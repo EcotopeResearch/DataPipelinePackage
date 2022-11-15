@@ -7,7 +7,7 @@
 
 ### clean.py
 - remove outliers specified in the configuration file
-  -> send alert to Ecotope engineers about sensor malfunction
+- send alert to Ecotope engineers about sensor malfunction
 - remove any nan values
 
 ### unit_conv.py
