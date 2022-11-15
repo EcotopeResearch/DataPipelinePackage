@@ -1,2 +1,3 @@
 # DataPipelinePackage
-functions for python data pipeline
+
+## Functions in Data Pipeline package
