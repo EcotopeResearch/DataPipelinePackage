@@ -13,6 +13,12 @@ def get_noaa_data(stations: List[str]):
         ftp_server.encoding = "utf-8"
         for station in stations:
             filename = f"{station}-{year}.gz"
-            with open(filename, "wb") as file:
+            with open(f"{filename}", "wb") as file:
                 ftp_server.retrbinary(f"RETR {filename}", file.write)
+        ftp_server.quit()
 
+def main():
+    stations = ["727935-24234"]
+    get_noaa_data(stations)
+
+main()
