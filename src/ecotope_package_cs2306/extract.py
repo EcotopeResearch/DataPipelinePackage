@@ -43,6 +43,5 @@ def gz_to_df(filename: str) -> pd.DataFrame:
 def main():
     stations = ["727935-24234"]
     #get_noaa_data(stations)
-    unzip_gz("potato")
 
 main()
