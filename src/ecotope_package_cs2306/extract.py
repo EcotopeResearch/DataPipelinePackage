@@ -1,12 +1,15 @@
-from asyncio.windows_events import NULL
 from typing import List
 import pandas as pd
 from ftplib import FTP
 from datetime import datetime
 import gzip
-import shutil
 
 def get_noaa_data(stations: List[str]):
+    noaa_filenames = download_noaa_data(stations)
+    noaa_dfs = convert_to_df(noaa_filenames)
+
+def download_noaa_data(stations: List[str]) -> List[str]:
+    noaa_filenames = List()
     year_end = datetime.today().year
     for year in range(2010, year_end+1):
         hostname = f"ftp.ncdc.noaa.gov"
@@ -17,17 +20,25 @@ def get_noaa_data(stations: List[str]):
         ftp_server.encoding = "utf-8"
         for station in stations:
             filename = f"{station}-{year}.gz"
+            noaa_filenames.append(filename)
             with open(f"output/{filename}", "wb") as file:
                 ftp_server.retrbinary(f"RETR {filename}", file.write)
                 ftp_server.quit()
-                unzip_gz(filename)
                 #STOP
         ftp_server.quit()
+    return noaa_filenames
 
-def unzip_gz(filename):
-    with gzip.open("output/727935-24234-2010.gz") as data:
+def convert_to_df(noaa_filenames: List[str]) -> List[pd.DataFrame]:
+    noaa_dfs = List()
+    for filename in noaa_filenames:
+        noaa_dfs.append(gz_to_df(filename))
+    return noaa_dfs
+        
+
+def gz_to_df(filename: str) -> pd.DataFrame:
+    with gzip.open(f"output/{filename}") as data:
         table = pd.read_table(data, header=None)
-        print(table)
+    return table
 
 def main():
     stations = ["727935-24234"]
