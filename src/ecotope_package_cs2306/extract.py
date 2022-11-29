@@ -6,6 +6,19 @@ import gzip
 import os
 import re
 
+
+# reads all json files into a singular dataframe
+def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
+    temp_dfs = []
+    for file in json_filenames:
+      data = pd.read_json(file, lines=True)
+      temp_dfs.append(data)
+    
+    df = pd.concat(temp_dfs, ignore_index=True)
+    return df
+
+
+
 def get_noaa_data(station_names: List[str]) -> dict:
     noaa_dictionary = _get_noaa_dictionary()
     station_ids = [noaa_dictionary[station_name][0] for station_name in station_names if station_name in noaa_dictionary]
