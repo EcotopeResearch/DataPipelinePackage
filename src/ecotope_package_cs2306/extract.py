@@ -21,6 +21,8 @@ def _format_df(station_ids: dict, noaa_dfs: dict):
         for key, value in noaa_dfs.items():
             if key.startswith(value1):
                 temp_df.append(value)
+        
+        
 
 
 
@@ -83,9 +85,9 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
         table = pd.read_table(data, header=None)
     return table
 
-def main():
+def __main__():
     stations = ["727935-24234"]
     #, 'KPWM', 'KSFO', 'KAVL'
     get_noaa_data(['KBFI'])
-
-main()
+if __name__ == __main__:
+    __main__()
