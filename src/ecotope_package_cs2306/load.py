@@ -9,6 +9,7 @@ DB_ERROR_CODE = -2
 TABLE_ERROR_CODE = -3
 config_file_path = "config.ini"
 
+
 def getLoginInfo(config_file_path): 
     """
     Function will read login information from 
@@ -26,6 +27,7 @@ def getLoginInfo(config_file_path):
     }
     return config
 
+
 def connectDB(config):
     """
     Function will use login information to
@@ -36,6 +38,7 @@ def connectDB(config):
     """
     connection = mysql.connector.connect(**config)
     return connection, connection.cursor()
+
 
 def checkTableExists(cursor, tablename, dbname):
     """
