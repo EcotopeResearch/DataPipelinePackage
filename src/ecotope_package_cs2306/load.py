@@ -17,13 +17,16 @@ def getLoginInfo(config_file_path):
     Input: config file
     Output: Login information
     """
-    configur = configparser.ConfigParser()
-    configur.read(config_file_path)
+    configure = configparser.ConfigParser()
+    configure.read(config_file_path)
     config = {
-        'user' : configur.get('database', 'user'),
-        'password' : configur.get('database', 'password'),
-        'host' : configur.get('database', 'host'),
-        'database' : configur.get('database', 'database')
+        "database": {'user': configure.get('database', 'user'),
+                     'password': configure.get('database', 'password'),
+                     'host': configure.get('database', 'host'),
+                     'database': configure.get('database', 'database')},
+        "table": {"tablename": configure.get('table', 'tablename'),
+                  "sitename": configure.get('table', 'sitename')}
+
     }
     return config
 
