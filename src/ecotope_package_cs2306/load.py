@@ -145,7 +145,7 @@ if __name__ == '__main__':
         print(f"Successfully connected to {config_dict['database']['database']}.")
 
     # load sample database
-    df = pd.read_csv('data.csv')
+    df = pd.read_csv('ecotope_data.csv')
     df.time = pd.to_datetime(df.time)
     df.set_index(['time', 'id'], inplace=True)
 
