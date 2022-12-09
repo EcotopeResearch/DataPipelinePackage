@@ -12,8 +12,8 @@ config_file_path = "config.ini"
 
 def getLoginInfo(config_file_path): 
     """
-    Function will read login information from 
-    config.ini and return it in a config var. 
+    Function will read login information from config.ini and return it in a config var.
+
     Input: config file
     Output: Login information
     """
@@ -33,9 +33,8 @@ def getLoginInfo(config_file_path):
 
 def connectDB(config):
     """
-    Function will use login information to
-    try and connect to the database and return
-    a connection object to make a cursor. 
+    Function will use login information to try and connect to the database and return a
+    connection object to make a cursor.
     Input: _getLoginInfo
     Output: Connection object
     """
