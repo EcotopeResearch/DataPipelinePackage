@@ -1,4 +1,4 @@
-import dict_config_parser
+import configparser
 import mysql.connector
 from mysql.connector import errorcode
 import sys
@@ -9,6 +9,33 @@ DB_ERROR_CODE = -2
 TABLE_ERROR_CODE = -3
 config_file_path = "config.ini"
 
+def getLoginInfo(config_file_path): 
+    """
+    Function will read login information from 
+    config.ini and return it in a config var. 
+    Input: config file
+    Output: Login information
+    """
+    configur = configparser.ConfigParser()
+    configur.read(config_file_path)
+    config = {
+        'user' : configur.get('database', 'user'),
+        'password' : configur.get('database', 'password'),
+        'host' : configur.get('database', 'host'),
+        'database' : configur.get('database', 'database')
+    }
+    return config
+
+def connectDB(config):
+    """
+    Function will use login information to
+    try and connect to the database and return
+    a connection object to make a cursor. 
+    Input: _getLoginInfo
+    Output: Connection object
+    """
+    connection = mysql.connector.connect(**config)
+    return connection, connection.cursor()
 
 def checkTableExists(cursor, tablename, dbname):
     """
@@ -87,7 +114,7 @@ def loadDatabase(cursor, dataframe, dbname, tablename, sitename):
 
 if __name__ == '__main__':
     # get database connection information and desired table name to write data into
-    config_dict = getDatabaseConnectionInfo(config_file_path)
+    config_dict = getLoginInfo(config_file_path)
 
     # check if configuration file was properly read
     if config_dict == CONFIG_ERROR_CODE:
@@ -98,7 +125,7 @@ if __name__ == '__main__':
         print(f"Successfully fetched configuration information from file path {config_file_path}.")
 
     # establish connection to database
-    db_connection, db_cursor = getDBCursor(config_dict['database'])
+    db_connection, db_cursor = connectDB(config_dict['database'])
 
     # check if connection was established to database
     if db_connection == DB_ERROR_CODE:
