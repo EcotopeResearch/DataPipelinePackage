@@ -3,17 +3,34 @@ import pandas as pd
 from ftplib import FTP
 from datetime import datetime
 import gzip
-import os
+import os, json
 import re
+
+
+# grabs all json files from file server and stores the paths to files in a list
+def extract_json() -> List[str]:
+  # path to file server currently unknown, will be updated later
+  file_server_path = 'somedir/'
+  json_filenames = []
+  # find all json files in file server and append the file's full path to list
+  for file in os.listdir(file_server_path):
+    if file.endswith('.json'):
+      full_filename = os.path.join(file_server_path, file)
+      json_filenames.append(full_filename)
+  
+  # return list of json file paths 
+  return json_filenames
 
 
 # reads all json files into a singular dataframe
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     temp_dfs = []
+    # read each json file into dataframe and append to temporary list
     for file in json_filenames:
       data = pd.read_json(file, lines=True)
       temp_dfs.append(data)
     
+    # concatenate all dataframes into one dataframe 
     df = pd.concat(temp_dfs, ignore_index=True)
     return df
 
