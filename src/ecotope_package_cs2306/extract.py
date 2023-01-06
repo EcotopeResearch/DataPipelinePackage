@@ -34,8 +34,6 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=True)
     return df
 
-
-
 def get_noaa_data(station_names: List[str]) -> dict:
     noaa_dictionary = _get_noaa_dictionary()
     station_ids = [noaa_dictionary[station_name][0] for station_name in station_names if station_name in noaa_dictionary]
@@ -44,17 +42,16 @@ def get_noaa_data(station_names: List[str]) -> dict:
     print(noaa_dfs)
 
 def _format_df(station_ids: dict, noaa_dfs: dict):
-    formatted_dfs = {}
+    formatted_dfs = {} 
     for key1, value1 in station_ids:
-
-        temp_df = pd.DataFrame()
+        # Append all DataFrames with the same station_id 
+        temp_df = pd.DataFrame(columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour'])
         for key, value in noaa_dfs.items():
             if key.startswith(value1):
                 temp_df.append(value)
-        
-        
-
-
+        # Do unit Conversions
+        formatted_dfs[key1] = temp_df
+    return formatted_dfs
 
 def _get_noaa_dictionary() -> dict:
     filename = "isd-history.csv"
@@ -119,5 +116,6 @@ def __main__():
     stations = ["727935-24234"]
     #, 'KPWM', 'KSFO', 'KAVL'
     get_noaa_data(['KBFI'])
-if __name__ == __main__:
-    __main__()
+
+
+__main__()
