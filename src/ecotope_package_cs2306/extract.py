@@ -5,7 +5,8 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-
+import unit_convert
+import numpy as np
 
 # grabs all json files from file server and stores the paths to files in a list
 def extract_json() -> List[str]:
@@ -48,9 +49,35 @@ def _format_df(station_ids: dict, noaa_dfs: dict):
         temp_df = pd.DataFrame(columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour'])
         for key, value in noaa_dfs.items():
             if key.startswith(value1):
-                temp_df.append(value)
+                temp_df = pd.concat([temp_df, value], ignore_index=True)
+
         # Do unit Conversions
+
+        # Convert all -9999 into N/A
+        temp_df = temp_df.replace(-9999, np.NaN)
+
+        # Convert tz from UTC to PT and format: Y-M-D HR:00:00
+        #temp_df["time"] = 
+
+        # Convert airtemp, dewpoint, sealevelpressure, windspeed
+        temp_df["airTemp_F"] = temp_df["airTemp"].apply(unit_convert.temp_c_to_f)
+        temp_df["dewPoint_F"] = temp_df["dewPoint"].apply(unit_convert.temp_c_to_f)
+        temp_df["seaLevelPressure_mb"] = temp_df["seaLevelPressure"].apply(unit_convert.divide_num_by_ten) 
+        temp_df["windSpeed_kts"] = temp_df["windSpeed"].apply(unit_convert.windspeed_mps_to_knots)  
+        
+        # Convert precip
+        temp_df["precip1Hour_mm"] = temp_df["precip1Hour"].apply(unit_convert.precip_cm_to_mm)
+        temp_df["precip6Hour_mm"] = temp_df["precip6Hour"].apply(unit_convert.precip_cm_to_mm)
+        
+        # Match case wind_direction
+        temp_df["windDirection_deg"] = temp_df["windDirection"].apply(unit_convert.winddirection_index_to_deg)
+
+        # Drop columns that were replaced
+        temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour", "precip6Hour"], axis = 1)
+        
+        # Save df in dict
         formatted_dfs[key1] = temp_df
+
     return formatted_dfs
 
 def _get_noaa_dictionary() -> dict:
