@@ -11,7 +11,7 @@ import numpy as np
 # grabs all json files from file server and stores the paths to files in a list
 def extract_json() -> List[str]:
   # path to file server currently unknown, will be updated later
-  file_server_path = 'somedir/'
+  file_server_path = 'input/'
   json_filenames = []
   # find all json files in file server and append the file's full path to list
   for file in os.listdir(file_server_path):
@@ -28,7 +28,7 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     temp_dfs = []
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
-      data = pd.read_json(file, lines=True)
+      data = pd.read_json(file)
       temp_dfs.append(data)
 
     # concatenate all dataframes into one dataframe 
