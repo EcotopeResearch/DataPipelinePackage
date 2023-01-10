@@ -1,19 +1,24 @@
-
+from datetime import datetime
+import pandas as pd
 # Format for unit Conversions
 # {value type}_{from unit}_to_{to unit}({value type}_{from unit})
 # Ex. temp_c_to_f(temp_c)
 
+# Used in NOAA Data
 def temp_c_to_f(temp_c : float):
     temp_f = 32 + (temp_c/10)* 9/5
     return temp_f
 
+# Used in NOAA Data
 def divide_num_by_ten(num : float):
     return (num/10)
 
+# Used in NOAA Data
 def windspeed_mps_to_knots(speed : float):
     speed_kts = 1.9438445 * speed/10
     return speed_kts
 
+# Used in NOAA Data
 def precip_cm_to_mm(precip : float):
     precip_mm = 0
     if precip == -1:
@@ -22,6 +27,7 @@ def precip_cm_to_mm(precip : float):
         precip_mm = divide_num_by_ten(precip)
     return precip_mm
 
+# Used in NOAA Data
 def winddirection_index_to_deg(wind_direction: int):
     wind_direction_deg = 0 
     match wind_direction:

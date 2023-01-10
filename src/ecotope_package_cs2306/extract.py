@@ -41,23 +41,28 @@ def get_noaa_data(station_names: List[str]) -> dict:
     noaa_filenames = _download_noaa_data(station_ids)
     noaa_dfs = _convert_to_df(noaa_filenames)
     print(noaa_dfs)
+    formatted_dfs = _format_df(station_ids, noaa_dfs)
+    return formatted_dfs
 
-def _format_df(station_ids: dict, noaa_dfs: dict):
-    formatted_dfs = {} 
-    for key1, value1 in station_ids:
+def _format_df(station_ids: list, noaa_dfs: dict):
+    formatted_dfs = {}
+    for value1 in station_ids:
         # Append all DataFrames with the same station_id 
         temp_df = pd.DataFrame(columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour'])
         for key, value in noaa_dfs.items():
             if key.startswith(value1):
                 temp_df = pd.concat([temp_df, value], ignore_index=True)
+                print(list(value.columns))
 
+        print(temp_df)
         # Do unit Conversions
-
+        print("Doing Conversions")
         # Convert all -9999 into N/A
         temp_df = temp_df.replace(-9999, np.NaN)
 
         # Convert tz from UTC to PT and format: Y-M-D HR:00:00
-        #temp_df["time"] = 
+        temp_df["time"] = pd.to_datetime(temp_df[["year", "month", "day", "hour"]])
+        temp_df["time"] = temp_df["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
 
         # Convert airtemp, dewpoint, sealevelpressure, windspeed
         temp_df["airTemp_F"] = temp_df["airTemp"].apply(unit_convert.temp_c_to_f)
@@ -73,10 +78,11 @@ def _format_df(station_ids: dict, noaa_dfs: dict):
         temp_df["windDirection_deg"] = temp_df["windDirection"].apply(unit_convert.winddirection_index_to_deg)
 
         # Drop columns that were replaced
-        temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour", "precip6Hour"], axis = 1)
+        temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour", "precip6Hour", "year", "month", "day", "hour"], axis = 1)
         
+        print(temp_df)
         # Save df in dict
-        formatted_dfs[key1] = temp_df
+        formatted_dfs[value1] = temp_df
 
     return formatted_dfs
 
@@ -101,8 +107,8 @@ def _get_noaa_dictionary() -> dict:
 def _download_noaa_data(stations: List[str]) -> List[str]:
     noaa_filenames = list()
     year_end = datetime.today().year
-    # Download files for each station from 2010 till present year
-    for year in range(2010, year_end+1):
+    # Download files for each station from 2010 till present year (FIX: ADD +1 to year_end)
+    for year in range(2010, year_end):
         # Set FTP credentials and connect
         hostname = f"ftp.ncdc.noaa.gov"
         wd = f"/pub/data/noaa/isd-lite/{year}/"
@@ -137,12 +143,13 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
     # Opens the file and returns it as a pd.DataFrame
     with gzip.open(f"output/{filename}") as data:
         table = pd.read_table(data, header=None)
+    
     return table
 
 def __main__():
     stations = ["727935-24234"]
     #, 'KPWM', 'KSFO', 'KAVL'
-    get_noaa_data(['KBFI'])
-
+    formatted_dfs = get_noaa_data(['KBFI'])
+    print(formatted_dfs)
 
 __main__()
