@@ -28,11 +28,22 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     temp_dfs = []
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
-      data = pd.read_json(file, lines=True)
+      data = pd.json_normalize(file, max_level = 0)
+      cols = ["year","month","day"]
+      data['date'] = data[cols].apply(lambda x: '/'.join(x.values.astype(str)), axis="columns")
+      data['time'] = data['date'].apply(lambda x: ' '.join(x.values.astype(str)), axis="columns")
+
       temp_dfs.append(data)
     
     # concatenate all dataframes into one dataframe 
     df = pd.concat(temp_dfs, ignore_index=True)
+    df.fillna(method="ffill")
+    return df
+
+# merges the sensor and weather data
+def merge_noaa(site, noaa: pd.DataFrame) -> pd.DataFrame:
+    df = []
+    df = pd.merge(site, noaa, on='time')
     return df
 
 def get_noaa_data(station_names: List[str]) -> dict:
