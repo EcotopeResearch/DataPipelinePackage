@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+import numpy as np
 # Format for unit Conversions
 # {value type}_{from unit}_to_{to unit}({value type}_{from unit})
 # Ex. temp_c_to_f(temp_c)
@@ -70,5 +71,7 @@ def conditions_index_to_desc(conditions: int):
         case 18: 
             conditions_desc = 'Overcast'
         case 19: 
-            conditions_desc = 'Dark overcast'    
+            conditions_desc = 'Dark overcast'  
+        case _:
+            conditions_desc = np.NaN  
     return conditions_desc

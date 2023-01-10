@@ -169,4 +169,5 @@ def __main__():
         print("done 1")
     print("done")
 
-__main__()
+if __name__ == '__main__':
+    __main__()
