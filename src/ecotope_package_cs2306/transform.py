@@ -4,7 +4,7 @@ import pandas as pd
 #copy pasted into whatever our transform.py ends up being. 
 
 #There is no csv_filename, this SHOULD get passed a df
-vars_filename = "Variable_Names.csv"
+vars_filename = "input/vars_test.csv"
 
 
 #STRETCH GOAL
@@ -29,7 +29,7 @@ def _removeOutliers(df, vars_filename):
     bounds_df = pd.read_csv(vars_filename)
     #keeping only variable_name (1), lower_bound (11), and upper_bound (12)
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
-    #TODO: remove row if there is NaN in both lower_bound and upper_bound column. 
+    #TODO: remove row if there is NaN in both lower_bound and upper_bound column. Use pd.apply lambda function to implement
     print(bounds_df)
 
     #Removal
@@ -61,6 +61,7 @@ def _fillMissing(df):
 def __main__():
     #Sample df, this should come from extract in actual running
     df = pd.DataFrame()
+    #use csv_test to make dataframe
 
     print("\nTesting _removeOutliers...\n")
     _removeOutliers(df, vars_filename)
