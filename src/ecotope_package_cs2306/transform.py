@@ -15,16 +15,11 @@ def _removeOutliers(df, vars_filename):
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
-    #data is brought in directly as a df, no additional work
-
     #Bounds setup df
-    #Variable_Names.csv, I only need columns 1 (variable_name), 11 (lower_bound), and 12 (upper_bound).
-    #Read it in, load into another pandas dataframe. ONLY load the row if it has at least one bound. 
+    #Variable_Names.csv, only keeps variable_name, lower_bound, and upper_bound columns, and only if bounds exist
     bounds_df = pd.read_csv(vars_filename)
-    #keeping only variable_name (1), lower_bound (11), and upper_bound (12)
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
-    #TODO: remove row if there is NaN in both lower_bound and upper_bound column. Use pd.apply lambda function to implement
-    print("Printing bounds df")
+    bounds_df.dropna(axis=0, thresh=2, inplace=True)
     print(bounds_df)
 
     #Removal
@@ -33,7 +28,6 @@ def _removeOutliers(df, vars_filename):
     #within the set bounds indicated by bounds df col 2 and 3. 
 
     return df
-
 
 #What are the select variables? Just variables with numeric inputs?
 def _fillMissing(df):
