@@ -5,9 +5,6 @@ import sys
 import pandas as pd
 import os
 
-CONFIG_ERROR_CODE = -1
-DB_ERROR_CODE = -2
-TABLE_ERROR_CODE = -3
 config_file_path = "config.ini"
 
 
@@ -40,7 +37,7 @@ def getLoginInfo(config_file_path: str) -> dict:
     return config
 
 
-def connectDB(config: dict):
+def connectDB(config_info: dict):
     """
     Function will use login information to try and connect to the database and return a
     connection object to make a cursor.
@@ -48,10 +45,12 @@ def connectDB(config: dict):
     Output: Connection object
     """
 
+    dbname = config_info['database']
+
     connection = None
 
     try:
-        connection = mysql.connector.connect(**config)
+        connection = mysql.connector.connect(**config_info)
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
@@ -60,19 +59,21 @@ def connectDB(config: dict):
             print(err)
             sys.exit()
 
-    print(f"Successfully connected to {config_dict['database']['database']}.")
+    print(f"Successfully connected to {dbname}.")
     return connection, connection.cursor()
 
 
-def checkTableExists(cursor, tablename: str, dbname: str) -> int:
+def checkTableExists(cursor, config_info: dict) -> int:
     """
     Check if given table exists in database.
 
     :param cursor: Database cursor object.
-    :param tablename: Name of table in database.
-    :param dbname: Name of database.
+    :param config_info: configuration dictionary containing config info.
     :return: Boolean value representing if table exists in database.
     """
+
+    tablename = config_info['table']['tablename']
+    dbname = config_info['database']['database']
 
     cursor.execute(f"SELECT count(*) "
                    f"FROM information_schema.TABLES "
@@ -109,22 +110,23 @@ def createNewTable(cursor, dataframe: str, tablename: str) -> bool:
     return True
 
 
-def loadDatabase(cursor, dataframe: str, dbname: str, tablename: str, sitename: str):
+def loadDatabase(cursor, dataframe: str, config_info: dict):
     """
     Loads data stored in passed dataframe into mySQL database using.
 
     :param cursor: Database cursor object.
     :param dataframe: Pandas dataframe object.
-    :param tablename: Name of table in database.
-    :param dbname: Name of database.
-    :param sitename: Name of site.
+    :param config_info: configuration dictionary containing config info.
     :return: Boolean value representing if data was written to database.
     """
 
-    if not checkTableExists(cursor, tablename, dbname):
+    tablename = config_info['table']['tablename']
+    sitename = config_info['table']['sitename']
+    dbname = config_info['database']['database']
+
+    if not checkTableExists(cursor, config_info):
         if not createNewTable(cursor, dataframe, tablename):
-            print(f"Could not create new table {config_dict['table']['tablename']} in database "
-                  f"{config_dict['database']['database']}")
+            print(f"Could not create new table {tablename} in database {dbname}")
             sys.exit()
 
     date_values = dataframe.index.get_level_values(0).unique()
@@ -138,8 +140,7 @@ def loadDatabase(cursor, dataframe: str, dbname: str, tablename: str, sitename: 
                 f"VALUES ('{date}', '{sitename}', {sensor_data})"
         cursor.execute(query)
 
-    print(f"Successfully wrote data frame to table {config_dict['table']['tablename']} in "
-          f"database {config_dict['database']['database']}.")
+    print(f"Successfully wrote data frame to table {tablename} in database {dbname}.")
 
 
 if __name__ == '__main__':
@@ -155,8 +156,7 @@ if __name__ == '__main__':
     df.set_index(['time', 'id'], inplace=True)
 
     # load data stored in data frame to database
-    loadDatabase(db_cursor, df, config_dict['database']['database'], config_dict['table']['tablename'],
-                 config_dict['table']['sitename'])
+    loadDatabase(db_cursor, df, config_dict)
 
     # commit changes to database and close connections
     # db_connection.commit()
