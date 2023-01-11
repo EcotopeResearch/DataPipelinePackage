@@ -1,11 +1,7 @@
 import pandas as pd
 
-#I'm just going to write generic functions that hopefully can be 
-#copy pasted into whatever our transform.py ends up being. 
-
-#There is no csv_filename, this SHOULD get passed a df
-vars_filename = "input/vars_test.csv"
-
+#required input files
+vars_filename = "input/vars_test.csv" 
 
 #STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
@@ -19,8 +15,6 @@ def _removeOutliers(df, vars_filename):
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
-    print("Entered _removeOutliers")
-
     #data is brought in directly as a df, no additional work
 
     #Bounds setup df
@@ -30,6 +24,7 @@ def _removeOutliers(df, vars_filename):
     #keeping only variable_name (1), lower_bound (11), and upper_bound (12)
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     #TODO: remove row if there is NaN in both lower_bound and upper_bound column. Use pd.apply lambda function to implement
+    print("Printing bounds df")
     print(bounds_df)
 
     #Removal
@@ -58,16 +53,23 @@ def _fillMissing(df):
     return df
 
 
-def __main__():
+#Test function for simple main, will be removed once transform.py is complete
+def outlier_fillTest():
     #Sample df, this should come from extract in actual running
-    df = pd.DataFrame()
-    #use csv_test to make dataframe
+    testdf_filename = "input/csv_test.csv"
+    df = pd.read_csv(testdf_filename)
 
     print("\nTesting _removeOutliers...\n")
     _removeOutliers(df, vars_filename)
     print("\nFinished testing _removeOutliers\n")
 
     #print("\nTesting _fillMissing...\n")
+
+
+#Test main, will be removed once transform.py is complete
+def __main__():
+    outlier_fillTest()
+
 
 if __name__ == '__main__':
     __main__()
