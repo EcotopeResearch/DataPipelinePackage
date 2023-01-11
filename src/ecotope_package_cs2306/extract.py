@@ -48,6 +48,12 @@ def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def get_noaa_data(station_names: List[str]) -> dict:
+    """
+    Function will take in a list of station names and will return a dictionary where the key is the station name and the 
+    value is a dataframe with the parsed weather data
+    Input: List of Station Names
+    Output: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
+    """
     noaa_dictionary = _get_noaa_dictionary()
     print(noaa_dictionary)
     station_ids = [noaa_dictionary[station_name][0] for station_name in station_names if station_name in noaa_dictionary]
@@ -57,6 +63,12 @@ def get_noaa_data(station_names: List[str]) -> dict:
     return formatted_dfs
 
 def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
+    """
+    Function will take a list of station ids and a dictionary of filename and the respective file stored in a dataframe
+    The function will return a dictionary where the key is the station id and the value is a dataframe for that station
+    Input: List of station_ids, dictionary of filename and the respective file stored in a dataframe
+    Output: Dictionary where the key is the station id and the value is a dataframe for that station
+    """
     formatted_dfs = {}
     for value1 in station_ids:
         # Append all DataFrames with the same station_id 
@@ -101,6 +113,11 @@ def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
     return formatted_dfs
 
 def _get_noaa_dictionary() -> dict:
+    """
+    This function downloads a dictionary of equivalent station id for each station name
+    Input: None
+    Output: Dictionary of station id and corrosponding station name
+    """
     filename = "isd-history.csv"
     hostname = f"ftp.ncdc.noaa.gov"
     wd = f"/pub/data/noaa/"
@@ -119,6 +136,12 @@ def _get_noaa_dictionary() -> dict:
     return df_id_usafwban.set_index("ICAO").T.to_dict('list')
 
 def _download_noaa_data(stations: List[str]) -> List[str]:
+    """
+    This function takes in a list of the stations and downloads the corrosponding NOAA weather data
+    via FTP and returns it in a List of filenames
+    Input: List of station_ids who's data needs to be downloaded
+    Output: List of filenames that were downloaded
+    """
     noaa_filenames = list()
     year_end = datetime.today().year
     # Download files for each station from 2010 till present year
@@ -145,8 +168,12 @@ def _download_noaa_data(stations: List[str]) -> List[str]:
     return noaa_filenames
 
 def _convert_to_df(noaa_filenames: List[str]) -> dict:
-    # Gets the list of downloaded filenames and imports the files
-    # and converts it to a dictionary of DataFrames
+    """
+    Gets the list of downloaded filenames and imports the files
+    and converts it to a dictionary of DataFrames
+    Input: List of downloaded filenames
+    Output: Dictionary where key is filename and value is dataframe for the file
+    """
     noaa_dfs = []
     for filename in noaa_filenames:
         noaa_dfs.append(_gz_to_df(filename))
@@ -154,7 +181,11 @@ def _convert_to_df(noaa_filenames: List[str]) -> dict:
     return noaa_dfs_dict
 
 def _gz_to_df(filename: str) -> pd.DataFrame:
-    # Opens the file and returns it as a pd.DataFrame
+    """
+    Opens the file and returns it as a pd.DataFrame
+    Input: String of filename to be converted
+    Output: DataFrame of the corrosponding file
+    """
     with gzip.open(f"output/{filename}") as data:
         table = pd.read_table(data, header=None, delim_whitespace=True)
     table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
