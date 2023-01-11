@@ -28,17 +28,23 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     temp_dfs = []
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
-      data = pd.read_json(file)
-      temp_dfs.append(data)
+        test = json.load(open(file))
+        data = pd.json_normalize(test, record_path=['sensors'], meta=['device', 'connection', 'time'])
+        data["time"] = pd.to_datetime(data["time"])
+        data["time"] = data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        temp_dfs.append(data)
 
     # concatenate all dataframes into one dataframe 
     df = pd.concat(temp_dfs, ignore_index=True)
     return df
 
 # merges the sensor and weather data
-def merge_noaa(site, noaa: pd.DataFrame) -> pd.DataFrame:
+def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
     df = []
-    df = pd.merge(site, noaa, on='time')
+    data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
+    data["time"] = pd.to_datetime(data["time"], utc=True)
+    data["time"] = data["time"].dt.tz_convert('US/Pacific')
+    df = site.merge(data, how='left', on='time')
     return df
 
 def get_noaa_data(station_names: List[str]) -> dict:
@@ -155,6 +161,7 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
     return table
 
 def __main__():
+    """""
     stations = ["727935-24234"]
     #, 'KPWM', 'KSFO', 'KAVL'
     formatted_dfs = get_noaa_data(['KBFI'])
@@ -163,6 +170,7 @@ def __main__():
         value.to_csv(f"output/{key}.csv", index=False)
         print("done 1")
     print("done")
+    """""
 
 if __name__ == '__main__':
     __main__()
