@@ -8,10 +8,10 @@ import os
 CONFIG_ERROR_CODE = -1
 DB_ERROR_CODE = -2
 TABLE_ERROR_CODE = -3
-config_file_path = "confi.ini"
+config_file_path = "config.ini"
 
 
-def getLoginInfo(config_file_path): 
+def getLoginInfo(config_file_path: str) -> dict:
     """
     Function will read login information from config.ini and return it in a config var.
 
@@ -19,12 +19,13 @@ def getLoginInfo(config_file_path):
     Output: Login information
     """
 
-    if not os.path.exists(f"/Configuration/{config_file_path}"):
-        print(f"File path '{config_file_path}' does not exist.")
+    file_path = f"Configuration/{config_file_path}"
+    if not os.path.exists(file_path):
+        print(f"File path '{file_path}' does not exist.")
         sys.exit()
 
     configure = configparser.ConfigParser()
-    configure.read(config_file_path)
+    configure.read(file_path)
     config = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),
@@ -39,7 +40,7 @@ def getLoginInfo(config_file_path):
     return config
 
 
-def connectDB(config):
+def connectDB(config: dict):
     """
     Function will use login information to try and connect to the database and return a
     connection object to make a cursor.
@@ -47,24 +48,23 @@ def connectDB(config):
     Output: Connection object
     """
 
-    connection = mysql.connector.connect(**config)
+    connection = None
 
-    # check if connection was established to database
-    if connection == DB_ERROR_CODE:
-        error = db_cursor
-        if error.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password.")
+    try:
+        connection = mysql.connector.connect(**config)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Something is wrong with your user name or password")
+            sys.exit()
         else:
-            print(error)
-        sys.exit()
+            print(err)
+            sys.exit()
 
-    else:
-        print(f"Successfully connected to {config_dict['database']['database']}.")
-
+    print(f"Successfully connected to {config_dict['database']['database']}.")
     return connection, connection.cursor()
 
 
-def checkTableExists(cursor, tablename, dbname):
+def checkTableExists(cursor, tablename: str, dbname: str) -> int:
     """
     Check if given table exists in database.
 
@@ -82,7 +82,7 @@ def checkTableExists(cursor, tablename, dbname):
     return num_tables
 
 
-def createNewTable(cursor, dataframe, tablename):
+def createNewTable(cursor, dataframe: str, tablename: str) -> bool:
     """
     Creates a new table to store data in the given dataframe.
 
@@ -109,7 +109,7 @@ def createNewTable(cursor, dataframe, tablename):
     return True
 
 
-def loadDatabase(cursor, dataframe, dbname, tablename, sitename):
+def loadDatabase(cursor, dataframe: str, dbname: str, tablename: str, sitename: str):
     """
     Loads data stored in passed dataframe into mySQL database using.
 
@@ -125,6 +125,7 @@ def loadDatabase(cursor, dataframe, dbname, tablename, sitename):
         if not createNewTable(cursor, dataframe, tablename):
             print(f"Could not create new table {config_dict['table']['tablename']} in database "
                   f"{config_dict['database']['database']}")
+            sys.exit()
 
     date_values = dataframe.index.get_level_values(0).unique()
 
@@ -137,18 +138,11 @@ def loadDatabase(cursor, dataframe, dbname, tablename, sitename):
                 f"VALUES ('{date}', '{sitename}', {sensor_data})"
         cursor.execute(query)
 
-
     print(f"Successfully wrote data frame to table {config_dict['table']['tablename']} in "
           f"database {config_dict['database']['database']}.")
 
 
-def main():
-    print(os.path.exists("/Configuration"))
-
-
 if __name__ == '__main__':
-    main()
-    """
     # get database connection information and desired table name to write data into
     config_dict = getLoginInfo(config_file_path)
 
@@ -156,7 +150,7 @@ if __name__ == '__main__':
     db_connection, db_cursor = connectDB(config_dict['database'])
 
     # load sample database
-    df = pd.read_csv('ecotope_data.csv')
+    df = pd.read_csv('src/ecotope_package_cs2306/ecotope_data.csv')
     df.time = pd.to_datetime(df.time)
     df.set_index(['time', 'id'], inplace=True)
 
@@ -164,7 +158,7 @@ if __name__ == '__main__':
     loadDatabase(db_cursor, df, config_dict['database']['database'], config_dict['table']['tablename'],
                  config_dict['table']['sitename'])
 
-    # commit changes to database and close connection
-    db_connection.commit()
+    # commit changes to database and close connections
+    # db_connection.commit()
+    db_connection.close()
     db_cursor.close()
-    """
