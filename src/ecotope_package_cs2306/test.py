@@ -1,7 +1,8 @@
-import extract
-import load
+from src.ecotope_package_cs2306 import extract
+from src.ecotope_package_cs2306 import load
 import sys
 from mysql.connector import errorcode
+
 
 def __main__():
     
