@@ -1,7 +1,7 @@
 import pandas as pd
 
 #required input files
-vars_filename = "input/vars_test.csv" 
+vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
 
 #STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
@@ -26,6 +26,8 @@ def _removeOutliers(df, vars_filename):
     #Compare the two dataframes. For each row of the data, locate column names with names in the rows
     #of the bounds df. If matched, go all the way down that column, and remove the data IF it is not
     #within the set bounds indicated by bounds df col 2 and 3. 
+
+    #basically, call dropna but for deleting individual entires?
 
     return df
 
