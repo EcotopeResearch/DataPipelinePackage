@@ -12,7 +12,6 @@ def _removeOutliers(df, vars_filename):
     Function will take the location of extracted data in a json and bounds information in a csv,
     store the json data in a pandas dataframe, then remove outliers above or below bounds as 
     designated by the csv. Function then returns the resulting dataframe. 
-
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
@@ -43,7 +42,6 @@ def _removeOutliers(df, vars_filename):
 def _fillMissing(df):
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
-
     Input: Pandas dataframe
     Output: Pandas dataframe
     """
@@ -80,6 +78,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
                 df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
         df = pd.concat([df_pre, df_post], ignore_index=True)
     return df
+
 
 
 #Test function for simple main, will be removed once transform.py is complete
