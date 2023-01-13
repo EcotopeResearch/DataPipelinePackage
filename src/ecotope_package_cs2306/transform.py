@@ -1,7 +1,8 @@
 import pandas as pd
+import numpy as np
 
 #required input files
-vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
+vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
 
 #STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
@@ -16,25 +17,24 @@ def _removeOutliers(df, vars_filename):
     Output: Pandas dataframe 
     """
     #Bounds setup df
-    #Variable_Names.csv, only keeps variable_name, lower_bound, and upper_bound columns, and only if bounds exist
+    #Variable_Names.csv, only keeps variable_name, lower_bound, and upper_bound columns, and only if bounds and name exists
     bounds_df = pd.read_csv(vars_filename)
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
-    print(bounds_df)
-
-    #Removal
-    #Compare the two dataframes. For each row of the data, locate column names with names in the rows
-    #of the bounds df. If matched, go all the way down that column, and remove the data IF it is not
-    #within the set bounds indicated by bounds df col 2 and 3. 
-
-    #basically, call dropna but for deleting individual entires?
-    for var in df: #For each column
-        #upper = 
-        #lower = 
-        #loc column names that match
-        #once located, if within bounds for each in that column
-        #pd.NA to replace?
-        pass
+    bounds_df.set_index(['variable_name'], inplace=True)
+    bounds_df = bounds_df[bounds_df.index.notnull()] #removing NaN var names
+    
+    #bad data removal
+    for columnVar in df: #apply to each column X, change to .apply?
+        #Search bounds, match name
+        if(columnVar in bounds_df.index):
+            cLower = bounds_df.loc[columnVar]["lower_bound"]
+            cUpper = bounds_df.loc[columnVar]["upper_bound"]
+            #use .apply to check if within bounds for all of column columnVar
+            for index in df.index:
+                value = df.loc[index][columnVar]
+                if(value < cLower and value > cUpper):
+                    df.replace(toreplace = df.loc[index][columnVar], value = np.NaN, inplace = True)
 
     return df
 
@@ -60,11 +60,11 @@ def _fillMissing(df):
 #Test function for simple main, will be removed once transform.py is complete
 def outlier_fillTest():
     #Sample df, this should come from extract in actual running
-    testdf_filename = "input/csv_test.csv"
+    testdf_filename = "input/ecotope_wide_data.csv"
     df = pd.read_csv(testdf_filename)
 
     print("\nTesting _removeOutliers...\n")
-    _removeOutliers(df, vars_filename)
+    print(_removeOutliers(df, vars_filename))
     print("\nFinished testing _removeOutliers\n")
 
     #print("\nTesting _fillMissing...\n")
