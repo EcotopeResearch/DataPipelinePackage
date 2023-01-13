@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import numpy as np
 
 #required input files
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
@@ -38,6 +39,7 @@ def _removeOutliers(df, vars_filename):
 
     return df
 
+
 #What are the select variables? Just variables with numeric inputs?
 def _fillMissing(df):
     """
@@ -54,6 +56,30 @@ def _fillMissing(df):
     #forward fill being take previous var value and insert it. we need to do this column by column.
     #probably use pd.ffill
 
+    return df
+
+
+def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
+    """
+    Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
+    Input: DataFrame to be adjusted
+    Output: Adjusted Dataframe
+    """
+    adjustments = pd.read_csv("input/adjustments.csv")
+    adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
+    df = df.sort_values(by = "datetime_applied")
+    for adjustment in adjustments:
+        adjustment_datetime = adjustment["datetime_applied"]
+        df_pre = df.loc[df['time'] < adjustment_datetime]
+        df_post = df.loc[df['time'] >= adjustment_datetime]
+        match adjustment["adjustment_type"]:
+            case "add":
+                continue
+            case "remove":
+                df_post[adjustment["sensor_1"]] = np.nan
+            case "swap":
+                df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
+        df = pd.concat([df_pre, df_post], ignore_index=True)
     return df
 
 
