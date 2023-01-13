@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import numpy as np
 
 #required input files
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
