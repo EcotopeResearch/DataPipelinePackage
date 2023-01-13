@@ -83,7 +83,7 @@ def checkTableExists(cursor, config_info: dict) -> int:
     return num_tables
 
 
-def createNewTable(cursor, dataframe: str, tablename: str) -> bool:
+def createNewTable(cursor, dataframe: str, config_info: dict) -> bool:
     """
     Creates a new table to store data in the given dataframe.
 
@@ -93,9 +93,10 @@ def createNewTable(cursor, dataframe: str, tablename: str) -> bool:
     :return: Boolean value representing if new table was created.
     """
 
-    sensors = dataframe.index.get_level_values(1).unique()
+    table_name = config_info['table']['tablename']
+    sensors = dataframe.columns
 
-    create_table_statement = f"CREATE TABLE {tablename} (\n" \
+    create_table_statement = f"CREATE TABLE {table_name} (\n" \
                              f"time_pt datetime,\n" \
                              f"site char(7),\n"
 
@@ -125,19 +126,19 @@ def loadDatabase(cursor, dataframe: str, config_info: dict):
     dbname = config_info['database']['database']
 
     if not checkTableExists(cursor, config_info):
-        if not createNewTable(cursor, dataframe, tablename):
+        if not createNewTable(cursor, dataframe, config_info):
             print(f"Could not create new table {tablename} in database {dbname}")
             sys.exit()
 
-    date_values = dataframe.index.get_level_values(0).unique()
-
+    date_values = dataframe.index
     for date in date_values:
         time_data = dataframe.loc[date]
         sensor_names = str(list(time_data.index.get_level_values(0))).replace("'", "").replace("[", "").replace("]", "")
-        sensor_data = str(list(time_data['data'].values)).replace("[", "").replace("]", "")
+        sensor_data = str(list(time_data.values)).replace("[", "").replace("]", "")
 
         query = f"INSERT INTO {tablename} (time_pt, site, {sensor_names})\n" \
                 f"VALUES ('{date}', '{sitename}', {sensor_data})"
+
         cursor.execute(query)
 
     print(f"Successfully wrote data frame to table {tablename} in database {dbname}.")
@@ -145,20 +146,19 @@ def loadDatabase(cursor, dataframe: str, config_info: dict):
 
 if __name__ == '__main__':
     # get database connection information and desired table name to write data into
-    config_dict = getLoginInfo(config_file_path)
+    config_dict = getLoginInfo(config_file_path=config_file_path)
 
     # establish connection to database
-    db_connection, db_cursor = connectDB(config_dict['database'])
+    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
-    # load sample database
-    df = pd.read_csv('src/ecotope_package_cs2306/ecotope_data.csv')
-    df.time = pd.to_datetime(df.time)
-    df.set_index(['time', 'id'], inplace=True)
+    df_path = "input/ecotope_wide_data.csv"
+    ecotope_data = pd.read_csv(df_path)
+    ecotope_data.set_index("time", inplace=True)
 
     # load data stored in data frame to database
-    loadDatabase(db_cursor, df, config_dict)
+    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict)
 
     # commit changes to database and close connections
-    # db_connection.commit()
+    db_connection.commit()
     db_connection.close()
     db_cursor.close()
