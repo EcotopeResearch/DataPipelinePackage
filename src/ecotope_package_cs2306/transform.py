@@ -1,7 +1,7 @@
 import pandas as pd
 
 #required input files
-vars_filename = "input/vars_test.csv" 
+vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
 
 #STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
@@ -27,6 +27,15 @@ def _removeOutliers(df, vars_filename):
     #of the bounds df. If matched, go all the way down that column, and remove the data IF it is not
     #within the set bounds indicated by bounds df col 2 and 3. 
 
+    #basically, call dropna but for deleting individual entires?
+    for var in df: #For each column
+        #upper = 
+        #lower = 
+        #loc column names that match
+        #once located, if within bounds for each in that column
+        #pd.NA to replace?
+        pass
+
     return df
 
 #What are the select variables? Just variables with numeric inputs?
@@ -38,11 +47,12 @@ def _fillMissing(df):
     Output: Pandas dataframe
     """
 
-    #ONLY forward fill if cumulative sum of var is not zero. 
+    #ONLY forward fill if cumulative sum of var is not zero, e.g. don't do it until you find at least one valid entry first.
     #ffill_length column specifies time in minutes non-changepoint vars may be forward filled if missing. 
-    #vars with changepoint column set to 1, forward fill without restriction.
+    #vars with changepoint column set to 1, forward fill without restriction. obv cumulative sum still applies.
 
     #forward fill being take previous var value and insert it. we need to do this column by column.
+    #probably use pd.ffill
 
     return df
 
