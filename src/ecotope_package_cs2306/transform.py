@@ -21,11 +21,10 @@ def _removeOutliers(df, vars_filename):
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
-    bounds_df = bounds_df[bounds_df.index.notnull()] #removing NaN var names
+    bounds_df = bounds_df[bounds_df.index.notnull()]
     
     #bad data removal
     for columnVar in df: #apply to each column X, change to .apply?
-        #Search bounds, match name
         if(columnVar in bounds_df.index):
             cLower = bounds_df.loc[columnVar]["lower_bound"]
             cUpper = bounds_df.loc[columnVar]["upper_bound"]
