@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 #required input files
 vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
 
@@ -68,6 +68,29 @@ def outlier_fillTest():
     print("\nFinished testing _removeOutliers\n")
 
     #print("\nTesting _fillMissing...\n")
+
+def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
+    """
+    Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
+    Input: DataFrame to be adjusted
+    Output: Adjusted Dataframe
+    """
+    adjustments = pd.read_csv("input/adjustments.csv")
+    adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
+    df = df.sort_values(by = "datetime_applied")
+    for adjustment in adjustments:
+        adjustment_datetime = adjustment["datetime_applied"]
+        df_pre = df.loc[df['time'] < adjustment_datetime]
+        df_post = df.loc[df['time'] >= adjustment_datetime]
+        match adjustment["adjustment_type"]:
+            case "add":
+                continue
+            case "remove":
+                df_post[adjustment["sensor_1"]] = np.nan
+            case "swap":
+                df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
+        df = pd.concat([df_pre, df_post], ignore_index=True)
+    return df
 
 
 #Test main, will be removed once transform.py is complete
