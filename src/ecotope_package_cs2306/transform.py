@@ -32,7 +32,9 @@ def _removeOutliers(df, vars_filename):
             for index in df.index:
                 value = df.loc[index][columnVar]
                 if(value < cLower and value > cUpper):
-                    df.replace(toreplace = df.loc[index][columnVar], value = np.NaN, inplace = True)
+                    #TODO: Carlos, this is the line that doesn't work. It needs to replace values at 
+                    #location [index][columnVar] with np.NaN, simple as that. I'll fix it by Saturday night if you don't.
+                    df.replace(toreplace = df.loc[index][columnVar], value = np.NaN, inplace = True) 
 
     return df
 
