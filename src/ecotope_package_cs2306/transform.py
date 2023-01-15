@@ -15,27 +15,27 @@ def _removeOutliers(df, vars_filename):
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
-    #Bounds setup df
-    #Variable_Names.csv, only keeps variable_name, lower_bound, and upper_bound columns, and only if bounds and name exists
+    #Bounds dataframe holds acceptable ranges
     bounds_df = pd.read_csv(vars_filename)
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
     bounds_df = bounds_df[bounds_df.index.notnull()]
     
-    #bad data removal
-    for columnVar in df: #apply to each column X, change to .apply?
+    #bad data removal loop
+    for columnVar in df:
         if(columnVar in bounds_df.index):
             cLower = bounds_df.loc[columnVar]["lower_bound"]
             cUpper = bounds_df.loc[columnVar]["upper_bound"]
-            #use .apply to check if within bounds for all of column columnVar
             for index in df.index:
-                value = df.loc[index][columnVar]
-                if(value < cLower and value > cUpper):
-                    #TODO: Carlos, this is the line that doesn't work. It needs to replace values at 
-                    #location [index][columnVar] with np.NaN, simple as that. I'll fix it by Saturday night if you don't.
-                    df.replace(toreplace = df.loc[index][columnVar], value = np.NaN, inplace = True) 
-
+                value = df.loc[(index, columnVar)]
+                """
+                #BUG: 
+                Currently, below if replaces some var properly, some seemingly randomly. I checked, 
+                cLower and cUpper are perfect, but value isn't what it's supposed to be?
+                """
+                if(value < cLower or value > cUpper):
+                    df.replace(to_replace = df.loc[(index, columnVar)], value = np.NaN, inplace = True)
     return df
 
 
