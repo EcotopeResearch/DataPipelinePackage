@@ -32,7 +32,8 @@ def _removeOutliers(df, vars_filename):
                 """
                 #BUG: 
                 Currently, below if replaces some var properly, some seemingly randomly. I checked, 
-                cLower and cUpper are perfect, but value isn't what it's supposed to be?
+                cLower and cUpper are perfect, but value isn't what it's supposed to be? If you look 
+                at the test prints, there are ONLY issues with Duty_QAHVPump
                 """
                 if(value < cLower or value > cUpper):
                     df.replace(to_replace = df.loc[(index, columnVar)], value = np.NaN, inplace = True)
