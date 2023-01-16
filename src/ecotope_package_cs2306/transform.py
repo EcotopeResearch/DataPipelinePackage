@@ -3,6 +3,29 @@ import pandas as pd
 #required input files
 vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
 
+
+def renameVariables(df: pd.DataFrame):
+    # import configuration file which stores important info about each variable
+    data_info = pd.read_csv("input/Variable_Names.csv")
+
+    # slice on the relevant columns
+    data_info = data_info[1:87]
+
+    # store variable alias name and true name in list
+    variable_alias = list(data_info["variable_alias"])
+    variable_true = list(data_info["variable_name"])
+
+    # create a dict in format {{'variable.alias': 'variable.true'}, ...}
+    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+
+    print(variable_alias_true_dict)
+
+    # replace alias variable names with true variable names
+    # df.replace(variable_alias_true_dict)
+
+    return df
+
+
 #STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
 #Try and keep things clean so that can be added later. 
@@ -72,7 +95,14 @@ def outlier_fillTest():
 
 #Test main, will be removed once transform.py is complete
 def __main__():
-    outlier_fillTest()
+    # outlier_fillTest()
+    df_path = "input/ecotope_wide_data_original.csv"
+    ecotope_data = pd.read_csv(df_path)
+    ecotope_data.set_index("time", inplace=True)
+
+    ecotope_data = renameVariables(ecotope_data)
+
+    # print(ecotope_data)
 
 
 if __name__ == '__main__':
