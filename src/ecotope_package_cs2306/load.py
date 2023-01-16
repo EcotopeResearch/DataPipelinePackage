@@ -28,9 +28,9 @@ def getLoginInfo(config_file_path: str) -> dict:
                      'password': configure.get('database', 'password'),
                      'host': configure.get('database', 'host'),
                      'database': configure.get('database', 'database')},
-        "table": {"tablename": configure.get('table', 'tablename'),
-                  "sitename": configure.get('table', 'sitename')}
-
+        "sensor_table": {"table_name": configure.get('sensor_table', 'table_name'),
+                         'column_names': configure.get('sensor_table', 'column_names'),
+                         'column_dtypes': configure.get('sensor_table', 'column_dtypes')}
     }
 
     print(f"Successfully fetched configuration information from file path {config_file_path}.")
@@ -72,7 +72,7 @@ def checkTableExists(cursor, config_info: dict) -> int:
     :return: Boolean value representing if table exists in database.
     """
 
-    tablename = config_info['table']['tablename']
+    tablename = config_info['sensor_table']['table_name']
     dbname = config_info['database']['database']
 
     cursor.execute(f"SELECT count(*) "
@@ -93,22 +93,32 @@ def createNewTable(cursor, dataframe: str, config_info: dict) -> bool:
     :return: Boolean value representing if new table was created.
     """
 
-    table_name = config_info['table']['tablename']
+    table_name = config_info['sensor_table']['table_name']
     sensors = dataframe.columns
 
     create_table_statement = f"CREATE TABLE {table_name} (\n" \
                              f"time_pt datetime,\n" \
-                             f"site char(7),\n"
+                             # f"FOREIGN KEY time_hour_pt datetime,\n"
 
-    for sensor in sensors[:-1]:
+    for sensor in sensors:
         create_table_statement += f"{sensor} float,\n"
 
-    create_table_statement += f"{sensors[len(sensors) - 1]} float\n"
+    create_table_statement += f"PRIMARY KEY (time_pt)\n"
     create_table_statement += ");"
 
     cursor.execute(create_table_statement)
 
     return True
+
+
+def createUnknownColumns(cursor, column_names: list, config_info: dict):
+    for column in column_names:
+        cursor.execute(f"select * from INFORMATION_SCHEMA.COLUMNS where table_name = "
+                          f"'{config_info['table_name']}' and column_name = '{column}'")
+        column_exists = len(db_cursor.fetchall())
+
+        if not column_exists:
+            db_cursor.execute(f"ALTER TABLE {config_info['table_name']} ADD COLUMN {column} FLOAT NOT NULL;")
 
 
 def loadDatabase(cursor, dataframe: str, config_info: dict):
@@ -121,8 +131,7 @@ def loadDatabase(cursor, dataframe: str, config_info: dict):
     :return: Boolean value representing if data was written to database.
     """
 
-    tablename = config_info['table']['tablename']
-    sitename = config_info['table']['sitename']
+    tablename = config_info['sensor_table']['table_name']
     dbname = config_info['database']['database']
 
     if not checkTableExists(cursor, config_info):
@@ -130,14 +139,16 @@ def loadDatabase(cursor, dataframe: str, config_info: dict):
             print(f"Could not create new table {tablename} in database {dbname}")
             sys.exit()
 
+    createUnknownColumns(db_cursor, dataframe.columns, config_info['sensor_table'])
+
     date_values = dataframe.index
     for date in date_values:
         time_data = dataframe.loc[date]
         sensor_names = str(list(time_data.index.get_level_values(0))).replace("'", "").replace("[", "").replace("]", "")
         sensor_data = str(list(time_data.values)).replace("[", "").replace("]", "")
 
-        query = f"INSERT INTO {tablename} (time_pt, site, {sensor_names})\n" \
-                f"VALUES ('{date}', '{sitename}', {sensor_data})"
+        query = f"INSERT INTO {tablename} (time_pt, {sensor_names})\n" \
+                f"VALUES ('{date}', {sensor_data})"
 
         cursor.execute(query)
 
@@ -154,7 +165,11 @@ if __name__ == '__main__':
     df_path = "input/ecotope_wide_data.csv"
     ecotope_data = pd.read_csv(df_path)
     ecotope_data.set_index("time", inplace=True)
+    ecotope_data.index = pd.to_datetime(ecotope_data.index)
 
+    print(config_dict['sensor_table']['column_names'])
+
+    """
     # load data stored in data frame to database
     loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict)
 
@@ -162,3 +177,4 @@ if __name__ == '__main__':
     db_connection.commit()
     db_connection.close()
     db_cursor.close()
+    """
