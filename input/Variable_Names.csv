@@ -24,7 +24,7 @@ MXV1MixingValveRecircReturnTemp,Temp_RecircReturn_MXV1,sienna,,,,,,,0,5,0,20
 MXV2_ErrorCode,,,,,,,,,,,,
 MXV1_MixedOutletSetpoint_F,,,,,,,,,,,,
 MXV2_MixedOutletTemp_F,Temp_RecircSupply_MXV2,mediumorchid4,,,110,125,5,HIGH,,,0,20
-MXV2_ValvePosition,ValvePosition_MXV2,mediumpurple4,,,,,,,,,0,20
+MXV2_ValvePosition,ValvePosition_MXV2,mediumpurple4,,,,,,,1,,0,20
 MXV2MixingValveHotInletTemp,Temp_HotInlet_MXV2,hotpink4,,,115,,5,LOW,,,0,20
 MXV2MixingValveRecircReturnTemp,Temp_RecircReturn_MXV2,orchid,,,,,,,,,0,20
 name,,,,,,,,,,,,

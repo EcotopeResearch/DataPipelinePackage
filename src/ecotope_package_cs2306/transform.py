@@ -5,9 +5,9 @@ import numpy as np
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
 
 
-#TODO: _removeOutliers STRETCH GOAL
+#TODO: remove_outliers STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
-def _removeOutliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
+def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
@@ -20,18 +20,18 @@ def _removeOutliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
     bounds_df = bounds_df[bounds_df.index.notnull()]
-    for columnVar in df:  #bad data removal loop
-        if(columnVar in bounds_df.index):
-            cLower = bounds_df.loc[columnVar]["lower_bound"]
-            cUpper = bounds_df.loc[columnVar]["upper_bound"]
+    for column_var in df:  #bad data removal loop
+        if(column_var in bounds_df.index):
+            c_lower = bounds_df.loc[column_var]["lower_bound"]
+            c_upper = bounds_df.loc[column_var]["upper_bound"]
             for index in df.index:
-                value = df.loc[(index, columnVar)]
-                if(value < cLower or value > cUpper):
-                    df.replace(to_replace = df.loc[(index, columnVar)], value = np.NaN, inplace = True)
+                value = df.loc[(index, column_var)]
+                if(value < c_lower or value > c_upper):
+                    df.replace(to_replace = df.loc[(index, column_var)], value = np.NaN, inplace = True)
     return df
 
 
-def _fillMissing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
+def ffill_missing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
     Input: Pandas dataframe
@@ -41,11 +41,18 @@ def _fillMissing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
     ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
     ffill_df.set_index(['variable_name'], inplace=True)
-    ffill_df = ffill_df[ffill_df.index.notnull()]
-    #TODO: Conditonal ffill, right now this does cumsum and ffills perfectly BUT it needs to not 
-    #ffill if the gap is greater than ffill length. 
-    df.ffill(inplace = True)
-
+    ffill_df = ffill_df[ffill_df.index.notnull()] #drop data without names
+    for column_var in df:  #ffill loop
+        if(column_var in ffill_df.index):
+            cp = ffill_df.loc[column_var]["changepoint"]
+            length = ffill_df.loc[column_var]["ffill_length"]
+            if(length != length): #check for nan, set to 0
+                length = 0
+            length = int(length)
+            if(cp == 1): #ffill unconditionally
+                df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method='ffill')
+            elif(cp == 0): #ffill using length, PARTIALLY FILLS
+                df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method = 'ffill', limit = length)
     return df
 
 
@@ -119,27 +126,23 @@ def outlierTest():
     df = pd.read_csv(testdf_filename)
 
     print("\nTesting _removeOutliers...\n")
-    print(_removeOutliers(df, vars_filename))
+    print(remove_outliers(df, vars_filename))
     print("\nFinished testing _removeOutliers\n")
-
 
 #Test function for simple main, will be removed once transform.py is complete
 def ffillTest():
     testdf_filename = "input/ecotope_wide_data.csv"
     df = pd.read_csv(testdf_filename)
-    df = _removeOutliers(df, vars_filename)
+    df = remove_outliers(df, vars_filename)
 
     print("\nTesting _fillMissing...\n")
-    print(_fillMissing(df, vars_filename))
+    print(ffill_missing(df, vars_filename))
     print("\nFinished testing _fillMissing\n")
 
 
 #Test main, will be removed once transform.py is complete
 def __main__():
-    #outlierTest()
-    ffillTest()
     pass
-
 
 
 
