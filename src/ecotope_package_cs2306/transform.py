@@ -15,14 +15,12 @@ def _removeOutliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
-    #Bounds dataframe holds acceptable ranges
-    bounds_df = pd.read_csv(vars_filename)
+    bounds_df = pd.read_csv(vars_filename) #Bounds dataframe holds acceptable ranges
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
     bounds_df = bounds_df[bounds_df.index.notnull()]
-    #bad data removal loop
-    for columnVar in df:
+    for columnVar in df:  #bad data removal loop
         if(columnVar in bounds_df.index):
             cLower = bounds_df.loc[columnVar]["lower_bound"]
             cUpper = bounds_df.loc[columnVar]["upper_bound"]
@@ -39,21 +37,14 @@ def _fillMissing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     Input: Pandas dataframe
     Output: Pandas dataframe
     """
-    #ffill dataframe holds ffill length and changepoint bool
-    ffill_df = pd.read_csv(vars_filename)
+    ffill_df = pd.read_csv(vars_filename)  #ffill dataframe holds ffill length and changepoint bool
     ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
     ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
     ffill_df.set_index(['variable_name'], inplace=True)
     ffill_df = ffill_df[ffill_df.index.notnull()]
-
-    print(ffill_df)
-
-    #ONLY forward fill if cumulative sum of var is not zero, e.g. don't do it until you find at least one valid entry first.
-    #ffill_length column specifies time in minutes non-changepoint vars may be forward filled if missing. 
-    #vars with changepoint column set to 1, forward fill without restriction. obv cumulative sum still applies.
-
-    #TODO: Forward filling
-    #df.ffill
+    #TODO: Conditonal ffill, right now this does cumsum and ffills perfectly BUT it needs to not 
+    #ffill if the gap is greater than ffill length. 
+    df.ffill(inplace = True)
 
     return df
 
@@ -120,9 +111,10 @@ def outlierTest():
 def ffillTest():
     testdf_filename = "input/ecotope_wide_data.csv"
     df = pd.read_csv(testdf_filename)
+    df = _removeOutliers(df, vars_filename)
 
     print("\nTesting _fillMissing...\n")
-    _fillMissing(df, vars_filename)
+    print(_fillMissing(df, vars_filename))
     print("\nFinished testing _fillMissing\n")
 
 
