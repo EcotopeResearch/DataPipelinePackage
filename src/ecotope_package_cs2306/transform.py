@@ -75,7 +75,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
 
 def getEnergyByMinute(df : pd.DataFrame) -> pd.DataFrame:
     """
-    Energy is recorded cummulatively. Function takes the lagged difference in 
+    Energy is recorded cummulatively. Function takes the lagged differences in 
     order to get a per/minute value for each of the energy variables.
     Input: Pandas dataframe
     Output: Pandas dataframe
@@ -84,17 +84,33 @@ def getEnergyByMinute(df : pd.DataFrame) -> pd.DataFrame:
     energy_vars = energy_vars.filter(regex=".*[^BTU]$")
     for var in energy_vars:
         df[var] = df[var] - df[var].shift(1)
-        df[var][0] = 0.0
     return df
 
 
-def verifyPowerEnergy(df : pd.DataFrame) -> pd.DataFrame:
+def verifyPowerEnergy(df : pd.DataFrame):
     """
     Verifies that for each timestamp, corresponding power and energy variables are consistent
-    with one another. Power ~= energy * 60. 
+    with one another. Power ~= energy * 60. Margin of error TBD. Currently prints out
+    rows with inconsistent values. 
+    Prereq: Input df must have had getEnergyByMinute() called on it previously
     Input: Pandas dataframe
     Output: Pandas dataframe
     """
+    margin_error = 5.0              # margin of error still TBD, 5.0 for testing purposes 
+    energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
+    power_vars = (df.filter(regex=".*Power.*")).filter(regex="^((?!Energy).)*$")
+    for pvar in power_vars:
+        if (pvar != 'PowerMeter_SkidAux_Power'):
+            corres_energy = pvar.replace('Power', 'Energy')
+        if (pvar == 'PowerMeter_SkidAux_Power'):
+            corres_energy = 'PowerMeter_SkidAux_Energy'
+        if (corres_energy in energy_vars):
+            temp = df[[pvar, corres_energy]]
+            for i, row in temp.iterrows():
+                low_bound = row[corres_energy] * 60 - margin_error
+                high_bound = row[corres_energy] * 60 + margin_error
+                if (row[pvar] < low_bound or row[pvar] > high_bound):
+                    print(i, row)
 
 
 #Test function for simple main, will be removed once transform.py is complete
