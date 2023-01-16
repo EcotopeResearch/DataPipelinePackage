@@ -28,12 +28,6 @@ def _removeOutliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
             cUpper = bounds_df.loc[columnVar]["upper_bound"]
             for index in df.index:
                 value = df.loc[(index, columnVar)]
-                """
-                #BUG: 
-                Currently, below if replaces some var properly, some seemingly randomly. I checked, 
-                cLower and cUpper are perfect, but value isn't what it's supposed to be? If you look 
-                at the test prints, there are ONLY issues with Duty_QAHVPump
-                """
                 if(value < cLower or value > cUpper):
                     df.replace(to_replace = df.loc[(index, columnVar)], value = np.NaN, inplace = True)
     return df
@@ -51,6 +45,8 @@ def _fillMissing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
     ffill_df.set_index(['variable_name'], inplace=True)
     ffill_df = ffill_df[ffill_df.index.notnull()]
+
+    print(ffill_df)
 
     #ONLY forward fill if cumulative sum of var is not zero, e.g. don't do it until you find at least one valid entry first.
     #ffill_length column specifies time in minutes non-changepoint vars may be forward filled if missing. 
