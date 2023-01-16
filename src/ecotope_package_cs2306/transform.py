@@ -86,6 +86,29 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def getEnergyByMinute(df : pd.DataFrame) -> pd.DataFrame:
+    """
+    Energy is recorded cummulatively. Function takes the lagged difference in 
+    order to get a per/minute value for each of the energy variables.
+    Input: Pandas dataframe
+    Output: Pandas dataframe
+    """
+    energy_vars = df.filter(regex=".*Energy.*")
+    energy_vars = energy_vars.filter(regex=".*[^BTU]$")
+    for var in energy_vars:
+        df[var] = df[var] - df[var].shift(1)
+        df[var][0] = 0.0
+    return df
+
+
+def verifyPowerEnergy(df : pd.DataFrame) -> pd.DataFrame:
+    """
+    Verifies that for each timestamp, corresponding power and energy variables are consistent
+    with one another. Power ~= energy * 60. 
+    Input: Pandas dataframe
+    Output: Pandas dataframe
+    """
+
 
 #Test function for simple main, will be removed once transform.py is complete
 def outlierTest():
@@ -95,6 +118,8 @@ def outlierTest():
     print("\nTesting _removeOutliers...\n")
     print(_removeOutliers(df, vars_filename))
     print("\nFinished testing _removeOutliers\n")
+
+
 #Test function for simple main, will be removed once transform.py is complete
 def ffillTest():
     testdf_filename = "input/ecotope_wide_data.csv"
@@ -110,6 +135,7 @@ def __main__():
     #outlierTest()
     ffillTest()
     pass
+
 
 
 
