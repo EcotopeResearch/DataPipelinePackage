@@ -5,7 +5,7 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-import unit_convert
+# import unit_convert
 import numpy as np
 
 # grabs all json files from file server and stores the paths to files in a list

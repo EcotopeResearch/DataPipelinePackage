@@ -1,4 +1,5 @@
 import pandas as pd
+from src.ecotope_package_cs2306 import extract
 
 pd.set_option('display.max_columns', None)
 
@@ -52,6 +53,7 @@ def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
 
 
 if __name__ == "__main__":
+    """
     df_path = "input/ecotope_wide_data.csv"
     ecotope_data = pd.read_csv(df_path)
     ecotope_data.set_index("time", inplace=True)
@@ -61,3 +63,5 @@ if __name__ == "__main__":
     res_dict = aggregate_intermediate_values(intermediate_calculations)
     cop = calculate_cop_values(res_dict)
     print(cop)
+    """
+
