@@ -29,13 +29,16 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
         test = gzip.open(file)
+        test = json.load(test)
         data = pd.json_normalize(test, record_path=['sensors'], meta=['device', 'connection', 'time'])
         data["time"] = pd.to_datetime(data["time"])
         data["time"] = data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        data = pd.pivot_table(data, index="time", columns = "id", values = "data")
+        # data = data.set_index(["time"])
         temp_dfs.append(data)
 
     # concatenate all dataframes into one dataframe 
-    df = pd.concat(temp_dfs, ignore_index=True)
+    df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
 # merges the sensor and weather data
@@ -206,6 +209,7 @@ def __main__():
     json_filenames = extract_json()
     df = json_to_df(json_filenames)
     print(df)
+    df.to_csv("output/1_11_23.csv")
 
 if __name__ == '__main__':
     __main__()
