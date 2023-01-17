@@ -11,11 +11,11 @@ import numpy as np
 # grabs all json files from file server and stores the paths to files in a list
 def extract_json() -> List[str]:
   # path to file server currently unknown, will be updated later
-  file_server_path = 'input/'
+  file_server_path = 'input/data/'
   json_filenames = []
   # find all json files in file server and append the file's full path to list
   for file in os.listdir(file_server_path):
-    if file.endswith('.json'):
+    if file.endswith('.gz'):
       full_filename = os.path.join(file_server_path, file)
       json_filenames.append(full_filename)
   
@@ -28,7 +28,7 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     temp_dfs = []
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
-        test = json.load(open(file))
+        test = gzip.open(file)
         data = pd.json_normalize(test, record_path=['sensors'], meta=['device', 'connection', 'time'])
         data["time"] = pd.to_datetime(data["time"])
         data["time"] = data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
