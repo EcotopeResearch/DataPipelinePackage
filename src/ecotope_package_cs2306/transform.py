@@ -172,7 +172,7 @@ def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
     return cop_values
 
 
-#Test function for simple main, will be removed once transform.py is complete
+#Test function
 def outlierTest():
     testdf_filename = "input/ecotope_wide_data.csv"
     df = pd.read_csv(testdf_filename)
@@ -181,7 +181,7 @@ def outlierTest():
     print(remove_outliers(df, vars_filename))
     print("\nFinished testing _removeOutliers\n")
 
-#Test function for simple main, will be removed once transform.py is complete
+#Test function
 def ffillTest():
     testdf_filename = "input/ecotope_wide_data.csv"
     df = pd.read_csv(testdf_filename)
@@ -191,11 +191,21 @@ def ffillTest():
     print(ffill_missing(df, vars_filename))
     print("\nFinished testing _fillMissing\n")
 
+#Test function
+def testCopCalc():
+    df_path = "input/ecotope_wide_data.csv"
+    ecotope_data = pd.read_csv(df_path)
+    ecotope_data.set_index("time", inplace=True)
+
+    intermediate_aggregations = calculate_intermediate_values(ecotope_data)
+
+    cop = calculate_cop_values(intermediate_aggregations)
+    print(cop)
 
 
 #Test main, will be removed once transform.py is complete
 def __main__():
-    outlier_fillTest()
+    testCopCalc()
 
 
 if __name__ == '__main__':
