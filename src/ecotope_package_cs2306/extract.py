@@ -176,7 +176,9 @@ def _convert_to_df(noaa_filenames: List[str]) -> dict:
     """
     noaa_dfs = []
     for filename in noaa_filenames:
-        noaa_dfs.append(_gz_to_df(filename))
+        table = _gz_to_df(f"output/{filename}")
+        table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
+        noaa_dfs.append(table)
     noaa_dfs_dict = dict(zip(noaa_filenames, noaa_dfs))
     return noaa_dfs_dict
 
@@ -186,9 +188,8 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
     Input: String of filename to be converted
     Output: DataFrame of the corrosponding file
     """
-    with gzip.open(f"output/{filename}") as data:
+    with gzip.open(filename) as data:
         table = pd.read_table(data, header=None, delim_whitespace=True)
-    table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
     return table
 
 def __main__():
