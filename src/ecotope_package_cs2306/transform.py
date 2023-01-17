@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 
 #input files for tests, will come from parameters come deployment
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
@@ -97,13 +98,14 @@ def getEnergyByMinute(df : pd.DataFrame) -> pd.DataFrame:
 def verifyPowerEnergy(df : pd.DataFrame):
     """
     Verifies that for each timestamp, corresponding power and energy variables are consistent
-    with one another. Power ~= energy * 60. Margin of error TBD. Currently prints out
-    rows with inconsistent values. 
+    with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
+    rows with conflicting power and energy variables.
     Prereq: Input df must have had getEnergyByMinute() called on it previously
     Input: Pandas dataframe
-    Output: Pandas dataframe
+    Output: Creates or appends to a csv file
     """
-    margin_error = 5.0              # margin of error still TBD, 5.0 for testing purposes 
+    # margin of error still TBD, 5.0 for testing purposes 
+    margin_error = 5.0              
     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
     power_vars = (df.filter(regex=".*Power.*")).filter(regex="^((?!Energy).)*$")
     for pvar in power_vars:
@@ -117,7 +119,12 @@ def verifyPowerEnergy(df : pd.DataFrame):
                 low_bound = row[corres_energy] * 60 - margin_error
                 high_bound = row[corres_energy] * 60 + margin_error
                 if (row[pvar] < low_bound or row[pvar] > high_bound):
-                    print(i, row)
+                    out_df = df[(df[pvar] == row[pvar]) & (df[corres_energy] == row[corres_energy])]
+                    path_to_output = 'output/power_energy_conflicts.csv'
+                    if not os.path.isfile(path_to_output):
+                      out_df.to_csv(path_to_output, header=df.columns)
+                    else:
+                      out_df.to_csv(path_to_output, index=False, mode='a', header=False)
 
 
 #Test function for simple main, will be removed once transform.py is complete
@@ -142,6 +149,10 @@ def ffillTest():
 
 #Test main, will be removed once transform.py is complete
 def __main__():
+    testdf_filename = "input/ecotope_wide_data.csv"
+    df = pd.read_csv(testdf_filename)
+    df = getEnergyByMinute(df)
+    verifyPowerEnergy(df)
     pass
 
 
