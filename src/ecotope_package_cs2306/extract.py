@@ -9,9 +9,7 @@ import re
 import numpy as np
 
 # grabs all json files from file server and stores the paths to files in a list
-def extract_json() -> List[str]:
-  # path to file server currently unknown, will be updated later
-  file_server_path = 'input/data/'
+def extract_json(file_server_path : str) -> List[str]:
   json_filenames = []
   # find all json files in file server and append the file's full path to list
   for file in os.listdir(file_server_path):
@@ -206,7 +204,7 @@ def __main__():
         print("done 1")
     print("done")
     """""
-    json_filenames = extract_json()
+    json_filenames = extract_json('input/data/')
     df = json_to_df(json_filenames)
     print(df)
     df.to_csv("output/1_11_23.csv")
