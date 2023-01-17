@@ -46,18 +46,14 @@ def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
 
     return cop_values
 
-
+"""
 if __name__ == "__main__":
     df_path = "input/ecotope_wide_data.csv"
     ecotope_data1 = pd.read_csv(df_path)
     ecotope_data1.set_index("time", inplace=True)
 
-    ecotope_data2 = extract.json_to_df(["input/DCA632A85F95_20230101100000.json"])
+    intermediate_aggregations = calculate_intermediate_values(ecotope_data)
 
-    print(len(set(list(ecotope_data2['id']))))
-    print(len(set(list(ecotope_data1.columns))))
-
-    # intermediate_aggregations = calculate_intermediate_values(ecotope_data)
-
-    # cop = calculate_cop_values(intermediate_aggregations)
-    # print(cop)
+    cop = calculate_cop_values(intermediate_aggregations)
+    print(cop)
+"""
