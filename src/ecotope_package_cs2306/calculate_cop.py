@@ -1,5 +1,5 @@
 import pandas as pd
-from src.ecotope_package_cs2306 import extract
+import extract
 
 pd.set_option('display.max_columns', None)
 
