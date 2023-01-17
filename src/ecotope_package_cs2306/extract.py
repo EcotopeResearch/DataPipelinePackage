@@ -203,6 +203,9 @@ def __main__():
         print("done 1")
     print("done")
     """""
+    json_filenames = extract_json()
+    df = json_to_df(json_filenames)
+    print(df)
 
 if __name__ == '__main__':
     __main__()
