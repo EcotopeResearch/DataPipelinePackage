@@ -20,13 +20,9 @@ def calculate_intermediate_values(df: pd.DataFrame):
     intermediate_df['HeatLoss_TempMaint_MXV2'] = 60 * 8.33 * df['Flow_RecircReturn_MXV2'] * \
                                 (df['Temp_RecircSupply_MXV2'] - df['Temp_RecircReturn_MXV2']) / 1000
     intermediate_df['EnergyIn_SecLoopPump'] = df['PowerIn_SecLoopPump'] * (time_diff * (1/60))
-    intermediate_df['EnergyIn_HPWH'] = df['EnergyIn_HPWH']
+    intermediate_df['EnergyIn_HPWH'] = df['EnergyIn_HPWH'] * 2.7778e-7
 
-    return intermediate_df
-
-
-def aggregate_intermediate_values(df: pd.DataFrame) -> pd.DataFrame:
-    return df.mean(axis=0)
+    return intermediate_df.mean(axis=0)
 
 
 def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
@@ -35,16 +31,15 @@ def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
     ENERGYIN_SWINGTANK2 = 1
 
     cop_values = dict()
-    cop_values['COP_DHWSys'] = (((aggregated_values['HeatOut_HW'] * (1/60)) * (1/3.412)) +
-                                      ((aggregated_values['HeatLoss_TempMaint_MXV1'] * (1/60)) * (1/3.412)) +
-                                      ((aggregated_values['HeatLoss_TempMaint_MXV2'] * (1/60)) * (1/3.412)) /
-                                      (aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'] +
-                                       ENERGYIN_SWINGTANK1 + ENERGYIN_SWINGTANK2))
+    cop_values['COP_DHWSys'] = ((aggregated_values['HeatOut_HW'] * (1/60) * (1/3.412)) + (
+            aggregated_values['HeatLoss_TempMaint_MXV1'] * (1/60) * (1/3.412)) + (
+            aggregated_values['HeatLoss_TempMaint_MXV2'] * (1/60) * (1/3.412))) / (
+            aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
+            ENERGYIN_SWINGTANK2)
 
-    cop_values['COP_DHWSys_fixTMloss'] = (((aggregated_values['HeatOut_HW'] * (1/60)) * (1/3.412)) +
-                                          ((heatLoss_fixed * (1/60)) * (1/3.412)) /
-                                          (aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'] +
-                                          ENERGYIN_SWINGTANK1 + ENERGYIN_SWINGTANK2))
+    cop_values['COP_DHWSys_fixTMloss'] = ((aggregated_values['HeatOut_HW'] * (1/60) * (1/3.412)) + (heatLoss_fixed * (
+            1/60) * (1/3.412))) / ((aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'] +
+                                    ENERGYIN_SWINGTANK1 + ENERGYIN_SWINGTANK2))
 
     cop_values['COP_PrimaryPlant'] = ((aggregated_values['HeatOut_PrimaryPlant'] * (1/60)) * (1/3.412)) / \
                                      (aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'])
@@ -53,15 +48,16 @@ def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
 
 
 if __name__ == "__main__":
-    """
     df_path = "input/ecotope_wide_data.csv"
-    ecotope_data = pd.read_csv(df_path)
-    ecotope_data.set_index("time", inplace=True)
+    ecotope_data1 = pd.read_csv(df_path)
+    ecotope_data1.set_index("time", inplace=True)
 
-    intermediate_calculations = calculate_intermediate_values(ecotope_data)
+    ecotope_data2 = extract.json_to_df(["input/DCA632A85F95_20230101100000.json"])
 
-    res_dict = aggregate_intermediate_values(intermediate_calculations)
-    cop = calculate_cop_values(res_dict)
-    print(cop)
-    """
+    print(len(set(list(ecotope_data2['id']))))
+    print(len(set(list(ecotope_data1.columns))))
 
+    # intermediate_aggregations = calculate_intermediate_values(ecotope_data)
+
+    # cop = calculate_cop_values(intermediate_aggregations)
+    # print(cop)
