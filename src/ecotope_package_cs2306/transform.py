@@ -83,7 +83,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def getEnergyByMinute(df : pd.DataFrame) -> pd.DataFrame:
+def get_energy_by_min(df : pd.DataFrame) -> pd.DataFrame:
     """
     Energy is recorded cummulatively. Function takes the lagged differences in 
     order to get a per/minute value for each of the energy variables.
@@ -97,7 +97,7 @@ def getEnergyByMinute(df : pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def verifyPowerEnergy(df : pd.DataFrame):
+def verify_power_energy(df : pd.DataFrame):
     """
     Verifies that for each timestamp, corresponding power and energy variables are consistent
     with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
