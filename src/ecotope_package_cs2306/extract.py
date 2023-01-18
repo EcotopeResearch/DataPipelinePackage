@@ -8,21 +8,29 @@ import re
 # import unit_convert
 import numpy as np
 
-# grabs all json files from file server and stores the paths to files in a list
+
 def extract_json(file_server_path : str) -> List[str]:
+  """
+  Function takes in a path to directory and returns a list of paths to all
+  gz/json files in that directory.
+  Input: Path to directory as string
+  Output: List of filenames (including full path)
+  """
   json_filenames = []
-  # find all json files in file server and append the file's full path to list
   for file in os.listdir(file_server_path):
     if file.endswith('.gz'):
       full_filename = os.path.join(file_server_path, file)
       json_filenames.append(full_filename)
   
-  # return list of json file paths 
   return json_filenames
 
 
-# reads all json files into a singular dataframe
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
+    """
+    Function takes a list of gz/json filenames and reads all files into a singular dataframe.
+    Input: List of filenames 
+    Output: Pandas Dataframe
+    """
     temp_dfs = []
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
@@ -39,6 +47,7 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
+
 # merges the sensor and weather data
 def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
     df = []
@@ -48,10 +57,11 @@ def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
     df = site.merge(data, how='left', on='time')
     return df
 
+
 def get_noaa_data(station_names: List[str]) -> dict:
     """
-    Function will take in a list of station names and will return a dictionary where the key is the station name and the 
-    value is a dataframe with the parsed weather data
+    Function will take in a list of station names and will return a dictionary where 
+    the key is the station name and the value is a dataframe with the parsed weather data.
     Input: List of Station Names
     Output: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
@@ -62,6 +72,7 @@ def get_noaa_data(station_names: List[str]) -> dict:
     noaa_dfs = _convert_to_df(noaa_filenames)
     formatted_dfs = _format_df(station_ids, noaa_dfs)
     return formatted_dfs
+
 
 def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
     """
@@ -113,6 +124,7 @@ def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
 
     return formatted_dfs
 
+
 def _get_noaa_dictionary() -> dict:
     """
     This function downloads a dictionary of equivalent station id for each station name
@@ -135,6 +147,7 @@ def _get_noaa_dictionary() -> dict:
     df_id_usafwban = isd_history[["ICAO", "USAF_WBAN"]]
     df_id_usafwban = df_id_usafwban.drop_duplicates(subset = ["ICAO"], keep = 'first')
     return df_id_usafwban.set_index("ICAO").T.to_dict('list')
+
 
 def _download_noaa_data(stations: List[str]) -> List[str]:
     """
@@ -168,6 +181,7 @@ def _download_noaa_data(stations: List[str]) -> List[str]:
         ftp_server.quit()
     return noaa_filenames
 
+
 def _convert_to_df(noaa_filenames: List[str]) -> dict:
     """
     Gets the list of downloaded filenames and imports the files
@@ -183,6 +197,7 @@ def _convert_to_df(noaa_filenames: List[str]) -> dict:
     noaa_dfs_dict = dict(zip(noaa_filenames, noaa_dfs))
     return noaa_dfs_dict
 
+
 def _gz_to_df(filename: str) -> pd.DataFrame:
     """
     Opens the file and returns it as a pd.DataFrame
@@ -192,6 +207,7 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
     with gzip.open(filename) as data:
         table = pd.read_table(data, header=None, delim_whitespace=True)
     return table
+
 
 def __main__():
     """""
