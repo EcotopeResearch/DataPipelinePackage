@@ -58,12 +58,13 @@ def ffill_missing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
                 df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method = 'ffill', limit = length)
     return df
 
-"""
-def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
 
+def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
+    """
     Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
     Input: DataFrame to be adjusted
     Output: Adjusted Dataframe
+    """
 
     adjustments = pd.read_csv("input/adjustments.csv")
     adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
@@ -81,7 +82,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
                 df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
         df = pd.concat([df_pre, df_post], ignore_index=True)
     return df
-"""
+
 
 def get_energy_by_min(df : pd.DataFrame) -> pd.DataFrame:
     """
@@ -204,7 +205,7 @@ def testCopCalc():
 
 #Test main, will be removed once transform.py is complete
 def __main__():
-    # testCopCalc()
+    testCopCalc()
 
 if __name__ == '__main__':
     __main__()
