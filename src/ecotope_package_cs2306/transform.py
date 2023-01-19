@@ -204,7 +204,7 @@ def testCopCalc():
 
 #Test main, will be removed once transform.py is complete
 def __main__():
-    testCopCalc()
+    # testCopCalc()
 
 if __name__ == '__main__':
     __main__()
