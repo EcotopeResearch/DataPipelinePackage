@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+from dateutil.parser import parse
 
 #input files for tests, will come from parameters come deployment
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
@@ -131,47 +132,49 @@ def verify_power_energy(df : pd.DataFrame):
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
 
 
-def calculate_intermediate_values(df: pd.DataFrame):
-    time_diff = 1
-
-    intermediate_df = pd.DataFrame()
-    intermediate_df['Temp_RecircSupply_avg'] = (df['Temp_RecircSupply_MXV1'] + df['Temp_RecircSupply_MXV2']) / 2
-    intermediate_df['HeatOut_PrimaryPlant'] = 60 * 8.33 * df['Flow_CityWater_atSkid'] * \
-                                   (df['Temp_PrimaryStorageOutTop'] - df['Temp_CityWater_atSkid']) / 1000
-    intermediate_df['HeatOut_SecLoop'] = 60 * 8.33 * df['Flow_SecLoop'] * \
-                                    (df['Temp_SecLoopHexOutlet'] - df['Temp_SecLoopHexInlet']) / 1000
-    intermediate_df['HeatOut_HW'] = 60 * 8.33 * df['Flow_CityWater'] * (intermediate_df['Temp_RecircSupply_avg'] -
-                                                                        df['Temp_CityWater']) / 1000
-    intermediate_df['HeatLoss_TempMaint_MXV1'] = 60 * 8.33 * df['Flow_RecircReturn_MXV1'] * \
-                                (df['Temp_RecircSupply_MXV1'] - df['Temp_RecircReturn_MXV1']) / 1000
-    intermediate_df['HeatLoss_TempMaint_MXV2'] = 60 * 8.33 * df['Flow_RecircReturn_MXV2'] * \
-                                (df['Temp_RecircSupply_MXV2'] - df['Temp_RecircReturn_MXV2']) / 1000
-    intermediate_df['EnergyIn_SecLoopPump'] = df['PowerIn_SecLoopPump'] * (time_diff * (1/60))
-    intermediate_df['EnergyIn_HPWH'] = df['EnergyIn_HPWH'] * 2.7778e-7
-
-    return intermediate_df.mean(axis=0)
+def convert_to_kwh(sensor_readings):
+    return sensor_readings / (60 * 3.412)
 
 
-def calculate_cop_values(aggregated_values: pd.DataFrame) -> dict:
-    heatLoss_fixed = 27.296
-    ENERGYIN_SWINGTANK1 = 1
-    ENERGYIN_SWINGTANK2 = 1
+def get_kbtu_value(gpm, delta_t):
+    return 60 * 8.33 * gpm * delta_t / 1000
 
-    cop_values = dict()
-    cop_values['COP_DHWSys'] = ((aggregated_values['HeatOut_HW'] * (1/60) * (1/3.412)) + (
-            aggregated_values['HeatLoss_TempMaint_MXV1'] * (1/60) * (1/3.412)) + (
-            aggregated_values['HeatLoss_TempMaint_MXV2'] * (1/60) * (1/3.412))) / (
-            aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
-            ENERGYIN_SWINGTANK2)
 
-    cop_values['COP_DHWSys_fixTMloss'] = ((aggregated_values['HeatOut_HW'] * (1/60) * (1/3.412)) + (heatLoss_fixed * (
-            1/60) * (1/3.412))) / ((aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'] +
-                                    ENERGYIN_SWINGTANK1 + ENERGYIN_SWINGTANK2))
+def aggregate_values(df: pd.DataFrame) -> dict:
+    after_6pm = str(parse(df.index[0]).replace(hour=6, minute=0))
 
-    cop_values['COP_PrimaryPlant'] = ((aggregated_values['HeatOut_PrimaryPlant'] * (1/60)) * (1/3.412)) / \
-                                     (aggregated_values['EnergyIn_HPWH'] + aggregated_values['EnergyIn_SecLoopPump'])
+    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid',
+                 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid',
+                 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater',
+                 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2',
+                 'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
 
-    return cop_values
+    avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].mean(axis=0, skipna=True)
+
+    cop_inter = dict()
+    cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
+    cop_inter['HeatOut_PrimaryPlant'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+                                                       avg_sd['Temp_PrimaryStorageOutTop'] -
+                                                       avg_sd['Temp_CityWater_atSkid'])
+    cop_inter['HeatOut_PrimaryPlant_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+                                                             avg_sd['Temp_PrimaryStorageOutTop'] -
+                                                             avg_sd_6['Temp_CityWater_atSkid'])
+    cop_inter['HeatOut_SecLoop'] = get_kbtu_value(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
+                                                  avg_sd['Temp_SecLoopHexInlet'])
+    cop_inter['HeatOut_HW'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+                                             avg_sd['Temp_CityWater'])
+    cop_inter['HeatOut_HW_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+                                                   avg_sd_6['Temp_CityWater'])
+    cop_inter['HeatLoss_TempMaint_MXV1'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV1'],
+                                                          avg_sd['Temp_RecircSupply_MXV1'] -
+                                                          avg_sd['Temp_RecircReturn_MXV1'])
+    cop_inter['HeatLoss_TempMaint_MXV2'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV2'],
+                                                          avg_sd['Temp_RecircSupply_MXV2'] -
+                                                          avg_sd['Temp_RecircReturn_MXV2'])
+    cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * (1/60) * (1/1000)
+    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH'] * (1/60) * (1/1000)
+
+    return cop_inter
 
 
 #Test function
@@ -198,11 +201,6 @@ def testCopCalc():
     df_path = "input/ecotope_wide_data.csv"
     ecotope_data = pd.read_csv(df_path)
     ecotope_data.set_index("time", inplace=True)
-
-    intermediate_aggregations = calculate_intermediate_values(ecotope_data)
-
-    cop = calculate_cop_values(intermediate_aggregations)
-    print(cop)
 
 #Test main, will be removed once transform.py is complete
 def __main__():
