@@ -1,11 +1,13 @@
 import pandas as pd
-import numpy as np
-from datetime import datetime
 from dateutil.parser import parse
 
 
 def convert_to_kwh(sensor_readings):
     return sensor_readings / (60 * 3.412)
+
+
+def get_kbtu_value(gpm, delta_t):
+    return 60 * 8.33 * gpm * delta_t / 1000
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
@@ -21,22 +23,26 @@ def aggregate_values(df: pd.DataFrame) -> dict:
 
     cop_inter = dict()
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
-    cop_inter['HeatOut_PrimaryPlant'] = 60 * 8.33 * avg_sd['Flow_CityWater_atSkid'] * \
-                                   (avg_sd['Temp_PrimaryStorageOutTop'] - avg_sd['Temp_CityWater_atSkid']) / 1000
-    cop_inter['HeatOut_PrimaryPlant_dyavg'] = 60 * 8.33 * avg_sd['Flow_CityWater_atSkid'] * \
-                                   (avg_sd['Temp_PrimaryStorageOutTop'] - avg_sd_6['Temp_CityWater_atSkid']) / 1000
-    cop_inter['HeatOut_SecLoop'] = 60 * 8.33 * avg_sd['Flow_SecLoop'] * \
-                                    (avg_sd['Temp_SecLoopHexOutlet'] - avg_sd['Temp_SecLoopHexInlet']) / 1000
-    cop_inter['HeatOut_HW'] = 60 * 8.33 * avg_sd['Flow_CityWater'] * (cop_inter['Temp_RecircSupply_avg'] -
-                                                                        avg_sd['Temp_CityWater']) / 1000
-    cop_inter['HeatOut_HW_dyavg'] = 60 * 8.33 * avg_sd['Flow_CityWater'] * (
-            cop_inter['Temp_RecircSupply_avg'] - avg_sd_6['Temp_CityWater']) / 1000
-    cop_inter['HeatLoss_TempMaint_MXV1'] = 60 * 8.33 * avg_sd['Flow_RecircReturn_MXV1'] * \
-                                (avg_sd['Temp_RecircSupply_MXV1'] - avg_sd['Temp_RecircReturn_MXV1']) / 1000
-    cop_inter['HeatLoss_TempMaint_MXV2'] = 60 * 8.33 * avg_sd['Flow_RecircReturn_MXV2'] * \
-                                (avg_sd['Temp_RecircSupply_MXV2'] - avg_sd['Temp_RecircReturn_MXV2']) / 1000
-    cop_inter['EnergyIn_SecLoopPump'] = (avg_sd['PowerIn_SecLoopPump'] * (1/60)) # / 1000
-    cop_inter['EnergyIn_HPWH'] = (avg_sd['EnergyIn_HPWH'] * 2.77778e-7) # (1/60)) / 1000
+    cop_inter['HeatOut_PrimaryPlant'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+                                                       avg_sd['Temp_PrimaryStorageOutTop'] -
+                                                       avg_sd['Temp_CityWater_atSkid'])
+    cop_inter['HeatOut_PrimaryPlant_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+                                                             avg_sd['Temp_PrimaryStorageOutTop'] -
+                                                             avg_sd_6['Temp_CityWater_atSkid'])
+    cop_inter['HeatOut_SecLoop'] = get_kbtu_value(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
+                                                  avg_sd['Temp_SecLoopHexInlet'])
+    cop_inter['HeatOut_HW'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+                                             avg_sd['Temp_CityWater'])
+    cop_inter['HeatOut_HW_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+                                                   avg_sd_6['Temp_CityWater'])
+    cop_inter['HeatLoss_TempMaint_MXV1'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV1'],
+                                                          avg_sd['Temp_RecircSupply_MXV1'] -
+                                                          avg_sd['Temp_RecircReturn_MXV1'])
+    cop_inter['HeatLoss_TempMaint_MXV2'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV2'],
+                                                          avg_sd['Temp_RecircSupply_MXV2'] -
+                                                          avg_sd['Temp_RecircReturn_MXV2'])
+    cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * (1/60) * (1/1000)
+    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH'] * (1/60) * (1/1000)
 
     return cop_inter
 
@@ -88,7 +94,6 @@ if __name__ == "__main__":
     ecotope_data.rename(columns=variable_alias_true_dict, inplace=True)
 
     ecotope_data.ffill(axis=0, inplace=True)
-    # ecotope_data = ecotope_data.replace(np.nan, 0.0)
 
     cop = calculate_cop_values(ecotope_data)
     print(cop)
