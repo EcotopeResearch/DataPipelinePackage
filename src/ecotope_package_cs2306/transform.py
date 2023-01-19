@@ -18,12 +18,12 @@ def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
-    bounds_df = pd.read_csv(vars_filename) #Bounds dataframe holds acceptable ranges
+    bounds_df = pd.read_csv(vars_filename) # bounds dataframe holds acceptable ranges
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
     bounds_df = bounds_df[bounds_df.index.notnull()]
-    for column_var in df:  #bad data removal loop
+    for column_var in df:  # bad data removal loop
         if(column_var in bounds_df.index):
             c_lower = bounds_df.loc[column_var]["lower_bound"]
             c_upper = bounds_df.loc[column_var]["upper_bound"]

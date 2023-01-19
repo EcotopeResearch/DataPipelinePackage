@@ -29,27 +29,30 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     """
     Function takes a list of gz/json filenames and reads all files into a singular dataframe.
     Input: List of filenames 
-    Output: Pandas Dataframe
+    Output: Pandas Dataframe containing data from all files
     """
     temp_dfs = []
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
-        test = gzip.open(file)
-        test = json.load(test)
-        data = pd.json_normalize(test, record_path=['sensors'], meta=['device', 'connection', 'time'])
-        data["time"] = pd.to_datetime(data["time"])
-        data["time"] = data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-        data = pd.pivot_table(data, index="time", columns = "id", values = "data")
-        # data = data.set_index(["time"])
-        temp_dfs.append(data)
+        data = gzip.open(file)
+        data = json.load(data)
+        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+        norm_data["time"] = pd.to_datetime(norm_data["time"])
+        norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
+        temp_dfs.append(norm_data)
 
     # concatenate all dataframes into one dataframe 
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
 
-# merges the sensor and weather data
 def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function takes a dataframe containing sensor data and merges it with weather data.
+    Input: Pandas Dataframe
+    Output: Merged Pandas Dataframe
+    """
     df = []
     data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
     data["time"] = pd.to_datetime(data["time"], utc=True)
