@@ -15,7 +15,7 @@ FM04_Temperature,Temp_RecircReturn_MXV1_FM,goldenrod,,,,,,,0,50,0,20
 FM05_Flow,Flow_RecircReturn_MXV2,mediumpurple4,,,20,,5,LOW,0,3,0,20
 FM05_Temperature,Temp_RecircReturn_MXV2_FM,mediumpurple4,,,,,,,0,3,0,20
 HotStorageWaterInMechRoom,Temp_HotStorageInMechRoom,deeppink,,,,,,,0,3,0,20
-MXV1_ErrorCode,,,,,,,,,,,,
+MXV1_ErrorCode,,,,,,,,,,,,PowerIn_SecLoopPump
 MXV2_MixedOutletSetpoint_F,,,,,,,,,1,,0,20
 MXV1_MixedOutletTemp_F,Temp_RecircSupply_MXV1,sienna3,,,110,125,5,HIGH,1,,0,20
 MXV1_ValvePosition,ValvePosition_MXV1,goldenrod,,,,,,,1,,0,20

@@ -7,7 +7,6 @@ import os
 import numpy as np
 import datetime
 
-
 pd.set_option('display.max_columns', None)
 
 
