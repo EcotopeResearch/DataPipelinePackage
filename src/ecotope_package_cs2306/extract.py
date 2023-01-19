@@ -5,7 +5,7 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-import unit_convert
+from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 import numpy as np
 
 
@@ -101,17 +101,17 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         temp_df["time"] = temp_df["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
 
         # Convert airtemp, dewpoint, sealevelpressure, windspeed
-        temp_df["airTemp_F"] = temp_df["airTemp"].apply(unit_convert.temp_c_to_f)
-        temp_df["dewPoint_F"] = temp_df["dewPoint"].apply(unit_convert.temp_c_to_f)
-        temp_df["seaLevelPressure_mb"] = temp_df["seaLevelPressure"].apply(unit_convert.divide_num_by_ten) 
-        temp_df["windSpeed_kts"] = temp_df["windSpeed"].apply(unit_convert.windspeed_mps_to_knots)  
+        temp_df["airTemp_F"] = temp_df["airTemp"].apply(temp_c_to_f)
+        temp_df["dewPoint_F"] = temp_df["dewPoint"].apply(temp_c_to_f)
+        temp_df["seaLevelPressure_mb"] = temp_df["seaLevelPressure"].apply(divide_num_by_ten) 
+        temp_df["windSpeed_kts"] = temp_df["windSpeed"].apply(windspeed_mps_to_knots)  
         
         # Convert precip
-        temp_df["precip1Hour_mm"] = temp_df["precip1Hour"].apply(unit_convert.precip_cm_to_mm)
-        temp_df["precip6Hour_mm"] = temp_df["precip6Hour"].apply(unit_convert.precip_cm_to_mm)
+        temp_df["precip1Hour_mm"] = temp_df["precip1Hour"].apply(precip_cm_to_mm)
+        temp_df["precip6Hour_mm"] = temp_df["precip6Hour"].apply(precip_cm_to_mm)
         
         # Match case conditions
-        temp_df["conditions"] = temp_df["conditions"].apply(unit_convert.conditions_index_to_desc)
+        temp_df["conditions"] = temp_df["conditions"].apply(conditions_index_to_desc)
 
         # Rename windDirections
         temp_df["windDirection_deg"] = temp_df["windDirection"]
