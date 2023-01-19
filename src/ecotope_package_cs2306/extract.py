@@ -5,7 +5,7 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-# import unit_convert
+import unit_convert
 import numpy as np
 
 
@@ -23,7 +23,6 @@ def extract_json(file_server_path : str) -> List[str]:
       json_filenames.append(full_filename)
   
   return json_filenames
-
 
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     """
@@ -69,15 +68,14 @@ def get_noaa_data(station_names: List[str]) -> dict:
     Output: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
     noaa_dictionary = _get_noaa_dictionary()
-    print(noaa_dictionary)
-    station_ids = [noaa_dictionary[station_name][0] for station_name in station_names if station_name in noaa_dictionary]
+    station_ids = {noaa_dictionary[station_name] : station_name for station_name in station_names if station_name in noaa_dictionary}
     noaa_filenames = _download_noaa_data(station_ids)
     noaa_dfs = _convert_to_df(noaa_filenames)
     formatted_dfs = _format_df(station_ids, noaa_dfs)
     return formatted_dfs
 
 
-def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
+def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
     """
     Function will take a list of station ids and a dictionary of filename and the respective file stored in a dataframe
     The function will return a dictionary where the key is the station id and the value is a dataframe for that station
@@ -85,7 +83,7 @@ def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
     Output: Dictionary where the key is the station id and the value is a dataframe for that station
     """
     formatted_dfs = {}
-    for value1 in station_ids:
+    for value1 in station_ids.keys():
         # Append all DataFrames with the same station_id 
         temp_df = pd.DataFrame(columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour'])
         for key, value in noaa_dfs.items():
@@ -123,7 +121,7 @@ def _format_df(station_ids: list, noaa_dfs: dict) -> dict:
         
         print(temp_df)
         # Save df in dict
-        formatted_dfs[value1] = temp_df
+        formatted_dfs[station_ids[value1]] = temp_df
 
     return formatted_dfs
 
@@ -149,10 +147,10 @@ def _get_noaa_dictionary() -> dict:
         isd_history['WBAN'], sep ="-")
     df_id_usafwban = isd_history[["ICAO", "USAF_WBAN"]]
     df_id_usafwban = df_id_usafwban.drop_duplicates(subset = ["ICAO"], keep = 'first')
-    return df_id_usafwban.set_index("ICAO").T.to_dict('list')
+    return df_id_usafwban.set_index('ICAO').to_dict()['USAF_WBAN']
 
 
-def _download_noaa_data(stations: List[str]) -> List[str]:
+def _download_noaa_data(stations: dict) -> List[str]:
     """
     This function takes in a list of the stations and downloads the corrosponding NOAA weather data
     via FTP and returns it in a List of filenames
@@ -171,12 +169,12 @@ def _download_noaa_data(stations: List[str]) -> List[str]:
         ftp_server.cwd(wd)
         ftp_server.encoding = "utf-8"
         # Download all files and save as station_year.gz in /output
-        for station in stations:
+        for station in stations.keys():
             filename = f"{station}-{year}.gz"
             noaa_filenames.append(filename)
             file_path = f"output/{filename}"
             # Do not download if the file already exists (FIX: Needsto redownload most recent year every time)
-            if os.path.exists(file_path) == False:
+            if (os.path.exists(file_path) == False) or (year == year_end):
                 with open(file_path, "wb") as file:
                     ftp_server.retrbinary(f"RETR {filename}", file.write)
             else:
@@ -222,11 +220,13 @@ def __main__():
         value.to_csv(f"output/{key}.csv", index=False)
         print("done 1")
     print("done")
-    """""
+    print(get_noaa_data(['KBFI']))
     json_filenames = extract_json('input/data/')
     df = json_to_df(json_filenames)
     print(df)
     df.to_csv("output/1_11_23.csv")
+    """""
+
 
 if __name__ == '__main__':
     __main__()
