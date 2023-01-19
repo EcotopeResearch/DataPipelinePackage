@@ -55,6 +55,44 @@ def ffill_missing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
             if(cp == 1): #ffill unconditionally
                 df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method='ffill')
             elif(cp == 0): #ffill using length, PARTIALLY FILLS
+                #TODO: Write a loop that will look through every index, forward filling manually and NOT 
+                # filling if the gap length is greater than limit. wish this was a c++ for loop 
+                """
+                gap_length = 0
+                gap_index = 0
+                fill_gap = False  #CHECK THIS FIRST
+                checking_gap = False
+                last_valid = np.NaN
+
+                #DO NOT FORWARD FILL AT ALL UNTIL
+                # IF when you hit a gap last_valid = np.NaN (aka no valid yet), just loop through doing nothing
+                # If there is a valid, record the index it started at in gap_index and set checking_gap to True
+                # Start moving down the column, counting up gap_length each time. 
+                # If gap_length becomes larger than length, keep moving to the end of
+                # and proceed ffilling as normal for the rest. 
+
+                #If the gap ends and gap_length <= length, fill the gap with the following steps
+                #1. set fill_gap to True, set checking_gap to False
+                #2. jump to gap_index in the loop
+                #3. go down the line and fill each index with last_valid
+
+                #when you hit a valid entry, check if you just came from a gap,
+                # if not record in last_valid, set fill_gap to False, and continue.
+
+                for index in column_var:
+                    if(index == np.NaN)
+
+                """
+                #TODO: ORRRR CYTHON SOLUTION
+                """
+                Load the series into a C implemented lookup table.
+                this one -> df.loc[:, [column_var]]
+
+                Then, search the lookup table for gaps (bordered by actual values or edges) that are <length
+                If a gap is <length, go ahead and ffill specifically that gap. 
+
+                Done
+                """
                 df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method = 'ffill', limit = length)
     return df
 
@@ -204,7 +242,7 @@ def testCopCalc():
 
 #Test main, will be removed once transform.py is complete
 def __main__():
-    # testCopCalc()
+    pass
 
 if __name__ == '__main__':
     __main__()
