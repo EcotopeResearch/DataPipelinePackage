@@ -217,6 +217,40 @@ def aggregate_values(df: pd.DataFrame) -> dict:
     return cop_inter
 
 
+def calculate_cop_values(df: pd.DataFrame) -> dict:
+    heatLoss_fixed = 27.296
+    ENERGYIN_SWINGTANK1 = 0
+    ENERGYIN_SWINGTANK2 = 0
+
+    cop_inter = aggregate_values(df)
+
+    cop_values = dict()
+    cop_values['COP_DHWSys'] = (convert_to_kwh(cop_inter['HeatOut_HW']) + (
+        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
+            ENERGYIN_SWINGTANK2)
+
+    cop_values['COP_DHWSys_dyavg'] = (convert_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
+        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
+            ENERGYIN_SWINGTANK2)
+
+    cop_values['COP_DHWSys_fixTMloss'] = ((convert_to_kwh(cop_inter['HeatOut_HW'])) + (
+        convert_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
+                                             cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
+                                             ENERGYIN_SWINGTANK2))
+
+    cop_values['COP_PrimaryPlant'] = (convert_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
+                                     (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+
+    cop_values['COP_PrimaryPlant_dyavg'] = (convert_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
+                                     (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+
+    return cop_values
+
+
 #Test function
 def outlierTest():
     testdf_filename = "input/ecotope_wide_data.csv"
