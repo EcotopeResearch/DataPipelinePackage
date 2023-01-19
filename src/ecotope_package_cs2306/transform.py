@@ -125,6 +125,7 @@ def get_energy_by_min(df : pd.DataFrame) -> pd.DataFrame:
     """
     Energy is recorded cummulatively. Function takes the lagged differences in 
     order to get a per/minute value for each of the energy variables.
+    
     Input: Pandas dataframe
     Output: Pandas dataframe
     """
@@ -140,7 +141,8 @@ def verify_power_energy(df : pd.DataFrame):
     Verifies that for each timestamp, corresponding power and energy variables are consistent
     with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
     rows with conflicting power and energy variables.
-    Prereq: Input df must have had getEnergyByMinute() called on it previously
+
+    Prereq: Input df MUST have had get_energy_by_min() called on it previously
     Input: Pandas dataframe
     Output: Creates or appends to a csv file
     """
