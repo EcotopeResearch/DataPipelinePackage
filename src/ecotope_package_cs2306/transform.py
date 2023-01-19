@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 
+#from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
+
 #input files for tests, will come from parameters come deployment
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
 
@@ -243,8 +245,11 @@ def testCopCalc():
     print(cop)
 
 #Test main, will be removed once transform.py is complete
+"""
 def __main__():
+
     pass
 
 if __name__ == '__main__':
     __main__()
+"""
