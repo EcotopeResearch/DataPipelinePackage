@@ -9,20 +9,20 @@ from unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots,
 import numpy as np
 
 
-def extract_json(file_server_path : str) -> List[str]:
+def extract_files(directory_path : str, extension : str) -> List[str]:
   """
-  Function takes in a path to directory and returns a list of paths to all
-  gz/json files in that directory.
-  Input: Path to directory as string
-  Output: List of filenames (including full path)
+  Function takes in a path to directory and a file extension and returns 
+  a list of paths files in that directory of that type.
+  Input: Path to directory and file extension as string
+  Output: List of filenames 
   """
-  json_filenames = []
-  for file in os.listdir(file_server_path):
-    if file.endswith('.gz'):
-      full_filename = os.path.join(file_server_path, file)
-      json_filenames.append(full_filename)
+  filenames = []
+  for file in os.listdir(directory_path):
+    if file.endswith(extension):
+      full_filename = os.path.join(directory_path, file)
+      filenames.append(full_filename)
   
-  return json_filenames
+  return filenames
 
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     """
