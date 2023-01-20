@@ -10,6 +10,17 @@ vars_filename = "input/Variable_Names.csv" #currently set to a test until real c
 #required input files
 vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
 
+def rename_sensors(df, variable_names_path):
+    variable_data = pd.read_csv(variable_names_path)
+    variable_data = variable_data[1:87]
+    variable_alias = list(variable_data["variable_alias"])
+    variable_true = list(variable_data["variable_name"])
+    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+
+    df.rename(columns=variable_alias_true_dict, inplace=True)
+
+    return df
+
 #TODO: remove_outliers STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
 def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
@@ -29,6 +40,8 @@ def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
         if(column_var in bounds_df.index):
             c_lower = bounds_df.loc[column_var]["lower_bound"]
             c_upper = bounds_df.loc[column_var]["upper_bound"]
+            c_upper = float(c_upper)
+            c_lower = float(c_lower)
             for index in df.index:
                 value = df.loc[(index, column_var)]
                 if(value < c_lower or value > c_upper):
