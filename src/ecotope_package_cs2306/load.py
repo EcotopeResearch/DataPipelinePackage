@@ -101,12 +101,13 @@ def createNewTable(cursor, dataframe: str, table_name: str, table_name_weather: 
     for sensor in sensors:
         create_table_statement += f"{sensor} float,\n"
 
-    create_table_statement += f"PRIMARY KEY (time_pt),\n"
-
     if table_name_weather is not None:
+        create_table_statement += f"PRIMARY KEY (time_pt),\n"
         create_table_statement += f"FOREIGN KEY (time_hour_pt) REFERENCES {table_name_weather}(time_pt)\n"
-    create_table_statement += ");"
+    else:
+        create_table_statement += f"PRIMARY KEY (time_pt)\n"
 
+    create_table_statement += ");"
     cursor.execute(create_table_statement)
 
     return True
@@ -136,13 +137,19 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, is_sensor: bool):
 
     if is_sensor:
         table_name = config_info['sensor_table']['table_name']
+
+        if not checkTableExists(cursor, table_name, dbname):
+            if not createNewTable(cursor, dataframe, table_name, config_info["weather_table"]['table_name']):
+                print(f"Could not create new table {table_name} in database {dbname}")
+                sys.exit()
+
     else:
         table_name = config_info['weather_table']['table_name']
 
-    if not checkTableExists(cursor, table_name, dbname):
-        if not createNewTable(cursor, dataframe, table_name, config_info['weather_table']['table_name']):
-            print(f"Could not create new table {table_name} in database {dbname}")
-            sys.exit()
+        if not checkTableExists(cursor, table_name, dbname):
+            if not createNewTable(cursor, dataframe, table_name, None):
+                print(f"Could not create new table {table_name} in database {dbname}")
+                sys.exit()
 
     createUnknownColumns(db_cursor, dataframe.columns, table_name)
 
@@ -188,6 +195,6 @@ if __name__ == '__main__':
     loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, is_sensor=True)
 
     # commit changes to database and close connections
-    # db_connection.commit()
+    db_connection.commit()
     db_connection.close()
     db_cursor.close()

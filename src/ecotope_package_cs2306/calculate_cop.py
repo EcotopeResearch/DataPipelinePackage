@@ -2,6 +2,21 @@ import pandas as pd
 from dateutil.parser import parse
 
 
+def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Energy is recorded cummulatively. Function takes the lagged differences in
+    order to get a per/minute value for each of the energy variables.
+
+    Input: Pandas dataframe
+    Output: Pandas dataframe
+    """
+    energy_vars = df.filter(regex=".*Energy.*")
+    energy_vars = energy_vars.filter(regex=".*[^BTU]$")
+    for var in energy_vars:
+        df[var] = df[var] - df[var].shift(1)
+    return df
+
+
 def convert_to_kwh(sensor_readings):
     return sensor_readings / (60 * 3.412)
 
@@ -42,7 +57,7 @@ def aggregate_values(df: pd.DataFrame) -> dict:
                                                           avg_sd['Temp_RecircSupply_MXV2'] -
                                                           avg_sd['Temp_RecircReturn_MXV2'])
     cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * (1/60) * (1/1000)
-    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH'] * (1/60) * (1/1000)
+    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH']
 
     return cop_inter
 
@@ -92,8 +107,9 @@ if __name__ == "__main__":
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     ecotope_data.rename(columns=variable_alias_true_dict, inplace=True)
-
     ecotope_data.ffill(axis=0, inplace=True)
+
+    ecotope_data = get_energy_by_min(ecotope_data)
 
     cop = calculate_cop_values(ecotope_data)
     print(cop)
