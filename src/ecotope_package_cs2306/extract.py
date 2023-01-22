@@ -136,6 +136,10 @@ def _get_noaa_dictionary() -> dict:
     Input: None
     Output: Dictionary of station id and corrosponding station name
     """
+
+    if not os.path.isdir(f"{_output_directory}weather"):
+        os.makedirs(f"{_output_directory}weather")
+
     filename = "isd-history.csv"
     hostname = f"ftp.ncdc.noaa.gov"
     wd = f"/pub/data/noaa/"
@@ -175,6 +179,8 @@ def _download_noaa_data(stations: dict) -> List[str]:
         ftp_server.encoding = "utf-8"
         # Download all files and save as station_year.gz in /output
         for station in stations.keys():
+            if not os.path.isdir(f"{_output_directory}weather/{stations[station]}"):
+                os.makedirs(f"{_output_directory}weather/{stations[station]}")
             filename = f"{station}-{year}.gz"
             noaa_filenames.append(filename)
             file_path = f"{_output_directory}weather/{stations[station]}/{filename}"
