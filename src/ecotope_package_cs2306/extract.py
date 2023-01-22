@@ -77,7 +77,7 @@ def get_noaa_data(station_names: List[str]) -> dict:
     noaa_dictionary = _get_noaa_dictionary()
     station_ids = {noaa_dictionary[station_name] : station_name for station_name in station_names if station_name in noaa_dictionary}
     noaa_filenames = _download_noaa_data(station_ids)
-    noaa_dfs = _convert_to_df(noaa_filenames)
+    noaa_dfs = _convert_to_df(station_ids, noaa_filenames)
     formatted_dfs = _format_df(station_ids, noaa_dfs)
     return formatted_dfs
 
@@ -97,9 +97,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
             if key.startswith(value1):
                 temp_df = pd.concat([temp_df, value], ignore_index=True)
 
-        print(temp_df)
         # Do unit Conversions
-        print("Doing Conversions")
         # Convert all -9999 into N/A
         temp_df = temp_df.replace(-9999, np.NaN)
 
@@ -126,7 +124,6 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         # Drop columns that were replaced
         temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour", "precip6Hour", "year", "month", "day", "hour", "windDirection"], axis = 1)
         
-        print(temp_df)
         # Save df in dict
         formatted_dfs[station_ids[value1]] = temp_df
 
@@ -146,7 +143,7 @@ def _get_noaa_dictionary() -> dict:
     ftp_server.login()
     ftp_server.cwd(wd)
     ftp_server.encoding = "utf-8"
-    with open(f"{_output_directory}{filename}", "wb") as file:
+    with open(f"{_output_directory}weather/{filename}", "wb") as file:
         ftp_server.retrbinary(f"RETR {filename}", file.write)
     ftp_server.quit()
     isd_history = pd.read_csv(
@@ -180,8 +177,8 @@ def _download_noaa_data(stations: dict) -> List[str]:
         for station in stations.keys():
             filename = f"{station}-{year}.gz"
             noaa_filenames.append(filename)
-            file_path = f"{_output_directory}{filename}"
-            # Do not download if the file already exists (FIX: Needsto redownload most recent year every time)
+            file_path = f"{_output_directory}weather/{stations[station]}/{filename}"
+            # Do not download if the file already exists
             if (os.path.exists(file_path) == False) or (year == year_end):
                 with open(file_path, "wb") as file:
                     ftp_server.retrbinary(f"RETR {filename}", file.write)
@@ -191,18 +188,20 @@ def _download_noaa_data(stations: dict) -> List[str]:
     return noaa_filenames
 
 
-def _convert_to_df(noaa_filenames: List[str]) -> dict:
+def _convert_to_df(stations: dict, noaa_filenames: List[str]) -> dict:
     """
     Gets the list of downloaded filenames and imports the files
     and converts it to a dictionary of DataFrames
-    Input: List of downloaded filenames
+    Input: Dict of stations, List of downloaded filenames
     Output: Dictionary where key is filename and value is dataframe for the file
     """
     noaa_dfs = []
-    for filename in noaa_filenames:
-        table = _gz_to_df(f"{_output_directory}{filename}")
-        table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
-        noaa_dfs.append(table)
+    for station in stations.keys():
+        for filename in noaa_filenames:
+            table = _gz_to_df(
+                f"{_output_directory}weather/{stations[station]}/{filename}")
+            table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
+            noaa_dfs.append(table)
     noaa_dfs_dict = dict(zip(noaa_filenames, noaa_dfs))
     return noaa_dfs_dict
 
