@@ -5,21 +5,29 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-from unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 import numpy as np
 
+_input_directory = "input/"
+_output_directory = "output/"
 
-def extract_files(directory_path : str, extension : str) -> List[str]:
+def set_input(input : str):
+    _input_directory = input
+
+def set_output(output: str):
+    _output_directory = output
+
+def extract_files(extension : str) -> List[str]:
   """
-  Function takes in a path to directory and a file extension and returns 
+  Function takes in a file extension and returns 
   a list of paths files in that directory of that type.
   Input: Path to directory and file extension as string
   Output: List of filenames 
   """
   filenames = []
-  for file in os.listdir(directory_path):
+  for file in os.listdir(_input_directory):
     if file.endswith(extension):
-      full_filename = os.path.join(directory_path, file)
+      full_filename = os.path.join(_input_directory, file)
       filenames.append(full_filename)
   
   return filenames
@@ -45,19 +53,18 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
-
-def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
-    """
-    Function takes a dataframe containing sensor data and merges it with weather data.
-    Input: Pandas Dataframe
-    Output: Merged Pandas Dataframe
-    """
-    df = []
-    data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
-    data["time"] = pd.to_datetime(data["time"], utc=True)
-    data["time"] = data["time"].dt.tz_convert('US/Pacific')
-    df = site.merge(data, how='left', on='time')
-    return df
+# def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
+#     """
+#     Function takes a dataframe containing sensor data and merges it with weather data.
+#     Input: Pandas Dataframe
+#     Output: Merged Pandas Dataframe
+#     """
+#     df = []
+#     data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
+#     data["time"] = pd.to_datetime(data["time"], utc=True)
+#     data["time"] = data["time"].dt.tz_convert('US/Pacific')
+#     df = site.merge(data, how='left', on='time')
+#     return df
 
 
 def get_noaa_data(station_names: List[str]) -> dict:
@@ -139,10 +146,11 @@ def _get_noaa_dictionary() -> dict:
     ftp_server.login()
     ftp_server.cwd(wd)
     ftp_server.encoding = "utf-8"
-    with open(f"output/{filename}", "wb") as file:
+    with open(f"{_output_directory}/{filename}", "wb") as file:
         ftp_server.retrbinary(f"RETR {filename}", file.write)
     ftp_server.quit()
-    isd_history = pd.read_csv(f"output/isd-history.csv",dtype=str)
+    isd_history = pd.read_csv(
+        f"{_output_directory}/isd-history.csv", dtype=str)
     isd_history["USAF_WBAN"] = isd_history['USAF'].str.cat(
         isd_history['WBAN'], sep ="-")
     df_id_usafwban = isd_history[["ICAO", "USAF_WBAN"]]
@@ -172,7 +180,7 @@ def _download_noaa_data(stations: dict) -> List[str]:
         for station in stations.keys():
             filename = f"{station}-{year}.gz"
             noaa_filenames.append(filename)
-            file_path = f"output/{filename}"
+            file_path = f"{_output_directory}/{filename}"
             # Do not download if the file already exists (FIX: Needsto redownload most recent year every time)
             if (os.path.exists(file_path) == False) or (year == year_end):
                 with open(file_path, "wb") as file:
@@ -192,7 +200,7 @@ def _convert_to_df(noaa_filenames: List[str]) -> dict:
     """
     noaa_dfs = []
     for filename in noaa_filenames:
-        table = _gz_to_df(f"output/{filename}")
+        table = _gz_to_df(f"{_output_directory}/{filename}")
         table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
         noaa_dfs.append(table)
     noaa_dfs_dict = dict(zip(noaa_filenames, noaa_dfs))
