@@ -8,9 +8,6 @@ from dateutil.parser import parse
 #input files for tests, will come from parameters come deployment
 vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
 
-#required input files
-vars_filename = "input/vars_test.csv" #currently set to a test until real csv is completed
-
 def rename_sensors(df, variable_names_path):
     variable_data = pd.read_csv(variable_names_path)
     variable_data = variable_data[1:87]
@@ -22,6 +19,7 @@ def rename_sensors(df, variable_names_path):
 
     return df
 
+
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
 def _rm_cols(col, bounds_df):
     if(col.name in bounds_df.index):
@@ -30,6 +28,19 @@ def _rm_cols(col, bounds_df):
         #for this to be one line, it could be the following:
         #col.mask((col > float(bounds_df.loc[col.name]["upper_bound"])) | (col < float(bounds_df.loc[col.name]["lower_bound"])), other = np.NaN, inplace = True)
         col.mask((col > c_upper) | (col < c_lower), other = np.NaN, inplace = True)
+
+def _ffill(col, ffill_df):
+    if(col.name in ffill_df.index):
+        cp = ffill_df.loc[col.name]["changepoint"]
+        length = ffill_df.loc[col.name]["ffill_length"]
+        if(length != length): #check for nan, set to 0
+            length = 0
+        length = int(length) #casting to int to avoid float errors
+        if(cp == 1): #ffill unconditionally
+            col.fillna(method='ffill', inplace = True)
+        elif(cp == 0): #ffill only up to length
+            col.fillna(method='ffill', inplace = True, limit = length)
+
 
 #TODO: remove_outliers STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
@@ -64,28 +75,9 @@ def ffill_missing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
     ffill_df.set_index(['variable_name'], inplace=True)
     ffill_df = ffill_df[ffill_df.index.notnull()] #drop data without names
-    for column_var in df:  #ffill loop
-        if(column_var in ffill_df.index):
-            cp = ffill_df.loc[column_var]["changepoint"]
-            length = ffill_df.loc[column_var]["ffill_length"]
-            if(length != length): #check for nan, set to 0
-                length = 0
-            length = int(length)
-            if(cp == 1): #ffill unconditionally
-                df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method='ffill')
-            elif(cp == 0): #ffill only up to length
-                df.loc[:, [column_var]] = df.loc[:, [column_var]].fillna(method = 'ffill', limit = length)
-                #TODO: ffill ONLY gaps that are >=length, not ANYTHING else
-                #TODO: Cython solution or vectorizaton
-                """
-                Load the series into a C implemented lookup table. 
-                this one -> df.loc[:, [column_var]]
 
-                Then, search the lookup table for gaps (bordered by actual values or edges) that are <length
-                If a gap is <length, go ahead and ffill specifically that gap. 
-
-                Done?
-                """
+    #improved .apply setup
+    df.apply(_ffill, args=(ffill_df,))
                 
     return df
 
@@ -246,6 +238,7 @@ def outlierTest():
     testdf_filename = "input/ecotope_wide_data.csv"
     df = pd.read_csv(testdf_filename)
 
+    print(df)
     print("\nTesting _removeOutliers...\n")
     print(remove_outliers(df, vars_filename))
     print("\nFinished testing _removeOutliers\n")
@@ -267,11 +260,12 @@ def testCopCalc():
     ecotope_data.set_index("time", inplace=True)
 
 #Test main, will be removed once transform.py is complete
-"""
-def __main__():
 
+def __main__():
+    outlierTest()
+    ffillTest()
     pass
 
 if __name__ == '__main__':
     __main__()
-"""
+
