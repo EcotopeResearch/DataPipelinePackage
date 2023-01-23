@@ -18,13 +18,12 @@ def getLoginInfo(config_file_path: str) -> dict:
     Output: Login information
     """
 
-    file_path = f"Configuration/{config_file_path}"
-    if not os.path.exists(file_path):
-        print(f"File path '{file_path}' does not exist.")
+    if not os.path.exists(config_file_path):
+        print(f"File path '{config_file_path}' does not exist.")
         sys.exit()
 
     configure = configparser.ConfigParser()
-    configure.read(file_path)
+    configure.read(config_file_path)
     config = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),

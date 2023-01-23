@@ -5,8 +5,10 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-from unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 import numpy as np
+from src.ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, \
+    precip_cm_to_mm, conditions_index_to_desc
+from src.ecotope_package_cs2306.load import getLoginInfo, connectDB
 
 
 def extract_files(directory_path : str, extension : str) -> List[str]:
@@ -23,6 +25,18 @@ def extract_files(directory_path : str, extension : str) -> List[str]:
       filenames.append(full_filename)
   
   return filenames
+
+
+def getLastRow(config_file: str) -> list:
+    config_dict = getLoginInfo(config_file)
+    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+
+    last_row_statement = f"select * from {config_dict['sensor_table']['table_name']} order by time_pt DESC LIMIT 1"
+    db_cursor.execute(last_row_statement)
+
+    last_row_data = db_cursor.fetchall()
+    return last_row_data
+
 
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     """
@@ -67,6 +81,7 @@ def get_noaa_data(station_names: List[str]) -> dict:
     Input: List of Station Names
     Output: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
+
     noaa_dictionary = _get_noaa_dictionary()
     station_ids = {noaa_dictionary[station_name] : station_name for station_name in station_names if station_name in noaa_dictionary}
     noaa_filenames = _download_noaa_data(station_ids)
@@ -82,6 +97,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
     Input: List of station_ids, dictionary of filename and the respective file stored in a dataframe
     Output: Dictionary where the key is the station id and the value is a dataframe for that station
     """
+
     formatted_dfs = {}
     for value1 in station_ids.keys():
         # Append all DataFrames with the same station_id 
@@ -132,6 +148,7 @@ def _get_noaa_dictionary() -> dict:
     Input: None
     Output: Dictionary of station id and corrosponding station name
     """
+
     filename = "isd-history.csv"
     hostname = f"ftp.ncdc.noaa.gov"
     wd = f"/pub/data/noaa/"
@@ -157,6 +174,7 @@ def _download_noaa_data(stations: dict) -> List[str]:
     Input: List of station_ids who's data needs to be downloaded
     Output: List of filenames that were downloaded
     """
+
     noaa_filenames = list()
     year_end = datetime.today().year
     # Download files for each station from 2010 till present year
@@ -211,7 +229,7 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
-    """""
+    """
     stations = ["727935-24234"]
     #, 'KPWM', 'KSFO', 'KAVL'
     formatted_dfs = get_noaa_data(['KBFI'])
@@ -225,7 +243,10 @@ def __main__():
     df = json_to_df(json_filenames)
     print(df)
     df.to_csv("output/1_11_23.csv")
-    """""
+    """
+
+    config_file_path = "C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/config/config.ini"
+    result = getLastRow(config_file_path)
 
 
 if __name__ == '__main__':
