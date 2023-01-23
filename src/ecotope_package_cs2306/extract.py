@@ -6,7 +6,18 @@ import gzip
 import os, json
 import re
 from unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from load import getLoginInfo, connectDB
 import numpy as np
+
+
+def get_last_line(config_file_path: str) -> list:
+    config_dict = getLoginInfo(config_file_path=config_file_path)
+    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+
+    db_cursor.execute(f"select * from {config_dict['sensor_table']['table_name']} order by time_pt DESC LIMIT 1")
+    last_row_data = db_cursor.fetchall()
+
+    return last_row_data
 
 
 def extract_files(directory_path : str, extension : str) -> List[str]:
