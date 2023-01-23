@@ -5,8 +5,8 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-from unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from load import getLoginInfo, connectDB
+from src.ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from src.ecotope_package_cs2306.load import getLoginInfo, connectDB
 import numpy as np
 
 
