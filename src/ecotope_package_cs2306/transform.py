@@ -22,10 +22,17 @@ def rename_sensors(df, variable_names_path):
 
     return df
 
+#Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
+def _rm_cols(col, bounds_df):
+    if(col.name in bounds_df.index):
+        c_lower = float(bounds_df.loc[col.name]["lower_bound"])
+        c_upper = float(bounds_df.loc[col.name]["upper_bound"])
+        #for this to be one line, it could be the following:
+        #col.mask((col > float(bounds_df.loc[col.name]["upper_bound"])) | (col < float(bounds_df.loc[col.name]["lower_bound"])), other = np.NaN, inplace = True)
+        col.mask((col > c_upper) | (col < c_lower), other = np.NaN, inplace = True)
+
 #TODO: remove_outliers STRETCH GOAL
 #Functionality for alarms being raised based on bounds needs to happen here. 
-#TODO: Improve function efficency, use vectorization. As is, it takes over a minute JUST 
-#for this function to run on a days worth of data. 
 def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
@@ -40,18 +47,8 @@ def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     bounds_df.set_index(['variable_name'], inplace=True)
     bounds_df = bounds_df[bounds_df.index.notnull()]
 
-    #this removal loop is the problem, use .apply OR vectorization to increase speed,
-    #vectorization being the best.
-    for column_var in df:  # bad data removal loop
-        if(column_var in bounds_df.index):
-            c_lower = bounds_df.loc[column_var]["lower_bound"]
-            c_upper = bounds_df.loc[column_var]["upper_bound"]
-            c_upper = float(c_upper)
-            c_lower = float(c_lower)
-            for index in df.index:
-                value = df.loc[(index, column_var)]
-                if(value < c_lower or value > c_upper):
-                    df.replace(to_replace = df.loc[(index, column_var)], value = np.NaN, inplace = True)
+    df.apply(_rm_cols, args=(bounds_df,))
+
     return df
 
 
