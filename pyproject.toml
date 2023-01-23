@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ecotope-datapipeline"
+version = "0.0.1"
+description = "Contains functions for use in Ecotope's Datapipelines"
+authors = ["Carlos Bello, <bellocarlos@seattleu.edu>, Emil Fahrig <fahrigemil@seattleu.edu>, Casey Mang <cmang@seattleu.edu>, Julian Harris <harrisjulian@seattleu.edu>, Roger Tram <rtram@seattleu.edu>"]
+readme = "README.md"
+packages = [{include = "ecotope_datapipeline"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^1.5.3"
+numpy = "^1.24.1"
+mysql-connector-python = "^8.0.32"
+
+
+
