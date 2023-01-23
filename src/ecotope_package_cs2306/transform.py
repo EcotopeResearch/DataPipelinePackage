@@ -144,11 +144,10 @@ def verify_power_energy(df : pd.DataFrame):
             corres_energy = 'PowerMeter_SkidAux_Energy'
         if (corres_energy in energy_vars):
             temp_df = power_energy_df[['time', pvar, corres_energy]]
-            print(temp_df)
             for i, row in temp_df.iterrows():
                 expected = row[corres_energy] * 60
-                low_bound = row[corres_energy] * 60 - margin_error
-                high_bound = row[corres_energy] * 60 + margin_error
+                low_bound = expected - margin_error
+                high_bound = expected + margin_error
                 if(row[pvar] != expected):
                     out_df.loc[len(df.index)] = [row['time'], pvar, corres_energy, row[corres_energy], row[pvar], expected, abs(expected - row[pvar])] 
                     path_to_output = 'output/power_energy_conflicts.csv'
