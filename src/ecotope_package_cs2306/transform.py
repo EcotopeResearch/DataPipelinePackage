@@ -11,13 +11,13 @@ vars_filename = "input/Variable_Names.csv" #currently set to a test until real c
 def rename_sensors(df, variable_names_path):
     variable_data = pd.read_csv(variable_names_path)
     variable_data = variable_data[1:87]
+    variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-
-    return df
+    df.set_index(['time'], axis=0, inplace=True)
 
 
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
@@ -275,7 +275,7 @@ def testPEV():
 def __main__():
     #outlierTest()
     #ffillTest()
-    testPEV()
+    rename_sensors()
 
     pass
 
