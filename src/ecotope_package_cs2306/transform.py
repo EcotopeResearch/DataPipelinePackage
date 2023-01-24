@@ -155,7 +155,7 @@ def verify_power_energy(df : pd.DataFrame):
                       out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
-
+      
 
 def convert_to_kwh(sensor_readings):
     return sensor_readings / (60 * 3.412)
