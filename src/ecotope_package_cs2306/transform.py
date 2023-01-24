@@ -17,7 +17,7 @@ def rename_sensors(df, variable_names_path):
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-    df.set_index(['time'], axis=0, inplace=True)
+    df.set_index(['time'], inplace=True)
 
 
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
