@@ -168,7 +168,7 @@ def _get_noaa_dictionary() -> dict:
         ftp_server.retrbinary(f"RETR {filename}", file.write)
     ftp_server.quit()
     isd_history = pd.read_csv(
-        f"{_output_directory}isd-history.csv", dtype=str)
+        f"{_output_directory}weather/isd-history.csv", dtype=str)
     isd_history["USAF_WBAN"] = isd_history['USAF'].str.cat(
         isd_history['WBAN'], sep ="-")
     df_id_usafwban = isd_history[["ICAO", "USAF_WBAN"]]
