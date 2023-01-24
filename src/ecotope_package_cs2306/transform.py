@@ -132,27 +132,30 @@ def verify_power_energy(df : pd.DataFrame):
     Output: Creates or appends to a csv file
     """
     # margin of error still TBD, 5.0 for testing purposes 
-    margin_error = 5.0              
+    margin_error = 5.0
+    out_df = pd.DataFrame(columns=['time', 'power_variable', 'energy_variable', 'energy_value' ,'power_value', 'expected_power', 'difference_from_expected'])
     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
     power_vars = (df.filter(regex=".*Power.*")).filter(regex="^((?!Energy).)*$")
+    power_energy_df = df[df.columns & (['time'] + list(energy_vars.columns) + list(power_vars.columns))]
     for pvar in power_vars:
         if (pvar != 'PowerMeter_SkidAux_Power'):
             corres_energy = pvar.replace('Power', 'Energy')
         if (pvar == 'PowerMeter_SkidAux_Power'):
             corres_energy = 'PowerMeter_SkidAux_Energy'
         if (corres_energy in energy_vars):
-            temp = df[[pvar, corres_energy]]
-            for i, row in temp.iterrows():
-                low_bound = row[corres_energy] * 60 - margin_error
-                high_bound = row[corres_energy] * 60 + margin_error
-                if (row[pvar] < low_bound or row[pvar] > high_bound):
-                    out_df = df[(df[pvar] == row[pvar]) & (df[corres_energy] == row[corres_energy])]
+            temp_df = power_energy_df[['time', pvar, corres_energy]]
+            for i, row in temp_df.iterrows():
+                expected = row[corres_energy] * 60
+                low_bound = expected - margin_error
+                high_bound = expected + margin_error
+                if(row[pvar] != expected):
+                    out_df.loc[len(df.index)] = [row['time'], pvar, corres_energy, row[corres_energy], row[pvar], expected, abs(expected - row[pvar])] 
                     path_to_output = 'output/power_energy_conflicts.csv'
                     if not os.path.isfile(path_to_output):
-                      out_df.to_csv(path_to_output, header=df.columns)
+                      out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
-
+      
 
 def convert_to_kwh(sensor_readings):
     return sensor_readings / (60 * 3.412)
@@ -259,11 +262,21 @@ def testCopCalc():
     ecotope_data = pd.read_csv(df_path)
     ecotope_data.set_index("time", inplace=True)
 
+# Test function
+def testPEV():
+    testdf_filename = "input/ecotope_wide_data.csv"
+    df = pd.read_csv(testdf_filename)
+    df = get_energy_by_min(df)
+
+    verify_power_energy(df)
+
 #Test main, will be removed once transform.py is complete
 
 def __main__():
-    outlierTest()
-    ffillTest()
+    #outlierTest()
+    #ffillTest()
+    testPEV()
+
     pass
 
 if __name__ == '__main__':
