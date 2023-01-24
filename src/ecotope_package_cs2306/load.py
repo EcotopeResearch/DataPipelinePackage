@@ -10,7 +10,7 @@ import datetime
 pd.set_option('display.max_columns', None)
 
 
-def getLoginInfo(config_file_path: str) -> dict:
+def getLoginInfo(file_path: str) -> dict:
     """
     Function will read login information from config.ini and return it in a config var.
 
@@ -18,7 +18,6 @@ def getLoginInfo(config_file_path: str) -> dict:
     Output: Login information
     """
 
-    file_path = f"Configuration/{config_file_path}"
     if not os.path.exists(file_path):
         print(f"File path '{file_path}' does not exist.")
         sys.exit()
@@ -34,7 +33,7 @@ def getLoginInfo(config_file_path: str) -> dict:
         "weather_table": {"table_name": configure.get('weather_table', 'table_name')}
     }
 
-    print(f"Successfully fetched configuration information from file path {config_file_path}.")
+    print(f"Successfully fetched configuration information from file path {file_path}.")
     return config
 
 

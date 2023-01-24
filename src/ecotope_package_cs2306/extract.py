@@ -6,6 +6,7 @@ import gzip
 import os, json
 import re
 from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from .load import connectDB, getLoginInfo
 import numpy as np
 
 _input_directory = "input/"
@@ -16,6 +17,23 @@ def set_input(input : str):
 
 def set_output(output: str):
     _output_directory = output
+
+def get_last_line(config_file_path: str) -> pd.DataFrame:
+    config_dict = getLoginInfo(config_file_path)
+    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+
+    db_cursor.execute(f"select * from {config_dict['sensor_table']['table_name']} order by time_pt DESC LIMIT 1")
+    last_row_data = pd.DataFrame(db_cursor.fetchall())
+    db_cursor.execute(f"select column_name from information_schema. columns where table_schema = '"
+                      f"{config_dict['database']['database']}' and table_name = '"
+                      f"{config_dict['sensor_table']['table_name']}'")
+    columns_names = db_cursor.fetchall()
+    columns_names = [name[0] for name in columns_names]
+    last_row_data.columns = columns_names
+    last_row_data.set_index(last_row_data['time_pt'], inplace=True)
+    last_row_data.drop(['time_pt', 'time_hour_pt'], axis=1, inplace=True)
+
+    return last_row_data
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
   """
@@ -53,19 +71,18 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
-# def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
-#     """
-#     Function takes a dataframe containing sensor data and merges it with weather data.
-#     Input: Pandas Dataframe
-#     Output: Merged Pandas Dataframe
-#     """
-#     df = []
-#     data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
-#     data["time"] = pd.to_datetime(data["time"], utc=True)
-#     data["time"] = data["time"].dt.tz_convert('US/Pacific')
-#     df = site.merge(data, how='left', on='time')
-#     return df
-
+def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function takes a dataframe containing sensor data and merges it with weather data.
+    Input: Pandas Dataframe
+    Output: Merged Pandas Dataframe
+    """
+    df = []
+    data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
+    data["time"] = pd.to_datetime(data["time"], utc=True)
+    data["time"] = data["time"].dt.tz_convert('US/Pacific')
+    df = site.merge(data, how='left', on='time')
+    return df
 
 def get_noaa_data(station_names: List[str]) -> dict:
     """
@@ -239,7 +256,6 @@ def __main__():
     print(df)
     df.to_csv("output/1_11_23.csv")
     """""
-
 
 if __name__ == '__main__':
     __main__()
