@@ -136,13 +136,15 @@ def verify_power_energy(df : pd.DataFrame):
     out_df = pd.DataFrame(columns=['time', 'power_variable', 'energy_variable', 'energy_value' ,'power_value', 'expected_power', 'difference_from_expected'])
     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
     power_vars = (df.filter(regex=".*Power.*")).filter(regex="^((?!Energy).)*$")
-    power_energy_df = df[df.columns & (['time'] + list(energy_vars.columns) + list(power_vars.columns))]
+    power_energy_df = df[df.columns.intersection(['time'] + list(energy_vars) + list(power_vars))]
+    print(power_energy_df)
     for pvar in power_vars:
         if (pvar != 'PowerMeter_SkidAux_Power'):
             corres_energy = pvar.replace('Power', 'Energy')
         if (pvar == 'PowerMeter_SkidAux_Power'):
-            corres_energy = 'PowerMeter_SkidAux_Energy'
+            corres_energy = 'PowerMeter_SkidAux_Energty'
         if (corres_energy in energy_vars):
+            print(power_energy_df)
             temp_df = power_energy_df[['time', pvar, corres_energy]]
             for i, row in temp_df.iterrows():
                 expected = row[corres_energy] * 60
