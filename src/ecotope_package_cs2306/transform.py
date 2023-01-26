@@ -91,8 +91,11 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     Output: Adjusted Dataframe
     """
     adjustments = pd.read_csv("input/adjustments.csv")
+    if adjustments.empty:
+        return df
     adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
     df = df.sort_values(by = "datetime_applied")
+    
     for adjustment in adjustments:
         adjustment_datetime = adjustment["datetime_applied"]
         df_pre = df.loc[df['time'] < adjustment_datetime]
@@ -281,8 +284,9 @@ def __main__():
     data = pd.read_pickle(file_path)
     rename_sensors(data, vars_filename)
     data = get_energy_by_min(data)
-
     verify_power_energy(data)
+
+    print(data)
 
     pass
 
