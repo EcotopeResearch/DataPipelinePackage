@@ -93,6 +93,8 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     adjustments = pd.read_csv("input/adjustments.csv")
     adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
     df = df.sort_values(by = "datetime_applied")
+    if df.empty:
+        pass
     for adjustment in adjustments:
         adjustment_datetime = adjustment["datetime_applied"]
         df_pre = df.loc[df['time'] < adjustment_datetime]
