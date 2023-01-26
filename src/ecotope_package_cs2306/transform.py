@@ -12,15 +12,14 @@ vars_filename = "input/Variable_Names.csv" #currently set to a test until real c
 
 def rename_sensors(df, variable_names_path):
     variable_data = pd.read_csv(variable_names_path)
-    variable_data = variable_data[1:87]
+    variable_data = variable_data[1:86]
+    variable_data = variable_data[['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-    # df.set_index(['time'], inplace=True)
-
 
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
 def _rm_cols(col, bounds_df):
@@ -172,12 +171,10 @@ def get_kbtu_value(gpm, delta_t):
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
+    print(df)
     after_6pm = df.index[0].replace(hour=6, minute=0)
 
-    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid',
-                'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater',
-                'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2',
-                'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
+    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
 
     avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].mean(axis=0, skipna=True)
 
@@ -284,9 +281,11 @@ def __main__():
     data = pd.read_pickle(file_path)
     rename_sensors(data, vars_filename)
     data = get_energy_by_min(data)
-    verify_power_energy(data)
+    # data = verify_power_energy(data)
 
-    print(data)
+    result = calculate_cop_values(data)
+
+    print(result)
 
     pass
 
