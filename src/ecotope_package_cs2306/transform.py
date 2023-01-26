@@ -3,6 +3,8 @@ import numpy as np
 import os
 from dateutil.parser import parse
 
+pd.set_option('display.max_columns', None)
+
 #from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
 #input files for tests, will come from parameters come deployment
@@ -17,7 +19,7 @@ def rename_sensors(df, variable_names_path):
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-    df.set_index(['time'], inplace=True)
+    # df.set_index(['time'], inplace=True)
 
 
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
@@ -277,7 +279,13 @@ def testPEV():
 def __main__():
     #outlierTest()
     #ffillTest()
-    rename_sensors()
+    file_path = "input/df.pkl"
+    data = pd.read_pickle(file_path)
+    rename_sensors(data, vars_filename)
+    data = get_energy_by_min(data)
+    verify_power_energy(data)
+
+    print(data)
 
     pass
 
