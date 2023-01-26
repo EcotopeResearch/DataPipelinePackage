@@ -170,7 +170,7 @@ def get_kbtu_value(gpm, delta_t):
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
-    after_6pm = str(parse(df.index[0]).replace(hour=6, minute=0))
+    after_6pm = df.index[0].replace(hour=6, minute=0)
 
     avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid',
                  'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid',
