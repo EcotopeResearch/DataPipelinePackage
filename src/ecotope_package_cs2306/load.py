@@ -47,12 +47,12 @@ def connectDB(config_info: dict):
     Output: Connection object
     """
 
-    dbname = config_info['database']
+    dbinfo = config_info['database']
 
     connection = None
 
     try:
-        connection = mysql.connector.connect(**config_info)
+        connection = mysql.connector.connect(**dbinfo)
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
@@ -61,7 +61,7 @@ def connectDB(config_info: dict):
             print(err)
             sys.exit()
 
-    print(f"Successfully connected to {dbname}.")
+    print(f"Successfully connected to {dbinfo['database']}.")
     return connection, connection.cursor()
 
 
@@ -165,15 +165,16 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
 
+
 if __name__ == '__main__':
     config_file_path = "Configuration/config.ini"
     df_path = "input/ecotope_wide_data.csv"
 
     # get database connection information and desired table name to write data into
-    config_dict = getLoginInfo(config_file_path)
+    # config_dict = getLoginInfo(config_file_path)
 
     # establish connection to database
-    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+    # db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
     ecotope_data = pd.read_csv(df_path)
     ecotope_data.set_index("time", inplace=True)
@@ -185,10 +186,12 @@ if __name__ == '__main__':
     weather_data.replace(np.nan, 0.0, inplace=True)
     weather_data.index = [datetime.datetime(year=2022, month=10, day=13, hour=17)]
 
+    print(weather_data)
+
     # load data stored in data frame to database
-    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
+    # loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
 
     # commit changes to database and close connections
-    db_connection.commit()
-    db_connection.close()
-    db_cursor.close()
+    # db_connection.commit()
+    # db_connection.close()
+    # db_cursor.close()

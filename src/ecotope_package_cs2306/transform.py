@@ -147,7 +147,6 @@ def verify_power_energy(df : pd.DataFrame):
         if (pvar == 'PowerMeter_SkidAux_Power'):
             corres_energy = 'PowerMeter_SkidAux_Energty'
         if (corres_energy in energy_vars):
-            print("here")
             temp_df = power_energy_df[['time', pvar, corres_energy]]
             for i, row in temp_df.iterrows():
                 expected = row[corres_energy] * 60
@@ -281,11 +280,11 @@ def __main__():
     data = pd.read_pickle(file_path)
     rename_sensors(data, vars_filename)
     data = get_energy_by_min(data)
-    # data = verify_power_energy(data)
+    data = verify_power_energy(data)
 
-    result = calculate_cop_values(data)
+    # result = calculate_cop_values(data)
 
-    print(result)
+    print(data)
 
     pass
 
