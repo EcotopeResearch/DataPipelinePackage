@@ -5,8 +5,6 @@ from datetime import datetime
 import gzip
 import os, json
 import re
-import pytz
-import datetime as dt
 from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from .load import connectDB, getLoginInfo
 import numpy as np
@@ -99,19 +97,6 @@ def get_noaa_data(station_names: List[str]) -> dict:
     noaa_dfs = _convert_to_df(station_ids, noaa_filenames)
     formatted_dfs = _format_df(station_ids, noaa_dfs)
     return formatted_dfs
-
-
-def daylight_savings(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Function will take in a dataframe and looks for duplicate timestamps due to daylight savings.
-    Takes the average values between the duplicate timestamps.
-    Input: Pandas dataframe
-    Output: Pandas dataframe 
-    """
-    df['time'] = df.apply(lambda row : (datetime.strptime(row['time'], '%Y-%m-%d %H:%M:%S')).astimezone(pytz.timezone('US/Pacific')), axis=1)
-    #df['flag'] = df.apply(lambda row : 1 if row['time'].dst() == dt.timedelta(hours = 1) else 0, axis=1)
-    print(df)
-
 
 
 def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
@@ -271,9 +256,6 @@ def __main__():
     print(df)
     df.to_csv("output/1_11_23.csv")
     """""
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
-    daylight_savings(df)
 
 if __name__ == '__main__':
     __main__()

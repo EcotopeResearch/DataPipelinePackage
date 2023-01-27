@@ -75,7 +75,3 @@ def conditions_index_to_desc(conditions: int):
         case _:
             conditions_desc = np.NaN  
     return conditions_desc
-
-# Used in verify_power_energy()
-def energy_to_power(energy : float):
-    return energy * 60
