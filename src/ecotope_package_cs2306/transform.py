@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from dateutil.parser import parse
+from .unit_convert import energy_to_power
 
 pd.set_option('display.max_columns', None)
 
@@ -149,7 +150,7 @@ def verify_power_energy(df : pd.DataFrame):
         if (corres_energy in energy_vars):
             temp_df = power_energy_df[['time', pvar, corres_energy]]
             for i, row in temp_df.iterrows():
-                expected = row[corres_energy] * 60
+                expected = energy_to_power(row[corres_energy])
                 low_bound = expected - margin_error
                 high_bound = expected + margin_error
                 if(row[pvar] != expected):
@@ -236,6 +237,21 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 
     return cop_values
 
+def aggregateDF(df: pd.DataFrame):
+    """
+    Input: Single pandas dataframe of minute-by-minute sensor data.
+    Output: List of dataframes, one being by the hour, one by the day, and that's it?
+    NOTE: should this be specific for bayview? Bayview is the only site that has to aggregate in this way, so?
+    """
+    #Certain vars don't need to be aggregated, what are they? How should I process them.
+
+    #Aggregate to hourly first, use hourly to aggregate to daily? Or will that not work.
+
+    #Finally, how am I actually aggregating? Do I want a mean? Are different parts of the dataset
+    #treated differently?
+
+    #use pd.aggregate(func, axis, args)
+    pass
 
 #Test function
 def outlierTest():
