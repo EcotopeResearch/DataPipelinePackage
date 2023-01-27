@@ -237,6 +237,21 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 
     return cop_values
 
+def aggregateDF(df: pd.DataFrame):
+    """
+    Input: Single pandas dataframe of minute-by-minute sensor data.
+    Output: List of dataframes, one being by the hour, one by the day, and that's it?
+    NOTE: should this be specific for bayview? Bayview is the only site that has to aggregate in this way, so?
+    """
+    #Certain vars don't need to be aggregated, what are they? How should I process them.
+
+    #Aggregate to hourly first, use hourly to aggregate to daily? Or will that not work.
+
+    #Finally, how am I actually aggregating? Do I want a mean? Are different parts of the dataset
+    #treated differently?
+
+    #use pd.aggregate(func, axis, args)
+    pass
 
 #Test function
 def outlierTest():
