@@ -47,12 +47,10 @@ def connectDB(config_info: dict):
     Output: Connection object
     """
 
-    dbinfo = config_info['database']
-
     connection = None
 
     try:
-        connection = mysql.connector.connect(**dbinfo)
+        connection = mysql.connector.connect(**config_info)
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
@@ -61,7 +59,7 @@ def connectDB(config_info: dict):
             print(err)
             sys.exit()
 
-    print(f"Successfully connected to {dbinfo['database']}.")
+    print(f"Successfully connected to database.")
     return connection, connection.cursor()
 
 
@@ -171,11 +169,12 @@ if __name__ == '__main__':
     df_path = "input/ecotope_wide_data.csv"
 
     # get database connection information and desired table name to write data into
-    # config_dict = getLoginInfo(config_file_path)
+    config_dict = getLoginInfo(config_file_path)
 
     # establish connection to database
-    # db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
+    """
     ecotope_data = pd.read_csv(df_path)
     ecotope_data.set_index("time", inplace=True)
     ecotope_data.index = pd.to_datetime(ecotope_data.index)
@@ -185,13 +184,23 @@ if __name__ == '__main__':
     weather_data.drop(['conditions', 'time'], axis=1, inplace=True)
     weather_data.replace(np.nan, 0.0, inplace=True)
     weather_data.index = [datetime.datetime(year=2022, month=10, day=13, hour=17)]
+    """
 
-    print(weather_data)
+    ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
+    ecotope_data.dropna(axis=1, inplace=True)
+    weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
+    weather_data.set_index(["time"], inplace=True)
+    weather_data = weather_data["2023-01-10 16:00:00-08:00":"2023-01-11 15:00:00-08:00"]
+    weather_data.drop(["conditions"], axis=1, inplace=True)
+    weather_data.fillna(0, inplace=True)
+
+    # print(weather_data)
+    # print(ecotope_data.columns)
 
     # load data stored in data frame to database
-    # loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
+    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
 
     # commit changes to database and close connections
-    # db_connection.commit()
-    # db_connection.close()
-    # db_cursor.close()
+    db_connection.commit()
+    db_connection.close()
+    db_cursor.close()
