@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import os
 from dateutil.parser import parse
+from .unit_convert import energy_to_power
+
+pd.set_option('display.max_columns', None)
 
 #from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
@@ -10,15 +13,14 @@ vars_filename = "input/Variable_Names.csv" #currently set to a test until real c
 
 def rename_sensors(df, variable_names_path):
     variable_data = pd.read_csv(variable_names_path)
-    variable_data = variable_data[1:87]
+    variable_data = variable_data[1:86]
+    variable_data = variable_data[['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-    df.set_index(['time'], axis=0, inplace=True)
-
 
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
 def _rm_cols(col, bounds_df):
@@ -89,8 +91,11 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     Output: Adjusted Dataframe
     """
     adjustments = pd.read_csv("input/adjustments.csv")
+    if adjustments.empty:
+        return df
     adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
     df = df.sort_values(by = "datetime_applied")
+    
     for adjustment in adjustments:
         adjustment_datetime = adjustment["datetime_applied"]
         df_pre = df.loc[df['time'] < adjustment_datetime]
@@ -137,17 +142,16 @@ def verify_power_energy(df : pd.DataFrame):
     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
     power_vars = (df.filter(regex=".*Power.*")).filter(regex="^((?!Energy).)*$")
     power_energy_df = df[df.columns.intersection(['time'] + list(energy_vars) + list(power_vars))]
-    print(power_energy_df)
     for pvar in power_vars:
         if (pvar != 'PowerMeter_SkidAux_Power'):
             corres_energy = pvar.replace('Power', 'Energy')
         if (pvar == 'PowerMeter_SkidAux_Power'):
             corres_energy = 'PowerMeter_SkidAux_Energty'
         if (corres_energy in energy_vars):
-            print(power_energy_df)
+            print("here")
             temp_df = power_energy_df[['time', pvar, corres_energy]]
             for i, row in temp_df.iterrows():
-                expected = row[corres_energy] * 60
+                expected = energy_to_power(row[corres_energy])
                 low_bound = expected - margin_error
                 high_bound = expected + margin_error
                 if(row[pvar] != expected):
@@ -168,13 +172,10 @@ def get_kbtu_value(gpm, delta_t):
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
-    after_6pm = str(parse(df.index[0]).replace(hour=6, minute=0))
+    print(df)
+    after_6pm = df.index[0].replace(hour=6, minute=0)
 
-    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid',
-                 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid',
-                 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater',
-                 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2',
-                 'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
+    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
 
     avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].mean(axis=0, skipna=True)
 
@@ -292,7 +293,15 @@ def testPEV():
 def __main__():
     #outlierTest()
     #ffillTest()
-    rename_sensors()
+    file_path = "input/df.pkl"
+    data = pd.read_pickle(file_path)
+    rename_sensors(data, vars_filename)
+    data = get_energy_by_min(data)
+    # data = verify_power_energy(data)
+
+    result = calculate_cop_values(data)
+
+    print(result)
 
     pass
 

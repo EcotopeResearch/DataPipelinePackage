@@ -2,17 +2,86 @@ import pandas as pd
 import numpy as np
 import re
 import datetime
+ 
+# Constants 
+relative_loc = pd.Series([1, .82, .64, .46, .29, .11, 0])
+tank_frxn = relative_loc.subtract(relative_loc.shift(-1))
+gal_per_tank = 285
+tot_storage = gal_per_tank * 3  #3 tanks
+zone_gals = tank_frxn * tot_storage
+zone_gals = pd.Series.dropna(zone_gals) #remove NA from leading math
+zone_list = pd.Series(["ZoneTemp_top", "ZoneTemp_midtop", "ZoneTemp_mid", "ZoneTemp_midlow", "ZoneTemp_low", "ZoneTemp_bottom"])
+gals_per_zone = pd.DataFrame({'Zone':zone_list, 'Zone_vol_g':zone_gals}) # Steal me
 
+
+def largest_less_than(df_row, target):
+    """
+    Function takes a list of gz/json filenames and a target temperature and determines
+    the zone with the highest temperature < 120 degrees
+    Input: A single row of a sensor Pandas Dataframe and an integer
+    Output: A string of the name of the zone.
+    """
+    largest_less_than_120_tmp = max(df_row, key = lambda k: df_row[k].values[0] < target)
+    return largest_less_than_120_tmp
+
+def get_vol_equivalent_to_120(df_row):
+    """
+    Function takes a row of sensor data and finds the total volume of water > 120 degrees
+    Input: A single row of a sensor Pandas Dataframe
+    Output: A float of the total volume of water > 120 degrees
+    """
+    tvadder = 0
+    vadder = 0
+    dftemp = df_row.iloc[:, 4:]
+    dftemp = pd.to_numeric(dftemp)
+    for i in range(1, len(dftemp.columns)) :
+        if dftemp.columns[i] == "Temp_low":
+            vadder += gals_per_zone[gals_per_zone.columns[1]][i]
+            tvadder += dftemp[dftemp.columns[i]][0] * gals_per_zone[gals_per_zone.columns[1]][i]
+            break
+        elif dftemp[dftemp.columns[i + 1]][0] >= 120:
+            vadder += gals_per_zone[gals_per_zone.columns[1]][i]
+            tvadder += (dftemp[dftemp.columns[i + 1]][0] + dftemp[dftemp.columns[i]][0]) / 2  * gals_per_zone[gals_per_zone.columns[1]][i]
+        elif dftemp[dftemp.columns[i + 1]][0] < 120:
+            vadder += dftemp["Vol120"][0]
+            tvadder += dftemp["Vol120"][0] * dftemp["ZoneTemp120"][0]
+            break
+    avg_temp_above_120 = tvadder / vadder
+    temp_ratio = (avg_temp_above_120 - dftemp["Temp_CityWater_atSkid"][0]) / (120 - dftemp["Temp_CityWater_atSkid"][0])
+    return (temp_ratio * vadder)
+
+def get_V120(df_row):
+    """
+    Function takes a row of sensor data and determines the volume of water > 120 degrees 
+    in the zone that has the highest sensor < 120 degrees
+    Input: A single row of a sensor Pandas Dataframe
+    Output: A float of the volume of water > 120 degrees
+    """
+    if df_row["Temp_120"] != 120:
+        return 0
+    temp_cols = df_row.filter(regex = 'outlet$|top|mid|low', axis=1)
+    name_cols = largest_less_than(df_row[temp_cols], 120)
+    name_col_index = df_row[temp_cols].columns.get_loc(name_cols)
+    dV = gals_per_zone['Zone_vol_g'][name_col_index]
+
+    V120 = (df_row[name_col_index - 1].values[0] - 120)/ (df_row[name_col_index - 1].values[0] - df_row[name_col_index]) * dV
+    return V120
+
+def get_zone_Temp120(df_row):
+    """
+    Function takes a row of sensor data and determines the highest sensor < 120 degrees
+    Input: A single row of a sensor Pandas Dataframe
+    Output: A float of the average temperature of the zone < 120 degrees
+    """
+    if df_row["Temp_120"] != 120:
+        return 0
+    temp_cols = df_row.filter(regex = 'outlet$|top|mid|low', axis=1)
+    name_cols = largest_less_than(df_row[temp_cols], 120)
+    name_col_index = df_row[temp_cols].columns.get_loc(name_cols)
+    zone_Temp_120 = (df_row["Temp_120"] + df_row[name_col_index - 1]) / 2
+
+    return zone_Temp_120
 def main():
-    # Constants #######################################
-    relative_loc = pd.Series([1, .82, .64, .46, .29, .11, 0])
-    tank_frxn = relative_loc.subtract(relative_loc.shift(-1))
-    gal_per_tank = 285
-    tot_storage = gal_per_tank * 3  #3 tanks
-    zone_gals = tank_frxn * tot_storage
-    zone_gals = pd.Series.dropna(zone_gals) #remove NA from leading math
-    zone_list = pd.Series(["ZoneTemp_top", "ZoneTemp_midtop", "ZoneTemp_mid", "ZoneTemp_midlow", "ZoneTemp_low", "ZoneTemp_bottom"])
-    gals_per_zone = pd.DataFrame({'Zone':zone_list, 'Zone_vol_g':zone_gals}) # Steal me
 
     test_grid = pd.read_excel('../input/test_matrix.xlsx', skiprows = 1)
     #print((~test_grid.iloc[: , -6:].isna()).sum(axis=1))
