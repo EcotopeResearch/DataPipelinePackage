@@ -5,8 +5,8 @@ from datetime import datetime
 import gzip
 import os, json
 import datetime as dt
-from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from .load import connectDB, getLoginInfo
+from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from ecotope_package_cs2306.load import connectDB, getLoginInfo
 import numpy as np
 
 _input_directory = "input/"
@@ -53,6 +53,9 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     last_row_data.drop(['time_pt', 'time_hour_pt'], axis=1, inplace=True)
     print(last_row_data)
     return last_row_data
+
+def extract_new(last_row: pd.DataFrame):
+    last_row 
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
   """
