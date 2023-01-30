@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from dateutil.parser import parse
-from .unit_convert import energy_to_power
+from .unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
 from .extract import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
@@ -177,14 +177,6 @@ def verify_power_energy(df : pd.DataFrame):
                       out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
-      
-
-def convert_to_kwh(sensor_readings):
-    return sensor_readings / (60 * 3.412)
-
-
-def get_kbtu_value(gpm, delta_t):
-    return 60 * 8.33 * gpm * delta_t / 1000
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
@@ -197,22 +189,22 @@ def aggregate_values(df: pd.DataFrame) -> dict:
 
     cop_inter = dict()
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
-    cop_inter['HeatOut_PrimaryPlant'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+    cop_inter['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                        avg_sd['Temp_PrimaryStorageOutTop'] -
                                                        avg_sd['Temp_CityWater_atSkid'])
-    cop_inter['HeatOut_PrimaryPlant_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+    cop_inter['HeatOut_PrimaryPlant_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                              avg_sd['Temp_PrimaryStorageOutTop'] -
                                                              avg_sd_6['Temp_CityWater_atSkid'])
-    cop_inter['HeatOut_SecLoop'] = get_kbtu_value(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
+    cop_inter['HeatOut_SecLoop'] = energy_kwh_to_kbtu(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
                                                   avg_sd['Temp_SecLoopHexInlet'])
-    cop_inter['HeatOut_HW'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+    cop_inter['HeatOut_HW'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
                                              avg_sd['Temp_CityWater'])
-    cop_inter['HeatOut_HW_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+    cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
                                                    avg_sd_6['Temp_CityWater'])
-    cop_inter['HeatLoss_TempMaint_MXV1'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV1'],
+    cop_inter['HeatLoss_TempMaint_MXV1'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV1'],
                                                           avg_sd['Temp_RecircSupply_MXV1'] -
                                                           avg_sd['Temp_RecircReturn_MXV1'])
-    cop_inter['HeatLoss_TempMaint_MXV2'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV2'],
+    cop_inter['HeatLoss_TempMaint_MXV2'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV2'],
                                                           avg_sd['Temp_RecircSupply_MXV2'] -
                                                           avg_sd['Temp_RecircReturn_MXV2'])
     cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * (1/60) * (1/1000)
@@ -229,27 +221,27 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
     cop_inter = aggregate_values(df)
 
     cop_values = dict()
-    cop_values['COP_DHWSys'] = (convert_to_kwh(cop_inter['HeatOut_HW']) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+    cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
             cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
             ENERGYIN_SWINGTANK2)
 
-    cop_values['COP_DHWSys_dyavg'] = (convert_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+    cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
             cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
             ENERGYIN_SWINGTANK2)
 
-    cop_values['COP_DHWSys_fixTMloss'] = ((convert_to_kwh(cop_inter['HeatOut_HW'])) + (
-        convert_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
+    cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
+        energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
                                              cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
                                              ENERGYIN_SWINGTANK2))
 
-    cop_values['COP_PrimaryPlant'] = (convert_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
+    cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
                                      (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-    cop_values['COP_PrimaryPlant_dyavg'] = (convert_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
+    cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
                                      (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
     return cop_values

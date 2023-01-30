@@ -76,6 +76,13 @@ def conditions_index_to_desc(conditions: int):
             conditions_desc = np.NaN  
     return conditions_desc
 
-# Used in verify_power_energy()
+# Used in verify_power_energy() in transform
 def energy_to_power(energy : float):
     return energy * 60
+
+# Used in aggregate_values
+def energy_btu_to_kwh(sensor_readings):
+    return sensor_readings / (60 * 3.412)
+
+def energy_kwh_to_kbtu(gpm, delta_t):
+    return 60 * 8.33 * gpm * delta_t / 1000
