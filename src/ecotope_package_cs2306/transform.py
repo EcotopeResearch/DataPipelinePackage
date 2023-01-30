@@ -237,20 +237,29 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 
     return cop_values
 
+#simple helper function to help split dataframe by name
+def _split_helper(col, sumDF, meanDF):
+    if("Power" in col.name or "Energy" in col.name or "time" in col.name):
+        sumDF = pd.concat([sumDF, col], axis=1)
+    else:
+        meanDF = pd.concat([meanDF, col], axis=1)
+ 
 def aggregateDF(df: pd.DataFrame):
     """
     Input: Single pandas dataframe of minute-by-minute sensor data.
-    Output: List of dataframes, one being by the hour, one by the day, and that's it?
-    NOTE: should this be specific for bayview? Bayview is the only site that has to aggregate in this way, so?
+    Output: List of sensor data dataframes, one by the hour, one by the day.
     """
-    #Certain vars don't need to be aggregated, what are they? How should I process them.
+    #Sensor AND weather data both get extrapolated to the hour and to the day using mean and sum.
 
-    #Aggregate to hourly first, use hourly to aggregate to daily? Or will that not work.
+    #DF split into two, sumDF has power, energy, and time vars, meanDF has the rest
+    sumDF = pd.DataFrame
+    meanDF = pd.DataFrame
+    df.apply(_split_helper, args=(sumDF, meanDF))
 
-    #Finally, how am I actually aggregating? Do I want a mean? Are different parts of the dataset
-    #treated differently?
+    #now that they are split, they need to be aggregated into 60 min chunks. careful with time!
+    #pd.aggregate
 
-    #use pd.aggregate(func, axis, args)
+    #return df_hourly, df_daily
     pass
 
 #Test function
