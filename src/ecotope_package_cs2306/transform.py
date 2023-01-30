@@ -257,14 +257,15 @@ def aggregate_df(df: pd.DataFrame):
     mean_df = df.filter(regex=".*[^Energy].*")
 
     #Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
-    sum_df.resample('H').sum()
-    mean_df.resample('H').mean()
-
-    #NOTE: REPEAT PROCESS FOR DAILY? MIGHT BE A BETTER WAY BUT
+    hourly_sum = sum_df.resample('H').sum()
+    hourly_mean = mean_df.resample('H').mean()
+    #Same thing as for hours, but for a whole day
+    daily_sum = sum_df.resample("D").sum()
+    daily_mean = mean_df.resample('D').mean()
 
     #combine sum_df and mean_df into one hourly_df, then try and print that and see if it breaks
-    hourly_df = pd.concat([sum_df, mean_df], axis=1)
-    daily_df = pd.DataFrame
+    hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)
+    daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
     return [hourly_df, daily_df]
 
@@ -311,11 +312,16 @@ def __main__():
     rename_sensors(data, vars_filename)
     #data = get_energy_by_min(data)
     #data = verify_power_energy(data)
+    #actually run all tests here
 
     # result = calculate_cop_values(data)
-    print(data)
-    hourly = aggregate_df(data)
-    print(hourly)
+    #print(data)
+    """
+    df_list = aggregate_df(data)
+    print(data.head(10))
+    print(df_list[0].head(10))
+    print(df_list[1])
+    """
 
     pass
 
