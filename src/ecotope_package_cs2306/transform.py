@@ -3,6 +3,7 @@ import numpy as np
 import os
 from dateutil.parser import parse
 from .unit_convert import energy_to_power
+from .extract import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
 
@@ -103,7 +104,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     Input: DataFrame to be adjusted
     Output: Adjusted Dataframe
     """
-    adjustments = pd.read_csv("input/adjustments.csv")
+    adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
     if adjustments.empty:
         return df
     adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
@@ -171,7 +172,7 @@ def verify_power_energy(df : pd.DataFrame):
                 high_bound = expected + margin_error
                 if(row[pvar] != expected):
                     out_df.loc[len(df.index)] = [row['time'], pvar, corres_energy, row[corres_energy], row[pvar], expected, abs(expected - row[pvar])] 
-                    path_to_output = 'output/power_energy_conflicts.csv'
+                    path_to_output = f'{_output_directory}power_energy_conflicts.csv'
                     if not os.path.isfile(path_to_output):
                       out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
@@ -306,39 +307,39 @@ def aggregateDF(df: pd.DataFrame):
     pass
 
 
-#Test function
-def outlierTest():
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
+# #Test function
+# def outlierTest():
+#     testdf_filename = "input/ecotope_wide_data.csv"
+#     df = pd.read_csv(testdf_filename)
 
-    print(df)
-    print("\nTesting _removeOutliers...\n")
-    print(remove_outliers(df, vars_filename))
-    print("\nFinished testing _removeOutliers\n")
+#     print(df)
+#     print("\nTesting _removeOutliers...\n")
+#     print(remove_outliers(df, vars_filename))
+#     print("\nFinished testing _removeOutliers\n")
 
-#Test function
-def ffillTest():
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
-    df = remove_outliers(df, vars_filename)
+# #Test function
+# def ffillTest():
+#     testdf_filename = "input/ecotope_wide_data.csv"
+#     df = pd.read_csv(testdf_filename)
+#     df = remove_outliers(df, vars_filename)
 
-    print("\nTesting _fillMissing...\n")
-    print(ffill_missing(df, vars_filename))
-    print("\nFinished testing _fillMissing\n")
+#     print("\nTesting _fillMissing...\n")
+#     print(ffill_missing(df, vars_filename))
+#     print("\nFinished testing _fillMissing\n")
 
-#Test function
-def testCopCalc():
-    df_path = "input/ecotope_wide_data.csv"
-    ecotope_data = pd.read_csv(df_path)
-    ecotope_data.set_index("time", inplace=True)
+# #Test function
+# def testCopCalc():
+#     df_path = "input/ecotope_wide_data.csv"
+#     ecotope_data = pd.read_csv(df_path)
+#     ecotope_data.set_index("time", inplace=True)
 
-# Test function
-def testPEV():
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
-    df = get_energy_by_min(df)
+# # Test function
+# def testPEV():
+#     testdf_filename = "input/ecotope_wide_data.csv"
+#     df = pd.read_csv(testdf_filename)
+#     df = get_energy_by_min(df)
 
-    verify_power_energy(df)
+#     verify_power_energy(df)
 
 #Test main, will be removed once transform.py is complete
 
