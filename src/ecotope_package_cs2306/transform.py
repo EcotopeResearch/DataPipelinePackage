@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 from dateutil.parser import parse
-from .unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
-from .extract import _input_directory, _output_directory
+#from .unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
+#from .extract import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
 
@@ -246,37 +246,27 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 
     return cop_values
 
-#simple helper function to help split dataframe by name
-#TODO: Instead of this helper, use a regex to filter by Power/Energy, put those into two DFs
-def _split_helper(col, sum_df, mean_df):
-    if("Energy" in col.name):
-        sum_df = pd.concat([sum_df, col], axis=1)
-    else:
-        mean_df = pd.concat([mean_df, col], axis=1)
  
-def aggregateDF(df: pd.DataFrame):
+def aggregate_df(df: pd.DataFrame):
     """
     Input: Single pandas dataframe of minute-by-minute sensor data.
     Output: List of sensor data dataframes, one by the hour, one by the day.
     """
-    #Sensor AND weather data both get extrapolated to the hour and to the day using mean and sum.
+    #Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
+    sum_df = df.filter(regex=".*Energy.*")
+    mean_df = df.filter(regex=".*[^Energy].*")
 
-    #DF split into two, sumDF has power, energy, and time vars, meanDF has the rest
-    sum_df = pd.DataFrame
-    mean_df = pd.DataFrame
-    df.apply(_split_helper, args=(sum_df, mean_df)) #fills sum and mean df with respective data
-
-    #now that they are split, they need to be aggregated into 60 min chunks. careful with time!
-    
-    #SOLUTION #2 -- Resample: 
-    #These lines downsamples the columns of the DF into 1 hour bins and sums/means the values of the timestamps falling within that bin
+    #Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     sum_df.resample('H').sum()
     mean_df.resample('H').mean()
 
-    #combine sum_df and mean_df into one hourly_df, then try and print that and see if it breaks
+    #NOTE: REPEAT PROCESS FOR DAILY? MIGHT BE A BETTER WAY BUT
 
-    #return df_hourly, df_daily
-    pass
+    #combine sum_df and mean_df into one hourly_df, then try and print that and see if it breaks
+    hourly_df = pd.concat([sum_df, mean_df], axis=1)
+    daily_df = pd.DataFrame
+
+    return [hourly_df, daily_df]
 
 
 # #Test function
@@ -324,6 +314,8 @@ def __main__():
 
     # result = calculate_cop_values(data)
     print(data)
+    hourly = aggregate_df(data)
+    print(hourly)
 
     pass
 
