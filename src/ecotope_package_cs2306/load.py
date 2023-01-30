@@ -133,7 +133,7 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
 
     dbname = config_info['database']['database']
     table_name = config_info[data_type]["table_name"]
-    sensor_names = config_dict[data_type]['sensor_list']
+    sensor_names = config_info[data_type]['sensor_list']
 
     weather_table_name = None
     foreign_key = False
