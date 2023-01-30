@@ -5,8 +5,8 @@ from datetime import datetime
 import gzip
 import os, json
 import datetime as dt
-from unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from load import connectDB, getLoginInfo
+from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from .load import connectDB, getLoginInfo
 import numpy as np
 
 _input_directory = "input/"
