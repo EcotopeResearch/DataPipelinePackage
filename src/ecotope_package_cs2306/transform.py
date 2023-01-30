@@ -246,10 +246,10 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 
     return cop_values
 
-
 #simple helper function to help split dataframe by name
+#TODO: Instead of this helper, use a regex to filter by Power/Energy, put those into two DFs
 def _split_helper(col, sum_df, mean_df):
-    if("Power" in col.name or "Energy" in col.name or "time" in col.name):
+    if("Energy" in col.name):
         sum_df = pd.concat([sum_df, col], axis=1)
     else:
         mean_df = pd.concat([mean_df, col], axis=1)
@@ -267,34 +267,14 @@ def aggregateDF(df: pd.DataFrame):
     df.apply(_split_helper, args=(sum_df, mean_df)) #fills sum and mean df with respective data
 
     #now that they are split, they need to be aggregated into 60 min chunks. careful with time!
-
-    #SOLUTION #1 -- Cringe: but I will loop to 24 for each hour, and aggregate a slice each time?
-    hour = 0
-    hourly_df = pd.DataFrame
-    while(hour < 24):
-        sum_hour_data = sum_df[:60].aggregate(["sum"])  #slicing the first 60 gives us just the first hour
-        mean_hour_data = mean_df[:60].aggregate(["mean"])
-        #then we cut the first hour and repeat. this works knowing we process a day at a time. acceptable?
-        hour += 1
     
     #SOLUTION #2 -- Resample: 
-    #Resample works with dateTime indeces, if I don't have one it'll break, is that what we got? 
-    #If so, that makes this VERY easy
-    #This line downsamples the columns of the DF into 1 hour bins and sums the values of the timestamps falling within that bin
+    #These lines downsamples the columns of the DF into 1 hour bins and sums/means the values of the timestamps falling within that bin
     sum_df.resample('H').sum()
     mean_df.resample('H').mean()
 
-    """
-    for loop, slice by the hour, aggregating each hour
-    lower = 0, upper = 1
-    e.g. [lower:upper] #aggregate from hour 0 to hour 1, then increment both by 1. 
-    then it'll loop and aggregate from hour 1 to hour 2, then increment again
+    #combine sum_df and mean_df into one hourly_df, then try and print that and see if it breaks
 
-    #NOTE: You can slice by row index even if the name is changed. 
-    #IDEA: Slice the first 60 elements, aggregate those, then purge the first 60 and 
-    #do it all again?
-    sum_df[:60].aggregate(["sum"])
-    """
     #return df_hourly, df_daily
     pass
 
