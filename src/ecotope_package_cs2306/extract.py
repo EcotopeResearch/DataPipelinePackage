@@ -4,8 +4,6 @@ from ftplib import FTP
 from datetime import datetime
 import gzip
 import os, json
-import re
-import pytz
 import datetime as dt
 from .unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from .load import connectDB, getLoginInfo
@@ -13,12 +11,31 @@ import numpy as np
 
 _input_directory = "input/"
 _output_directory = "output/"
+_config_directory = "Configuration/config.ini"
 
 def set_input(input : str):
+    """
+    Accessor function to set input directory in the format {directory}/
+    Defaults to input/
+    Input: String of relative directory
+    """
     _input_directory = input
 
 def set_output(output: str):
+    """
+    Accessor function to set output directory in the format {directory}/
+    Defaults to output/
+    Input: String of relative directory
+    """
     _output_directory = output
+
+def set_config(cfg_file: str):
+    """
+    Accessor function to set config directory in the format {directory}/
+    Defaults to Configuration/config.ini
+    Input: String of relative directory
+    """
+    _config_directory = cfg_file
 
 def get_last_line(config_file_path: str) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
@@ -34,7 +51,7 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     last_row_data.columns = columns_names
     last_row_data.set_index(last_row_data['time_pt'], inplace=True)
     last_row_data.drop(['time_pt', 'time_hour_pt'], axis=1, inplace=True)
-
+    print(last_row_data)
     return last_row_data
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
@@ -243,21 +260,9 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
-    """""
-    stations = ["727935-24234"]
-    #, 'KPWM', 'KSFO', 'KAVL'
-    formatted_dfs = get_noaa_data(['KBFI'])
-    print(formatted_dfs)
-    for key, value in formatted_dfs.items():
-        value.to_csv(f"output/{key}.csv", index=False)
-        print("done 1")
-    print("done")
-    print(get_noaa_data(['KBFI']))
-    json_filenames = extract_json('input/data/')
-    df = json_to_df(json_filenames)
-    print(df)
-    df.to_csv("output/1_11_23.csv")
-    """""
+    # pass
+    val = get_last_line(_config_directory)
+    print(val)
 
 if __name__ == '__main__':
     __main__()

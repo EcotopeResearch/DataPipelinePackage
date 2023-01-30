@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 from dateutil.parser import parse
-from .unit_convert import energy_to_power
+from .unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
+from .extract import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
 
@@ -103,7 +104,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     Input: DataFrame to be adjusted
     Output: Adjusted Dataframe
     """
-    adjustments = pd.read_csv("input/adjustments.csv")
+    adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
     if adjustments.empty:
         return df
     adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
@@ -171,19 +172,11 @@ def verify_power_energy(df : pd.DataFrame):
                 high_bound = expected + margin_error
                 if(row[pvar] != expected):
                     out_df.loc[len(df.index)] = [row['time'], pvar, corres_energy, row[corres_energy], row[pvar], expected, abs(expected - row[pvar])] 
-                    path_to_output = 'output/power_energy_conflicts.csv'
+                    path_to_output = f'{_output_directory}power_energy_conflicts.csv'
                     if not os.path.isfile(path_to_output):
                       out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
-      
-
-def convert_to_kwh(sensor_readings):
-    return sensor_readings / (60 * 3.412)
-
-
-def get_kbtu_value(gpm, delta_t):
-    return 60 * 8.33 * gpm * delta_t / 1000
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
@@ -196,22 +189,22 @@ def aggregate_values(df: pd.DataFrame) -> dict:
 
     cop_inter = dict()
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
-    cop_inter['HeatOut_PrimaryPlant'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+    cop_inter['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                        avg_sd['Temp_PrimaryStorageOutTop'] -
                                                        avg_sd['Temp_CityWater_atSkid'])
-    cop_inter['HeatOut_PrimaryPlant_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater_atSkid'],
+    cop_inter['HeatOut_PrimaryPlant_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                              avg_sd['Temp_PrimaryStorageOutTop'] -
                                                              avg_sd_6['Temp_CityWater_atSkid'])
-    cop_inter['HeatOut_SecLoop'] = get_kbtu_value(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
+    cop_inter['HeatOut_SecLoop'] = energy_kwh_to_kbtu(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
                                                   avg_sd['Temp_SecLoopHexInlet'])
-    cop_inter['HeatOut_HW'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+    cop_inter['HeatOut_HW'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
                                              avg_sd['Temp_CityWater'])
-    cop_inter['HeatOut_HW_dyavg'] = get_kbtu_value(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+    cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
                                                    avg_sd_6['Temp_CityWater'])
-    cop_inter['HeatLoss_TempMaint_MXV1'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV1'],
+    cop_inter['HeatLoss_TempMaint_MXV1'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV1'],
                                                           avg_sd['Temp_RecircSupply_MXV1'] -
                                                           avg_sd['Temp_RecircReturn_MXV1'])
-    cop_inter['HeatLoss_TempMaint_MXV2'] = get_kbtu_value(avg_sd['Flow_RecircReturn_MXV2'],
+    cop_inter['HeatLoss_TempMaint_MXV2'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV2'],
                                                           avg_sd['Temp_RecircSupply_MXV2'] -
                                                           avg_sd['Temp_RecircReturn_MXV2'])
     cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * (1/60) * (1/1000)
@@ -228,27 +221,27 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
     cop_inter = aggregate_values(df)
 
     cop_values = dict()
-    cop_values['COP_DHWSys'] = (convert_to_kwh(cop_inter['HeatOut_HW']) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+    cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
             cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
             ENERGYIN_SWINGTANK2)
 
-    cop_values['COP_DHWSys_dyavg'] = (convert_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-        convert_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+    cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
             cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
             ENERGYIN_SWINGTANK2)
 
-    cop_values['COP_DHWSys_fixTMloss'] = ((convert_to_kwh(cop_inter['HeatOut_HW'])) + (
-        convert_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
+    cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
+        energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
                                              cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
                                              ENERGYIN_SWINGTANK2))
 
-    cop_values['COP_PrimaryPlant'] = (convert_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
+    cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
                                      (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-    cop_values['COP_PrimaryPlant_dyavg'] = (convert_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
+    cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
                                      (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
     return cop_values
@@ -286,39 +279,39 @@ def aggregateDF(df: pd.DataFrame):
     pass
 
 
-#Test function
-def outlierTest():
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
+# #Test function
+# def outlierTest():
+#     testdf_filename = "input/ecotope_wide_data.csv"
+#     df = pd.read_csv(testdf_filename)
 
-    print(df)
-    print("\nTesting _removeOutliers...\n")
-    print(remove_outliers(df, vars_filename))
-    print("\nFinished testing _removeOutliers\n")
+#     print(df)
+#     print("\nTesting _removeOutliers...\n")
+#     print(remove_outliers(df, vars_filename))
+#     print("\nFinished testing _removeOutliers\n")
 
-#Test function
-def ffillTest():
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
-    df = remove_outliers(df, vars_filename)
+# #Test function
+# def ffillTest():
+#     testdf_filename = "input/ecotope_wide_data.csv"
+#     df = pd.read_csv(testdf_filename)
+#     df = remove_outliers(df, vars_filename)
 
-    print("\nTesting _fillMissing...\n")
-    print(ffill_missing(df, vars_filename))
-    print("\nFinished testing _fillMissing\n")
+#     print("\nTesting _fillMissing...\n")
+#     print(ffill_missing(df, vars_filename))
+#     print("\nFinished testing _fillMissing\n")
 
-#Test function
-def testCopCalc():
-    df_path = "input/ecotope_wide_data.csv"
-    ecotope_data = pd.read_csv(df_path)
-    ecotope_data.set_index("time", inplace=True)
+# #Test function
+# def testCopCalc():
+#     df_path = "input/ecotope_wide_data.csv"
+#     ecotope_data = pd.read_csv(df_path)
+#     ecotope_data.set_index("time", inplace=True)
 
-# Test function
-def testPEV():
-    testdf_filename = "input/ecotope_wide_data.csv"
-    df = pd.read_csv(testdf_filename)
-    df = get_energy_by_min(df)
+# # Test function
+# def testPEV():
+#     testdf_filename = "input/ecotope_wide_data.csv"
+#     df = pd.read_csv(testdf_filename)
+#     df = get_energy_by_min(df)
 
-    verify_power_energy(df)
+#     verify_power_energy(df)
 
 #Test main, will be removed once transform.py is complete
 
