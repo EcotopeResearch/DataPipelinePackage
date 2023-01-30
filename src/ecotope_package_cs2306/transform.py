@@ -149,6 +149,7 @@ def verify_power_energy(df : pd.DataFrame):
             corres_energy = 'PowerMeter_SkidAux_Energty'
         if (corres_energy in energy_vars):
             temp_df = power_energy_df[power_energy_df.columns.intersection(['time'] + list(energy_vars) + list(power_vars))]
+            print(temp_df.columns)
             for i, row in temp_df.iterrows():
                 expected = energy_to_power(row[corres_energy])
                 low_bound = expected - margin_error
