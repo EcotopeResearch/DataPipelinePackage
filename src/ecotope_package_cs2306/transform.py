@@ -22,6 +22,18 @@ def rename_sensors(df, variable_names_path):
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
 
+
+def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function will take in a dataframe and looks for duplicate timestamps due to daylight savings.
+    Takes the average values between the duplicate timestamps.
+    Input: Pandas dataframe
+    Output: Pandas dataframe 
+    """
+    df = df.groupby('time').mean()
+    return df
+
+
 #Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
 def _rm_cols(col, bounds_df):
     if(col.name in bounds_df.index):
