@@ -137,6 +137,7 @@ def verify_power_energy(df : pd.DataFrame):
     Output: Creates or appends to a csv file
     """
     # margin of error still TBD, 5.0 for testing purposes 
+    df.reset_index()
     margin_error = 5.0
     out_df = pd.DataFrame(columns=['time', 'power_variable', 'energy_variable', 'energy_value' ,'power_value', 'expected_power', 'difference_from_expected'])
     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
@@ -149,7 +150,6 @@ def verify_power_energy(df : pd.DataFrame):
             corres_energy = 'PowerMeter_SkidAux_Energty'
         if (corres_energy in energy_vars):
             temp_df = power_energy_df[power_energy_df.columns.intersection(['time'] + list(energy_vars) + list(power_vars))]
-            temp_df.reset_index()
             print(temp_df.columns)
             for i, row in temp_df.iterrows():
                 expected = energy_to_power(row[corres_energy])
