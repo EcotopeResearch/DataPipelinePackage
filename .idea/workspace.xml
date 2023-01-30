@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="41dc0d27-ef20-4102-b924-8b00a6c6ef53" name="Default Changelist" comment="cop calc in transformation">
+      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2010.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2011.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2012.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2013.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2014.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output/weather/isd-history.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/BayviewDataPipeline" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/pipeline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/transform.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/transform.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/calculate_cop.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/extract.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/gal120.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/load.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/transform.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/unit_convert.py" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;history&quot;: [
+    {
+      &quot;state&quot;: &quot;MERGED&quot;
+    }
+  ],
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">
+    <option name="selectedUrlAndAccountId">
+      <UrlAndAccount>
+        <option name="accountId" value="d493af96-e3dd-4461-afe8-f00f7483aa42" />
+        <option name="url" value="https://github.com/EcotopeResearch/DataPipelinePackage.git" />
+      </UrlAndAccount>
+    </option>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2Ih9t2OPxpvPq2jeEYoFhwuHfCA" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "C:/Users/emilx/PycharmProjects/MATH3450"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\emilx\OneDrive\Documents\GitHub\DataPipelinePackage\configuration" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\emilx\OneDrive\Documents\GitHub\DataPipelinePackage\input" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.load">
+    <configuration name="calculate_cop" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="DataPipelinePackage" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\emilx\miniconda\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/ecotope_package_cs2306/calculate_cop.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="extract" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="DataPipelinePackage" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\emilx\anaconda3\envs\DataPipelinePackage\python.exe" />
+      <option name="SDK_NAME" value="DataPipelinePackage" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/ecotope_package_cs2306/extract.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="load" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="DataPipelinePackage" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\emilx\miniconda\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/ecotope_package_cs2306/load.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="transform" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="DataPipelinePackage" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\emilx\miniconda\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/ecotope_package_cs2306/transform.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.calculate_cop" />
+      <item itemvalue="Python.extract" />
+      <item itemvalue="Python.load" />
+      <item itemvalue="Python.transform" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="41dc0d27-ef20-4102-b924-8b00a6c6ef53" name="Default Changelist" comment="" />
+      <created>1670623158389</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1670623158389</updated>
+    </task>
+    <task id="LOCAL-00001" summary="testing load">
+      <created>1673400984437</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1673400984438</updated>
+    </task>
+    <task id="LOCAL-00002" summary="formatting load.py">
+      <created>1673403192083</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1673403192083</updated>
+    </task>
+    <task id="LOCAL-00003" summary="formatting load.py">
+      <created>1673479394004</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1673479394004</updated>
+    </task>
+    <task id="LOCAL-00004" summary="load-.py accept wide databases now not long ones">
+      <created>1673569167641</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1673569167641</updated>
+    </task>
+    <task id="LOCAL-00005" summary="calculating cop values">
+      <created>1673830139677</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1673830139677</updated>
+    </task>
+    <task id="LOCAL-00006" summary="foreign key in sensor data">
+      <created>1673978307499</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1673978307500</updated>
+    </task>
+    <task id="LOCAL-00007" summary="stuff">
+      <created>1673989118938</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1673989118939</updated>
+    </task>
+    <task id="LOCAL-00008" summary="cop calculations in transform.py">
+      <created>1673990084617</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1673990084617</updated>
+    </task>
+    <task id="LOCAL-00009" summary="all cop calculations">
+      <created>1674157416672</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1674157416677</updated>
+    </task>
+    <task id="LOCAL-00010" summary="cop calcs">
+      <created>1674166412806</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1674166412807</updated>
+    </task>
+    <task id="LOCAL-00011" summary="cop calcs">
+      <created>1674166933794</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1674166933794</updated>
+    </task>
+    <task id="LOCAL-00012" summary="cop calc in transformation">
+      <created>1674168812362</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1674168812362</updated>
+    </task>
+    <task id="LOCAL-00013" summary="cop calc in transformation">
+      <created>1674169240956</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1674169240956</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="testing load" />
+    <MESSAGE value="formatting load.py" />
+    <MESSAGE value="load-.py accept wide databases now not long ones" />
+    <MESSAGE value="calculating cop values" />
+    <MESSAGE value="foreign key in sensor data" />
+    <MESSAGE value="stuff" />
+    <MESSAGE value="cop calculations in transform.py" />
+    <MESSAGE value="all cop calculations" />
+    <MESSAGE value="cop calcs" />
+    <MESSAGE value="cop calc in transformation" />
+    <option name="LAST_COMMIT_MESSAGE" value="cop calc in transformation" />
+  </component>
+</project>

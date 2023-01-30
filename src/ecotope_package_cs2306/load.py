@@ -133,7 +133,7 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
 
     dbname = config_info['database']['database']
     table_name = config_info[data_type]["table_name"]
-    sensor_names = config_dict[data_type]['sensor_list']
+    sensor_names = config_info[data_type]['sensor_list']
 
     weather_table_name = None
     foreign_key = False
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     config_dict = getLoginInfo(config_file_path)
 
     # establish connection to database
-    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+    db_connection, db_cursor = connectDB(config_info=config_dict["database"])
 
     """
     ecotope_data = pd.read_csv(df_path)
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     """
 
     ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
-    ecotope_data.dropna(axis=1, inplace=True)
+    # ecotope_data.dropna(axis=1, inplace=True)
     weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
     weather_data.set_index(["time"], inplace=True)
     weather_data = weather_data["2023-01-10 16:00:00-08:00":"2023-01-11 15:00:00-08:00"]
@@ -195,12 +195,12 @@ if __name__ == '__main__':
     weather_data.fillna(0, inplace=True)
 
     # print(weather_data)
-    # print(ecotope_data.columns)
+    # print(ecotope_data)
 
     # load data stored in data frame to database
-    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
+    loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
 
     # commit changes to database and close connections
-    db_connection.commit()
+    # db_connection.commit()
     db_connection.close()
     db_cursor.close()

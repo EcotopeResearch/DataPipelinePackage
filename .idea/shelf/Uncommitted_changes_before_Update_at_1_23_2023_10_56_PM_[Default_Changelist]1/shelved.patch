@@ -1,0 +1,81 @@
+Index: src/ecotope_package_cs2306/load.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import configparser\r\nimport mysql.connector\r\nfrom mysql.connector import errorcode\r\nimport sys\r\nimport pandas as pd\r\nimport os\r\nimport numpy as np\r\nimport datetime\r\n\r\npd.set_option('display.max_columns', None)\r\n\r\n\r\ndef getLoginInfo(config_file_path: str) -> dict:\r\n    \"\"\"\r\n    Function will read login information from config.ini and return it in a config var.\r\n\r\n    Input: config file\r\n    Output: Login information\r\n    \"\"\"\r\n\r\n    if not os.path.exists(config_file_path):\r\n        print(f\"File path '{config_file_path}' does not exist.\")\r\n        sys.exit()\r\n\r\n    configure = configparser.ConfigParser()\r\n    configure.read(config_file_path)\r\n    config = {\r\n        \"database\": {'user': configure.get('database', 'user'),\r\n                     'password': configure.get('database', 'password'),\r\n                     'host': configure.get('database', 'host'),\r\n                     'database': configure.get('database', 'database')},\r\n        \"sensor_table\": {\"table_name\": configure.get('sensor_table', 'table_name')},\r\n        \"weather_table\": {\"table_name\": configure.get('weather_table', 'table_name')}\r\n    }\r\n\r\n    print(f\"Successfully fetched configuration information from file path {config_file_path}.\")\r\n    return config\r\n\r\n\r\ndef connectDB(config_info: dict):\r\n    \"\"\"\r\n    Function will use login information to try and connect to the database and return a\r\n    connection object to make a cursor.\r\n    Input: _getLoginInfo\r\n    Output: Connection object\r\n    \"\"\"\r\n\r\n    dbname = config_info['database']\r\n\r\n    connection = None\r\n\r\n    try:\r\n        connection = mysql.connector.connect(**config_info)\r\n    except mysql.connector.Error as err:\r\n        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:\r\n            print(\"Something is wrong with your user name or password\")\r\n            sys.exit()\r\n        else:\r\n            print(err)\r\n            sys.exit()\r\n\r\n    print(f\"Successfully connected to {dbname}.\")\r\n    return connection, connection.cursor()\r\n\r\n\r\ndef checkTableExists(cursor, table_name: str, dbname: str) -> int:\r\n    \"\"\"\r\n    Check if given table exists in database.\r\n\r\n    :param cursor: Database cursor object.\r\n    :param config_info: configuration dictionary containing config info.\r\n    :return: Boolean value representing if table exists in database.\r\n    \"\"\"\r\n\r\n    cursor.execute(f\"SELECT count(*) \"\r\n                   f\"FROM information_schema.TABLES \"\r\n                   f\"WHERE (TABLE_SCHEMA = '{dbname}') AND (TABLE_NAME = '{table_name}')\")\r\n\r\n    num_tables = cursor.fetchall()[0][0]\r\n    return num_tables\r\n\r\n\r\ndef createNewTable(cursor, dataframe: str, table_name: str, table_name_weather: str=None) -> bool:\r\n    \"\"\"\r\n    Creates a new table to store data in the given dataframe.\r\n\r\n    :param cursor: Database cursor object.\r\n    :param dataframe: Pandas data frame.\r\n    :param table_name: Name of table in database.\r\n    :return: Boolean value representing if new table was created.\r\n    \"\"\"\r\n\r\n    sensors = dataframe.columns\r\n\r\n    create_table_statement = f\"CREATE TABLE {table_name} (\\ntime_pt datetime,\\n\"\r\n\r\n    if table_name_weather is not None:\r\n        create_table_statement += f\"time_hour_pt datetime,\\n\"\r\n\r\n    for sensor in sensors:\r\n        create_table_statement += f\"{sensor} float,\\n\"\r\n\r\n    if table_name_weather is not None:\r\n        create_table_statement += f\"PRIMARY KEY (time_pt),\\n\"\r\n        create_table_statement += f\"FOREIGN KEY (time_hour_pt) REFERENCES {table_name_weather}(time_pt)\\n\"\r\n    else:\r\n        create_table_statement += f\"PRIMARY KEY (time_pt)\\n\"\r\n\r\n    create_table_statement += \");\"\r\n    cursor.execute(create_table_statement)\r\n\r\n    return True\r\n\r\n\r\ndef createUnknownColumns(cursor, column_names: list, table_name):\r\n    for column in column_names:\r\n        cursor.execute(f\"select * from INFORMATION_SCHEMA.COLUMNS where table_name = \"\r\n                          f\"'{table_name}' and column_name = '{column}'\")\r\n        column_exists = len(db_cursor.fetchall())\r\n\r\n        if not column_exists:\r\n            db_cursor.execute(f\"ALTER TABLE {table_name} ADD COLUMN {column} FLOAT NOT NULL;\")\r\n\r\n\r\ndef loadDatabase(cursor, dataframe: str, config_info: dict, is_sensor: bool):\r\n    \"\"\"\r\n    Loads data stored in passed dataframe into mySQL database using.\r\n\r\n    :param cursor: Database cursor object.\r\n    :param dataframe: Pandas dataframe object.\r\n    :param config_info: configuration dictionary containing config info.\r\n    :return: Boolean value representing if data was written to database.\r\n    \"\"\"\r\n\r\n    dbname = config_info['database']['database']\r\n\r\n    if is_sensor:\r\n        table_name = config_info['sensor_table']['table_name']\r\n\r\n        if not checkTableExists(cursor, table_name, dbname):\r\n            if not createNewTable(cursor, dataframe, table_name, config_info[\"weather_table\"]['table_name']):\r\n                print(f\"Could not create new table {table_name} in database {dbname}\")\r\n                sys.exit()\r\n\r\n    else:\r\n        table_name = config_info['weather_table']['table_name']\r\n\r\n        if not checkTableExists(cursor, table_name, dbname):\r\n            if not createNewTable(cursor, dataframe, table_name, None):\r\n                print(f\"Could not create new table {table_name} in database {dbname}\")\r\n                sys.exit()\r\n\r\n    createUnknownColumns(db_cursor, dataframe.columns, table_name)\r\n\r\n    date_values = dataframe.index\r\n    for date in date_values:\r\n        time_data = dataframe.loc[date]\r\n        sensor_names = str(list(time_data.index.get_level_values(0))).replace(\"'\", \"\").replace(\"[\", \"\").replace(\"]\", \"\")\r\n        sensor_data = str(list(time_data.values)).replace(\"[\", \"\").replace(\"]\", \"\")\r\n\r\n        if is_sensor:\r\n            query = f\"INSERT INTO {table_name} (time_pt, time_hour_pt, {sensor_names})\\n\" \\\r\n                    f\"VALUES ('{date}', '{date.replace(minute=0, second=0)}', {sensor_data})\"\r\n        else:\r\n            query = f\"INSERT INTO {table_name} (time_pt, {sensor_names})\\n\" \\\r\n                    f\"VALUES ('{date}', {sensor_data})\"\r\n\r\n        cursor.execute(query)\r\n\r\n    print(f\"Successfully wrote data frame to table {table_name} in database {dbname}.\")\r\n\r\n\r\nif __name__ == '__main__':\r\n    config_file_path = \"config.ini\"\r\n    df_path = \"input/ecotope_wide_data.csv\"\r\n\r\n    # get database connection information and desired table name to write data into\r\n    config_dict = getLoginInfo(config_file_path=config_file_path)\r\n\r\n    # establish connection to database\r\n    db_connection, db_cursor = connectDB(config_info=config_dict['database'])\r\n\r\n    ecotope_data = pd.read_csv(df_path)\r\n    ecotope_data.set_index(\"time\", inplace=True)\r\n    ecotope_data.index = pd.to_datetime(ecotope_data.index)\r\n\r\n    weather_data = pd.read_csv(\"output/727935-24234.csv\").head(1)\r\n    weather_data.index = pd.to_datetime(weather_data['time'])\r\n    weather_data.drop(['conditions', 'time'], axis=1, inplace=True)\r\n    weather_data.replace(np.nan, 0.0, inplace=True)\r\n    weather_data.index = [datetime.datetime(year=2022, month=10, day=13, hour=17)]\r\n\r\n    # load data stored in data frame to database\r\n    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, is_sensor=True)\r\n\r\n    # commit changes to database and close connections\r\n    db_connection.commit()\r\n    db_connection.close()\r\n    db_cursor.close()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/ecotope_package_cs2306/load.py b/src/ecotope_package_cs2306/load.py
+--- a/src/ecotope_package_cs2306/load.py	
++++ b/src/ecotope_package_cs2306/load.py	
+@@ -18,12 +18,13 @@
+     Output: Login information
+     """
+ 
+-    if not os.path.exists(config_file_path):
+-        print(f"File path '{config_file_path}' does not exist.")
++    file_path = f"Configuration/{config_file_path}"
++    if not os.path.exists(file_path):
++        print(f"File path '{file_path}' does not exist.")
+         sys.exit()
+ 
+     configure = configparser.ConfigParser()
+-    configure.read(config_file_path)
++    configure.read(file_path)
+     config = {
+         "database": {'user': configure.get('database', 'user'),
+                      'password': configure.get('database', 'password'),
+Index: src/ecotope_package_cs2306/__init__.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from .extract import get_noaa_data, merge_noaa, json_to_df, extract_files\r\nfrom .transform import remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, aggregate_values, calculate_cop_values\r\nfrom.load import getLoginInfo, connectDB, checkTableExists, createNewTable, createUnknownColumns, loadDatabase\r\n\r\n#from .load import getLoginInfo, connectDB, checkTableExists, createNewTable, createUnknownColumns, loadDatabase\r\n\r\n__all__ = [\"get_noaa_data\", \"merge_noaa\", \"json_to_df\", \"extract_files\", \"remove_outliers\", \"ffill_missing\", \"sensor_adjustment\", \"get_energy_by_min\", \"verify_power_energy\", \"aggregate_values\", \"calculate_cop_values\" \"getLoginInfo\", \"connectDB\", \"checkTableExists\", \"createNewTable\", \"createUnknownColumns\", \"loadDatabase\"]
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/ecotope_package_cs2306/__init__.py b/src/ecotope_package_cs2306/__init__.py
+--- a/src/ecotope_package_cs2306/__init__.py	
++++ b/src/ecotope_package_cs2306/__init__.py	
+@@ -1,5 +1,5 @@
+ from .extract import get_noaa_data, merge_noaa, json_to_df, extract_files
+-from .transform import remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, aggregate_values, calculate_cop_values
++from .transform import remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
+ from.load import getLoginInfo, connectDB, checkTableExists, createNewTable, createUnknownColumns, loadDatabase
+ 
+ #from .load import getLoginInfo, connectDB, checkTableExists, createNewTable, createUnknownColumns, loadDatabase
+Index: .idea/DataPipelinePackage.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\" />\r\n    <orderEntry type=\"jdk\" jdkName=\"DataPipelinePackage\" jdkType=\"Python SDK\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/DataPipelinePackage.iml b/.idea/DataPipelinePackage.iml
+--- a/.idea/DataPipelinePackage.iml	
++++ b/.idea/DataPipelinePackage.iml	
+@@ -2,7 +2,7 @@
+ <module type="PYTHON_MODULE" version="4">
+   <component name="NewModuleRootManager">
+     <content url="file://$MODULE_DIR$" />
+-    <orderEntry type="jdk" jdkName="DataPipelinePackage" jdkType="Python SDK" />
++    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
+ </module>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ProjectRootManager\" version=\"2\" project-jdk-name=\"DataPipelinePackage\" project-jdk-type=\"Python SDK\" />\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	
++++ b/.idea/misc.xml	
+@@ -1,4 +1,4 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+-  <component name="ProjectRootManager" version="2" project-jdk-name="DataPipelinePackage" project-jdk-type="Python SDK" />
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7" project-jdk-type="Python SDK" />
+ </project>
+\ No newline at end of file
