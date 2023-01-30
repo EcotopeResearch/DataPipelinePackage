@@ -155,7 +155,7 @@ def verify_power_energy(df : pd.DataFrame):
                 low_bound = expected - margin_error
                 high_bound = expected + margin_error
                 if(row[pvar] != expected):
-                    out_df.loc[len(df.index)] = [row['time'], pvar, corres_energy, row[corres_energy], row[pvar], expected, abs(expected - row[pvar])] 
+                    out_df.loc[len(df.index)] = [row.index, pvar, corres_energy, row[corres_energy], row[pvar], expected, abs(expected - row[pvar])] 
                     path_to_output = 'output/power_energy_conflicts.csv'
                     if not os.path.isfile(path_to_output):
                       out_df.to_csv(path_to_output, index=False, header=out_df.columns)
