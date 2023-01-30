@@ -9,8 +9,6 @@ pd.set_option('display.max_columns', None)
 
 #from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
-#input files for tests, will come from parameters come deployment
-vars_filename = "input/Variable_Names.csv" #currently set to a test until real csv is completed
 
 def rename_sensors(df, variable_names_path):
     variable_data = pd.read_csv(variable_names_path)
@@ -43,7 +41,6 @@ def _rm_cols(col, bounds_df):
         #for this to be one line, it could be the following:
         #col.mask((col > float(bounds_df.loc[col.name]["upper_bound"])) | (col < float(bounds_df.loc[col.name]["lower_bound"])), other = np.NaN, inplace = True)
         col.mask((col > c_upper) | (col < c_lower), other = np.NaN, inplace = True)
-
 
 def _ffill(col, ffill_df):
     if(col.name in ffill_df.index):
@@ -250,7 +247,7 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 def aggregate_df(df: pd.DataFrame):
     """
     Input: Single pandas dataframe of minute-by-minute sensor data.
-    Output: List of sensor data dataframes, one by the hour, one by the day.
+    Output: Two pandas dataframes of by the hour and by the day aggregated sensor data.
     """
     #Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
     sum_df = df.filter(regex=".*Energy.*")
@@ -267,9 +264,9 @@ def aggregate_df(df: pd.DataFrame):
     hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
-    return [hourly_df, daily_df]
+    return hourly_df, daily_df
 
-
+""""
 # #Test function
 # def outlierTest():
 #     testdf_filename = "input/ecotope_wide_data.csv"
@@ -303,25 +300,28 @@ def aggregate_df(df: pd.DataFrame):
 #     df = get_energy_by_min(df)
 
 #     verify_power_energy(df)
+"""
+
 
 #Test main, will be removed once transform.py is complete
-
 def __main__():
     file_path = "input/df.pkl"
-    data = pd.read_pickle(file_path)
-    rename_sensors(data, vars_filename)
-    #data = get_energy_by_min(data)
-    #data = verify_power_energy(data)
-    #actually run all tests here
+    vars_filename = "input/Variable_Names.csv"
 
-    # result = calculate_cop_values(data)
-    #print(data)
-    """
-    df_list = aggregate_df(data)
-    print(data.head(10))
-    print(df_list[0].head(10))
-    print(df_list[1])
-    """
+    df = pd.read_pickle(file_path)
+    rename_sensors(df, vars_filename)
+    df = avg_duplicate_times(df)
+    df = remove_outliers(df, vars_filename)
+    df = ffill_missing(df, vars_filename)
+    df = sensor_adjustment(df)
+    df = get_energy_by_min(df)
+    verify_power_energy(df)
+    cop_values = calculate_cop_values(df)
+    hourly_df, daily_df = aggregate_df(df)
+
+    print(df.head(10))
+    print(hourly_df.head(10))
+    print(daily_df)
 
     pass
 
