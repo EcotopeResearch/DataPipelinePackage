@@ -137,8 +137,9 @@ def verify_power_energy(df : pd.DataFrame):
     Output: Creates or appends to a csv file
     """
     # margin of error still TBD, 5.0 for testing purposes 
-    df.reset_index()
     margin_error = 5.0
+    df['time'] = df.index
+    
     out_df = pd.DataFrame(columns=['time', 'power_variable', 'energy_variable', 'energy_value' ,'power_value', 'expected_power', 'difference_from_expected'])
     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
     power_vars = (df.filter(regex=".*Power.*")).filter(regex="^((?!Energy).)*$")
