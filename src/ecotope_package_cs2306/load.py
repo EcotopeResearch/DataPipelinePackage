@@ -8,14 +8,16 @@ import numpy as np
 import datetime
 
 pd.set_option('display.max_columns', None)
-# _config_directory = "Configuration/config.ini"
-"""
+_config_directory = "Configuration/config.ini"
+
 def set_config(cfg_file: str):
+    """
     Accessor function to set config directory in the format {directory}/
     Defaults to Configuration/config.ini
     Input: String of relative directory
+    """
     _config_directory = cfg_file
-"""
+
 
 def getLoginInfo(config_info) -> dict:
     """
