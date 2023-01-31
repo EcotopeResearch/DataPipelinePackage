@@ -7,7 +7,7 @@ from ecotope_package_cs2306.extract import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
 
-#from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
+# from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
 
 def rename_sensors(df, variable_names_path):

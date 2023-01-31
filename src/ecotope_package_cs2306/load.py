@@ -158,7 +158,7 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
         else:
             query = f"INSERT INTO {table_name} (time_pt, {sensor_names})\n" \
                     f"VALUES ('{date}', {sensor_data})"
-
+        
         cursor.execute(query)
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     """
 
     ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
-    # ecotope_data.dropna(axis=1, inplace=True)
+    ecotope_data.replace(np.NaN, 0, inplace=True)
     weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
     weather_data.set_index(["time"], inplace=True)
     weather_data = weather_data["2023-01-10 16:00:00-08:00":"2023-01-11 15:00:00-08:00"]
@@ -198,9 +198,9 @@ if __name__ == '__main__':
     # print(ecotope_data)
 
     # load data stored in data frame to database
-    loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
+    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
 
     # commit changes to database and close connections
-    # db_connection.commit()
+    db_connection.commit()
     db_connection.close()
     db_cursor.close()

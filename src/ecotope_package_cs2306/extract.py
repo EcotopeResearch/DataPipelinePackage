@@ -41,11 +41,11 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
-    db_cursor.execute(f"select * from {config_dict['sensor_table']['table_name']} order by time_pt DESC LIMIT 1")
+    db_cursor.execute(f"select * from {config_dict['pump']['table_name']} order by time_pt DESC LIMIT 1")
     last_row_data = pd.DataFrame(db_cursor.fetchall())
     db_cursor.execute(f"select column_name from information_schema. columns where table_schema = '"
                       f"{config_dict['database']['database']}' and table_name = '"
-                      f"{config_dict['sensor_table']['table_name']}'")
+                      f"{config_dict['pump']['table_name']}'")
     columns_names = db_cursor.fetchall()
     columns_names = [name[0] for name in columns_names]
     last_row_data.columns = columns_names
