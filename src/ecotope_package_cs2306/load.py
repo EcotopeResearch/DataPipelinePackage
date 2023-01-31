@@ -30,9 +30,15 @@ def getLoginInfo(file_path: str) -> dict:
                      'host': configure.get('database', 'host'),
                      'database': configure.get('database', 'database')},
         "pump": {"table_name": configure.get('pump', 'table_name'),
-                       "sensor_list": configure.get('pump', 'sensor_list').replace("[", "").replace("]", "").replace(" ", "").replace('"', "").split(',')},
+                       "sensor_list": configure.get('pump', 'sensor_list').replace("[", "").replace("]", "").replace(" ", "").replace('"', "").split(','),
+                       "foreign_key": configure.get('pump', 'foreign_key').split(" ") if configure.get('pump', 'foreign_key') != 'None' else False,
+                       "ref_table": configure.get('pump', 'referenced_table').split(" ") if configure.get('pump', 'referenced_table') != 'None' else False,
+                       "ref_column": configure.get('pump', 'referenced_column').split(" ") if configure.get('pump', 'referenced_column') != 'None' else False},
         "weather": {"table_name": configure.get('weather', 'table_name'),
-                          "sensor_list": configure.get('weather', 'sensor_list').replace("[", "").replace("]", "").replace(" ", "").replace('"', "").split(',')}
+                        "sensor_list": configure.get('weather', 'sensor_list').replace("[", "").replace("]", "").replace(" ", "").replace('"', "").split(','),
+                        "foreign_key": configure.get('weather', 'foreign_key').split(" ") if configure.get('weather', 'foreign_key') != 'None' else [],
+                        "ref_table": configure.get('weather', 'referenced_table').split(" ") if configure.get('weather', 'referenced_table') != 'None' else [],
+                        "ref_column": configure.get('weather', 'referenced_column').split(" ") if configure.get('weather', 'referenced_column') != 'None' else []}
     }
 
     print(f"Successfully fetched configuration information from file path {file_path}.")
@@ -80,7 +86,7 @@ def checkTableExists(cursor, table_name: str, dbname: str) -> int:
     return num_tables
 
 
-def createNewTable(cursor, table_name: str, table_column_names: list, foreign_table_name: str) -> bool:
+def createNewTable(cursor, table_name: str, table_column_names: list, foreign_info: dict) -> bool:
     """
     Creates a new table to store data in the given dataframe.
 
@@ -90,19 +96,25 @@ def createNewTable(cursor, table_name: str, table_column_names: list, foreign_ta
     :return: Boolean value representing if new table was created.
     """
 
-    create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
+    num_foreign_keys = len(foreign_info)
 
-    if foreign_table_name is not None:
-        create_table_statement += f"time_hour_pt datetime,\n"
+    create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
+
+    if num_foreign_keys:
+        for foreign_key_info in foreign_info:
+            fk_name, _, _ = foreign_key_info
+            create_table_statement += f"{fk_name} datetime,\n"
 
     for sensor in table_column_names:
         create_table_statement += f"{sensor} float,\n"
 
-    if foreign_table_name is not None:
-        create_table_statement += f"PRIMARY KEY (time_pt),\n"
-        create_table_statement += f"FOREIGN KEY (time_hour_pt) REFERENCES {foreign_table_name}(time_pt)\n"
+    if num_foreign_keys:
+        for foreign_key_info in foreign_info:
+            fk_name, ref_table, ref_column = foreign_key_info
+            create_table_statement += f"FOREIGN KEY ({fk_name}) REFERENCES {ref_table}({ref_column}),\n"
+        create_table_statement += f"PRIMARY KEY (time)\n"
     else:
-        create_table_statement += f"PRIMARY KEY (time_pt)\n"
+        create_table_statement += f"PRIMARY KEY (time)\n"
 
     create_table_statement += ");"
     cursor.execute(create_table_statement)
@@ -110,17 +122,7 @@ def createNewTable(cursor, table_name: str, table_column_names: list, foreign_ta
     return True
 
 
-def createUnknownColumns(cursor, column_names: list, table_name):
-    for column in column_names:
-        cursor.execute(f"select * from INFORMATION_SCHEMA.COLUMNS where table_name = "
-                          f"'{table_name}' and column_name = '{column}'")
-        column_exists = len(db_cursor.fetchall())
-
-        if not column_exists:
-            db_cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column} FLOAT NOT NULL;")
-
-
-def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
+def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
     """
     Loads data stored in passed dataframe into mySQL database using.
 
@@ -135,14 +137,14 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
     table_name = config_info[data_type]["table_name"]
     sensor_names = config_info[data_type]['sensor_list']
 
-    weather_table_name = None
-    foreign_key = False
-    if data_type == "pump":
-        foreign_key = True
-        weather_table_name = config_info['weather']['table_name']
+    num_foreign_keys = len(config_info[data_type]['foreign_key'])
+    foreign_info = list()
+    if num_foreign_keys:
+        for fk in range(num_foreign_keys):
+            foreign_info.append((config_info[data_type]['foreign_key'][fk], config_info[data_type]['ref_table'][fk], config_info[data_type]['ref_column'][fk]))
 
     if not checkTableExists(cursor, table_name, dbname):
-        if not createNewTable(cursor, table_name, config_info[data_type]['sensor_list'], weather_table_name):
+        if not createNewTable(cursor, table_name, config_info[data_type]['sensor_list'], foreign_info):
             print(f"Could not create new table {table_name} in database {dbname}")
             sys.exit()
 
@@ -152,13 +154,17 @@ def loadDatabase(cursor, dataframe: str, config_info: dict, data_type: str):
         sensor_names = str(list(dataframe.columns)).replace("[", "").replace("]", "").replace("'", "")
         sensor_data = str(list(time_data.values)).replace("[", "").replace("]", "")
 
-        if foreign_key:
-            query = f"INSERT INTO {table_name} (time_pt, time_hour_pt, {sensor_names})\n" \
-                    f"VALUES ('{date}', '{date.replace(minute=0, second=0)}', {sensor_data})"
+        if num_foreign_keys:
+            query = f"INSERT INTO {table_name} (time, "
+            for fk in range(num_foreign_keys-1):
+                query += f"{config_info[data_type]['foreign_key'][fk]}"
+            query += f"{config_info[data_type]['foreign_key'][num_foreign_keys-1]}, {sensor_names})\n"
+            query += f"VALUES ('{date}', '{date.replace(minute=0, second=0)}', {sensor_data})"
+
         else:
-            query = f"INSERT INTO {table_name} (time_pt, {sensor_names})\n" \
+            query = f"INSERT INTO {table_name} (time, {sensor_names})\n" \
                     f"VALUES ('{date}', {sensor_data})"
-        
+
         cursor.execute(query)
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
@@ -174,18 +180,6 @@ if __name__ == '__main__':
     # establish connection to database
     db_connection, db_cursor = connectDB(config_info=config_dict["database"])
 
-    """
-    ecotope_data = pd.read_csv(df_path)
-    ecotope_data.set_index("time", inplace=True)
-    ecotope_data.index = pd.to_datetime(ecotope_data.index)
-
-    weather_data = pd.read_csv("output/727935-24234.csv").head(1)
-    weather_data.index = pd.to_datetime(weather_data['time'])
-    weather_data.drop(['conditions', 'time'], axis=1, inplace=True)
-    weather_data.replace(np.nan, 0.0, inplace=True)
-    weather_data.index = [datetime.datetime(year=2022, month=10, day=13, hour=17)]
-    """
-
     ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
     ecotope_data.replace(np.NaN, 0, inplace=True)
     weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
@@ -198,6 +192,7 @@ if __name__ == '__main__':
     # print(ecotope_data)
 
     # load data stored in data frame to database
+    loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
     loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
 
     # commit changes to database and close connections

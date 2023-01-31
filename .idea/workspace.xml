@@ -23,24 +23,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="41dc0d27-ef20-4102-b924-8b00a6c6ef53" name="Default Changelist" comment="cop calc in transformation">
-      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2010.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2011.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2012.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2013.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output/weather/KBFI/727935-24234-2014.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output/weather/isd-history.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/BayviewDataPipeline" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/pipeline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/transform.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/BayviewDataPipeline/datapipeline/transform.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/calculate_cop.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/extract.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/gal120.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/load.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/transform.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/unit_convert.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Configuration/config.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Configuration/config.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ecotope_package_cs2306/load.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ecotope_package_cs2306/load.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,13 +64,13 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/emilx/PycharmProjects/MATH3450"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/emilx/PycharmProjects/MATH3450&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\emilx\OneDrive\Documents\GitHub\DataPipelinePackage\configuration" />
