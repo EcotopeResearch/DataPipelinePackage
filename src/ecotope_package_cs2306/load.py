@@ -6,24 +6,24 @@ import pandas as pd
 import os
 import numpy as np
 import datetime
+from ecotope_package_cs2306.extract import _config_directory
 
 pd.set_option('display.max_columns', None)
 
 
-def getLoginInfo(file_path: str) -> dict:
+def getLoginInfo() -> dict:
     """
-    Function will read login information from config.ini and return it in a config var.
+    Function will and return config.ini in a config var.
 
-    Input: config file
     Output: Login information
     """
 
-    if not os.path.exists(file_path):
-        print(f"File path '{file_path}' does not exist.")
+    if not os.path.exists(_config_directory):
+        print(f"File path '{_config_directory}' does not exist.")
         sys.exit()
 
     configure = configparser.ConfigParser()
-    configure.read(file_path)
+    configure.read(_config_directory)
     config = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),
@@ -41,7 +41,8 @@ def getLoginInfo(file_path: str) -> dict:
                         "ref_column": configure.get('weather', 'referenced_column').split(" ") if configure.get('weather', 'referenced_column') != 'None' else []}
     }
 
-    print(f"Successfully fetched configuration information from file path {file_path}.")
+    print(
+        f"Successfully fetched configuration information from file path {_config_directory}.")
     return config
 
 
