@@ -6,12 +6,12 @@ import gzip
 import os, json
 import datetime as dt
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecotope_package_cs2306.load import connectDB, getLoginInfo
+from ecotope_package_cs2306.load import connectDB, getLoginInfo, set_config
 import numpy as np
 
 _input_directory = "input/"
 _output_directory = "output/"
-_config_directory = "Configuration/config.ini"
+
 
 def set_input(input : str):
     """
@@ -28,14 +28,6 @@ def set_output(output: str):
     Input: String of relative directory
     """
     _output_directory = output
-
-def set_config(cfg_file: str):
-    """
-    Accessor function to set config directory in the format {directory}/
-    Defaults to Configuration/config.ini
-    Input: String of relative directory
-    """
-    _config_directory = cfg_file
 
 def get_last_line(config_file_path: str) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
