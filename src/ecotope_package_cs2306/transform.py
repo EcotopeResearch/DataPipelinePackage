@@ -33,8 +33,8 @@ def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-#Helper functions for remove_outliers and ffill_missing because I am too stupid to write a lambda
-def _rm_cols(col, bounds_df):
+
+def _rm_cols(col, bounds_df): #Helper function for remove_outliers
     if(col.name in bounds_df.index):
         c_lower = float(bounds_df.loc[col.name]["lower_bound"])
         c_upper = float(bounds_df.loc[col.name]["upper_bound"])
@@ -42,21 +42,7 @@ def _rm_cols(col, bounds_df):
         #col.mask((col > float(bounds_df.loc[col.name]["upper_bound"])) | (col < float(bounds_df.loc[col.name]["lower_bound"])), other = np.NaN, inplace = True)
         col.mask((col > c_upper) | (col < c_lower), other = np.NaN, inplace = True)
 
-def _ffill(col, ffill_df):
-    if(col.name in ffill_df.index):
-        cp = ffill_df.loc[col.name]["changepoint"]
-        length = ffill_df.loc[col.name]["ffill_length"]
-        if(length != length): #check for nan, set to 0
-            length = 0
-        length = int(length) #casting to int to avoid float errors
-        if(cp == 1): #ffill unconditionally
-            col.fillna(method='ffill', inplace = True)
-        elif(cp == 0): #ffill only up to length
-            col.fillna(method='ffill', inplace = True, limit = length)
-
-
-#TODO: remove_outliers STRETCH GOAL
-#Functionality for alarms being raised based on bounds needs to happen here. 
+#TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here. 
 def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
@@ -76,7 +62,19 @@ def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     return df
 
 
-#TODO: Improve function effiency with vectorization
+def _ffill(col, ffill_df): #Helper function for ffill_missing
+    if(col.name in ffill_df.index):
+        cp = ffill_df.loc[col.name]["changepoint"]
+        length = ffill_df.loc[col.name]["ffill_length"]
+        if(length != length): #check for nan, set to 0
+            length = 0
+        length = int(length) #casting to int to avoid float errors
+        if(cp == 1): #ffill unconditionally
+            col.fillna(method='ffill', inplace = True)
+        elif(cp == 0): #ffill only up to length
+            col.fillna(method='ffill', inplace = True, limit = length)
+
+
 def ffill_missing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
@@ -247,7 +245,7 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 def aggregate_df(df: pd.DataFrame):
     """
     Input: Single pandas dataframe of minute-by-minute sensor data.
-    Output: Two pandas dataframes of by the hour and by the day aggregated sensor data.
+    Output: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.
     """
     #Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
     sum_df = df.filter(regex=".*Energy.*")
@@ -266,7 +264,8 @@ def aggregate_df(df: pd.DataFrame):
 
     return hourly_df, daily_df
 
-""""
+
+"""" Test Functions, remove once file is complete
 # #Test function
 # def outlierTest():
 #     testdf_filename = "input/ecotope_wide_data.csv"
@@ -303,7 +302,7 @@ def aggregate_df(df: pd.DataFrame):
 """
 
 
-#Test main, will be removed once transform.py is complete
+""" Test main, will be removed once transform.py is complete
 def __main__():
     file_path = "input/df.pkl"
     vars_filename = "input/Variable_Names.csv"
@@ -327,4 +326,5 @@ def __main__():
 
 if __name__ == '__main__':
     __main__()
+"""
 
