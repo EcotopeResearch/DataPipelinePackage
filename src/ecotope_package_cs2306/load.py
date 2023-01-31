@@ -8,29 +8,28 @@ import numpy as np
 import datetime
 
 pd.set_option('display.max_columns', None)
-_config_directory = "Configuration/config.ini"
-
+# _config_directory = "Configuration/config.ini"
+"""
 def set_config(cfg_file: str):
-    """
     Accessor function to set config directory in the format {directory}/
     Defaults to Configuration/config.ini
     Input: String of relative directory
-    """
     _config_directory = cfg_file
+"""
 
-def getLoginInfo() -> dict:
+def getLoginInfo(config_info) -> dict:
     """
     Function will and return config.ini in a config var.
 
     Output: Login information
     """
 
-    if not os.path.exists(_config_directory):
-        print(f"File path '{_config_directory}' does not exist.")
+    if not os.path.exists(config_info):
+        print(f"File path '{config_info}' does not exist.")
         sys.exit()
 
     configure = configparser.ConfigParser()
-    configure.read(_config_directory)
+    configure.read(config_info)
     config = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),
