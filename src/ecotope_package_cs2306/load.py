@@ -41,7 +41,7 @@ def getLoginInfo(config_info) -> dict:
     }
 
     print(
-        f"Successfully fetched configuration information from file path {_config_directory}.")
+        f"Successfully fetched configuration information from file path {config_info}.")
     return config
 
 
