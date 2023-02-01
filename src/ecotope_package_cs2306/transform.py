@@ -42,7 +42,6 @@ def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-
 def _rm_cols(col, bounds_df): #Helper function for remove_outliers
     if(col.name in bounds_df.index):
         c_lower = float(bounds_df.loc[col.name]["lower_bound"])
