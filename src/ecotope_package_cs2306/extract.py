@@ -45,13 +45,14 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     last_row_data.drop(['time', 'time_hour'], axis=1, inplace=True)
 
     return last_row_data
-
+"YearMonthDateMilitaryTime"
 def extract_new(last_row: pd.DataFrame):
     last_row = last_row.squeeze()
-    print(last_row[0])
-    time = last_row.index
-    print(time)
+    time = last_row.name
+    time = time.to_pydatetime()
     print(type(time))
+    time_str = time.strftime("%Y%m%d%H%M%S")
+    print(time_str)
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
   """
@@ -260,7 +261,6 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 def __main__():
     df = get_last_line("Configuration/config.ini")
-    print(df)
     extract_new(df)
 
 if __name__ == '__main__':
