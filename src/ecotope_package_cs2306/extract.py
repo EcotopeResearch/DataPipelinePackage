@@ -9,25 +9,25 @@ from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, 
 from ecotope_package_cs2306.load import connectDB, getLoginInfo
 import numpy as np
 
-_input_directory = "input/"
-_output_directory = "output/"
-
-
-def set_input(input : str):
+def set_input(input : str = "input/"):
     """
     Accessor function to set input directory in the format {directory}/
     Defaults to input/
     Input: String of relative directory
     """
+    global _input_directory
     _input_directory = input
+    return _input_directory
 
-def set_output(output: str):
+def set_output(output: str = "output/"):
     """
     Accessor function to set output directory in the format {directory}/
     Defaults to output/
     Input: String of relative directory
     """
+    global _output_directory
     _output_directory = output
+    return _output_directory
 
 def get_last_line(config_file_path: str) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
@@ -45,14 +45,13 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     last_row_data.drop(['time', 'time_hour'], axis=1, inplace=True)
 
     return last_row_data
-"YearMonthDateMilitaryTime"
-def extract_new(last_row: pd.DataFrame):
-    last_row = last_row.squeeze()
-    time = last_row.name
+
+def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
+    time = last_row.squeeze().name
     time = time.to_pydatetime()
-    print(type(time))
-    time_str = time.strftime("%Y%m%d%H%M%S")
-    print(time_str)
+    time_int = int(time.strftime("%Y%m%d%H%M%S"))
+    return list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
+
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
   """
@@ -62,9 +61,9 @@ def extract_files(data_subdirect : str, extension : str) -> List[str]:
   Output: List of filenames 
   """
   filenames = []
-  for file in os.listdir(f"{_input_directory}{data_subdirect}"):
+  for file in os.listdir(f"{data_subdirect}"):
     if file.endswith(extension):
-      full_filename = os.path.join(f"{_input_directory}{data_subdirect}", file)
+      full_filename = os.path.join(f"{data_subdirect}", file)
       filenames.append(full_filename)
   
   return filenames
@@ -260,8 +259,11 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
+    set_input()
     df = get_last_line("Configuration/config.ini")
-    extract_new(df)
+    json_filenames = extract_files("data/", ".gz")
+    filenames = extract_new(df, json_filenames)
+    print(filenames)
 
 if __name__ == '__main__':
     __main__()
