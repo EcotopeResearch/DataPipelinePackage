@@ -33,7 +33,7 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
-    db_cursor.execute(f"select * from {config_dict['pump']['table_name']} order by time_pt DESC LIMIT 1")
+    db_cursor.execute(f"select * from {config_dict['pump']['table_name']} order by time DESC LIMIT 1")
     last_row_data = pd.DataFrame(db_cursor.fetchall())
     db_cursor.execute(f"select column_name from information_schema. columns where table_schema = '"
                       f"{config_dict['database']['database']}' and table_name = '"
@@ -41,13 +41,17 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     columns_names = db_cursor.fetchall()
     columns_names = [name[0] for name in columns_names]
     last_row_data.columns = columns_names
-    last_row_data.set_index(last_row_data['time_pt'], inplace=True)
-    last_row_data.drop(['time_pt', 'time_hour_pt'], axis=1, inplace=True)
-    print(last_row_data)
+    last_row_data.set_index(last_row_data['time'], inplace=True)
+    last_row_data.drop(['time', 'time_hour'], axis=1, inplace=True)
+
     return last_row_data
 
 def extract_new(last_row: pd.DataFrame):
-    last_row 
+    last_row = last_row.squeeze()
+    print(last_row[0])
+    time = last_row.index
+    print(time)
+    print(type(time))
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
   """
@@ -255,9 +259,9 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
-    # pass
-    val = get_last_line(_config_directory)
-    print(val)
+    df = get_last_line("Configuration/config.ini")
+    print(df)
+    extract_new(df)
 
 if __name__ == '__main__':
     __main__()

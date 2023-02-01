@@ -8,9 +8,9 @@ import numpy as np
 import datetime
 
 pd.set_option('display.max_columns', None)
+_config_directory = "Configuration/config.ini"
 
-
-def getLoginInfo(config_info) -> dict:
+def getLoginInfo(config_info : str = _config_directory) -> dict:
     """
     Function will and return config.ini in a config var.
 
@@ -43,7 +43,7 @@ def getLoginInfo(config_info) -> dict:
     print(
         f"Successfully fetched configuration information from file path {config_info}.")
     return config
-
+    
 
 def connectDB(config_info: dict):
     """
