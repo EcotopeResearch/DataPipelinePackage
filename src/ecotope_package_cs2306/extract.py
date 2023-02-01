@@ -40,6 +40,11 @@ def set_data(data: str = "data/"):
     return _data_directory
 
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
+    """
+    Function retrieves the last line from the database with the most recent datetime.
+    Input: Path to config file (defaulr is set in load.py)
+    Output: One line DF of the last entry
+    """
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
@@ -57,6 +62,11 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     return last_row_data
 
 def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
+    """
+    Function filters the filenames to only those newer than the last date.
+    Input: The last row in the database, List of filenames to be filtered
+    Output: Filtered list of filenames
+    """
     time = last_row.squeeze().name
     time = time.to_pydatetime()
     time_int = int(time.strftime("%Y%m%d%H%M%S"))

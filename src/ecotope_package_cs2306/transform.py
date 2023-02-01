@@ -10,7 +10,7 @@ pd.set_option('display.max_columns', None)
 # from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
 
-def round_time(df):
+def round_time(df : pd.DataFrame):
     """
     Function takes in a dataframe and rounds dataTime index to the nearest minute.
     Input: Pandas dataframe
@@ -19,7 +19,7 @@ def round_time(df):
     df.index = df.index.round('T')
 
 
-def rename_sensors(df, variable_names_path):
+def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv"):
     variable_data = pd.read_csv(variable_names_path)
     variable_data = variable_data[1:86]
     variable_data = variable_data[['variable_alias', 'variable_name']]
@@ -55,7 +55,7 @@ def _rm_cols(col, bounds_df): #Helper function for remove_outliers
         col.mask((col > c_upper) | (col < c_lower), other = np.NaN, inplace = True)
 
 #TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here. 
-def remove_outliers(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
+def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
@@ -87,7 +87,7 @@ def _ffill(col, ffill_df): #Helper function for ffill_missing
             col.fillna(method='ffill', inplace = True, limit = length)
 
 
-def ffill_missing(df : pd.DataFrame, vars_filename) -> pd.DataFrame:
+def ffill_missing(df : pd.DataFrame, vars_filename : str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
     Input: Pandas dataframe
