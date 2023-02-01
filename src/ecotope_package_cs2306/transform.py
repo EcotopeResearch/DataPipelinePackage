@@ -40,9 +40,9 @@ def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
     """
     df['time'] = df.index
     duplicateRows = df[df.duplicated(['time'])]
-    print(duplicateRows)
-    del df['time']
+    #print(duplicateRows)
     df = df.groupby('time').mean()
+    del df['time']
     return df
 
 
