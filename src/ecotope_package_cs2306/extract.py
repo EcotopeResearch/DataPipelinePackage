@@ -169,6 +169,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         # Drop columns that were replaced
         temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour", "precip6Hour", "year", "month", "day", "hour", "windDirection"], axis = 1)
         
+        temp_df.set_index(["time"], inplace=True)
         # Save df in dict
         formatted_dfs[station_ids[value1]] = temp_df
 
