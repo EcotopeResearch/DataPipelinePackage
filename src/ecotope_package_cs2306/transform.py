@@ -10,6 +10,15 @@ pd.set_option('display.max_columns', None)
 # from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
 
+def round_time(df):
+    """
+    Function takes in a dataframe and rounds dataTime index to the nearest minute.
+    Input: Pandas dataframe
+    Output: None
+    """
+    df.index = df.index.round('T')
+
+
 def rename_sensors(df, variable_names_path):
     variable_data = pd.read_csv(variable_names_path)
     variable_data = variable_data[1:86]
@@ -302,7 +311,7 @@ def aggregate_df(df: pd.DataFrame):
 """
 
 
-""" Test main, will be removed once transform.py is complete
+"""# Test main, will be removed once transform.py is complete
 def __main__():
     file_path = "input/df.pkl"
     vars_filename = "input/Variable_Names.csv"
@@ -321,6 +330,7 @@ def __main__():
     print(df.head(10))
     print(hourly_df.head(10))
     print(daily_df)
+    
 
     pass
 
