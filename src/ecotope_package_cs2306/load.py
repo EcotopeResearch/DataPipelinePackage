@@ -18,7 +18,7 @@ def set_config(cfg : str = "Configuration/config.ini"):
     global _config_directory 
     _config_directory = cfg
     return _config_directory
-
+set_config()
 def getLoginInfo(config_info : str = _config_directory) -> dict:
     """
     Function will and return config.ini in a config var.
@@ -208,4 +208,3 @@ if __name__ == '__main__':
     db_connection.commit()
     db_connection.close()
     db_cursor.close()
-set_config()
