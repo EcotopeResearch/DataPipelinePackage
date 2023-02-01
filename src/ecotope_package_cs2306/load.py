@@ -8,7 +8,16 @@ import numpy as np
 import datetime
 
 pd.set_option('display.max_columns', None)
-_config_directory = "Configuration/config.ini"
+
+def set_config(cfg : str = "Configuration/config.ini"):
+    """
+    Accessor function to set input directory in the format {directory}/
+    Defaults to input/
+    Input: String of relative directory
+    """
+    global _config_directory 
+    _config_directory = cfg
+    return _config_directory
 
 def getLoginInfo(config_info : str = _config_directory) -> dict:
     """
@@ -199,3 +208,4 @@ if __name__ == '__main__':
     db_connection.commit()
     db_connection.close()
     db_cursor.close()
+set_config()

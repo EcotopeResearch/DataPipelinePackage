@@ -6,7 +6,7 @@ import gzip
 import os, json
 import datetime as dt
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecotope_package_cs2306.load import connectDB, getLoginInfo
+from ecotope_package_cs2306.load import connectDB, getLoginInfo, _config_directory
 import numpy as np
 
 def set_input(input : str = "input/"):
@@ -39,7 +39,7 @@ def set_data(data: str = "data/"):
     _data_directory = data
     return _data_directory
 
-def get_last_line(config_file_path: str) -> pd.DataFrame:
+def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
@@ -270,11 +270,7 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
-    set_input()
-    df = get_last_line("Configuration/config.ini")
-    json_filenames = extract_files(".gz")
-    filenames = extract_new(df, json_filenames)
-    print(filenames)
+    pass
 
 if __name__ == '__main__':
     __main__()
