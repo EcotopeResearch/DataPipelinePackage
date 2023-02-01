@@ -29,6 +29,16 @@ def set_output(output: str = "output/"):
     _output_directory = output
     return _output_directory
 
+def set_data(data: str = "data/"):
+    """
+    Accessor function to set data directory in the format {directory}/
+    Defaults to data/
+    Input: String of relative directory
+    """
+    global _data_directory
+    _data_directory = data
+    return _data_directory
+
 def get_last_line(config_file_path: str) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
@@ -53,7 +63,7 @@ def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
     return list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
 
 
-def extract_files(data_subdirect : str, extension : str) -> List[str]:
+def extract_files(extension : str) -> List[str]:
   """
   Function takes in the subdirectory for data and the file extension and returns 
   a list of paths files in that directory of that type.
@@ -61,9 +71,9 @@ def extract_files(data_subdirect : str, extension : str) -> List[str]:
   Output: List of filenames 
   """
   filenames = []
-  for file in os.listdir(f"{data_subdirect}"):
+  for file in os.listdir(_data_directory):
     if file.endswith(extension):
-      full_filename = os.path.join(f"{data_subdirect}", file)
+      full_filename = os.path.join(_data_directory, file)
       filenames.append(full_filename)
   
   return filenames
@@ -261,9 +271,13 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 def __main__():
     set_input()
     df = get_last_line("Configuration/config.ini")
-    json_filenames = extract_files("data/", ".gz")
+    json_filenames = extract_files(".gz")
     filenames = extract_new(df, json_filenames)
     print(filenames)
 
 if __name__ == '__main__':
     __main__()
+
+set_input()
+set_output()
+set_data()
