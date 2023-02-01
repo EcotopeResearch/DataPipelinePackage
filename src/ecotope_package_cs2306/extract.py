@@ -47,7 +47,8 @@ def get_last_line(config_file_path: str) -> pd.DataFrame:
     return last_row_data
 
 def extract_new(last_row: pd.DataFrame):
-    last_row 
+    last_row = last_row.squeeze()
+    print(last_row)
 
 def extract_files(data_subdirect : str, extension : str) -> List[str]:
   """
@@ -255,11 +256,18 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
+<<<<<<< Updated upstream
     # pass
     # val = get_last_line(_config_directory)
     # print(val)
     res = get_last_line("Configuration/config.ini")
     print(res)
+=======
+    df = get_last_line("Configuration/config.ini")
+    print(df)
+    out = extract_new(df)
+    print(out)
+>>>>>>> Stashed changes
 
 if __name__ == '__main__':
     __main__()
