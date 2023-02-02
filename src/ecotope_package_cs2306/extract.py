@@ -6,7 +6,7 @@ import gzip
 import os, json
 import datetime as dt
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecotope_package_cs2306.load import connectDB, getLoginInfo, _config_directory
+from ecotope_package_cs2306.load import connectDB, getLoginInfo, set_config
 import numpy as np
 
 def set_input(input : str = "input/"):
@@ -38,6 +38,11 @@ def set_data(data: str = "data/"):
     global _data_directory
     _data_directory = data
     return _data_directory
+
+set_input()
+set_output()
+set_data()
+_config_directory = set_config()
 
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     """
@@ -284,7 +289,3 @@ def __main__():
 
 if __name__ == '__main__':
     __main__()
-
-set_input()
-set_output()
-set_data()
