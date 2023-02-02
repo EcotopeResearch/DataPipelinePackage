@@ -103,6 +103,7 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 
 
 if __name__ == "__main__":
+    """
     ecotope_data = pd.read_csv("output/1_11_23.csv")
     ecotope_data.set_index(['time'], inplace=True)
 
@@ -117,3 +118,6 @@ if __name__ == "__main__":
 
     ecotope_data = get_energy_by_min(ecotope_data)
     cop = calculate_cop_values(ecotope_data)
+    """
+    data = pd.read_csv("input/Variable_Names.csv")
+    print(str(list(data[1:86]['variable_name'])).replace("'", "").replace(" ", ""))

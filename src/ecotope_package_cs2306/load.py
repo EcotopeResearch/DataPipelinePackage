@@ -27,10 +27,12 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
                      'password': configure.get('database', 'password'),
                      'host': configure.get('database', 'host'),
                      'database': configure.get('database', 'database')},
-        "pump": {"table_name": configure.get('pump', 'table_name'),
-                       "sensor_list": configure.get('pump', 'sensor_list').split(',')},
-        "weather": {"table_name": configure.get('weather', 'table_name'),
-                        "sensor_list": configure.get('weather', 'sensor_list').split(',')}
+        "minute": {"table_name": configure.get('minute', 'table_name'),
+                "sensor_list": configure.get('minute', 'sensor_list').split(',')},
+        "hour": {"table_name": configure.get('hour', 'table_name'),
+                "sensor_list": configure.get('hour', 'sensor_list').split(',')},
+        "day": {"table_name": configure.get('day', 'table_name'),
+                "sensor_list": configure.get('day', 'sensor_list').split(',')}
     }
 
     print(
@@ -92,7 +94,7 @@ def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
     create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
 
     for sensor in table_column_names:
-        create_table_statement += f"{sensor} float,\n"
+        create_table_statement += f"{sensor} float default 0.0,\n"
 
     create_table_statement += f"PRIMARY KEY (time)\n"
 
