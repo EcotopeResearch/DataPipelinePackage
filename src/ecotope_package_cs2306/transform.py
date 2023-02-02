@@ -277,6 +277,19 @@ def aggregate_df(df: pd.DataFrame):
     return hourly_df, daily_df
 
 
+def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame, cop_values : dict ) -> pd.DataFrame:
+    """
+    Function left-joins the the weather data and COP data to the hourly dataframe.
+    Input: Hourly dataframe, noaa dataframe, and cop_values dictionary 
+    Output: a single dataframe
+    """
+    out_df = pd.merge(hourly_data, noaa_data, how="left")
+    for value in cop_values:
+      out_df = pd.merge(out_df, cop_values[value], how="left")
+    
+    print(out_df)
+
+
 """" Test Functions, remove once file is complete
 # #Test function
 # def outlierTest():
