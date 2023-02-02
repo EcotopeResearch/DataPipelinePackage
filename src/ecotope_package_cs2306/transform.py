@@ -9,6 +9,8 @@ pd.set_option('display.max_columns', None)
 
 # from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
+def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
+    df = pd.concat([df, last_row], join = "inner")
 
 def round_time(df : pd.DataFrame):
     """

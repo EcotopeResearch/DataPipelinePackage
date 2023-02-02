@@ -1,5 +1,5 @@
 # Sets configurations
-
+# TODO This doesn't work
 def set_input(input: str = "input/"):
     """
     Accessor function to set input directory in the format {directory}/
