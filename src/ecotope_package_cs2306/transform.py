@@ -381,7 +381,7 @@ def get_zone_Temp120(df_row):
     return zone_Temp_120
 
     
-def get_Storage_Gals120(df) -> pd.DataFrame:
+def get_storage_gals120(df) -> pd.DataFrame:
     """
     Function that creates and appends the Gals120 data onto the Dataframe
     Input: A Pandas Dataframe
@@ -401,7 +401,7 @@ def avgRowValsOfColContainingSubstring(df, substring):
         
         return result
 
-def get_Temp_Zones120(df) -> pd.DataFrame:
+def get_temp_zones120(df) -> pd.DataFrame:
     df['Temp_top'] = avgRowValsOfColContainingSubstring(df, "Temp1")
     df['Temp_midtop'] = avgRowValsOfColContainingSubstring(df, "Temp2")
     df['Temp_mid'] = avgRowValsOfColContainingSubstring(df, "Temp3")
