@@ -36,6 +36,7 @@ def set_config(cfg: str = "Configuration/config.ini"):
     Input: String of relative directory
     """
     _config_directory = cfg
+    print(_config_directory)
     return _config_directory
 
 
@@ -48,3 +49,4 @@ _input_directory = set_input()
 _output_directory = set_output()
 _data_directory = set_data()
 _config_directory = set_config()
+print("DONE")
