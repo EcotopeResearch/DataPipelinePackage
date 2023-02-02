@@ -72,7 +72,8 @@ def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
     Input: The last row in the database, List of filenames to be filtered
     Output: Filtered list of filenames
     """
-    time = last_row.squeeze().name
+    time = last_row.squeeze()
+    time = time.name
     time = time.to_pydatetime()
     time_int = int(time.strftime("%Y%m%d%H%M%S"))
     return list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
