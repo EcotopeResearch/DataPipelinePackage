@@ -92,7 +92,7 @@ def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
     create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
 
     for sensor in table_column_names:
-        create_table_statement += f"{sensor} float,\n"
+        create_table_statement += f"{sensor} float default 0.0,\n"
 
     create_table_statement += f"PRIMARY KEY (time)\n"
 
