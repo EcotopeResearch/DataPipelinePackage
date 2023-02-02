@@ -284,15 +284,22 @@ def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame) -> pd.D
     Output: A single, joined dataframe
     """
     out_df = hourly_data.join(noaa_data)
-    # for value in cop_values:
-    #   out_df = out_df.join(cop_values[value])
-    
+    return out_df
+
+
+def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.DataFrame:
+    """
+    Function left-joins the the daily data and COP data.
+    Input: Daily dataframe and cop_values dictionary 
+    Output: A single, joined dataframe
+    """
+    out_df = daily_data.join(cop_data)
     return out_df
 
 
 if __name__ == '__main__':
     df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
-    
+
     rename_sensors(df, "input/Variable_Names.csv")
     df = get_energy_by_min(df)
     # df = remove_outliers(df, "input/Variable_Names.csv")
