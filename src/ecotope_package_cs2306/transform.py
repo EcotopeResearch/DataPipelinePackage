@@ -3,12 +3,14 @@ import numpy as np
 import os
 from dateutil.parser import parse
 from ecotope_package_cs2306.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
-from ecotope_package_cs2306.extract import _input_directory, _output_directory
+from ecotope_package_cs2306.config import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
 
 # from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
 
+def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
+    df = pd.concat([df, last_row], join = "inner")
 
 def round_time(df : pd.DataFrame):
     """

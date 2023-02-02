@@ -6,19 +6,9 @@ import pandas as pd
 import os
 import numpy as np
 import datetime
-
+from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
-global _config_directory
-def set_config(cfg : str = "Configuration/config.ini"):
-    """
-    Accessor function to set input directory in the format {directory}/
-    Defaults to input/
-    Input: String of relative directory
-    """
-    global _config_directory
-    _config_directory = cfg
-    return _config_directory
-set_config()
+
 def getLoginInfo(config_info : str = _config_directory) -> dict:
     """
     Function will and return config.ini in a config var.

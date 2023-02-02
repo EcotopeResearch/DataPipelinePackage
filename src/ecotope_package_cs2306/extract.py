@@ -6,43 +6,9 @@ import gzip
 import os, json
 import datetime as dt
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecotope_package_cs2306.load import connectDB, getLoginInfo, set_config
+from ecotope_package_cs2306.load import connectDB, getLoginInfo
+from ecotope_package_cs2306.config import _config_directory, _data_directory, _output_directory
 import numpy as np
-
-def set_input(input : str = "input/"):
-    """
-    Accessor function to set input directory in the format {directory}/
-    Defaults to input/
-    Input: String of relative directory
-    """
-    global _input_directory
-    _input_directory = input
-    return _input_directory
-
-def set_output(output: str = "output/"):
-    """
-    Accessor function to set output directory in the format {directory}/
-    Defaults to output/
-    Input: String of relative directory
-    """
-    global _output_directory
-    _output_directory = output
-    return _output_directory
-
-def set_data(data: str = "data/"):
-    """
-    Accessor function to set data directory in the format {directory}/
-    Defaults to data/
-    Input: String of relative directory
-    """
-    global _data_directory
-    _data_directory = data
-    return _data_directory
-
-set_input()
-set_output()
-set_data()
-_config_directory = set_config()
 
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     """
