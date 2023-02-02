@@ -38,8 +38,8 @@ def aggregate_values(df: pd.DataFrame) -> dict:
 
     avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].mean(axis=0, skipna=True)
 
-    print(avg_sd)
-    print(avg_sd_6)
+    # print(avg_sd)
+    # print(avg_sd_6)
 
     cop_inter = dict()
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
@@ -73,6 +73,7 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
     ENERGYIN_SWINGTANK2 = 0
 
     cop_inter = aggregate_values(df)
+    print(cop_inter)
 
     cop_values = dict()
     cop_values['COP_DHWSys'] = (convert_to_kwh(cop_inter['HeatOut_HW']) + (
@@ -112,9 +113,7 @@ if __name__ == "__main__":
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     ecotope_data.rename(columns=variable_alias_true_dict, inplace=True)
-    ecotope_data.ffill(axis=0, inplace=True)
+    # ecotope_data.ffill(axis=0, inplace=True)
 
     ecotope_data = get_energy_by_min(ecotope_data)
-    print(ecotope_data)
-    # cop = calculate_cop_values(ecotope_data)
-    # print(cop)
+    cop = calculate_cop_values(ecotope_data)

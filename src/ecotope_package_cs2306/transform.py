@@ -192,11 +192,14 @@ def aggregate_values(df: pd.DataFrame) -> dict:
     # print(df)
     after_6pm = df.index[0].replace(hour=6, minute=0)
 
-    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
+    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 
+    'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 
+    'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 
+    'EnergyIn_HPWH']].resample('D').mean()
 
-    avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].mean(axis=0, skipna=True)
+    avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
 
-    cop_inter = dict()
+    cop_inter = pd.DataFrame(index=avg_sd.index)
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
     cop_inter['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                        avg_sd['Temp_PrimaryStorageOutTop'] -
@@ -217,42 +220,37 @@ def aggregate_values(df: pd.DataFrame) -> dict:
                                                           avg_sd['Temp_RecircSupply_MXV2'] -
                                                           avg_sd['Temp_RecircReturn_MXV2'])
     cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * (1/60) * (1/1000)
-    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH'] * (1/60) * (1/1000)
+    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH']
 
     return cop_inter
 
 
 def calculate_cop_values(df: pd.DataFrame) -> dict:
     heatLoss_fixed = 27.296
-    ENERGYIN_SWINGTANK1 = 0
-    ENERGYIN_SWINGTANK2 = 0
 
     cop_inter = aggregate_values(df)
 
-    cop_values = dict()
+    cop_values = pd.DataFrame(cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
     cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
         energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
         energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
-            ENERGYIN_SWINGTANK2)
+            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
     cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
         energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
         energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
-            ENERGYIN_SWINGTANK2)
+            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
     cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
         energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
-                                             cop_inter['EnergyIn_SecLoopPump'] + ENERGYIN_SWINGTANK1 +
-                                             ENERGYIN_SWINGTANK2))
+                                             cop_inter['EnergyIn_SecLoopPump']))
 
     cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
                                      (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
     cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
                                      (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
-
+    
     return cop_values
 
  
@@ -279,7 +277,7 @@ def aggregate_df(df: pd.DataFrame):
     return hourly_df, daily_df
 
 
-def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame, cop_values : dict ) -> pd.DataFrame:
+def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame) -> pd.DataFrame:
     """
     Function left-joins the the weather data and COP data to the hourly dataframe.
     Input: Hourly dataframe, noaa dataframe, and cop_values dictionary 
@@ -294,14 +292,18 @@ def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame, cop_val
 
 if __name__ == '__main__':
     df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
+    
     rename_sensors(df, "input/Variable_Names.csv")
-    df = remove_outliers(df, "input/Variable_Names.csv")
+    df = get_energy_by_min(df)
+    # df = remove_outliers(df, "input/Variable_Names.csv")
     df = ffill_missing(df, "input/Variable_Names.csv")
     df = sensor_adjustment(df)
-    df = get_energy_by_min(df)
     verify_power_energy(df)
-    print(df)
     cop_values = calculate_cop_values(df)
+    hourly_df, daily_df = aggregate_df(df)
+    hourly_df = join_to_hourly(hourly_df, noaa_df)
+    print(hourly_df)
+
 
 """" Test Functions, remove once file is complete
 # #Test function
