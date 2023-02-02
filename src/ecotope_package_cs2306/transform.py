@@ -260,8 +260,8 @@ def aggregate_df(df: pd.DataFrame):
     Output: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.
     """
     #Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
-    sum_df = df.filter(regex=".*Energy.*")
-    mean_df = df.filter(regex=".*[^Energy].*")
+    sum_df = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
+    mean_df = df.filter(regex=".*[^Energy].*") #NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
 
     #Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     hourly_sum = sum_df.resample('H').sum()
