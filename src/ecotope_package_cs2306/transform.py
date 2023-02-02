@@ -187,7 +187,7 @@ def verify_power_energy(df : pd.DataFrame):
 
 
 def aggregate_values(df: pd.DataFrame) -> dict:
-    print(df)
+    # print(df)
     after_6pm = df.index[0].replace(hour=6, minute=0)
 
     avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 'EnergyIn_HPWH']].mean(axis=0, skipna=True)
@@ -287,9 +287,19 @@ def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame, cop_val
     # for value in cop_values:
     #   out_df = out_df.join(cop_values[value])
     
-    print(out_df)
     return out_df
 
+
+if __name__ == '__main__':
+    df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
+    rename_sensors(df, "input/Variable_Names.csv")
+    df = remove_outliers(df, "input/Variable_Names.csv")
+    df = ffill_missing(df, "input/Variable_Names.csv")
+    df = sensor_adjustment(df)
+    df = get_energy_by_min(df)
+    verify_power_energy(df)
+    print(df)
+    cop_values = calculate_cop_values(df)
 
 """" Test Functions, remove once file is complete
 # #Test function
