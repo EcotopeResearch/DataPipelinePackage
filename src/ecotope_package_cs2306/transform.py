@@ -261,7 +261,7 @@ def aggregate_df(df: pd.DataFrame):
     """
     #Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
     sum_df = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
-    mean_df = df.filter(regex=".*[^Energy].*") #NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
+    mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$") #NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
 
     #Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     hourly_sum = sum_df.resample('H').sum()
@@ -441,8 +441,9 @@ if __name__ == '__main__':
     verify_power_energy(df)
     cop_values = calculate_cop_values(df)
     hourly_df, daily_df = aggregate_df(df)
-    hourly_df = join_to_hourly(hourly_df, noaa_df)
-    print(hourly_df)
+    # hourly_df = join_to_hourly(hourly_df, noaa_df)
+    print(len(hourly_df.columns))
+    print(len(daily_df.columns))
 
 
 """" Test Functions, remove once file is complete
