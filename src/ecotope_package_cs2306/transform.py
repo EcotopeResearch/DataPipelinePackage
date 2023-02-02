@@ -283,9 +283,9 @@ def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame, cop_val
     Input: Hourly dataframe, noaa dataframe, and cop_values dictionary 
     Output: A single, joined dataframe
     """
-    out_df = pd.merge(hourly_data, noaa_data, how="left")
+    out_df = hourly_data.join(noaa_data)
     for value in cop_values:
-      out_df = pd.merge(out_df, cop_values[value], how="left")
+      out_df = out_df.join(cop_values[value])
     
     print(out_df)
     return out_df
