@@ -277,7 +277,7 @@ def aggregate_df(df: pd.DataFrame):
     return hourly_df, daily_df
 
 
-def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame ) -> pd.DataFrame:
+def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame, cop_values : dict ) -> pd.DataFrame:
     """
     Function left-joins the the weather data and COP data to the hourly dataframe.
     Input: Hourly dataframe, noaa dataframe, and cop_values dictionary 
