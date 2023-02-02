@@ -28,15 +28,9 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
                      'host': configure.get('database', 'host'),
                      'database': configure.get('database', 'database')},
         "pump": {"table_name": configure.get('pump', 'table_name'),
-                       "sensor_list": configure.get('pump', 'sensor_list').split(','),
-                       "foreign_key": configure.get('pump', 'foreign_key').split(" ") if configure.get('pump', 'foreign_key') != 'None' else False,
-                       "ref_table": configure.get('pump', 'referenced_table').split(" ") if configure.get('pump', 'referenced_table') != 'None' else False,
-                       "ref_column": configure.get('pump', 'referenced_column').split(" ") if configure.get('pump', 'referenced_column') != 'None' else False},
+                       "sensor_list": configure.get('pump', 'sensor_list').split(',')},
         "weather": {"table_name": configure.get('weather', 'table_name'),
-                        "sensor_list": configure.get('weather', 'sensor_list').split(','),
-                        "foreign_key": configure.get('weather', 'foreign_key').split(" ") if configure.get('weather', 'foreign_key') != 'None' else [],
-                        "ref_table": configure.get('weather', 'referenced_table').split(" ") if configure.get('weather', 'referenced_table') != 'None' else [],
-                        "ref_column": configure.get('weather', 'referenced_column').split(" ") if configure.get('weather', 'referenced_column') != 'None' else []}
+                        "sensor_list": configure.get('weather', 'sensor_list').split(',')}
     }
 
     print(
@@ -85,7 +79,7 @@ def checkTableExists(cursor, table_name: str, dbname: str) -> int:
     return num_tables
 
 
-def createNewTable(cursor, table_name: str, table_column_names: list, foreign_info: dict) -> bool:
+def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
     """
     Creates a new table to store data in the given dataframe.
 
@@ -95,25 +89,12 @@ def createNewTable(cursor, table_name: str, table_column_names: list, foreign_in
     :return: Boolean value representing if new table was created.
     """
 
-    num_foreign_keys = len(foreign_info)
-
     create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
-
-    if num_foreign_keys:
-        for foreign_key_info in foreign_info:
-            fk_name, _, _ = foreign_key_info
-            create_table_statement += f"{fk_name} datetime,\n"
 
     for sensor in table_column_names:
         create_table_statement += f"{sensor} float,\n"
 
-    if num_foreign_keys:
-        for foreign_key_info in foreign_info:
-            fk_name, ref_table, ref_column = foreign_key_info
-            create_table_statement += f"FOREIGN KEY ({fk_name}) REFERENCES {ref_table}({ref_column}),\n"
-        create_table_statement += f"PRIMARY KEY (time)\n"
-    else:
-        create_table_statement += f"PRIMARY KEY (time)\n"
+    create_table_statement += f"PRIMARY KEY (time)\n"
 
     create_table_statement += ");"
     cursor.execute(create_table_statement)
@@ -136,14 +117,8 @@ def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
     table_name = config_info[data_type]["table_name"]
     sensor_names = config_info[data_type]['sensor_list']
 
-    num_foreign_keys = len(config_info[data_type]['foreign_key'])
-    foreign_info = list()
-    if num_foreign_keys:
-        for fk in range(num_foreign_keys):
-            foreign_info.append((config_info[data_type]['foreign_key'][fk], config_info[data_type]['ref_table'][fk], config_info[data_type]['ref_column'][fk]))
-
     if not checkTableExists(cursor, table_name, dbname):
-        if not createNewTable(cursor, table_name, config_info[data_type]['sensor_list'], foreign_info):
+        if not createNewTable(cursor, table_name, config_info[data_type]['sensor_list']):
             print(f"Could not create new table {table_name} in database {dbname}")
             sys.exit()
 
@@ -153,16 +128,8 @@ def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
         sensor_names = str(list(dataframe.columns)).replace("[", "").replace("]", "").replace("'", "")
         sensor_data = str(list(time_data.values)).replace("[", "").replace("]", "")
 
-        if num_foreign_keys:
-            query = f"INSERT INTO {table_name} (time, "
-            for fk in range(num_foreign_keys-1):
-                query += f"{config_info[data_type]['foreign_key'][fk]}"
-            query += f"{config_info[data_type]['foreign_key'][num_foreign_keys-1]}, {sensor_names})\n"
-            query += f"VALUES ('{date}', '{date.replace(minute=0, second=0)}', {sensor_data})"
-
-        else:
-            query = f"INSERT INTO {table_name} (time, {sensor_names})\n" \
-                    f"VALUES ('{date}', {sensor_data})"
+        query = f"INSERT INTO {table_name} (time, {sensor_names})\n" \
+                f"VALUES ('{date}', {sensor_data})"
 
         cursor.execute(query)
 
