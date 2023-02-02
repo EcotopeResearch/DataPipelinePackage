@@ -29,14 +29,13 @@ def set_data(data: str = "data/"):
     _data_directory = data
     return _data_directory
 
-def set_config(cfg: str = "Configuration/config.ini"):
+def set_config(cfg: str = "input/config.ini"):
     """
     Accessor function to set input directory in the format {directory}/
     Defaults to input/
     Input: String of relative directory
     """
     _config_directory = cfg
-    print(_config_directory)
     return _config_directory
 
 
@@ -49,4 +48,3 @@ _input_directory = set_input()
 _output_directory = set_output()
 _data_directory = set_data()
 _config_directory = set_config()
-print("DONE")
