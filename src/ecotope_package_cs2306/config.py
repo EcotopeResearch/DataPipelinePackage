@@ -13,6 +13,7 @@ if not os.path.exists(_config_directory):
 configure = configparser.ConfigParser()
 configure.read(_config_directory)
 
+# Directories are saved in config.ini with a relative directory to working directory
 _input_directory = configure.get('input', 'directory')
 _output_directory = configure.get('output', 'directory')
 _data_directory = configure.get('data', 'directory')
