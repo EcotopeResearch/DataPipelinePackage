@@ -9,6 +9,7 @@ from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, 
 from ecotope_package_cs2306.load import connectDB, getLoginInfo
 from ecotope_package_cs2306.config import _config_directory, _data_directory, _output_directory
 import numpy as np
+import sys
 
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     """
@@ -71,6 +72,7 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     for file in json_filenames:
         data = gzip.open(file)
         data = json.load(data)
+        # TODO: This section is BV specific, maybe move to another function
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         norm_data["time"] = pd.to_datetime(norm_data["time"])
         norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
@@ -81,18 +83,20 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
-def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
-    """
-    Function takes a dataframe containing sensor data and merges it with weather data.
-    Input: Pandas Dataframe
-    Output: Merged Pandas Dataframe
-    """
-    df = []
-    data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
-    data["time"] = pd.to_datetime(data["time"], utc=True)
-    data["time"] = data["time"].dt.tz_convert('US/Pacific')
-    df = site.merge(data, how='left', on='time')
-    return df
+
+# TODO: This does nothing
+# def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
+#     """
+#     Function takes a dataframe containing sensor data and merges it with weather data.
+#     Input: Pandas Dataframe
+#     Output: Merged Pandas Dataframe
+#     """
+#     df = []
+#     data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
+#     data["time"] = pd.to_datetime(data["time"], utc=True)
+#     data["time"] = data["time"].dt.tz_convert('US/Pacific')
+#     df = site.merge(data, how='left', on='time')
+#     return df
 
 def get_noaa_data(station_names: List[str]) -> dict:
     """
@@ -171,20 +175,31 @@ def _get_noaa_dictionary() -> dict:
     filename = "isd-history.csv"
     hostname = f"ftp.ncdc.noaa.gov"
     wd = f"/pub/data/noaa/"
-    ftp_server = FTP(hostname)
-    ftp_server.login()
-    ftp_server.cwd(wd)
-    ftp_server.encoding = "utf-8"
-    with open(f"{_output_directory}weather/{filename}", "wb") as file:
-        ftp_server.retrbinary(f"RETR {filename}", file.write)
-    ftp_server.quit()
-    isd_history = pd.read_csv(
-        f"{_output_directory}weather/isd-history.csv", dtype=str)
+    try:
+        ftp_server = FTP(hostname)
+        ftp_server.login()
+        ftp_server.cwd(wd)
+        ftp_server.encoding = "utf-8"
+        with open(f"{_output_directory}weather/{filename}", "wb") as file:
+            ftp_server.retrbinary(f"RETR {filename}", file.write)
+        ftp_server.quit()
+    except:
+        print("FTP ERROR")
+
+    isd_directory = f"{_output_directory}weather/isd-history.csv"
+    if not os.path.exists(isd_directory):
+        print(
+            f"File path '{isd_directory}' does not exist.")
+        sys.exit()
+
+    isd_history = pd.read_csv(isd_directory, dtype=str)
     isd_history["USAF_WBAN"] = isd_history['USAF'].str.cat(
-        isd_history['WBAN'], sep ="-")
+        isd_history['WBAN'], sep="-")
     df_id_usafwban = isd_history[["ICAO", "USAF_WBAN"]]
-    df_id_usafwban = df_id_usafwban.drop_duplicates(subset = ["ICAO"], keep = 'first')
-    return df_id_usafwban.set_index('ICAO').to_dict()['USAF_WBAN']
+    df_id_usafwban = df_id_usafwban.drop_duplicates(
+        subset=["ICAO"], keep='first')
+    noaa_dict = df_id_usafwban.set_index('ICAO').to_dict()['USAF_WBAN']
+    return noaa_dict
 
 
 def _download_noaa_data(stations: dict) -> List[str]:
@@ -196,15 +211,19 @@ def _download_noaa_data(stations: dict) -> List[str]:
     """
     noaa_filenames = list()
     year_end = datetime.today().year
+
+    try:
+        hostname = f"ftp.ncdc.noaa.gov"
+        ftp_server = FTP(hostname)
+        ftp_server.login()
+        ftp_server.encoding = "utf-8"
+    except:
+        print("FTP ERROR")
     # Download files for each station from 2010 till present year
     for year in range(2010, year_end + 1):
         # Set FTP credentials and connect
-        hostname = f"ftp.ncdc.noaa.gov"
         wd = f"/pub/data/noaa/isd-lite/{year}/"
-        ftp_server = FTP(hostname)
-        ftp_server.login()
         ftp_server.cwd(wd)
-        ftp_server.encoding = "utf-8"
         # Download all files and save as station_year.gz in /output
         for station in stations.keys():
             if not os.path.isdir(f"{_output_directory}weather/{stations[station]}"):
@@ -218,7 +237,7 @@ def _download_noaa_data(stations: dict) -> List[str]:
                     ftp_server.retrbinary(f"RETR {filename}", file.write)
             else:
                 print(file_path, " exists")
-        ftp_server.quit()
+    ftp_server.quit()
     return noaa_filenames
 
 

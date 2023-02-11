@@ -22,6 +22,7 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
 
     configure = configparser.ConfigParser()
     configure.read(config_info)
+    #TODO: Please Generalize -Carlos
     config = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),
