@@ -16,6 +16,8 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
     Output: Login information
     """
 
+    config_info = "config.ini"
+
     if not os.path.exists(config_info):
         print(f"File path '{config_info}' does not exist.")
         sys.exit()
