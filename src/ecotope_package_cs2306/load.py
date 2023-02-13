@@ -38,8 +38,8 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
                 "sensor_list": configure.get('day', 'sensor_list').split(',')}
     }
 
-    print(
-        f"Successfully fetched configuration information from file path {config_info}.")
+    print(f"Successfully fetched configuration information from file path {config_info}.")
+    print(config)
     return config
     
 
@@ -102,7 +102,6 @@ def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
     create_table_statement += f"PRIMARY KEY (time)\n"
 
     create_table_statement += ");"
-    print(create_table_statement)
     cursor.execute(create_table_statement)
 
     return True
@@ -148,9 +147,10 @@ if __name__ == '__main__':
 
     # get database connection information and desired table name to write data into
     config_dict = getLoginInfo(config_file_path)
+    print(config_dict)
 
     # establish connection to database
-    db_connection, db_cursor = connectDB(config_info=config_dict["database"])
+    # db_connection, db_cursor = connectDB(config_info=config_dict["database"])
 
     ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
     ecotope_data.replace(np.NaN, 0, inplace=True)
@@ -168,6 +168,6 @@ if __name__ == '__main__':
     # loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
 
     # commit changes to database and close connections
-    db_connection.commit()
-    db_connection.close()
-    db_cursor.close()
+    # db_connection.commit()
+    # db_connection.close()
+    # db_cursor.close()
