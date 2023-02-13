@@ -53,6 +53,7 @@ def extract_files(extension : str) -> List[str]:
   Input: Path to directory and file extension as string
   Output: List of filenames 
   """
+  os.chdir(os.getcwd())
   filenames = []
   for file in os.listdir(_data_directory):
     if file.endswith(extension):
