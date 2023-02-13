@@ -39,7 +39,6 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
     }
 
     print(f"Successfully fetched configuration information from file path {config_info}.")
-    print(config)
     return config
     
 
