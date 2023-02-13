@@ -161,11 +161,11 @@ if __name__ == '__main__':
     weather_data.fillna(0, inplace=True)
 
     # print(weather_data)
-    # print(ecotope_data)
+    # print(ecotope_data.columns)
 
     # load data stored in data frame to database
     # loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
-    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
+    # loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
 
     # commit changes to database and close connections
     db_connection.commit()
