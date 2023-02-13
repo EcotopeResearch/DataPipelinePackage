@@ -102,6 +102,7 @@ def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
     create_table_statement += f"PRIMARY KEY (time)\n"
 
     create_table_statement += ");"
+    print(create_table_statement)
     cursor.execute(create_table_statement)
 
     return True
@@ -163,8 +164,8 @@ if __name__ == '__main__':
     # print(ecotope_data)
 
     # load data stored in data frame to database
-    loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
-    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="pump")
+    # loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
+    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
 
     # commit changes to database and close connections
     db_connection.commit()
