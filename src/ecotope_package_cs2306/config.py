@@ -3,7 +3,7 @@
 import configparser
 import os
 import sys
-
+os.chdir(os.getcwd())
 _config_directory = "config.ini"
 
 if not os.path.exists(_config_directory):
