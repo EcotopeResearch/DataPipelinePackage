@@ -265,7 +265,7 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
                                         (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
         
     except ZeroDivisionError:
-        print("ZeroDivisionError")
+        print("DIVIDED BY ZERO ERROR")
     
     return cop_values
 
