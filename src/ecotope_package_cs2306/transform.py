@@ -42,8 +42,6 @@ def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
     """
     df['time_temp'] = df.index
     df['time_temp'] = df['time_temp'].tz_localize(None)
-    duplicateRows = df[df.duplicated(['time_temp'])]
-    print(duplicateRows)
     df = df.groupby('time_temp').mean()
     del df['time_temp']
     return df
@@ -413,8 +411,8 @@ def get_temp_zones120(df) -> pd.DataFrame:
 
 def join_to_hourly(hourly_data : pd.DataFrame, noaa_data : pd.DataFrame) -> pd.DataFrame:
     """
-    Function left-joins the the weather data and COP data to the hourly dataframe.
-    Input: Hourly dataframe, noaa dataframe, and cop_values dictionary 
+    Function left-joins the weather data to the hourly dataframe.
+    Input: Hourly dataframe and noaa dataframe
     Output: A single, joined dataframe
     """
     out_df = hourly_data.join(noaa_data)

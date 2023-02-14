@@ -48,9 +48,9 @@ def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
 
 def extract_files(extension : str) -> List[str]:
   """
-  Function takes in the subdirectory for data and the file extension and returns 
-  a list of paths files in that directory of that type.
-  Input: Path to directory and file extension as string
+  Function takes in a file extension and returns 
+  a list of paths files in the directory of that type.
+  Input: File extension as string
   Output: List of filenames 
   """
   os.chdir(os.getcwd())
