@@ -308,7 +308,7 @@ def set_zone_vol() -> pd.DataFrame:
     gals_per_zone = pd.DataFrame({'Zone':zone_list, 'Zone_vol_g':zone_gals})
     return gals_per_zone
 
-def largest_less_than(df_row, target):
+def _largest_less_than(df_row, target):
     """
     Function takes a list of gz/json filenames and a target temperature and determines
     the zone with the highest temperature < 120 degrees.
@@ -324,60 +324,65 @@ def largest_less_than(df_row, target):
 
     return largest_less_than_120_tmp
 
-def get_vol_equivalent_to_120(df_row):
+def _get_vol_equivalent_to_120(df_row):
     """
     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
     Input: A single row of a sensor Pandas Dataframe in a series
     Output: A float of the total volume of water > 120 degrees
     """
-    tvadder = 0
-    vadder = 0
-    gals_per_zone = set_zone_vol()
-    dftemp = df_row.filter(regex = 'Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
-    count = 1
-    for val in dftemp:
-        if dftemp.index[count] == "Temp_low":
-            vadder += gals_per_zone[gals_per_zone.columns[1]][count]
-            tvadder += val * gals_per_zone[gals_per_zone.columns[1]][count]
-            break
-        elif dftemp[dftemp.index[count + 1]] >= 120:
-            vadder += gals_per_zone[gals_per_zone.columns[1]][count]
-            tvadder += (dftemp[dftemp.index[count + 1]] + val) / 2  * gals_per_zone[gals_per_zone.columns[1]][count]
-        elif dftemp[dftemp.index[count + 1]] < 120:
-            vadder += dftemp.get('Vol120')
-            tvadder += dftemp.get('Vol120') * dftemp.get('ZoneTemp120')
-            break
-        count += 1
-    avg_temp_above_120 = tvadder / vadder
-    temp_ratio = (avg_temp_above_120 - dftemp[0]) / (120 - dftemp[0])
-    return (temp_ratio * vadder)
+    try:
+        tvadder = 0
+        vadder = 0
+        gals_per_zone = set_zone_vol()
+        dftemp = df_row.filter(regex = 'Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
+        count = 1
+        for val in dftemp:
+            if dftemp.index[count] == "Temp_low":
+                vadder += gals_per_zone[gals_per_zone.columns[1]][count]
+                tvadder += val * gals_per_zone[gals_per_zone.columns[1]][count]
+                break
+            elif dftemp[dftemp.index[count + 1]] >= 120:
+                vadder += gals_per_zone[gals_per_zone.columns[1]][count]
+                tvadder += (dftemp[dftemp.index[count + 1]] + val) / 2  * gals_per_zone[gals_per_zone.columns[1]][count]
+            elif dftemp[dftemp.index[count + 1]] < 120:
+                vadder += dftemp.get('Vol120')
+                tvadder += dftemp.get('Vol120') * dftemp.get('ZoneTemp120')
+                break
+            count += 1
+        avg_temp_above_120 = tvadder / vadder     
+        temp_ratio = (avg_temp_above_120 - dftemp[0]) / (120 - dftemp[0])
+        return (temp_ratio * vadder)
+    except ZeroDivisionError:
+        print("DIVIDED BY ZERO ERROR")
+        return 0
+    
 
-def get_V120(df_row):
+def _get_V120(df_row):
     """
     Function takes a row of sensor data and determines the volume of water > 120 degrees
     in the zone that has the highest sensor < 120 degrees.
     Input: A single row of a sensor Pandas Dataframe in a series
     Output: A float of the volume of water > 120 degrees
     """
-    #if df_row["Temp_120"] != 120:
-    #    return 0
-    gals_per_zone = set_zone_vol()
-    temp_cols = df_row.filter(regex = 'HPWHOutlet$|top|mid|bottom')
-    name_cols = ""
-    name_cols = largest_less_than(temp_cols, 120)
-    count = 0
-    for index in temp_cols.index:
-        if index == name_cols:
-            name_col_index = count
-            break
-        count += 1
+    try:
+        gals_per_zone = set_zone_vol()
+        temp_cols = df_row.filter(regex = 'HPWHOutlet$|top|mid|bottom')
+        name_cols = ""
+        name_cols = _largest_less_than(temp_cols, 120)
+        count = 0
+        for index in temp_cols.index:
+            if index == name_cols:
+                name_col_index = count
+                break
+            count += 1
+        dV = gals_per_zone['Zone_vol_g'][name_col_index]
+        V120 = (temp_cols[temp_cols.index[name_col_index]] - 120)/ (temp_cols[temp_cols.index[name_col_index]] - temp_cols[temp_cols.index[name_col_index - 1]]) * dV
+        return V120
+    except ZeroDivisionError:
+        print("DIVIDED BY ZERO ERROR")
+        return 0
 
-    dV = gals_per_zone['Zone_vol_g'][name_col_index]
-
-    V120 = (temp_cols[temp_cols.index[name_col_index]] - 120)/ (temp_cols[temp_cols.index[name_col_index]] - temp_cols[temp_cols.index[name_col_index - 1]]) * dV
-    return V120
-
-def get_zone_Temp120(df_row):
+def _get_zone_Temp120(df_row):
     """
     Function takes a row of sensor data and determines the highest sensor < 120 degrees.
     Input: A single row of a sensor Pandas Dataframe in a series
@@ -386,13 +391,14 @@ def get_zone_Temp120(df_row):
     #if df_row["Temp_120"] != 120:
     #    return 0
     temp_cols = df_row.filter(regex = 'HPWHOutlet$|top|mid|bottom')
-    name_cols = largest_less_than(temp_cols, 120)
+    name_cols = _largest_less_than(temp_cols, 120)
     count = 0
     for index in temp_cols.index:
         if index == name_cols:
             name_col_index = count
             break
         count += 1
+
     zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
     return zone_Temp_120
 
@@ -403,26 +409,27 @@ def get_storage_gals120(df) -> pd.DataFrame:
     Input: A Pandas Dataframe
     Output: a Pandas Dataframe
     """
-    df['Vol120'] = df.apply(get_V120, axis=1)
-    df['ZoneTemp120'] = df.apply(get_zone_Temp120, axis=1)
-    df['Vol_Equivalent_to_120'] = df.apply(get_vol_equivalent_to_120, axis=1)
-
-        
+    df['Vol120'] = df.apply(_get_V120, axis=1)
+    df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
+    df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120, axis=1)
+    
     return df  
 
-def avgRowValsOfColContainingSubstring(df, substring):
-        df_subset = df[[x for x in df if substring in x]]
-        
-        result = df_subset.sum(axis=1, skipna=True) / df_subset.count(axis=1)
-        
-        return result
+def _calculate_average_zone_temp(df, substring):
+        try:
+            df_subset = df[[x for x in df if substring in x]]
+            result = df_subset.sum(axis=1, skipna=True) / df_subset.count(axis=1)
+            return result
+        except ZeroDivisionError:
+            print("DIVIDED BY ZERO ERROR")
+            return 0
 
 def get_temp_zones120(df) -> pd.DataFrame:
-    df['Temp_top'] = avgRowValsOfColContainingSubstring(df, "Temp1")
-    df['Temp_midtop'] = avgRowValsOfColContainingSubstring(df, "Temp2")
-    df['Temp_mid'] = avgRowValsOfColContainingSubstring(df, "Temp3")
-    df['Temp_midbottom'] = avgRowValsOfColContainingSubstring(df, "Temp4")
-    df['Temp_bottom'] = avgRowValsOfColContainingSubstring(df, "Temp5")
+    df['Temp_top'] = _calculate_average_zone_temp(df, "Temp1")
+    df['Temp_midtop'] = _calculate_average_zone_temp(df, "Temp2")
+    df['Temp_mid'] = _calculate_average_zone_temp(df, "Temp3")
+    df['Temp_midbottom'] = _calculate_average_zone_temp(df, "Temp4")
+    df['Temp_bottom'] = _calculate_average_zone_temp(df, "Temp5")
     return df
 
 
