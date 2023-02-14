@@ -77,10 +77,9 @@ def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}
         bounds_df = bounds_df[bounds_df.index.notnull()]
 
         df.apply(_rm_cols, args=(bounds_df,))
-
-        return df
     except FileNotFoundError:
         print("File Not Found: ", vars_filename)
+    return df
 
 
 def _ffill(col, ffill_df): #Helper function for ffill_missing
@@ -111,10 +110,9 @@ def ffill_missing(df : pd.DataFrame, vars_filename : str = f"{_input_directory}V
 
         #improved .apply setup
         df.apply(_ffill, args=(ffill_df,))
-                    
-        return df
     except FileNotFoundError:
         print("File Not Found: ", vars_filename)
+    return df 
 
 
 def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
@@ -142,9 +140,9 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
                 case "swap":
                     df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
             df = pd.concat([df_pre, df_post], ignore_index=True)
-        return df
     except FileNotFoundError:
         print("File Not Found: ", f"{_input_directory}adjustments.csv")
+    return df
 
 
 def get_energy_by_min(df : pd.DataFrame) -> pd.DataFrame:
@@ -266,9 +264,10 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
         cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
                                         (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
         
-        return cop_values
     except ZeroDivisionError:
         print("ZeroDivisionError")
+    
+    return cop_values
 
  
 def aggregate_df(df: pd.DataFrame):
