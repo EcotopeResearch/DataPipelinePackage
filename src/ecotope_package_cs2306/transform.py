@@ -22,15 +22,20 @@ def round_time(df : pd.DataFrame):
 
 
 def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv"):
-    variable_data = pd.read_csv(variable_names_path)
-    variable_data = variable_data[1:86]
-    variable_data = variable_data[['variable_alias', 'variable_name']]
-    variable_data.dropna(axis=0, inplace=True)
-    variable_alias = list(variable_data["variable_alias"])
-    variable_true = list(variable_data["variable_name"])
-    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+    try:
+        variable_data = pd.read_csv(variable_names_path)
+        variable_data = variable_data[1:86]
+        variable_data = variable_data[['variable_alias', 'variable_name']]
+        variable_data.dropna(axis=0, inplace=True)
+        variable_alias = list(variable_data["variable_alias"])
+        variable_true = list(variable_data["variable_name"])
+        variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
-    df.rename(columns=variable_alias_true_dict, inplace=True)
+        df.rename(columns=variable_alias_true_dict, inplace=True)
+  
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path) 
+    
 
 
 def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
@@ -64,15 +69,18 @@ def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}
     Input: Pandas dataframe and file location of variable processing information
     Output: Pandas dataframe 
     """
-    bounds_df = pd.read_csv(vars_filename) # bounds dataframe holds acceptable ranges
-    bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
-    bounds_df.dropna(axis=0, thresh=2, inplace=True)
-    bounds_df.set_index(['variable_name'], inplace=True)
-    bounds_df = bounds_df[bounds_df.index.notnull()]
+    try:
+        bounds_df = pd.read_csv(vars_filename) # bounds dataframe holds acceptable ranges
+        bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
+        bounds_df.dropna(axis=0, thresh=2, inplace=True)
+        bounds_df.set_index(['variable_name'], inplace=True)
+        bounds_df = bounds_df[bounds_df.index.notnull()]
 
-    df.apply(_rm_cols, args=(bounds_df,))
+        df.apply(_rm_cols, args=(bounds_df,))
 
-    return df
+        return df
+    except FileNotFoundError:
+        print("File Not Found: ", vars_filename)
 
 
 def _ffill(col, ffill_df): #Helper function for ffill_missing
@@ -94,16 +102,19 @@ def ffill_missing(df : pd.DataFrame, vars_filename : str = f"{_input_directory}V
     Input: Pandas dataframe
     Output: Pandas dataframe
     """
-    ffill_df = pd.read_csv(vars_filename)  #ffill dataframe holds ffill length and changepoint bool
-    ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
-    ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
-    ffill_df.set_index(['variable_name'], inplace=True)
-    ffill_df = ffill_df[ffill_df.index.notnull()] #drop data without names
+    try:
+        ffill_df = pd.read_csv(vars_filename)  #ffill dataframe holds ffill length and changepoint bool
+        ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
+        ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
+        ffill_df.set_index(['variable_name'], inplace=True)
+        ffill_df = ffill_df[ffill_df.index.notnull()] #drop data without names
 
-    #improved .apply setup
-    df.apply(_ffill, args=(ffill_df,))
-                
-    return df
+        #improved .apply setup
+        df.apply(_ffill, args=(ffill_df,))
+                    
+        return df
+    except FileNotFoundError:
+        print("File Not Found: ", vars_filename)
 
 
 def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
@@ -112,25 +123,28 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     Input: DataFrame to be adjusted
     Output: Adjusted Dataframe
     """
-    adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
-    if adjustments.empty:
+    try:
+        adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
+        if adjustments.empty:
+            return df
+        adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
+        df = df.sort_values(by = "datetime_applied")
+        
+        for adjustment in adjustments:
+            adjustment_datetime = adjustment["datetime_applied"]
+            df_pre = df.loc[df['time'] < adjustment_datetime]
+            df_post = df.loc[df['time'] >= adjustment_datetime]
+            match adjustment["adjustment_type"]:
+                case "add":
+                    continue
+                case "remove":
+                    df_post[adjustment["sensor_1"]] = np.nan
+                case "swap":
+                    df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
+            df = pd.concat([df_pre, df_post], ignore_index=True)
         return df
-    adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
-    df = df.sort_values(by = "datetime_applied")
-    
-    for adjustment in adjustments:
-        adjustment_datetime = adjustment["datetime_applied"]
-        df_pre = df.loc[df['time'] < adjustment_datetime]
-        df_post = df.loc[df['time'] >= adjustment_datetime]
-        match adjustment["adjustment_type"]:
-            case "add":
-                continue
-            case "remove":
-                df_post[adjustment["sensor_1"]] = np.nan
-            case "swap":
-                df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
-        df = pd.concat([df_pre, df_post], ignore_index=True)
-    return df
+    except FileNotFoundError:
+        print("File Not Found: ", f"{_input_directory}adjustments.csv")
 
 
 def get_energy_by_min(df : pd.DataFrame) -> pd.DataFrame:
@@ -230,27 +244,31 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
     cop_inter = aggregate_values(df)
 
     cop_values = pd.DataFrame(cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
-    cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
-        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-    cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
-        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-        energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-            cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+    try:
+        cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
+            energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+            energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+                cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-    cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
-        energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
-                                             cop_inter['EnergyIn_SecLoopPump']))
+        cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
+            energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+            energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+                cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-    cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
-                                     (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+        cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
+            energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
+                                                cop_inter['EnergyIn_SecLoopPump']))
 
-    cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
-                                     (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
-    
-    return cop_values
+        cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
+                                        (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+
+        cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
+                                        (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+        
+        return cop_values
+    except ZeroDivisionError:
+        print("ZeroDivisionError")
 
  
 def aggregate_df(df: pd.DataFrame):
