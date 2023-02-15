@@ -9,7 +9,7 @@ import datetime
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 
-def getLoginInfo(config_info : str = _config_directory) -> dict:
+def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> dict:
     """
     Function will and return config.ini in a config var.
 
