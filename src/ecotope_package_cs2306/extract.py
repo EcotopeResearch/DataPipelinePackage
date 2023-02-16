@@ -21,11 +21,15 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
+    # {config_dict['minute']['table_name']}
     try:
-        db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
+        db_cursor.execute(f"select * from fef order by time DESC LIMIT 1")
     except mysqlerrors.Error:
         print(f"Table {config_dict['minute']['table_name']} does not exist.")
-        return 0
+        indicies = config_dict['minute']['sensor_list'] #.replace("[", "").replace("]", "").replace("'", "").split(",")
+        return_df = pd.DataFrame(columns=indicies)
+        
+        return return_df
 
     last_row_data = pd.DataFrame(db_cursor.fetchall())
     last_time = last_row_data[0][0]

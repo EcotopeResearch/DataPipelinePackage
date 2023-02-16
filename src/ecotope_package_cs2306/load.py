@@ -33,7 +33,7 @@ def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> 
     }
 
     db_table_info = {header: {"table_name": configure.get('minute', 'table_name'), 
-                  "sensor_list": configure.get('minute', 'sensor_list').split(',')} for header in table_headers}
+                  "sensor_list": list(configure.get('minute', 'sensor_list').split(','))} for header in table_headers}
     
     db_connection_info.update(db_table_info)
 
