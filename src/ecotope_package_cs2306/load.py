@@ -9,7 +9,7 @@ import datetime
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 
-def getLoginInfo(config_info : str = _config_directory) -> dict:
+def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> dict:
     """
     Function will and return config.ini in a config var.
 
@@ -25,21 +25,20 @@ def getLoginInfo(config_info : str = _config_directory) -> dict:
     configure = configparser.ConfigParser()
     configure.read(config_info)
     #TODO: Please Generalize -Carlos
-    config = {
+    db_connection_info = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),
                      'host': configure.get('database', 'host'),
-                     'database': configure.get('database', 'database')},
-        "minute": {"table_name": configure.get('minute', 'table_name'),
-                "sensor_list": configure.get('minute', 'sensor_list').split(',')},
-        "hour": {"table_name": configure.get('hour', 'table_name'),
-                "sensor_list": configure.get('hour', 'sensor_list').split(',')},
-        "day": {"table_name": configure.get('day', 'table_name'),
-                "sensor_list": configure.get('day', 'sensor_list').split(',')}
+                     'database': configure.get('database', 'database')}
     }
 
+    db_table_info = {header: {"table_name": configure.get('minute', 'table_name'), 
+                  "sensor_list": configure.get('minute', 'sensor_list').split(',')} for header in table_headers}
+    
+    db_connection_info.update(db_table_info)
+
     print(f"Successfully fetched configuration information from file path {config_info}.")
-    return config
+    return db_connection_info
     
 
 def connectDB(config_info: dict):
@@ -144,13 +143,15 @@ if __name__ == '__main__':
     config_file_path = "Configuration/config.ini"
     df_path = "input/ecotope_wide_data.csv"
 
+    table_list = ["minute", "hour", "day"]
     # get database connection information and desired table name to write data into
-    config_dict = getLoginInfo(config_file_path)
+    config_dict = getLoginInfo(table_list, config_file_path)
     print(config_dict)
 
     # establish connection to database
     # db_connection, db_cursor = connectDB(config_info=config_dict["database"])
 
+    """
     ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
     ecotope_data.replace(np.NaN, 0, inplace=True)
     weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
@@ -158,7 +159,7 @@ if __name__ == '__main__':
     weather_data = weather_data["2023-01-10 16:00:00-08:00":"2023-01-11 15:00:00-08:00"]
     weather_data.drop(["conditions"], axis=1, inplace=True)
     weather_data.fillna(0, inplace=True)
-
+    """
     # print(weather_data)
     # print(ecotope_data.columns)
 

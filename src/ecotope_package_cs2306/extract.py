@@ -10,6 +10,7 @@ from ecotope_package_cs2306.load import connectDB, getLoginInfo
 from ecotope_package_cs2306.config import _config_directory, _data_directory, _output_directory
 import numpy as np
 import sys
+import mysql.connector.errors as mysqlerrors
 
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     """
@@ -20,16 +21,41 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     config_dict = getLoginInfo(config_file_path)
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
-    db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
+    try:
+        db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
+    except mysqlerrors.Error:
+        print(f"Table {config_dict['minute']['table_name']} does not exist.")
+        return 0
+
     last_row_data = pd.DataFrame(db_cursor.fetchall())
-    db_cursor.execute(f"select column_name from information_schema. columns where table_schema = '"
-                      f"{config_dict['database']['database']}' and table_name = '"
-                      f"{config_dict['minute']['table_name']}'")
+    last_time = last_row_data[0][0]
+
+    if ((last_time.hour != 23) and (last_time.minute != 59)):
+        last_full_day = datetime(year=last_time.year, month=last_time.month, day=last_time.day-1, hour=23, minute=59, second=0)
+        try:
+            db_cursor.execute(f"select * from {config_dict['minute']['table_name']} where time = '{last_full_day}'")
+        except mysqlerrors.Error:
+            print(f"Table {config_dict['minute']['table_name']} does not exist.")
+            return 0
+
+        last_row_data = pd.DataFrame(db_cursor.fetchall())
+
+    try:
+        db_cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
+                        f"{config_dict['database']['database']}' and table_name = '"
+                        f"{config_dict['minute']['table_name']}'")
+    except mysqlerrors.Error:
+        print(f"Table {config_dict['minute']['table_name']} does not exist.")
+        return 0
+    
     columns_names = db_cursor.fetchall()
     columns_names = [name[0] for name in columns_names]
     last_row_data.columns = columns_names
     last_row_data.set_index(last_row_data['time'], inplace=True)
-    last_row_data.drop(['time', 'time_hour'], axis=1, inplace=True)
+    last_row_data.drop(['time'], axis=1, inplace=True)
+
+    db_cursor.close()
+    db_connection.close()
 
     return last_row_data
 
@@ -272,7 +298,8 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
-    pass
+    result_df = get_last_line()
+    print(result_df)
 
 if __name__ == '__main__':
     __main__()
