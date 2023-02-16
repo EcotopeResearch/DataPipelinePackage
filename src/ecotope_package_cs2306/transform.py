@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import datetime as dt
+import csv
 import os
 from dateutil.parser import parse
 from ecotope_package_cs2306.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
@@ -269,6 +271,12 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
     
     return cop_values
 
+
+def _ls_helper(row, dt_list):
+    #NOTE: Carlos, the two below lines are the current issue, if they can match we are good. 
+    #      It MIGHT also be how True is being assigned on 279, but probably not. Main is currently set up to debug this. 
+    if(row.name.date() in dt_list):
+        row["load_shift_day"] = True
  
 def aggregate_df(df: pd.DataFrame):
     """
@@ -289,6 +297,22 @@ def aggregate_df(df: pd.DataFrame):
     #combine sum_df and mean_df into one hourly_df, then try and print that and see if it breaks
     hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
+
+    #appending loadshift data
+    filename = f"{_input_directory}loadshift_matrix.csv"
+    date_list = []
+    with open(filename) as datefile:
+        readCSV = csv.reader(datefile, delimiter=',')
+        for row in readCSV:
+            date_list.append(row[0])
+        date_list.pop(0)
+    #date_list is a list of strings in the following format: "1/19/2023", OR "%m/%d/%Y", now we convert to datetime!
+    format = "%m/%d/%Y"
+    dt_list = []
+    for date in date_list:
+        dt_list.append(dt.datetime.strptime(date, format))
+    daily_df["load_shift_day"] = False
+    daily_df.apply(_ls_helper, axis=1, args=(dt_list,)) 
 
     return hourly_df, daily_df
 
@@ -453,20 +477,20 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
     return out_df
 
 
-if __name__ == '__main__':
-    df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
+# if __name__ == '__main__':
+#     df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
 
-    rename_sensors(df, "input/Variable_Names.csv")
-    df = get_energy_by_min(df)
-    # df = remove_outliers(df, "input/Variable_Names.csv")
-    df = ffill_missing(df, "input/Variable_Names.csv")
-    df = sensor_adjustment(df)
-    verify_power_energy(df)
-    cop_values = calculate_cop_values(df)
-    hourly_df, daily_df = aggregate_df(df)
-    # hourly_df = join_to_hourly(hourly_df, noaa_df)
-    print(len(hourly_df.columns))
-    print(len(daily_df.columns))
+#     rename_sensors(df, "input/Variable_Names.csv")
+#     df = get_energy_by_min(df)
+#     # df = remove_outliers(df, "input/Variable_Names.csv")
+#     df = ffill_missing(df, "input/Variable_Names.csv")
+#     df = sensor_adjustment(df)
+#     verify_power_energy(df)
+#     cop_values = calculate_cop_values(df)
+#     hourly_df, daily_df = aggregate_df(df)
+#     # hourly_df = join_to_hourly(hourly_df, noaa_df)
+#     print(len(hourly_df.columns))
+#     print(len(daily_df.columns))
 
 
 """" Test Functions, remove once file is complete
@@ -506,16 +530,19 @@ if __name__ == '__main__':
 """
 
 
-"""# Test main, will be removed once transform.py is complete
+# Test main, will be removed once transform.py is complete
 def __main__():
     file_path = "input/df.pkl"
     vars_filename = "input/Variable_Names.csv"
 
     df = pd.read_pickle(file_path)
     rename_sensors(df, vars_filename)
-    df = avg_duplicate_times(df)
     df = remove_outliers(df, vars_filename)
     df = ffill_missing(df, vars_filename)
+    hourly_df, daily_df = aggregate_df(df)
+    print(daily_df)
+    """
+    df = avg_duplicate_times(df)
     df = sensor_adjustment(df)
     df = get_energy_by_min(df)
     df = get_Temp_Zones(df)
@@ -527,11 +554,9 @@ def __main__():
     print(df.head(10))
     print(hourly_df.head(10))
     print(daily_df)
-    
+    """
 
     pass
 
 if __name__ == '__main__':
     __main__()
-"""
-
