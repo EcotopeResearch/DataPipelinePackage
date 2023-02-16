@@ -18,16 +18,16 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     Input: Path to config file (defaulr is set in load.py)
     Output: One line DF of the last entry
     """
-    config_dict = getLoginInfo(config_file_path)
+    config_dict = getLoginInfo(["minute"])
     db_connection, db_cursor = connectDB(config_info=config_dict['database'])
 
-    # {config_dict['minute']['table_name']}
     try:
-        db_cursor.execute(f"select * from fef order by time DESC LIMIT 1")
+        db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
     except mysqlerrors.Error:
         print(f"Table {config_dict['minute']['table_name']} does not exist.")
-        indicies = config_dict['minute']['sensor_list'] #.replace("[", "").replace("]", "").replace("'", "").split(",")
-        return_df = pd.DataFrame(columns=indicies)
+        column_names = config_dict['minute']['sensor_list'] #.replace("[", "").replace("]", "").replace("'", "").split(",")
+        return_df = pd.DataFrame(columns=column_names, index=[datetime(year=2022, month=1, day=9, hour=23, minute=59, second=0)])
+        return_df = return_df.fillna(0)
         
         return return_df
 
@@ -302,8 +302,7 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
 
 
 def __main__():
-    result_df = get_last_line()
-    print(result_df)
+    pass
 
 if __name__ == '__main__':
     __main__()
