@@ -298,6 +298,7 @@ def aggregate_df(df: pd.DataFrame):
     hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
+    """
     #appending loadshift data
     filename = f"{_input_directory}loadshift_matrix.csv"
     date_list = []
@@ -313,6 +314,7 @@ def aggregate_df(df: pd.DataFrame):
         dt_list.append(dt.datetime.strptime(date, format))
     daily_df["load_shift_day"] = False
     daily_df.apply(_ls_helper, axis=1, args=(dt_list,)) 
+    """
 
     return hourly_df, daily_df
 
