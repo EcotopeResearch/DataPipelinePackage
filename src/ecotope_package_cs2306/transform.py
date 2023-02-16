@@ -271,12 +271,15 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
     
     return cop_values
 
-
+#loops through a list of dateTime objects, compares if the date of that object matches the 
+#date of the row name, which is also a dateTime object. If it matches, load_shift is True (happened that day)
 def _ls_helper(row, dt_list):
-    #NOTE: Carlos, the two below lines are the current issue, if they can match we are good. 
-    #      It MIGHT also be how True is being assigned on 279, but probably not. Main is currently set up to debug this. 
-    if(row.name.date() in dt_list):
-        row["load_shift_day"] = True
+    for date in dt_list:
+        if(row.name.date() == date.date()):
+            print("\n\nA DATE WAS MATCHED!!\n\n")
+            print(row)
+            #BUG: this IS getting replaced with True! But it's not replaced once out of the function?
+            row["load_shift_day"] = True
  
 def aggregate_df(df: pd.DataFrame):
     """
@@ -298,7 +301,6 @@ def aggregate_df(df: pd.DataFrame):
     hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
-    """
     #appending loadshift data
     filename = f"{_input_directory}loadshift_matrix.csv"
     date_list = []
@@ -313,8 +315,8 @@ def aggregate_df(df: pd.DataFrame):
     for date in date_list:
         dt_list.append(dt.datetime.strptime(date, format))
     daily_df["load_shift_day"] = False
+    #BUG: .apply not setting load_shift_day to True, despite happening in function. daily_df = daily_df.apply ?
     daily_df.apply(_ls_helper, axis=1, args=(dt_list,)) 
-    """
 
     return hourly_df, daily_df
 
