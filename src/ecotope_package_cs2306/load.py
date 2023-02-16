@@ -24,7 +24,7 @@ def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> 
 
     configure = configparser.ConfigParser()
     configure.read(config_info)
-    #TODO: Please Generalize -Carlos
+
     db_connection_info = {
         "database": {'user': configure.get('database', 'user'),
                      'password': configure.get('database', 'password'),
@@ -32,8 +32,8 @@ def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> 
                      'database': configure.get('database', 'database')}
     }
 
-    db_table_info = {header: {"table_name": configure.get('minute', 'table_name'), 
-                  "sensor_list": list(configure.get('minute', 'sensor_list').split(','))} for header in table_headers}
+    db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
+                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
     
     db_connection_info.update(db_table_info)
 
