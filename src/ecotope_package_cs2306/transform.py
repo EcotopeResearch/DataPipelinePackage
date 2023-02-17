@@ -201,16 +201,13 @@ def verify_power_energy(df : pd.DataFrame):
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
 
 
-def aggregate_values(df: pd.DataFrame) -> dict:
-    # print(df)
-    after_6pm = df.index[0].replace(hour=6, minute=0)
-
+def aggregate_values(df: pd.DataFrame, hour_slice: str) -> dict:
     avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 
     'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 
     'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 
     'EnergyIn_HPWH']].resample('D').mean()
 
-    avg_sd_6 = df[after_6pm:][['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
+    avg_sd_6 = df.between_time(hour_slice, "11:59PM")[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
 
     cop_inter = pd.DataFrame(index=avg_sd.index)
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
@@ -238,10 +235,8 @@ def aggregate_values(df: pd.DataFrame) -> dict:
     return cop_inter
 
 
-def calculate_cop_values(df: pd.DataFrame) -> dict:
-    heatLoss_fixed = 27.296
-
-    cop_inter = aggregate_values(df)
+def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, hour_slice: str) -> dict:
+    cop_inter = aggregate_values(df, hour_slice)
 
     cop_values = pd.DataFrame(cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
 
