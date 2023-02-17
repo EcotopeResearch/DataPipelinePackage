@@ -276,10 +276,8 @@ def calculate_cop_values(df: pd.DataFrame) -> dict:
 def _ls_helper(row, dt_list):
     for date in dt_list:
         if(row.name.date() == date.date()):
-            print("\n\nA DATE WAS MATCHED!!\n\n")
-            print(row)
-            #BUG: this IS getting replaced with True! But it's not replaced once out of the function?
-            row["load_shift_day"] = True
+            row.loc["load_shift_day"] = True
+    return row
  
 def aggregate_df(df: pd.DataFrame):
     """
@@ -316,7 +314,7 @@ def aggregate_df(df: pd.DataFrame):
         dt_list.append(dt.datetime.strptime(date, format))
     daily_df["load_shift_day"] = False
     #BUG: .apply not setting load_shift_day to True, despite happening in function. daily_df = daily_df.apply ?
-    daily_df.apply(_ls_helper, axis=1, args=(dt_list,)) 
+    daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,)) 
 
     return hourly_df, daily_df
 
@@ -533,7 +531,7 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
 #     verify_power_energy(df)
 """
 
-
+"""
 # Test main, will be removed once transform.py is complete
 def __main__():
     file_path = "input/df.pkl"
@@ -545,7 +543,7 @@ def __main__():
     df = ffill_missing(df, vars_filename)
     hourly_df, daily_df = aggregate_df(df)
     print(daily_df)
-    """
+    
     df = avg_duplicate_times(df)
     df = sensor_adjustment(df)
     df = get_energy_by_min(df)
@@ -558,9 +556,10 @@ def __main__():
     print(df.head(10))
     print(hourly_df.head(10))
     print(daily_df)
-    """
+
 
     pass
 
 if __name__ == '__main__':
     __main__()
+"""
