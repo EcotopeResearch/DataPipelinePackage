@@ -201,14 +201,14 @@ def verify_power_energy(df : pd.DataFrame):
                       out_df.to_csv(path_to_output, index=False, mode='a', header=False)
 
 
-def aggregate_values(df: pd.DataFrame, hour_slice: str) -> dict:
+def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
     avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 
     'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 
     'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 
     'EnergyIn_HPWH']].resample('D').mean()
 
-    if hour_slice is not None:
-        avg_sd_6 = df.between_time(hour_slice, "11:59PM")[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
+    if thermo_slice is not None:
+        avg_sd_6 = df.between_time(thermo_slice, "11:59PM")[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
     else:
         avg_sd_6 = df[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
 
@@ -238,8 +238,8 @@ def aggregate_values(df: pd.DataFrame, hour_slice: str) -> dict:
     return cop_inter
 
 
-def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, hour_slice: str) -> dict:
-    cop_inter = aggregate_values(df, hour_slice)
+def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> dict:
+    cop_inter = aggregate_values(df, thermo_slice)
 
     cop_values = pd.DataFrame(cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
 
@@ -477,20 +477,19 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
     return out_df
 
 
-# if __name__ == '__main__':
-#     df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
+"""
+if __name__ == '__main__':
+    df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
 
-#     rename_sensors(df, "input/Variable_Names.csv")
-#     df = get_energy_by_min(df)
-#     # df = remove_outliers(df, "input/Variable_Names.csv")
-#     df = ffill_missing(df, "input/Variable_Names.csv")
-#     df = sensor_adjustment(df)
-#     verify_power_energy(df)
-#     cop_values = calculate_cop_values(df)
-#     hourly_df, daily_df = aggregate_df(df)
-#     # hourly_df = join_to_hourly(hourly_df, noaa_df)
-#     print(len(hourly_df.columns))
-#     print(len(daily_df.columns))
+    rename_sensors(df, "input/Variable_Names.csv")
+    df = get_energy_by_min(df)
+    # df = remove_outliers(df, "input/Variable_Names.csv")
+    df = ffill_missing(df, "input/Variable_Names.csv")
+    df = sensor_adjustment(df)
+
+    cop_values = calculate_cop_values(df, 27.278, None)
+    print(cop_values)
+"""
 
 
 """" Test Functions, remove once file is complete
