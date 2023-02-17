@@ -207,7 +207,10 @@ def aggregate_values(df: pd.DataFrame, hour_slice: str) -> dict:
     'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 
     'EnergyIn_HPWH']].resample('D').mean()
 
-    avg_sd_6 = df.between_time(hour_slice, "11:59PM")[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
+    if hour_slice is not None:
+        avg_sd_6 = df.between_time(hour_slice, "11:59PM")[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
+    else:
+        avg_sd_6 = df[['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
 
     cop_inter = pd.DataFrame(index=avg_sd.index)
     cop_inter['Temp_RecircSupply_avg'] = (avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
