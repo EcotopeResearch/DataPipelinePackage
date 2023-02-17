@@ -102,13 +102,16 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     # read each json file into dataframe and append to temporary list
     for file in json_filenames:
         data = gzip.open(file)
-        data = json.load(data)
-        # TODO: This section is BV specific, maybe move to another function
-        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
-        norm_data["time"] = pd.to_datetime(norm_data["time"])
-        norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-        norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
-        temp_dfs.append(norm_data)
+        try:
+            data = json.load(data)
+            # TODO: This section is BV specific, maybe move to another function
+            norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+            norm_data["time"] = pd.to_datetime(norm_data["time"])
+            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+            norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
+            temp_dfs.append(norm_data)
+        except json.decoder.JSONDecodeError:
+            print('Empty or invalid JSON File')
 
     # concatenate all dataframes into one dataframe 
     df = pd.concat(temp_dfs, ignore_index=False)
