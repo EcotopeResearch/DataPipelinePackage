@@ -27,6 +27,15 @@ Write a test that ensures that feature is working as intended (for all plausible
 #inherits from TestCase class to add our own tests
 class Test_Load(unittest.TestCase):
     
+    #CLASS DATA
+    login_dict = {
+            "user" : "fahrigemil",
+            "password" : "aBC12345!",
+            "host" : "csp70.cslab.seattleu.edu",
+            "database" : "testDB"
+        }
+    table_list = ["minute", "hour", "day"]
+
     #TEST FIXTURES BELOW
     #Fixture being prep needed to perform tests, such as running a database, directories, or cleanup.
 
@@ -44,33 +53,20 @@ class Test_Load(unittest.TestCase):
     #UNITTEST: getLoginInfo
     def test_getLoginInfo(self):
         #this is how it's setup in bayview load? I don't know how else to call it?
-        table_list = ["minute", "hour", "day"]
-        config_dict = getLoginInfo(table_list)
+        config_dict = getLoginInfo(self.table_list)
 
-        login_dict = config_dict['database']
-        correct_dict = {
-            "user" : "fahrigemil",
-            "password" : "aBC12345!",
-            "host" : "csp70.cslab.seattleu.edu",
-            "database" : "testDB"
-        }
+        test_login_dict = config_dict['database']
 
         #test makes sure data was loaded correctly
-        self.assertDictEqual(login_dict, correct_dict)
+        self.assertDictEqual(test_login_dict, self.login_dict)
         #self.assertDictEqual #whole config dict? well it's massive, so 
 
     #UNITTEST: connectDB
     def test_connectDB(self):
         #login dictionary assumed correct for purposes of test
-        login_dict = {
-            "user" : "fahrigemil",
-            "password" : "aBC12345!",
-            "host" : "csp70.cslab.seattleu.edu",
-            "database" : "testDB"
-        }
 
         #when this is successful, it prints "Successfully connected to database."
-        db_connection, db_cursor = connectDB(login_dict)
+        db_connection, db_cursor = connectDB(self.login_dict)
 
         #how can I assert connections/test that it's valid? Is there a way for a cursor to return false?
         #this prints something into main, so we could just look for that, but I'd like something more?
@@ -80,6 +76,7 @@ class Test_Load(unittest.TestCase):
 
     #UNITTEST: checkTableExists
     def test_checkTableExists(self):
+
         return
 
     #UNITTEST: createNewTable
