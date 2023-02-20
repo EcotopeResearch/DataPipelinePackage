@@ -77,20 +77,19 @@ def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
 
 
 def extract_files(extension : str) -> List[str]:
-  """
-  Function takes in a file extension and returns 
-  a list of paths files in the directory of that type.
-  Input: File extension as string
-  Output: List of filenames 
-  """
-  os.chdir(os.getcwd())
-  filenames = []
-  for file in os.listdir(_data_directory):
-    if file.endswith(extension):
-      full_filename = os.path.join(_data_directory, file)
-      filenames.append(full_filename)
-  
-  return filenames
+    """
+    Function takes in a file extension and returns a list of paths files in the directory of that type.
+    Input: File extension as string
+    Output: List of filenames 
+    """
+    os.chdir(os.getcwd())
+    filenames = []
+    for file in os.listdir(_data_directory):
+      if file.endswith(extension):
+        full_filename = os.path.join(_data_directory, file)
+        filenames.append(full_filename)
+    
+    return filenames
 
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     """
