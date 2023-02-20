@@ -63,13 +63,10 @@ class Test_Load(unittest.TestCase):
 
     #UNITTEST: connectDB
     def test_connectDB(self):
-        #login dictionary assumed correct for purposes of test
-
         #when this is successful, it prints "Successfully connected to database."
         db_connection, db_cursor = connectDB(self.login_dict)
 
-        #how can I assert connections/test that it's valid? Is there a way for a cursor to return false?
-        #this prints something into main, so we could just look for that, but I'd like something more?
+        #how can I assert connections/test that it's valid? Is there a way for a cursor or connection object to return false?
 
         db_connection.close
         db_cursor.close    
