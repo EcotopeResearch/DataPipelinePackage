@@ -46,3 +46,5 @@ class Test_Extract(unittest.TestCase):
         test_new_extract = extract_new(get_last_line(), extract_files('.gz'))
         expected = []
         self.assertDictEqual(expected, test_new_extract)
+    if __name__ == '__main__':
+        unittest.main()
