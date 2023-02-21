@@ -135,6 +135,24 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     return df
 
 
+def get_site_directories(data_directory : str) -> List[str]:
+    """
+    Function takes in a data directory and returns a list of the paths to all immediate
+    site folders in that directory.
+    Input:
+    Output: List of paths to site folders.
+    """
+    directories = []
+    try:
+        for name in os.listdir(data_directory):
+            path = os.path.join(data_directory, name)
+            if os.path.isdir(path):
+                directories.append(path)
+    except FileNotFoundError:
+        print("Folder not Found: ", data_directory)
+    return directories
+
+
 # TODO: This does nothing
 # def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
 #     """
