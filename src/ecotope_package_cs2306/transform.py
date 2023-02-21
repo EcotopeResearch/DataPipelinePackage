@@ -316,19 +316,19 @@ def aggregate_df(df: pd.DataFrame):
 
     return hourly_df, daily_df
 
-def set_zone_vol() -> pd.DataFrame:
+def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that initializes the dataframe that holds the volumes of each zone.
     Input: None
     Output: Pandas dataframe
     """
-    relative_loc = pd.Series([1, .82, .64, .46, .29, .11, 0])
+    relative_loc = location
     tank_frxn = relative_loc.subtract(relative_loc.shift(-1))
-    gal_per_tank = 285
-    tot_storage = gal_per_tank * 3  #3 tanks
+    gal_per_tank = gals
+    tot_storage = total
     zone_gals = tank_frxn * tot_storage
     zone_gals = pd.Series.dropna(zone_gals) #remove NA from leading math
-    zone_list = pd.Series(["ZoneTemp_top", "ZoneTemp_midtop", "ZoneTemp_mid", "ZoneTemp_midlow", "ZoneTemp_low", "ZoneTemp_bottom"])
+    zone_list = zones
     gals_per_zone = pd.DataFrame({'Zone':zone_list, 'Zone_vol_g':zone_gals})
     return gals_per_zone
 
