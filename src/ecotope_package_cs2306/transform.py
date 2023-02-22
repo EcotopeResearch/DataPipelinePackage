@@ -481,15 +481,11 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
 
 """
 if __name__ == '__main__':
-    df = pd.read_pickle("input/df.pkl")
+    df = pd.read_pickle("testing/Bayview/transform/pickles/rounded.pkl")
     #print(df.index.tolist())
     #print(type(df.index.tolist()[0])
-    round_time(df)
-    empty_df = pd.DataFrame()
-    if(round_time(df)):
-        print("Rounding successful!")
-    else: 
-        print("DF is empty!")
+    print(df)
+    print("Rounded data printed?")
 """
 
 """" Test Functions, remove once file is complete
