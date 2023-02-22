@@ -75,13 +75,13 @@ class Test_Load(unittest.TestCase):
     def test_getLoginInfo(self):
         #this is how it's setup in bayview load? I don't know how else to call it?
         config_dict = getLoginInfo(self.table_list)
+        empty_dict = getLoginInfo(["bad_list"])
 
         #currently, this fails, despite it being called exactly how it is in bayview load
         test_login_dict = config_dict['database']
 
         #test makes sure data was loaded correctly
         self.assertDictEqual(test_login_dict, self.login_dict)
-        #self.assertDictEqual #whole config dict? well it's massive, so 
 
     #UNITTEST: connectDB
     def test_connectDB(self):
@@ -132,7 +132,7 @@ class Test_Load(unittest.TestCase):
         db_connection.close
         db_cursor.close
     """
-    
+
     #UNITTEST: loadDatabase
     def test_loadDatabase(self):
         #how can I look at a database and assert that it has stuff? 
