@@ -41,9 +41,26 @@ class Test_Load(unittest.TestCase):
     #TEST FIXTURES BELOW
     #Fixture being prep needed to perform tests, such as running a database, directories, or cleanup.
 
-    #NOTE: Cleanup would be removing whatever tables get loaded as part of testing. It seems like the current
-    #load scripts use fixed table names? I could create a new config but idk, seems like a mess atm, I need
-    #more information, I can't write all the test cases myself, I'll just do basic ones for now. 
+    def setUp(self):
+        db_connection, db_cursor = connectDB(self.login_dict)
+
+        #NOTE: Probably execute SQL directly vs using a function to test?
+        #we need a table that always exists, so we create that here
+        createNewTable(db_cursor, "existing_table", ["col1", "col2", "col3"])
+
+        db_connection.close
+        db_cursor.close
+
+    #NOTE: This runs after all the tests and resets anything that needed to be reset
+    def tearDown(self):
+        db_connection, db_cursor = connectDB(self.login_dict)
+
+        #this table must always not exist
+        #DROP TABLE: new_table
+        db_cursor.execute("DROP TABLE new_table")
+
+        db_connection.close
+        db_cursor.close
 
 
     #TEST CASES BELOW
@@ -81,12 +98,15 @@ class Test_Load(unittest.TestCase):
         db_connection, db_cursor = connectDB(self.login_dict)
 
         #Bool should be true #MAKE SURE IT'S A TABLE THAT'S ALWAYS THERE!!
-        trueBool = checkTableExists(db_cursor, "test_table_DON'T_REMOVE") 
+        trueBool = checkTableExists(db_cursor, "existing_table") 
         #Bool should be false
         falseBool = checkTableExists(db_cursor, "this_table_doesn't_exist")
 
         self.assertEqual(trueBool, True)
         self.assertEqual(falseBool, False)
+
+        db_connection.close
+        db_cursor.close
 
     #UNITTEST: createNewTable
     #NOTE: Helper function in bayview run
@@ -100,11 +120,14 @@ class Test_Load(unittest.TestCase):
         #try creating a table that doesn't exist yet, a normal test
         trueBool = createNewTable(db_cursor, "new_table", ["col1", "col2", "col3"])
 
-        #try creating a table that exists, error checkingx
-        falseBool = createNewTable(db_cursor, self.table_list[0], self.column_list)
+        #try creating a table that exists, error checking
+        falseBool = createNewTable(db_cursor, "existing_table", ["col1", "col2", "col3"])
 
         self.assertEqual(trueBool, True)
         self.assertEqual(falseBool, False)
+
+        db_connection.close
+        db_cursor.close
 
     #UNITTEST: loadDatabase
     def test_loadDatabase(self):
@@ -119,26 +142,11 @@ class Test_Load(unittest.TestCase):
         #The basic idea will be to fetch the # of rows in the tables of minute, hourly, and daily, and make sure they
         #match with what they should be. If that's all good, we call that a successful test. 
 
-        return
-    
-    """
-    #Default tests to make sure unittest working as intended. 
-    def test_fail(self):
-        self.assertEqual(3, 5)
-    def test_pass(self):
-        self.assertEqual(5, 5)
-    """
-
-    #TEST CASE - BIG TEST
-    def test_fullLoad(self):
-        #Test component interaction here?
+        db_connection.close
+        db_cursor.close
         return
 
 
 if __name__ == '__main__':
-    #table_list = ["minute", "hour", "day"]
-    #config_dict = getLoginInfo(table_list)
-    #print("\n\n", config_dict['database'], "\n\n")
-
     #runs test_xxx functions, shows what passed or failed. 
     unittest.main()
