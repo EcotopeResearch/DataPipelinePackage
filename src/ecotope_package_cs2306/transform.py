@@ -479,18 +479,12 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
 
 """
 if __name__ == '__main__':
-    df = pd.read_pickle("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/input/df.pkl")
+    df = pd.read_pickle("input/df.pkl")
+    #print(df.index.tolist())
+    #print(type(df.index.tolist()[0])
 
-    rename_sensors(df, "input/Variable_Names.csv")
-    df = get_energy_by_min(df)
-    # df = remove_outliers(df, "input/Variable_Names.csv")
-    df = ffill_missing(df, "input/Variable_Names.csv")
-    df = sensor_adjustment(df)
-
-    cop_values = calculate_cop_values(df, 27.278, None)
-    print(cop_values)
+    print("Pickle index printed!!")
 """
-
 
 """" Test Functions, remove once file is complete
 # #Test function
