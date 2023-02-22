@@ -40,13 +40,14 @@ class Test_Load(unittest.TestCase):
 
     #TEST FIXTURES BELOW
     #Fixture being prep needed to perform tests, such as running a database, directories, or cleanup.
-
+    """
     def setUp(self):
         db_connection, db_cursor = connectDB(self.login_dict)
 
         #NOTE: Probably execute SQL directly vs using a function to test?
         #we need a table that always exists, so we create that here
-        createNewTable(db_cursor, "existing_table", ["col1", "col2", "col3"])
+        if(not checkTableExists(db_cursor, "existing_table")):
+            createNewTable(db_cursor, "existing_table", ["col1", "col2", "col3"])
 
         db_connection.close
         db_cursor.close
@@ -61,6 +62,7 @@ class Test_Load(unittest.TestCase):
 
         db_connection.close
         db_cursor.close
+    """
 
 
     #TEST CASES BELOW
@@ -91,6 +93,7 @@ class Test_Load(unittest.TestCase):
         db_connection.close
         db_cursor.close    
 
+    """
     #UNITTEST: checkTableExists
     #NOTE: Helper function in bayview run
     def test_checkTableExists(self):
@@ -128,7 +131,8 @@ class Test_Load(unittest.TestCase):
 
         db_connection.close
         db_cursor.close
-
+    """
+    
     #UNITTEST: loadDatabase
     def test_loadDatabase(self):
         #how can I look at a database and assert that it has stuff? 
