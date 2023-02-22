@@ -75,6 +75,7 @@ class Test_Load(unittest.TestCase):
     def test_getLoginInfo(self):
         #this is how it's setup in bayview load? I don't know how else to call it?
         config_dict = getLoginInfo(self.table_list)
+        #NOTE: Test behavior for wrong header string input
         empty_dict = getLoginInfo(["bad_list"])
 
         #currently, this fails, despite it being called exactly how it is in bayview load
@@ -87,6 +88,7 @@ class Test_Load(unittest.TestCase):
     def test_connectDB(self):
         #when this is successful, it prints "Successfully connected to database."
         db_connection, db_cursor = connectDB(self.login_dict)
+        #NOTE: Test behavior when wrong login credentials passed in 
 
         #how can I assert connections/test that it's valid? Is there a way for a cursor or connection object to return false?
 
