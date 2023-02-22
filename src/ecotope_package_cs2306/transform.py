@@ -20,7 +20,10 @@ def round_time(df : pd.DataFrame):
     Input: Pandas dataframe
     Output: None
     """
+    if(df.empty):
+        return False
     df.index = df.index.round('T')
+    return True
 
 
 def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv"):
@@ -476,14 +479,17 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
     out_df = daily_data.join(cop_data)
     return out_df
 
-
 """
 if __name__ == '__main__':
     df = pd.read_pickle("input/df.pkl")
     #print(df.index.tolist())
     #print(type(df.index.tolist()[0])
-
-    print("Pickle index printed!!")
+    round_time(df)
+    empty_df = pd.DataFrame()
+    if(round_time(df)):
+        print("Rounding successful!")
+    else: 
+        print("DF is empty!")
 """
 
 """" Test Functions, remove once file is complete

@@ -5,8 +5,8 @@ from ecotope_package_cs2306 import rename_sensors, avg_duplicate_times, remove_o
 class Test_Transform(unittest.TestCase):
 
     #CLASS DATA
-    config_path = "placeholder"
     var_names_path = "input/Variable_Names.csv"
+    fresh_pickle_path = "testing/Bayview/transform/pickles/trans_start.pkl"
 
     #TEST FIXTURES BELOW
     #NOTE: Does any cleaning/resetting need to be done here? I don't think so. 
@@ -17,16 +17,14 @@ class Test_Transform(unittest.TestCase):
 
     #round_time(df)
     def test_round_time(self):
-        #I need a pickle w/the df fresh out of extract. 
-        rounder_df = pd.read_pickle("pickleLocation.pkl")
+        rounder_df = pd.read_pickle(self.fresh_pickle_path)
+        empty_df = pd.DataFrame()
 
-        #NOTE: pickle df index is a timestamp object, not date time. 
+        trueBool = round_time(rounder_df)
+        falseBool = round_time(empty_df)
 
-        #next, we grab a time that we are sure should have been rounded and test that it has been
-        round_time(rounder_df)
-
-        #self.assertEqual
-        return
+        self.assertEqual(trueBool, True)
+        self.assertEqual(falseBool, False)
 
     #rename_sensors(df, var_names_path)
 
@@ -62,5 +60,10 @@ class Test_Transform(unittest.TestCase):
         self.assertEqual(5, 5)
 
 if __name__ == '__main__':
+    """
+    fresh_df = pd.read_pickle("testing/Bayview/transform/pickles/trans_start.pkl")
+    print(fresh_df)
+    print("I am in main, yay!!")
     #runs test_xxx functions, shows what passed or failed. 
+    """
     unittest.main()
