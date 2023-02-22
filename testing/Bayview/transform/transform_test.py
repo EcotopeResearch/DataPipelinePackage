@@ -46,6 +46,10 @@ class Test_Transform(unittest.TestCase):
         self.assertEqual(renamed_names[:5], var_names[:5]) 
 
     #concat_last_row(df, last_row)
+    def test_concat_last_row(self):
+        #all this function does is get passed in a df, and a row, and combines them. easy test.
+
+        pass
 
     #avg_duplicate_times(df) - returns df
 
@@ -55,16 +59,20 @@ class Test_Transform(unittest.TestCase):
 
     #get_energy_by_min(df) - returns df
 
+    #NOTE: Roger
     #verify_power_energy(df) 
 
     #remove_outliers(df, var_names_path) - returns df
 
+    #NOTE: Roger
     #calculate_cop_values(df, heatLoss_fixed, thermo_slice) - returns cop_values df
 
     #aggregate_df(df) - returns hourly_df and daily_df
 
+    #NOTE: Roger
     #get_temp_zones120(df) - returns df
 
+    #NOTE: Roger
     #get_storage_gals120(df) - returns df
 
     #join_to_hourly(hourly_df, noaa_df) - returns hourly_df
@@ -99,7 +107,6 @@ if __name__ == '__main__':
     if(var_data == rename_names):
         print("The lists match! Nice!")
     """
-    
     
     #runs test_xxx functions, shows what passed or failed. 
     unittest.main()

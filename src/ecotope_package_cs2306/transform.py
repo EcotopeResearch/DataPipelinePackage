@@ -128,25 +128,28 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     """
     try:
         adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
-        if adjustments.empty:
-            return df
-        adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
-        df = df.sort_values(by = "datetime_applied")
-        
-        for adjustment in adjustments:
-            adjustment_datetime = adjustment["datetime_applied"]
-            df_pre = df.loc[df['time'] < adjustment_datetime]
-            df_post = df.loc[df['time'] >= adjustment_datetime]
-            match adjustment["adjustment_type"]:
-                case "add":
-                    continue
-                case "remove":
-                    df_post[adjustment["sensor_1"]] = np.nan
-                case "swap":
-                    df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
-            df = pd.concat([df_pre, df_post], ignore_index=True)
     except FileNotFoundError:
         print("File Not Found: ", f"{_input_directory}adjustments.csv")
+    if adjustments.empty:
+        return df
+    
+    adjustments["datetime_applied"] = pd.to_datetime(adjustments["datetime_applied"])
+    df = df.sort_values(by = "datetime_applied")
+    
+    for adjustment in adjustments:
+        adjustment_datetime = adjustment["datetime_applied"]
+        #NOTE: To access time, df.name
+        df_pre = df.loc[df['time'] < adjustment_datetime]
+        df_post = df.loc[df['time'] >= adjustment_datetime]
+        match adjustment["adjustment_type"]:
+            case "add":
+                continue
+            case "remove":
+                df_post[adjustment["sensor_1"]] = np.nan
+            case "swap":
+                df_post[[adjustment["sensor_1"],adjustment["sensor_2"]]] = df_post[[adjustment["sensor_2"],adjustment["sensor_1"]]]
+        df = pd.concat([df_pre, df_post], ignore_index=True)
+    
     return df
 
 
