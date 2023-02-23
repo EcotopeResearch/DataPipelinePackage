@@ -27,6 +27,12 @@ def round_time(df : pd.DataFrame):
 
 
 def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv"):
+    """
+    Function will take in a dataframe and a string representation of a file path and renames
+    sensors from their alias to their true name.
+    Input: Pandas dataframe and file location of file containing sensor aliases to their corresponding name
+    Output: Pandas dataframe
+    """
     try:
         variable_data = pd.read_csv(variable_names_path)
         variable_data = variable_data[1:86]
@@ -37,6 +43,7 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
         variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
         df.rename(columns=variable_alias_true_dict, inplace=True)
+        df = df.drop(columns=[col for col in df if col in variable_alias])
   
     except FileNotFoundError:
         print("File Not Found: ", variable_names_path) 
