@@ -135,7 +135,7 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     return df
 
 
-def get_site_directories(data_directory : str) -> List[str]:
+def get_sub_dirs(data_directory : str) -> List[str]:
     """
     Function takes in a data directory and returns a list of the paths to all immediate
     site folders in that directory.
