@@ -262,10 +262,11 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
             energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
                 cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-        cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
-            energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-            energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-                cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+        if thermo_slice is not None:
+            cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
+                energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
+                energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
+                    cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
         cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
             energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
@@ -274,8 +275,9 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
         cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
                                         (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
-        cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
-                                        (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
+        if thermo_slice is not None:
+            cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
+                                            (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
         
     except ZeroDivisionError:
         print("DIVIDED BY ZERO ERROR")
