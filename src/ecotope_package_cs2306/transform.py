@@ -82,15 +82,15 @@ def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}
     Output: Pandas dataframe 
     """
     try:
-        bounds_df = pd.read_csv(vars_filename) # bounds dataframe holds acceptable ranges
-        bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
-        bounds_df.dropna(axis=0, thresh=2, inplace=True)
-        bounds_df.set_index(['variable_name'], inplace=True)
-        bounds_df = bounds_df[bounds_df.index.notnull()]
-
-        df.apply(_rm_cols, args=(bounds_df,))
+        bounds_df = pd.read_csv(vars_filename) 
     except FileNotFoundError:
         print("File Not Found: ", vars_filename)
+    bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
+    bounds_df.dropna(axis=0, thresh=2, inplace=True)
+    bounds_df.set_index(['variable_name'], inplace=True)
+    bounds_df = bounds_df[bounds_df.index.notnull()]
+
+    df.apply(_rm_cols, args=(bounds_df,))
     return df
 
 
@@ -115,15 +115,14 @@ def ffill_missing(df : pd.DataFrame, vars_filename : str = f"{_input_directory}V
     """
     try:
         ffill_df = pd.read_csv(vars_filename)  #ffill dataframe holds ffill length and changepoint bool
-        ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
-        ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
-        ffill_df.set_index(['variable_name'], inplace=True)
-        ffill_df = ffill_df[ffill_df.index.notnull()] #drop data without names
-
-        #improved .apply setup
-        df.apply(_ffill, args=(ffill_df,))
     except FileNotFoundError:
         print("File Not Found: ", vars_filename)
+    ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
+    ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
+    ffill_df.set_index(['variable_name'], inplace=True)
+    ffill_df = ffill_df[ffill_df.index.notnull()] #drop data without names
+
+    df.apply(_ffill, args=(ffill_df,))
     return df 
 
 

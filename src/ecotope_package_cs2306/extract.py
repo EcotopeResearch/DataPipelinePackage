@@ -102,18 +102,20 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     for file in json_filenames:
         try:
             data = gzip.open(file)
+        except FileNotFoundError:
+            print("File Not Found: ", file)
             try:
                 data = json.load(data)
-                # TODO: This section is BV specific, maybe move to another function
-                norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
-                norm_data["time"] = pd.to_datetime(norm_data["time"])
-                norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-                norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
-                temp_dfs.append(norm_data)
             except json.decoder.JSONDecodeError:
                 print('Empty or invalid JSON File')
-        except FileNotFoundError:
-            print("File Not Found: ", file) 
+            
+            # TODO: This section is BV specific, maybe move to another function
+            norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+            norm_data["time"] = pd.to_datetime(norm_data["time"])
+            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+            norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
+        
+            temp_dfs.append(norm_data)
     # concatenate all dataframes into one dataframe 
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
@@ -128,9 +130,10 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     for file in csv_filenames:
         try:
             data = pd.read_csv(file)
-            temp_dfs.append(data)
         except FileNotFoundError:
             print("File Not Found: ", file)
+        if len(data.columns) != 0:
+            temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
