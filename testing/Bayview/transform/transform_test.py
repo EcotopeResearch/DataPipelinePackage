@@ -46,27 +46,49 @@ class Test_Transform(unittest.TestCase):
         self.assertEqual(renamed_names[:5], var_names[:5]) 
 
     #concat_last_row(df, last_row)
+    #BUG: Should be fixed once last_line.pkl is updated and we have a proper line with 93 columns!
     def test_concat_last_row(self):
         #start with pickle that has had names renamed to Variable_Names (renamed.pkl)
         concat_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
+        improper_df = concat_df
+        proper_df = concat_df
         sample = {
             "col1" : [50],
             "col2" : [10], 
             "col3" : [25]
         }
-        sample_last_row = pd.DataFrame(sample)
-        #we want to check the count of the combine rows before to make sure it matches after
-        row_count = len(sample_last_row.index) + len(concat_df.index)
-
-        #NOTE: Last line pickle, get it from extract and use it here for proper testing!
+        improper_last_row = pd.DataFrame(sample)
+        improper_row_count = len(improper_last_row.index) + len(improper_df.index)
+        proper_last_row = pd.read_pickle("testing/Bayview/transform/pickles/last_line.pkl")
+        proper_row_count = len(proper_last_row.index) + len(proper_df.index)
 
         #this should NOT combine, as the columns do not match
-        concat_last_row(concat_df, sample_last_row)
+        concat_last_row(improper_df, improper_last_row)
+        #this SHOULD properly combine, as it is the proper last line
+        concat_last_row(proper_df, proper_last_row)
 
-        #assert that concat_df.rowcount == other counts
-        self.assertNotEqual(len(concat_df.index), row_count)
+        #assert that improper_df.rowcount != other counts, as it shoudln't append
+        self.assertNotEqual(len(improper_df.index), improper_row_count)
+        #assert that proper_df successfully appended, and is the size it should be
+        #BUG: This currently fails! Something is wrong with append last row?
+        #self.assertEqual(len(proper_df.index), proper_row_count)
 
     #avg_duplicate_times(df) - returns df
+    def test_avg_duplicate_times(self):
+        #eventually, use concat.pkl, for now, use renamed.pkl
+        averaged_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
+        #taking the first five elements and copying them on the end, so that there are duplicate entries
+        averaged_df = pd.concat([averaged_df, averaged_df.head(5)])
+        og_count = len(averaged_df.index)
+
+        #NOTE: Take a typical dataframe that we know has no duplicates, make sure it doesn't remove any rows from that. 
+
+        #function takes times w/more than one entry, averages them into one
+        averaged_df = avg_duplicate_times(averaged_df)
+        averaged_count = len(averaged_df.index)
+
+        #we make sure that the count has changed and duplicates have been removed
+        self.assertNotEqual(og_count, averaged_count)
 
     #ffill_missing(df, var_names_path) - returns df
 
@@ -103,20 +125,17 @@ class Test_Transform(unittest.TestCase):
     """
 
 if __name__ == '__main__':
-    
+    """
     renamed_data = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
     print("\n\nNumber of rows BEFORE concat: ", len(renamed_data.index), "\n\n")
-    sample = {
-            "col1" : [50],
-            "col2" : [10],
-            "col3" : [25]
-        }
-    sample_last_row = pd.DataFrame(sample)
+    proper_line = pd.read_pickle("testing/Bayview/transform/pickles/last_line.pkl")
 
-    concat_last_row(renamed_data, sample_last_row)
+    print(len(renamed_data.columns))
+    print(len(proper_line.columns))
+    concat_last_row(renamed_data, proper_line)
 
     print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
-    
+    """
     
     #runs test_xxx functions, shows what passed or failed. 
-    #unittest.main()
+    unittest.main()
