@@ -17,12 +17,9 @@ def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
     Output: Pandas dataframe with last row concatenated
     """
     cols = df.columns
-    print(cols)
     last_row = last_row.iloc[:, last_row.columns.isin(cols)]
-    #last_row = last_row.loc[:, cols]
-    print(len(df.columns))
-    print(len(last_row.columns))
     df = pd.concat([df, last_row], join = "inner")
+    df.sort_index(inplace=True)
     return df
 
 def round_time(df : pd.DataFrame):
