@@ -46,7 +46,7 @@ class Test_Transform(unittest.TestCase):
         self.assertEqual(renamed_names[:5], var_names[:5]) 
 
     #concat_last_row(df, last_row)
-    #BUG: Should be fixed once last_line.pkl is updated and we have a proper line with 93 columns!
+    #BUG: Should be fixed once last_line.pkl is updated and we have a proper line with 73 columns!
     def test_concat_last_row(self):
         #start with pickle that has had names renamed to Variable_Names (renamed.pkl)
         concat_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
@@ -122,6 +122,17 @@ class Test_Transform(unittest.TestCase):
     """
 
     #get_energy_by_min(df) - returns df
+    def test_get_energy_by_min(self):
+        #NOTE: update pickle to sensor_adjusted.pkl, for now use ffilled.pkl
+        get_energy_df = pd.read_pickle("testing/Bayview/transform/pickles/ffilled.pkl")
+
+        #this function replaces energy values w/cumulative per/minute values of energy vars?
+
+        #how does it change? how could I verify that it did or didn't update properly? I could 
+        #check that the df has changed, but that seems pretty dumb. or maybe that's all we can do?
+
+        #assert that updated_df and starting_df are different, call multiple times w/improper input, like an empty df
+        self.assertEqual(5, 5)
 
     #NOTE: Roger
     #verify_power_energy(df) 
@@ -143,13 +154,6 @@ class Test_Transform(unittest.TestCase):
 
     #join_to_daily(daily_df, cop_values) - returns daily_df
 
-    """
-    #tests to make sure I set up the class correctly, done with
-    def test_fail(self):
-        self.assertEqual(3, 5)
-    def test_pass(self):
-        self.assertEqual(5, 5)
-    """
 
 if __name__ == '__main__':
     """ NOTE: concat testing!!
