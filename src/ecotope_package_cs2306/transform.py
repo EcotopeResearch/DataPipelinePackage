@@ -35,19 +35,19 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
     """
     try:
         variable_data = pd.read_csv(variable_names_path)
-        variable_data = variable_data[1:86]
-        variable_data = variable_data[['variable_alias', 'variable_name']]
-        variable_data.dropna(axis=0, inplace=True)
-        variable_alias = list(variable_data["variable_alias"])
-        variable_true = list(variable_data["variable_name"])
-        variable_alias_true_dict = dict(zip(variable_alias, variable_true))
-
-        df.rename(columns=variable_alias_true_dict, inplace=True)
-        df = df.drop(columns=[col for col in df if col in variable_alias])
-  
     except FileNotFoundError:
-        print("File Not Found: ", variable_names_path) 
+        print("File Not Found: ", variable_names_path)
+        return df
     
+    variable_data = variable_data[1:86]
+    variable_data = variable_data[['variable_alias', 'variable_name']]
+    variable_data.dropna(axis=0, inplace=True)
+    variable_alias = list(variable_data["variable_alias"])
+    variable_true = list(variable_data["variable_name"])
+    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+
+    df.rename(columns=variable_alias_true_dict, inplace=True)
+    df = df.drop(columns=[col for col in df if col in variable_alias])
 
 
 def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
@@ -84,6 +84,8 @@ def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}
         bounds_df = pd.read_csv(vars_filename) 
     except FileNotFoundError:
         print("File Not Found: ", vars_filename)
+        return df
+  
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
@@ -116,6 +118,8 @@ def ffill_missing(df : pd.DataFrame, vars_filename : str = f"{_input_directory}V
         ffill_df = pd.read_csv(vars_filename)  #ffill dataframe holds ffill length and changepoint bool
     except FileNotFoundError:
         print("File Not Found: ", vars_filename)
+        return df
+    
     ffill_df = ffill_df.loc[:, ["variable_name", "changepoint", "ffill_length"]]
     ffill_df.dropna(axis=0, thresh=2, inplace=True) #drop data without changepoint AND ffill_length
     ffill_df.set_index(['variable_name'], inplace=True)
@@ -135,6 +139,7 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
         adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
     except FileNotFoundError:
         print("File Not Found: ", f"{_input_directory}adjustments.csv")
+        return df
     if adjustments.empty:
         return df
     
@@ -279,6 +284,7 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
         
     except ZeroDivisionError:
         print("DIVIDED BY ZERO ERROR")
+        return df
     
     return cop_values
 
