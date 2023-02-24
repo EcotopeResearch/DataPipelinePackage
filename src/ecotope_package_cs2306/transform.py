@@ -9,10 +9,17 @@ from ecotope_package_cs2306.config import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)
 
-# from .transform remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_intermediate_values, calculate_cop_values 
-
 def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
+    """
+    Function takes in a dataframe and the last row from the SQL database and concatenates the last row
+    to the start of the dataframe
+    Input: Pandas dataframe and last row Pandas dataframe
+    Output: Pandas dataframe with last row concatenated
+    """
+    cols = df.columns
+    last_row = last_row.loc[:, cols]
     df = pd.concat([df, last_row], join = "inner")
+    return df
 
 def round_time(df : pd.DataFrame):
     """
