@@ -75,7 +75,7 @@ class Test_Transform(unittest.TestCase):
 
     #avg_duplicate_times(df) - returns df
     def test_avg_duplicate_times(self):
-        #eventually, use concat.pkl, for now, use renamed.pkl
+        #NOTE: eventually, use concat.pkl, for now, use renamed.pkl
         averaged_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
         #taking the first five elements and copying them on the end, so that there are duplicate entries
         averaged_df = pd.concat([averaged_df, averaged_df.head(5)])
@@ -91,8 +91,35 @@ class Test_Transform(unittest.TestCase):
         self.assertNotEqual(og_count, averaged_count)
 
     #ffill_missing(df, var_names_path) - returns df
+    def test_ffill_missing(self):
+        #NOTE: eventually, use averaged.pkl, for now, use renamed.pkl
+        #NOTE: If we add additonal testing to these functions, can check error code behavior
+        pre_ffill_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
+        og_na_count = pre_ffill_df.isna().sum().sum()
 
+        #proper ffill call, df that needs ffilling and proper path
+        ffill_df = ffill_missing(pre_ffill_df, self.var_names_path)
+        post_na_count = ffill_df.isna().sum().sum()
+
+        #ffill called on a df that is fully filled, assert no changes were made
+        triple_df = ffill_missing(ffill_df, self.var_names_path)
+        triple_na_count = triple_df.isna().sum().sum()
+
+        #assert that the count of NA values in ffill_df are less than the count of NA values in pre_ffill_df
+        self.assertNotEqual(og_na_count, post_na_count)
+        #assert that no changes were made when ffill is called on a df that was already ffill'd 
+        self.assertEqual(post_na_count, triple_na_count)
+
+    """
     #sensor_adjustment(df) - returns df
+    #BUG: Carlos mentioned there was an issue with this, update something in the function
+    def test_sensor_adjustment(self):
+        #NOTE: Update pickle after other functions are fixed! For now use ffilled.pkl
+        unadjusted_df = pd.read_pickle("testing/Bayview/transform/pickles/ffilled.pkl")
+
+        #Just because this function is confusing and others don't really depend on it, I'm delaying writing tests for it
+        pass
+    """
 
     #get_energy_by_min(df) - returns df
 
@@ -125,7 +152,7 @@ class Test_Transform(unittest.TestCase):
     """
 
 if __name__ == '__main__':
-    """
+    """ NOTE: concat testing!!
     renamed_data = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
     print("\n\nNumber of rows BEFORE concat: ", len(renamed_data.index), "\n\n")
     proper_line = pd.read_pickle("testing/Bayview/transform/pickles/last_line.pkl")
@@ -136,6 +163,13 @@ if __name__ == '__main__':
 
     print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
     """
+
+    #We need a new pickle for post ffill!
+    #unfilled_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
+
+    #ffilled_df = ffill_missing(unfilled_df, "input/Variable_Names.csv")
+
+    #pd.to_pickle(ffilled_df, "testing/Bayview/transform/pickles/ffilled.pkl")
     
     #runs test_xxx functions, shows what passed or failed. 
     unittest.main()
