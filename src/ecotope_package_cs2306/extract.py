@@ -98,25 +98,26 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     Output: Pandas Dataframe containing data from all files
     """
     temp_dfs = []
-    # read each json file into dataframe and append to temporary list
     for file in json_filenames:
         try:
             data = gzip.open(file)
         except FileNotFoundError:
             print("File Not Found: ", file)
-            try:
-                data = json.load(data)
-            except json.decoder.JSONDecodeError:
-                print('Empty or invalid JSON File')
-            
-            # TODO: This section is BV specific, maybe move to another function
-            norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
-            norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-            norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
+            return 
+        try:
+            data = json.load(data)
+        except json.decoder.JSONDecodeError:
+            print('Empty or invalid JSON File')
+            return
         
-            temp_dfs.append(norm_data)
-    # concatenate all dataframes into one dataframe 
+        # TODO: This section is BV specific, maybe move to another function
+        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+        norm_data["time"] = pd.to_datetime(norm_data["time"])
+        norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
+    
+        temp_dfs.append(norm_data)
+
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
@@ -132,6 +133,8 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
             data = pd.read_csv(file)
         except FileNotFoundError:
             print("File Not Found: ", file)
+            return
+        
         if len(data.columns) != 0:
             temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
@@ -153,6 +156,7 @@ def get_sub_dirs(data_directory : str) -> List[str]:
                 directories.append(path)
     except FileNotFoundError:
         print("Folder not Found: ", data_directory)
+        return
     return directories
 
 
@@ -291,6 +295,7 @@ def _download_noaa_data(stations: dict) -> List[str]:
         ftp_server.encoding = "utf-8"
     except:
         print("FTP ERROR")
+        return
     # Download files for each station from 2010 till present year
     for year in range(2010, year_end + 1):
         # Set FTP credentials and connect
