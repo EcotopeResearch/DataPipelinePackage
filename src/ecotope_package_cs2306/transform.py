@@ -17,7 +17,11 @@ def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
     Output: Pandas dataframe with last row concatenated
     """
     cols = df.columns
-    last_row = last_row.loc[:, cols]
+    print(cols)
+    last_row = last_row.iloc[:, last_row.columns.isin(cols)]
+    #last_row = last_row.loc[:, cols]
+    print(df.columns)
+    print(last_row.columns)
     df = pd.concat([df, last_row], join = "inner")
     return df
 
