@@ -47,9 +47,24 @@ class Test_Transform(unittest.TestCase):
 
     #concat_last_row(df, last_row)
     def test_concat_last_row(self):
-        #all this function does is get passed in a df, and a row, and combines them. easy test.
+        #start with pickle that has had names renamed to Variable_Names (renamed.pkl)
+        concat_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
+        sample = {
+            "col1" : [50],
+            "col2" : [10], 
+            "col3" : [25]
+        }
+        sample_last_row = pd.DataFrame(sample)
+        #we want to check the count of the combine rows before to make sure it matches after
+        row_count = len(sample_last_row.index) + len(concat_df.index)
 
-        pass
+        #NOTE: Last line pickle, get it from extract and use it here for proper testing!
+
+        #this should NOT combine, as the columns do not match
+        concat_last_row(concat_df, sample_last_row)
+
+        #assert that concat_df.rowcount == other counts
+        self.assertNotEqual(len(concat_df.index), row_count)
 
     #avg_duplicate_times(df) - returns df
 
@@ -88,25 +103,20 @@ class Test_Transform(unittest.TestCase):
     """
 
 if __name__ == '__main__':
-    """
-    rename_df = pd.read_pickle("testing/Bayview/transform/pickles/rounded.pkl")
-    var_data = pd.read_csv("input/Variable_Names.csv")
-    #this is a series of the names
-    var_data = var_data["variable_name"].tolist()
-    #NOTE: var_data's first element is nan, pop it?
-    var_data.pop(0)
-    rename_sensors(rename_df, "input/Variable_Names.csv")
-    rename_names = rename_df.columns.tolist()
-    print(var_data)
-    print("Printed var data type!!")
-    #this is an index w/the names?
-    print(rename_names)
-    print("Printed column names type!!")
+    
+    renamed_data = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
+    print("\n\nNumber of rows BEFORE concat: ", len(renamed_data.index), "\n\n")
+    sample = {
+            "col1" : [50],
+            "col2" : [10],
+            "col3" : [25]
+        }
+    sample_last_row = pd.DataFrame(sample)
 
-    #NOTE: These lists are not identical, but VERY close. How can I test this?
-    if(var_data == rename_names):
-        print("The lists match! Nice!")
-    """
+    concat_last_row(renamed_data, sample_last_row)
+
+    print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
+    
     
     #runs test_xxx functions, shows what passed or failed. 
-    unittest.main()
+    #unittest.main()
