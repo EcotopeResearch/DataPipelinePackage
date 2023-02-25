@@ -52,7 +52,7 @@ class Test_Transform(unittest.TestCase):
         concat_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
         improper_df = concat_df
         proper_df = concat_df
-        sample = {
+        sample = { 
             "col1" : [50],
             "col2" : [10], 
             "col3" : [25]
@@ -63,15 +63,14 @@ class Test_Transform(unittest.TestCase):
         proper_row_count = len(proper_last_row.index) + len(proper_df.index)
 
         #this should NOT combine, as the columns do not match
-        concat_last_row(improper_df, improper_last_row)
+        improper_df = concat_last_row(improper_df, improper_last_row)
         #this SHOULD properly combine, as it is the proper last line
-        concat_last_row(proper_df, proper_last_row)
+        proper_df = concat_last_row(proper_df, proper_last_row)
 
         #assert that improper_df.rowcount != other counts, as it shoudln't append
         self.assertNotEqual(len(improper_df.index), improper_row_count)
         #assert that proper_df successfully appended, and is the size it should be
-        #BUG: This currently fails! Something is wrong with append last row?
-        #self.assertEqual(len(proper_df.index), proper_row_count)
+        self.assertEqual(len(proper_df.index), proper_row_count)
 
     #avg_duplicate_times(df) - returns df
     def test_avg_duplicate_times(self):
@@ -126,13 +125,14 @@ class Test_Transform(unittest.TestCase):
         #NOTE: update pickle to sensor_adjusted.pkl, for now use ffilled.pkl
         get_energy_df = pd.read_pickle("testing/Bayview/transform/pickles/ffilled.pkl")
 
-        #this function replaces energy values w/cumulative per/minute values of energy vars?
+        #testing that function does not break when passed improper input, like an empty df
+        test_df = get_energy_by_min(pd.DataFrame())
 
-        #how does it change? how could I verify that it did or didn't update properly? I could 
-        #check that the df has changed, but that seems pretty dumb. or maybe that's all we can do?
+        #ideal function call, assert that the dataframe has properly updated only energy values
+        avg_energy_df = get_energy_by_min(get_energy_df)
 
-        #assert that updated_df and starting_df are different, call multiple times w/improper input, like an empty df
-        self.assertEqual(5, 5)
+        #assert that get_energy_df and avg_energy_df have different values for their energy vars, borrow the regex!
+        #NOTE: I could loc specifically an energy series from each and just compare that. Should be fine?
 
     #NOTE: Roger
     #verify_power_energy(df) 
