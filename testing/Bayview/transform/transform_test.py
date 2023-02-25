@@ -132,7 +132,7 @@ class Test_Transform(unittest.TestCase):
         og_energy_vars = og_energy_vars.filter(regex=".*[^BTU]$")
 
         #testing that function does not break when passed improper input, like an empty df
-        test_df = get_energy_by_min(pd.DataFrame())
+        empty_df = get_energy_by_min(pd.DataFrame())
 
         #ideal function call, assert that the dataframe has properly updated only energy values
         avg_energy_df = get_energy_by_min(get_energy_df)
@@ -168,6 +168,15 @@ class Test_Transform(unittest.TestCase):
     #calculate_cop_values(df, heatLoss_fixed, thermo_slice) - returns cop_values df
 
     #aggregate_df(df) - returns hourly_df and daily_df
+    def test_aggregate_df(self):
+        #NOTE: This is a big candidate for extra testing
+        unaggregated_data = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
+
+        #test w/an empty df that nothing explodes
+        aggregate_df(pd.DataFrame())
+
+        #test that hourly_df returns properly (fewer rows than unaggregated_data, AND has load_shift_day as a column!)
+        #test that daily_df returns properly (fewer rows than hourly_df!)
 
     #NOTE: Roger
     #get_temp_zones120(df) - returns df
@@ -193,6 +202,15 @@ if __name__ == '__main__':
 
     print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
     """
-    
+
+    """
+    #pruned_outliers.pkl
+    pruned_data_df = pd.read_pickle("testing/Bayview/transform/pickles/pruned_data.pkl")
+    cop_calc_data = 
+
+    pd.to_pickle(, "testing/Bayview/transform/pickles/pruned_outliers.pkl")
+    #27.278, "6:00AM"
+    """
+
     #runs test_xxx functions, shows what passed or failed. 
     unittest.main()

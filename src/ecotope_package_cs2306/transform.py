@@ -310,6 +310,10 @@ def aggregate_df(df: pd.DataFrame):
     Input: Single pandas dataframe of minute-by-minute sensor data.
     Output: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.
     """
+    #If df passed in empty, we just return empty dfs for hourly_df and daily_df
+    if(df.empty):
+        return pd.DataFrame(), pd.DataFrame()
+    
     #Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
     sum_df = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
     mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$") #NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
