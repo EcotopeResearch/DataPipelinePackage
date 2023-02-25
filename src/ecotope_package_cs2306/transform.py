@@ -157,7 +157,8 @@ def sensor_adjustment(df : pd.DataFrame) -> pd.DataFrame:
     
     for adjustment in adjustments:
         adjustment_datetime = adjustment["datetime_applied"]
-        #NOTE: To access time, df.name
+        #NOTE: To access time, df.index (this returns a list of DateTime objects in a full df)
+        #To access time object if you have located a series, it's series.name (ex: df.iloc[0].name -- this prints the DateTime for the first row in a df)
         df_pre = df.loc[df['time'] < adjustment_datetime]
         df_post = df.loc[df['time'] >= adjustment_datetime]
         match adjustment["adjustment_type"]:

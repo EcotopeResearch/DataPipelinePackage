@@ -47,7 +47,6 @@ class Test_Transform(unittest.TestCase):
 
     """
     #concat_last_row(df, last_row)
-    #BUG: Should be fixed once last_line.pkl is updated and we have a proper line with 73 columns!
     def test_concat_last_row(self):
         #start with pickle that has had names renamed to Variable_Names (renamed.pkl)
         concat_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
@@ -73,7 +72,7 @@ class Test_Transform(unittest.TestCase):
         #assert that proper_df successfully appended, and is the size it should be
         #BUG: < not supported between instances of Timestamp and int. Catch the exception!
         self.assertEqual(len(proper_df.index), proper_row_count)
-    """
+        """
 
     #avg_duplicate_times(df) - returns df
     def test_avg_duplicate_times(self):
@@ -112,20 +111,26 @@ class Test_Transform(unittest.TestCase):
         #assert that no changes were made when ffill is called on a df that was already ffill'd 
         self.assertEqual(post_na_count, triple_na_count)
 
-    """
     #sensor_adjustment(df) - returns df
-    #BUG: Carlos mentioned there was an issue with this, update something in the function
+    #BUG: Something with how time is extracted in this function is currently broken, that bug needs to be fixed first. 
     def test_sensor_adjustment(self):
-        #NOTE: Update pickle after other functions are fixed! For now use ffilled.pkl
         unadjusted_df = pd.read_pickle("testing/Bayview/transform/pickles/ffilled.pkl")
+        #Eventually, adjusted_df should be loaded with a df that NEEDS adjustment. HOW CAN I GET THIS?
+        adjusted_df = pd.DataFrame() 
 
-        #Just because this function is confusing and others don't really depend on it, I'm delaying writing tests for it
-        pass
-    """
+        #empty df test to make sure it doesn't break
+        sensor_adjustment(pd.DataFrame())
+
+        #test to make sure it has modified the df when that df has an offset
+        adjusted_df = sensor_adjustment(adjusted_df)
+
+        #test to make sure a df without an offset does not get modified
+        unadjusted_df = sensor_adjustment(unadjusted_df) 
+
+        #how can I write an assertion to validate this? just check that those specific sensor values DID or DID NOT get modified?
 
     #get_energy_by_min(df) - returns df
     def test_get_energy_by_min(self):
-        #NOTE: update pickle to sensor_adjusted.pkl, for now use ffilled.pkl
         get_energy_df = pd.read_pickle("testing/Bayview/transform/pickles/ffilled.pkl")
         #df of the original energy vars to compare with after function is run
         og_energy_vars = get_energy_df.filter(regex=".*Energy.*")
@@ -169,7 +174,7 @@ class Test_Transform(unittest.TestCase):
 
     #aggregate_df(df) - returns hourly_df and daily_df
     def test_aggregate_df(self):
-        #NOTE: This is a big candidate for extra testing
+        #NOTE: This is potentially a candidate for extra testing
         unaggregated_df = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
 
         #test w/an empty df that nothing explodes
@@ -235,15 +240,6 @@ if __name__ == '__main__':
     concat_last_row(renamed_data, proper_line)
 
     print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
-    """
-
-    """
-    #pruned_outliers.pkl
-    pruned_data_df = pd.read_pickle("testing/Bayview/transform/pickles/pruned_data.pkl")
-    cop_calc_data = 
-
-    pd.to_pickle(, "testing/Bayview/transform/pickles/pruned_outliers.pkl")
-    #27.278, "6:00AM"
     """
 
     #runs test_xxx functions, shows what passed or failed. 
