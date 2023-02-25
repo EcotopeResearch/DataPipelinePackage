@@ -376,7 +376,7 @@ def _largest_less_than(df_row, target):
 
     return largest_less_than_120_tmp
 
-def _get_vol_equivalent_to_120(df_row):
+def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
     """
     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
     Input: A single row of a sensor Pandas Dataframe in a series
@@ -385,7 +385,7 @@ def _get_vol_equivalent_to_120(df_row):
     try:
         tvadder = 0
         vadder = 0
-        gals_per_zone = set_zone_vol()
+        gals_per_zone = set_zone_vol(location, gals, total, zones)
         dftemp = df_row.filter(regex = 'Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
         count = 1
         for val in dftemp:
@@ -409,7 +409,7 @@ def _get_vol_equivalent_to_120(df_row):
         return 0
     
 
-def _get_V120(df_row):
+def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
     """
     Function takes a row of sensor data and determines the volume of water > 120 degrees
     in the zone that has the highest sensor < 120 degrees.
@@ -417,7 +417,7 @@ def _get_V120(df_row):
     Output: A float of the volume of water > 120 degrees
     """
     try:
-        gals_per_zone = set_zone_vol()
+        gals_per_zone = set_zone_vol(location, gals, total, zones)
         temp_cols = df_row.filter(regex = 'HPWHOutlet$|top|mid|bottom')
         name_cols = ""
         name_cols = _largest_less_than(temp_cols, 120)
@@ -455,15 +455,15 @@ def _get_zone_Temp120(df_row):
     return zone_Temp_120
 
     
-def get_storage_gals120(df) -> pd.DataFrame:
+def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that creates and appends the Gals120 data onto the Dataframe
     Input: A Pandas Dataframe
     Output: a Pandas Dataframe
     """
-    df['Vol120'] = df.apply(_get_V120, axis=1)
+    df['Vol120'] = df.apply(_get_V120(location, gals, total, zones), axis=1)
     df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
-    df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120, axis=1)
+    df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120(location, gals, total, zones), axis=1)
     
     return df  
 
