@@ -266,7 +266,7 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
 def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> dict:
     cop_inter = aggregate_values(df, thermo_slice)
 
-    cop_values = pd.DataFrame(cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
+    cop_values = pd.DataFrame(index=cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
 
     try:
         cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
@@ -581,7 +581,7 @@ def __main__():
 
 
     pass
-
+    
 if __name__ == '__main__':
-    __main__()
+    
 """
