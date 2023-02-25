@@ -10,6 +10,7 @@ from ecotope_package_cs2306.load import connectDB, getLoginInfo
 from ecotope_package_cs2306.config import _config_directory, _data_directory, _output_directory
 import numpy as np
 import sys
+from pytz import timezone
 import mysql.connector.errors as mysqlerrors
 
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
@@ -25,10 +26,9 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
         db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
     except mysqlerrors.Error:
         print(f"Table {config_dict['minute']['table_name']} does not exist.")
-        column_names = config_dict['minute']['sensor_list'] #.replace("[", "").replace("]", "").replace("'", "").split(",")
-        return_df = pd.DataFrame(columns=column_names, index=[datetime(year=2022, month=1, day=9, hour=23, minute=59, second=0)])
+        column_names = config_dict['minute']['sensor_list']
+        return_df = pd.DataFrame(columns=column_names, index=[datetime(year=2022, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific'))])
         return_df = return_df.fillna(0)
-        
         return return_df
 
     last_row_data = pd.DataFrame(db_cursor.fetchall())
