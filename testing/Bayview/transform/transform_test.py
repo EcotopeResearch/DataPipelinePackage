@@ -170,13 +170,19 @@ class Test_Transform(unittest.TestCase):
     #aggregate_df(df) - returns hourly_df and daily_df
     def test_aggregate_df(self):
         #NOTE: This is a big candidate for extra testing
-        unaggregated_data = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
+        unaggregated_df = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
 
         #test w/an empty df that nothing explodes
         aggregate_df(pd.DataFrame())
 
-        #test that hourly_df returns properly (fewer rows than unaggregated_data, AND has load_shift_day as a column!)
-        #test that daily_df returns properly (fewer rows than hourly_df!)
+        #proper call to function returns our hourly and daily test dfs
+        hourly_df, daily_df = aggregate_df(unaggregated_df)
+
+        #test that hourly_df returns properly (fewer rows than unaggregated_data)
+        self.assertTrue(len(unaggregated_df.index) > len(hourly_df.index))
+        #test that daily_df returns properly (fewer rows than hourly_df AND has load_shift_day as a column!)
+        self.assertTrue(len(hourly_df.index) > len(daily_df.index))
+        self.assertTrue(("load_shift_day" in daily_df.columns))
 
     #NOTE: Roger
     #get_temp_zones120(df) - returns df
@@ -185,8 +191,36 @@ class Test_Transform(unittest.TestCase):
     #get_storage_gals120(df) - returns df
 
     #join_to_hourly(hourly_df, noaa_df) - returns hourly_df
+    def test_join_to_hourly(self):
+        #pickle of hourly_df, and pickle of NOAA data
+        hourly_df = pd.read_pickle("testing/Bayview/transform/pickles/hourly_df.pkl")
+        noaa_df = pd.read_pickle("testing/Bayview/transform/pickles/noaa_df.pkl")
+        #combined_count = len(hourly_df.columns) + len(noaa_df.columns)
+        og_count = len(hourly_df.columns)
+
+        #pass in two empty dfs, or just hourly missing and just noaa missing
+        join_to_hourly(pd.DataFrame(), pd.DataFrame())
+
+        #properly call, join these together, make sure that columns were added on
+        combined_df = join_to_hourly(hourly_df, noaa_df)
+
+        #assert that the column count has increased after join_to_hourly was called
+        self.assertTrue(len(combined_df.columns) > og_count)
 
     #join_to_daily(daily_df, cop_values) - returns daily_df
+    def test_join_to_daily(self):
+        daily_df = pd.read_pickle("testing/Bayview/transform/pickles/daily_df.pkl")
+        cop_values = pd.read_pickle("testing/Bayview/transform/pickles/cop_values.pkl")
+        og_count = len(daily_df.columns)
+
+        #pass in two empty dfs, or have just daily missing or just cop_values missing
+        combined_df = join_to_daily(daily_df, cop_values)
+
+        #proper call, make sure that cop_values columns were added on 
+        combined_df = join_to_daily(daily_df, cop_values)
+
+        #assert that the column count has increased after join_to_daily was called
+        self.assertTrue(len(combined_df.columns) > og_count)
 
 
 if __name__ == '__main__':
