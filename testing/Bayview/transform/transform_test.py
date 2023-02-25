@@ -156,7 +156,8 @@ class Test_Transform(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    """ NOTE: concat testing!!
+    """
+    # NOTE: concat testing!!
     renamed_data = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
     print("\n\nNumber of rows BEFORE concat: ", len(renamed_data.index), "\n\n")
     proper_line = pd.read_pickle("testing/Bayview/transform/pickles/last_line.pkl")
@@ -167,13 +168,6 @@ if __name__ == '__main__':
 
     print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
     """
-
-    #We need a new pickle for post ffill!
-    #unfilled_df = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
-
-    #ffilled_df = ffill_missing(unfilled_df, "input/Variable_Names.csv")
-
-    #pd.to_pickle(ffilled_df, "testing/Bayview/transform/pickles/ffilled.pkl")
     
     #runs test_xxx functions, shows what passed or failed. 
     unittest.main()
