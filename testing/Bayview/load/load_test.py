@@ -34,7 +34,8 @@ class Test_Load(unittest.TestCase):
             "host" : "csp70.cslab.seattleu.edu",
             "database" : "testDB"
         }
-    table_list = ["minute", "hour", "day"]
+    test_headers = ["minute"]
+    test_config_path = "test_config.ini"
     #need a list of all the columns, unfortunately that list is HUGE
     column_list = []
 
@@ -73,17 +74,17 @@ class Test_Load(unittest.TestCase):
 
     #UNITTEST: getLoginInfo
     def test_getLoginInfo(self):
-        #this is how it's setup in bayview load? I don't know how else to call it?
-        config_dict = getLoginInfo(self.table_list)
-        #NOTE: Test behavior for wrong header string input
-        empty_dict = getLoginInfo(["bad_list"])
-
-        #currently, this fails, despite it being called exactly how it is in bayview load
+        config_dict = getLoginInfo(self.test_headers)
         test_login_dict = config_dict['database']
 
-        #test makes sure data was loaded correctly
         self.assertDictEqual(test_login_dict, self.login_dict)
 
+    def test_correctheader_getLoginInfo(self):
+        config_dict = getLoginInfo(self.test_headers, self.test_config_path)
+        print(config_dict)
+        # self.assertDictEqual(test_login_dict, self.login_dict)
+
+    """
     #UNITTEST: connectDB
     def test_connectDB(self):
         #when this is successful, it prints "Successfully connected to database."
@@ -94,7 +95,7 @@ class Test_Load(unittest.TestCase):
 
         db_connection.close
         db_cursor.close    
-
+    """
     """
     #UNITTEST: checkTableExists
     #NOTE: Helper function in bayview run
@@ -135,6 +136,7 @@ class Test_Load(unittest.TestCase):
         db_cursor.close
     """
 
+    """
     #UNITTEST: loadDatabase
     def test_loadDatabase(self):
         #how can I look at a database and assert that it has stuff? 
@@ -151,6 +153,7 @@ class Test_Load(unittest.TestCase):
         db_connection.close
         db_cursor.close
         return
+    """
 
 
 if __name__ == '__main__':

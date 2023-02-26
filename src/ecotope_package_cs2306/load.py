@@ -16,8 +16,6 @@ def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> 
     Output: Login information
     """
 
-    config_info = "config.ini"
-
     if not os.path.exists(config_info):
         print(f"File path '{config_info}' does not exist.")
         sys.exit()
@@ -146,12 +144,11 @@ if __name__ == '__main__':
     table_list = ["minute", "hour", "day"]
     # get database connection information and desired table name to write data into
     config_dict = getLoginInfo(table_list, config_file_path)
-    print(config_dict)
-
-    # establish connection to database
-    # db_connection, db_cursor = connectDB(config_info=config_dict["database"])
+    print(config_dict['database'])
 
     """
+    db_connection, db_cursor = connectDB(config_info=config_dict["database"])
+
     ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
     ecotope_data.replace(np.NaN, 0, inplace=True)
     weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
@@ -159,15 +156,16 @@ if __name__ == '__main__':
     weather_data = weather_data["2023-01-10 16:00:00-08:00":"2023-01-11 15:00:00-08:00"]
     weather_data.drop(["conditions"], axis=1, inplace=True)
     weather_data.fillna(0, inplace=True)
+
+    print(weather_data)
+    print(ecotope_data.columns)
+
+    load data stored in data frame to database
+    loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
+    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
+
+    commit changes to database and close connections
+    db_connection.commit()
+    db_connection.close()
+    db_cursor.close()
     """
-    # print(weather_data)
-    # print(ecotope_data.columns)
-
-    # load data stored in data frame to database
-    # loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
-    # loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
-
-    # commit changes to database and close connections
-    # db_connection.commit()
-    # db_connection.close()
-    # db_cursor.close()
