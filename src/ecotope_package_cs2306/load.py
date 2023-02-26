@@ -55,7 +55,6 @@ def connectDB(config_info: dict):
         print("Unable to connect to database with given credentials.")
         return None, None
 
-
     print(f"Successfully connected to database.")
     return connection, connection.cursor()
 

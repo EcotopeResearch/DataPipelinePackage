@@ -79,7 +79,14 @@ class Test_Load(unittest.TestCase):
         self.assertRaises(configparser.NoSectionError, getLoginInfo, ["bad"], self.test_config_path)
         
     def test_incorrectpassword_connectDB(self):
-        self.assertRaises(mysql.connector.Error, connectDB, self.incorrect_password_login_dict)
+        cxn, cursor = connectDB(self.incorrect_password_login_dict)
+        self.assertEqual(cxn, None)
+        self.assertEqual(cursor, None)
+
+    def test_connectDB(self):
+        cxn, cursor = connectDB(self.login_dict["database"])
+        self.assertNotEqual(cxn, None)
+        self.assertNotEqual(cursor, None)
 
     """
     #UNITTEST: connectDB
