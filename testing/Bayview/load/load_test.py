@@ -28,12 +28,9 @@ Write a test that ensures that feature is working as intended (for all plausible
 class Test_Load(unittest.TestCase):
     
     #CLASS DATA
-    login_dict = {
-            "user" : "fahrigemil",
-            "password" : "aBC12345!",
-            "host" : "csp70.cslab.seattleu.edu",
-            "database" : "testDB"
-        }
+    login_dict = {'database': {'user': 'fahrigemil', 'password': 'aBC12345!', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'},
+                  'minute': {'table_name': 'bayview_minute', 
+                             'sensor_list': ['sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5']}}
     test_headers = ["minute"]
     test_config_path = "test_config.ini"
     #need a list of all the columns, unfortunately that list is HUGE
@@ -73,16 +70,14 @@ class Test_Load(unittest.TestCase):
     #TEST CASES - INDIVIDUAL TESTS
 
     #UNITTEST: getLoginInfo
-    def test_getLoginInfo(self):
-        config_dict = getLoginInfo(self.test_headers)
-        test_login_dict = config_dict['database']
-
-        self.assertDictEqual(test_login_dict, self.login_dict)
-
     def test_correctheader_getLoginInfo(self):
         config_dict = getLoginInfo(self.test_headers, self.test_config_path)
-        print(config_dict)
-        # self.assertDictEqual(test_login_dict, self.login_dict)
+        self.assertDictEqual(config_dict, self.login_dict)
+
+    def test_incorrectheader_getLoginInfo(self):
+        self.assertRaises(configparser.NoSectionError, getLoginInfo, ["bad"], self.test_config_path)
+        
+    
 
     """
     #UNITTEST: connectDB

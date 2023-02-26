@@ -138,13 +138,12 @@ def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
 
 
 if __name__ == '__main__':
-    config_file_path = "Configuration/config.ini"
     df_path = "input/ecotope_wide_data.csv"
 
-    table_list = ["minute", "hour", "day"]
+    table_list = ["bad"]
     # get database connection information and desired table name to write data into
-    config_dict = getLoginInfo(table_list, config_file_path)
-    print(config_dict['database'])
+    config_dict = getLoginInfo(table_list)
+    print(config_dict)
 
     """
     db_connection, db_cursor = connectDB(config_info=config_dict["database"])
