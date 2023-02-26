@@ -46,7 +46,7 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
         variable_data = pd.read_csv(variable_names_path)
     except FileNotFoundError:
         print("File Not Found: ", variable_names_path)
-        return df
+        return
     
     variable_data = variable_data[1:86]
     variable_data = variable_data[['variable_alias', 'variable_name']]
@@ -56,7 +56,7 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-    df = df.drop(columns=[col for col in df if col in variable_alias])
+    df = df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
 
 
 def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
@@ -68,7 +68,7 @@ def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
     df = df.groupby(df.index).mean()
-    df.index = (df.index).tz_localize("UTC").tz_convert('US/Pacific')
+    df.index = (df.index).tz_localize("UTC")
     return df
 
 
