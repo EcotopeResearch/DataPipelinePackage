@@ -51,13 +51,10 @@ def connectDB(config_info: dict):
 
     try:
         connection = mysql.connector.connect(**config_info)
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password")
-            sys.exit()
-        else:
-            print(err)
-            sys.exit()
+    except mysql.connector.Error:
+        print("Unable to connect to database with given credentials.")
+        return None, None
+
 
     print(f"Successfully connected to database.")
     return connection, connection.cursor()

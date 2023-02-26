@@ -31,6 +31,7 @@ class Test_Load(unittest.TestCase):
     login_dict = {'database': {'user': 'fahrigemil', 'password': 'aBC12345!', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'},
                   'minute': {'table_name': 'bayview_minute', 
                              'sensor_list': ['sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5']}}
+    incorrect_password_login_dict = {'database': {'user': 'fahrigemil', 'password': 'wrong', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'}}
     test_headers = ["minute"]
     test_config_path = "test_config.ini"
     #need a list of all the columns, unfortunately that list is HUGE
@@ -77,7 +78,8 @@ class Test_Load(unittest.TestCase):
     def test_incorrectheader_getLoginInfo(self):
         self.assertRaises(configparser.NoSectionError, getLoginInfo, ["bad"], self.test_config_path)
         
-    
+    def test_incorrectpassword_connectDB(self):
+        self.assertRaises(mysql.connector.Error, connectDB, self.incorrect_password_login_dict)
 
     """
     #UNITTEST: connectDB
