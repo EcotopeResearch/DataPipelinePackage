@@ -141,21 +141,20 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     return df
 
 
-def get_sub_dirs(data_directory : str) -> List[str]:
+def get_sub_dirs(dir : str) -> List[str]:
     """
-    Function takes in a data directory and returns a list of the paths to all immediate
-    site folders in that directory.
-    Input:
-    Output: List of paths to site folders.
+    Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory.
+    Input: Directory as a string.
+    Output: List of paths to subfolders.
     """
     directories = []
     try:
-        for name in os.listdir(data_directory):
-            path = os.path.join(data_directory, name)
+        for name in os.listdir(dir):
+            path = os.path.join(dir, name)
             if os.path.isdir(path):
                 directories.append(path)
     except FileNotFoundError:
-        print("Folder not Found: ", data_directory)
+        print("Folder not Found: ", dir)
         return
     return directories
 
