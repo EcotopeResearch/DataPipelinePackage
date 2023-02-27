@@ -34,7 +34,7 @@ def round_time(df : pd.DataFrame):
     return True
 
 
-def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv"):
+def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site : str = ""):
     """
     Function will take in a dataframe and a string representation of a file path and renames
     sensors from their alias to their true name.
@@ -55,7 +55,7 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
-    df = df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
+    df = df.drop(columns=[col for col in df if col in variable_alias])
 
 
 def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
