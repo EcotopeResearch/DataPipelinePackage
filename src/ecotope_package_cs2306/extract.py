@@ -82,8 +82,7 @@ def extract_files(extension : str, subdir : str = "") -> List[str]:
     Input: File extension as string
     Output: List of filenames 
     """
-    os.chdir(os.getcwd())
-    print(os.getcwd())
+    os.chdir(os.path.join(os.getcwd(), "/data"))
     filenames = []
     for file in os.listdir(os.path.join(_data_directory, subdir)):
       if file.endswith(extension):
