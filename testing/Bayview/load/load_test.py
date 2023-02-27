@@ -37,8 +37,11 @@ class Test_Load(unittest.TestCase):
     test_config_path = "test_config.ini"
     load_data = pd.DataFrame(np.random.randint(1, 10, size=(5, 5)).astype(float), columns=login_dict["day"]["sensor_list"], 
                              index=[datetime(2022, 1, i) for i in range(1, 6)])
+    new_data = pd.DataFrame(np.random.randint(1, 10, size=(3, 5)).astype(float), columns=login_dict["day"]["sensor_list"], 
+                    index=[datetime(2022, 1, i) for i in range(6, 9)])
+    
 
-
+    """
     def test_correctheader_getLoginInfo(self):
         config_dict = getLoginInfo(self.test_headers, self.test_config_path)
         self.assertDictEqual(config_dict, self.login_dict)
@@ -78,6 +81,35 @@ class Test_Load(unittest.TestCase):
 
         cxn.close()
         cursor.close()
+    """
+
+    def test_existing_table_loadDatabase(self):
+        cxn, cursor = connectDB(self.login_dict["database"])
+
+        loadDatabase(cursor, self.load_data, self.login_dict, "day")
+        cxn.commit()
+
+        loadDatabase(cursor, self.new_data, self.login_dict, "day")
+        cxn.commit()
+
+        cursor.execute("select * from bayview_day")
+        table_data = pd.DataFrame(cursor.fetchall())
+        cursor.execute(f"select column_name from information_schema.columns where table_schema = 'testDB' and table_name = 'bayview_day'")
+        column_names = cursor.fetchall()
+        column_names = [name[0] for name in column_names]
+        table_data.columns = column_names
+        table_data = table_data.set_index(["time"])
+        table_data = table_data.rename_axis(None)
+
+        self.assertEqual(table_data.equals(pd.concat([self.load_data, self.new_data])), True)
+
+        cursor.execute("drop table bayview_day")
+
+        cxn.close()
+        cursor.close()
+
+
+    
 
     """
     #UNITTEST: connectDB
