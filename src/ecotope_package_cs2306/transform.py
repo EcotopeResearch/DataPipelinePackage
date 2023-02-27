@@ -18,7 +18,6 @@ def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
     """
     cols = df.columns
     last_row = last_row.iloc[:, last_row.columns.isin(cols)]
-    print(last_row)
     df = pd.concat([last_row, df], join = "inner")
     df.sort_index(inplace=True)
     return df
