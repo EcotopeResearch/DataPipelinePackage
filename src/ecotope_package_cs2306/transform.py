@@ -468,7 +468,7 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
     """
     df['Vol120'] = df.apply(_get_V120, args = (location, gals, total, zones), axis=1)
     df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
-    df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120(location, gals, total, zones), axis=1)
+    df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120, args = (location, gals, total, zones), axis=1)
     
     return df  
 
