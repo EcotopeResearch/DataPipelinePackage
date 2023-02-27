@@ -45,7 +45,6 @@ class Test_Transform(unittest.TestCase):
         #See if first few elements in each list match
         self.assertEqual(renamed_names[:5], var_names[:5]) 
 
-    """
     #concat_last_row(df, last_row)
     def test_concat_last_row(self):
         #start with pickle that has had names renamed to Variable_Names (renamed.pkl)
@@ -72,7 +71,6 @@ class Test_Transform(unittest.TestCase):
         #assert that proper_df successfully appended, and is the size it should be
         #BUG: < not supported between instances of Timestamp and int. Catch the exception!
         self.assertEqual(len(proper_df.index), proper_row_count)
-        """
 
     #avg_duplicate_times(df) - returns df
     def test_avg_duplicate_times(self):
@@ -128,6 +126,8 @@ class Test_Transform(unittest.TestCase):
         unadjusted_df = sensor_adjustment(unadjusted_df) 
 
         #how can I write an assertion to validate this? just check that those specific sensor values DID or DID NOT get modified?
+        #check that the dataframe is the exact same, #adjusted df is pending!
+        
 
     #get_energy_by_min(df) - returns df
     def test_get_energy_by_min(self):
