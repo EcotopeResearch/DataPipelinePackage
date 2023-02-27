@@ -67,7 +67,7 @@ def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
     df = df.groupby(df.index).mean()
-    df.index = (df.index).tz_localize("UTC")
+    df.index = (df.index).tz_localize("UTC").tz_convert('US/Pacific')  # TODO: need to pass this info in instead of hardcoding 
     return df
 
 
