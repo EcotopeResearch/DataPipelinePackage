@@ -7,7 +7,7 @@ import os, json
 import datetime as dt
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from ecotope_package_cs2306.load import connectDB, getLoginInfo
-from ecotope_package_cs2306.config import _config_directory, _data_directory, _output_directory
+from ecotope_package_cs2306.config import _config_directory, _data_directory
 import numpy as np
 import sys
 from pytz import timezone
@@ -244,8 +244,8 @@ def _get_noaa_dictionary() -> dict:
     Output: Dictionary of station id and corrosponding station name
     """
 
-    if not os.path.isdir(f"{_output_directory}weather"):
-        os.makedirs(f"{_output_directory}weather")
+    if not os.path.isdir(f"{_data_directory}weather"):
+        os.makedirs(f"{_data_directory}weather")
 
     filename = "isd-history.csv"
     hostname = f"ftp.ncdc.noaa.gov"
@@ -255,13 +255,13 @@ def _get_noaa_dictionary() -> dict:
         ftp_server.login()
         ftp_server.cwd(wd)
         ftp_server.encoding = "utf-8"
-        with open(f"{_output_directory}weather/{filename}", "wb") as file:
+        with open(f"{_data_directory}weather/{filename}", "wb") as file:
             ftp_server.retrbinary(f"RETR {filename}", file.write)
         ftp_server.quit()
     except:
         print("FTP ERROR")
 
-    isd_directory = f"{_output_directory}weather/isd-history.csv"
+    isd_directory = f"{_data_directory}weather/isd-history.csv"
     if not os.path.exists(isd_directory):
         print(
             f"File path '{isd_directory}' does not exist.")
@@ -300,13 +300,13 @@ def _download_noaa_data(stations: dict) -> List[str]:
         # Set FTP credentials and connect
         wd = f"/pub/data/noaa/isd-lite/{year}/"
         ftp_server.cwd(wd)
-        # Download all files and save as station_year.gz in /output
+        # Download all files and save as station_year.gz in /data/weather
         for station in stations.keys():
-            if not os.path.isdir(f"{_output_directory}weather/{stations[station]}"):
-                os.makedirs(f"{_output_directory}weather/{stations[station]}")
+            if not os.path.isdir(f"{_data_directory}weather/{stations[station]}"):
+                os.makedirs(f"{_data_directory}weather/{stations[station]}")
             filename = f"{station}-{year}.gz"
             noaa_filenames.append(filename)
-            file_path = f"{_output_directory}weather/{stations[station]}/{filename}"
+            file_path = f"{_data_directory}weather/{stations[station]}/{filename}"
             # Do not download if the file already exists
             if (os.path.exists(file_path) == False) or (year == year_end):
                 with open(file_path, "wb") as file:
@@ -328,7 +328,7 @@ def _convert_to_df(stations: dict, noaa_filenames: List[str]) -> dict:
     for station in stations.keys():
         for filename in noaa_filenames:
             table = _gz_to_df(
-                f"{_output_directory}weather/{stations[station]}/{filename}")
+                f"{_data_directory}weather/{stations[station]}/{filename}")
             table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
             noaa_dfs.append(table)
     noaa_dfs_dict = dict(zip(noaa_filenames, noaa_dfs))
