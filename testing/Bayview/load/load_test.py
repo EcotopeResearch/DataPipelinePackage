@@ -10,6 +10,7 @@ import datetime
 #NECESSARY bayview load imports
 import pandas as pd
 import unittest
+from datetime import datetime
 from ecotope_package_cs2306 import getLoginInfo, connectDB, checkTableExists, createNewTable, loadDatabase
 from ecotope_package_cs2306.config import _config_directory
 
@@ -29,48 +30,15 @@ class Test_Load(unittest.TestCase):
     
     #CLASS DATA
     login_dict = {'database': {'user': 'fahrigemil', 'password': 'aBC12345!', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'},
-                  'minute': {'table_name': 'bayview_minute', 
+                  'day': {'table_name': 'bayview_day', 
                              'sensor_list': ['sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5']}}
     incorrect_password_login_dict = {'database': {'user': 'fahrigemil', 'password': 'wrong', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'}}
-    test_headers = ["minute"]
+    test_headers = ["day"]
     test_config_path = "test_config.ini"
-    #need a list of all the columns, unfortunately that list is HUGE
-    column_list = []
-
-    #TEST FIXTURES BELOW
-    #Fixture being prep needed to perform tests, such as running a database, directories, or cleanup.
-    """
-    def setUp(self):
-        db_connection, db_cursor = connectDB(self.login_dict)
-
-        #NOTE: Probably execute SQL directly vs using a function to test?
-        #we need a table that always exists, so we create that here
-        if(not checkTableExists(db_cursor, "existing_table")):
-            createNewTable(db_cursor, "existing_table", ["col1", "col2", "col3"])
-
-        db_connection.close
-        db_cursor.close
-
-    #NOTE: This runs after all the tests and resets anything that needed to be reset
-    def tearDown(self):
-        db_connection, db_cursor = connectDB(self.login_dict)
-
-        #this table must always not exist
-        #DROP TABLE: new_table
-        db_cursor.execute("DROP TABLE new_table")
-
-        db_connection.close
-        db_cursor.close
-    """
+    load_data = pd.DataFrame(np.random.randint(1, 10, size=(5, 5)).astype(float), columns=login_dict["day"]["sensor_list"], 
+                             index=[datetime(2022, 1, i) for i in range(1, 6)])
 
 
-    #TEST CASES BELOW
-    #NOTE: Because of time restraints, currently these tests only test for obviously correct and obviously 
-    #incorrect cases, e.g. does getLoginInfo work with both a properly setup and entirely missing config file?
-
-    #TEST CASES - INDIVIDUAL TESTS
-
-    #UNITTEST: getLoginInfo
     def test_correctheader_getLoginInfo(self):
         config_dict = getLoginInfo(self.test_headers, self.test_config_path)
         self.assertDictEqual(config_dict, self.login_dict)
@@ -87,6 +55,29 @@ class Test_Load(unittest.TestCase):
         cxn, cursor = connectDB(self.login_dict["database"])
         self.assertNotEqual(cxn, None)
         self.assertNotEqual(cursor, None)
+        cxn.close()
+        cursor.close()
+
+    def test_empty_table_loadDatabase(self):
+        cxn, cursor = connectDB(self.login_dict["database"])
+        loadDatabase(cursor, self.load_data, self.login_dict, "day")
+        cxn.commit()
+
+        cursor.execute("select * from bayview_day")
+        table_data = pd.DataFrame(cursor.fetchall())
+        cursor.execute(f"select column_name from information_schema.columns where table_schema = 'testDB' and table_name = 'bayview_day'")
+        column_names = cursor.fetchall()
+        column_names = [name[0] for name in column_names]
+        table_data.columns = column_names
+        table_data = table_data.set_index(["time"])
+        table_data = table_data.rename_axis(None)
+
+        self.assertEqual(table_data.equals(self.load_data), True)
+
+        cursor.execute("drop table bayview_day")
+
+        cxn.close()
+        cursor.close()
 
     """
     #UNITTEST: connectDB

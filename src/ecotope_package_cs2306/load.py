@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import numpy as np
 import datetime
+from datetime import datetime
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 
@@ -134,33 +135,15 @@ def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
 
 
 if __name__ == '__main__':
-    df_path = "input/ecotope_wide_data.csv"
+    login_dict = {'database': {'user': 'fahrigemil', 'password': 'aBC12345!', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'},
+                  'day': {'table_name': 'bayview_day', 
+                             'sensor_list': ['sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5']}}
+    load_data = pd.DataFrame(np.random.randint(1, 10, size=(5, 5)), columns=login_dict["day"]["sensor_list"], 
+                             index=[datetime(2022, 1, i) for i in range(1, 6)])
+    
+    conn, cursor = connectDB(login_dict["database"])
 
-    table_list = ["bad"]
-    # get database connection information and desired table name to write data into
-    config_dict = getLoginInfo(table_list)
-    print(config_dict)
-
-    """
-    db_connection, db_cursor = connectDB(config_info=config_dict["database"])
-
-    ecotope_data = pd.read_pickle("C:/Users/emilx/Downloads/post_process.pkl")
-    ecotope_data.replace(np.NaN, 0, inplace=True)
-    weather_data = pd.read_pickle("C:/Users/emilx/Downloads/noaa.pkl")
-    weather_data.set_index(["time"], inplace=True)
-    weather_data = weather_data["2023-01-10 16:00:00-08:00":"2023-01-11 15:00:00-08:00"]
-    weather_data.drop(["conditions"], axis=1, inplace=True)
-    weather_data.fillna(0, inplace=True)
-
-    print(weather_data)
-    print(ecotope_data.columns)
-
-    load data stored in data frame to database
-    loadDatabase(cursor=db_cursor, dataframe=weather_data, config_info=config_dict, data_type="weather")
-    loadDatabase(cursor=db_cursor, dataframe=ecotope_data, config_info=config_dict, data_type="minute")
-
-    commit changes to database and close connections
-    db_connection.commit()
-    db_connection.close()
-    db_cursor.close()
-    """
+    loadDatabase(cursor, load_data, login_dict, "day")
+    conn.commit()
+    conn.close()
+    cursor.close()
