@@ -76,7 +76,7 @@ def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
     return list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
 
 
-def extract_files(extension : str) -> List[str]:
+def extract_files(extension : str, subdir : str = "") -> List[str]:
     """
     Function takes in a file extension and returns a list of paths files in the directory of that type.
     Input: File extension as string
@@ -84,7 +84,7 @@ def extract_files(extension : str) -> List[str]:
     """
     os.chdir(os.getcwd())
     filenames = []
-    for file in os.listdir(_data_directory):
+    for file in os.listdir(os.path.join(_data_directory, subdir)):
       if file.endswith(extension):
         full_filename = os.path.join(_data_directory, file)
         filenames.append(full_filename)
