@@ -86,7 +86,7 @@ def extract_files(extension : str, subdir : str = "") -> List[str]:
     filenames = []
     for file in os.listdir(os.path.join(_data_directory, subdir)):
       if file.endswith(extension):
-        full_filename = os.path.join(_data_directory, file)
+        full_filename = os.path.join(_data_directory, subdir, file)
         filenames.append(full_filename)
     
     return filenames
