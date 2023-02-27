@@ -17,3 +17,9 @@ configure.read(_config_directory)
 _input_directory = configure.get('input', 'directory')
 _output_directory = configure.get('output', 'directory')
 _data_directory = configure.get('data', 'directory')
+
+directories = [_input_directory, _output_directory, _data_directory]
+for directory in directories:
+    if not os.path.isdir(directory):
+        print(f"File path '{directory}' does not exist, creating directory")
+        os.makedirs(directory)
