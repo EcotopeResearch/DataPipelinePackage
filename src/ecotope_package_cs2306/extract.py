@@ -152,7 +152,7 @@ def get_sub_dirs(dir : str) -> List[str]:
         for name in os.listdir(dir):
             path = os.path.join(dir, name)
             if os.path.isdir(path):
-                directories.append(path)
+                directories.append(name)
     except FileNotFoundError:
         print("Folder not Found: ", dir)
         return
