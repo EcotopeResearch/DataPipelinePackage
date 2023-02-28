@@ -30,7 +30,6 @@ def site_specific(df : pd.DataFrame, site : str) -> pd.DataFrame:
     
     return df
 
-<<<<<<< Updated upstream
 def lbnl_sat_calculations(df: pd.DataFrame) -> pd.DataFrame:
     df_temp = df.filter(regex=r'.*Temp_SAT.*')
     df["Temp_SATAvg"] = df.mean(axis=1)
@@ -45,7 +44,6 @@ def lbnl_pressure_conversions(df: pd.DataFrame) -> pd.DataFrame:
 
     else:
         return df
-=======
 
 def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_info_directory = configure.get('site_info', 'directory')
@@ -77,4 +75,3 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
         df = df.drop(columns=["Condensate_oz"])
 
     return df
->>>>>>> Stashed changes
