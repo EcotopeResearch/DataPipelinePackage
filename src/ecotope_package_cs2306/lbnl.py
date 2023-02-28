@@ -42,7 +42,15 @@ def lbnl_pressure_conversions(df: pd.DataFrame) -> pd.DataFrame:
         df["Pressure_staticP"] = df["Pressure_staticPa"] + (inWC_2_Pa * df["Pressure_staticInWC"])
         return df
 
-    else:
+    return df
+
+def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
+    if "Temp_LL_C" in df.columns:
+        df["Temp_LL_F"] = (9/5)*df["Temp_LL_C"] + 32
+        return df
+    
+    if "Temp_SL_C" in df.columns:
+        df["Temp_SL_F"] = (9/5)*df["Temp_SL_C"] + 32
         return df
 
 def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
