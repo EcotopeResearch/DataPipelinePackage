@@ -57,7 +57,12 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
+
+    # drop columns that do not have a corresponding true name 
     df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
+
+    # drop columns that are not documented in variable names csv file at all 
+    df.drop(columns=[col for col in df if col not in variable_alias or col not in variable_true], inplace=True)
 
 
 def avg_duplicate_times(df: pd.DataFrame) -> pd.DataFrame:
