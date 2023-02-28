@@ -34,3 +34,12 @@ def lbnl_sat_calculations(df: pd.DataFrame) -> pd.DataFrame:
     df["Temp_SATAvg"] = df.mean(axis=1)
 
     return df
+
+def lbnl_pressure_conversions(df: pd.DataFrame) -> pd.DataFrame:
+    if ("Pressure_staticInWC" in df.columns) and ("Pressure_staticPa" in df.columns):
+        inWC_2_Pa = 248.84
+        df["Pressure_staticP"] = df["Pressure_staticPa"] + (inWC_2_Pa * df["Pressure_staticInWC"])
+        return df
+
+    else:
+        return df
