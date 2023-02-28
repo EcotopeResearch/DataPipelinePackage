@@ -28,3 +28,9 @@ def site_specific(df : pd.DataFrame, site : str) -> pd.DataFrame:
     # Extra site specific calculations can be added with an extra elif statement and RegEx
     
     return df
+
+def lbnl_sat_calculations(df: pd.DataFrame) -> pd.DataFrame:
+    df_temp = df.filter(regex=r'.*Temp_SAT.*')
+    df["Temp_SATAvg"] = df.mean(axis=1)
+
+    return df
