@@ -274,7 +274,9 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
 
 
 def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> dict:
-    cop_inter = aggregate_values(df, thermo_slice)
+    cop_inter = pd.DataFrame()
+    if (len(df) != 0):
+        cop_inter = aggregate_values(df, thermo_slice)
 
     cop_values = pd.DataFrame(index=cop_inter.index, columns=["COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
 
@@ -382,6 +384,7 @@ def _largest_less_than(df_row, target):
     Output: A string of the name of the zone.
     """
     count = 0
+    largest_less_than_120_tmp = []
     for val in df_row:
         if val < target:
             largest_less_than_120_tmp = df_row.index[count]
@@ -400,6 +403,11 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
         tvadder = 0
         vadder = 0
         gals_per_zone = set_zone_vol(location, gals, total, zones)
+        dfcheck = df_row.filter(regex = 'top|mid|bottom')
+        # An empty or invalid dataframe would have Vol120 and ZoneTemp120 as columns with
+        # values of 0, so we check if the size is 0 without those columns if the dataframe has no data.
+        if(dfcheck.size == 0):
+            return 0
         dftemp = df_row.filter(regex = 'Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
         count = 1
         for val in dftemp:
@@ -433,6 +441,8 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
     try:
         gals_per_zone = set_zone_vol(location, gals, total, zones)
         temp_cols = df_row.filter(regex = 'HPWHOutlet$|top|mid|bottom')
+        if (temp_cols.size <= 3):
+            return 0
         name_cols = ""
         name_cols = _largest_less_than(temp_cols, 120)
         count = 0
@@ -457,6 +467,8 @@ def _get_zone_Temp120(df_row):
     #if df_row["Temp_120"] != 120:
     #    return 0
     temp_cols = df_row.filter(regex = 'HPWHOutlet$|top|mid|bottom')
+    if (temp_cols.size <= 3):
+            return 0
     name_cols = _largest_less_than(temp_cols, 120)
     count = 0
     for index in temp_cols.index:
@@ -475,9 +487,10 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
     Input: A Pandas Dataframe
     Output: a Pandas Dataframe
     """
-    df['Vol120'] = df.apply(_get_V120, args = (location, gals, total, zones), axis=1)
-    df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
-    df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120, args = (location, gals, total, zones), axis=1)
+    if(len(df) > 0):
+        df['Vol120'] = df.apply(_get_V120, args = (location, gals, total, zones), axis=1)
+        df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
+        df['Vol_Equivalent_to_120'] = df.apply(_get_vol_equivalent_to_120, args = (location, gals, total, zones), axis=1)
     
     return df  
 

@@ -152,6 +152,16 @@ class Test_Transform(unittest.TestCase):
 
     #NOTE: Roger
     #verify_power_energy(df) 
+    def test_verify_power_energy(self):
+        verify_power_energy(pd.DataFrame())
+
+        no_energy = {'Power': [1, 2], 'Power2': [20,30], 'More_Power': [10, 20], 'PowerEnergy': [3, 4]}
+        no_energy_df = pd.DataFrame(data=no_energy)
+        verify_power_energy(no_energy_df)
+        
+        no_power = {'Energy': [1, 2], 'More_Energy': [20,30], 'Meter_SkidAux_Energy': [10, 20], 'Energy2': [3, 4]}
+        no_power_df = pd.DataFrame(data=no_power)
+        verify_power_energy(no_power_df)
 
     #remove_outliers(df, var_names_path) - returns df
     def test_remove_outliers(self):
@@ -173,6 +183,15 @@ class Test_Transform(unittest.TestCase):
 
     #NOTE: Roger
     #calculate_cop_values(df, heatLoss_fixed, thermo_slice) - returns cop_values df
+    def test_calculate_cop_values(self):
+        cop_values = pd.read_pickle("testing/Bayview/transform/pickles/cop_values.pkl")
+        pruned = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
+
+        calculate_cop_values(pd.DataFrame(), 27.278, "6:00AM")
+
+        cop_df = calculate_cop_values(pruned)
+
+        self.assertEqual(cop_values, cop_df)
 
     #aggregate_df(df) - returns hourly_df and daily_df
     def test_aggregate_df(self):
@@ -193,9 +212,34 @@ class Test_Transform(unittest.TestCase):
 
     #NOTE: Roger
     #get_temp_zones120(df) - returns df
+    def test_get_temp_zones120(self):
+        temp_zones_df = pd.read_pikcle("testing/Bayview/transform/pickles/temp_zones.pkl")
+        get_temp_zones120(pd.DataFrame())
 
-    #NOTE: Roger
+        temp_zones_df = get_temp_zones120(temp_zones_df)
+        zones = ['Temp_top', 'Temp_midtop', 'Temp_mid', 'Temp_midbottom', 'Temp_bottom']
+        self.assertEqual(zones, list(temp_zones_df.iloc[:, -5:].columns))
+
+        test = {'Temp1': [1, 2], 'Temp1_stuff': [3, 4], 'Temp_1stuff': [5, 6], 'Temp.1stuff': [7, 8]}
+
+        test_df = pd.DataFrame(data=test)
+        test_df = get_temp_zones120(test_df)
+
+        expected1 = 2.0
+        expected2 = 3.0
+
+        self.assertEqual(expected1, test_df['Temp_Top'][0])
+        self.assertEqual(expected2, test_df['Temp_Top'][1])
+        
+   #NOTE: Roger
     #get_storage_gals120(df) - returns df
+    def test_get_storage_gals120(self):
+        storage_gals120_df = pd.read_pikcle("testing/Bayview/transform/pickles/storage_gals.pkl")
+        get_storage_gals120(pd.DataFrame())
+
+        storage_gals120_df = get_storage_gals120(storage_gals120_df)
+        gals120_columns = ['Vol120', 'ZoneTemp120', 'Vol_Equivalent_to_120']
+        self.assertEqual(gals120_columns,list(storage_gals120_df.iloc[:, -3:].columns))
 
     #join_to_hourly(hourly_df, noaa_df) - returns hourly_df
     def test_join_to_hourly(self):
