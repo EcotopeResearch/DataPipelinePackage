@@ -47,7 +47,7 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
         print("File Not Found: ", variable_names_path)
         return
     
-    variable_data = variable_data[1:86]
+    #variable_data = variable_data[1:86]
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
     variable_data = variable_data[['variable_alias', 'variable_name']]
