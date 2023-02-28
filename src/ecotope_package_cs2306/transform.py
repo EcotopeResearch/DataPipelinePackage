@@ -48,10 +48,9 @@ def rename_sensors(df : pd.DataFrame, variable_names_path: str = f"{_input_direc
         return
     
     variable_data = variable_data[1:86]
-    print(variable_data.columns)
-    variable_data = variable_data[['variable_alias', 'variable_name']]
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
+    variable_data = variable_data[['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
