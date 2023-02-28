@@ -47,11 +47,11 @@ def lbnl_pressure_conversions(df: pd.DataFrame) -> pd.DataFrame:
 def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
     if "Temp_LL_C" in df.columns:
         df["Temp_LL_F"] = (9/5)*df["Temp_LL_C"] + 32
-        return df
     
     if "Temp_SL_C" in df.columns:
         df["Temp_SL_F"] = (9/5)*df["Temp_SL_C"] + 32
-        return df
+
+    return df
 
 def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_info_directory = configure.get('site_info', 'directory')
