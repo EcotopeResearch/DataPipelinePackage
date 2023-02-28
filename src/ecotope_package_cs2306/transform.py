@@ -87,7 +87,7 @@ def _rm_cols(col, bounds_df): #Helper function for remove_outliers
         col.mask((col > c_upper) | (col < c_lower), other = np.NaN, inplace = True)
 
 #TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here. 
-def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
+def remove_outliers(df : pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site : str = "") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
@@ -96,11 +96,14 @@ def remove_outliers(df : pd.DataFrame, vars_filename: str = f"{_input_directory}
     Output: Pandas dataframe 
     """
     try:
-        bounds_df = pd.read_csv(vars_filename) 
+        bounds_df = pd.read_csv(variable_names_path) 
     except FileNotFoundError:
-        print("File Not Found: ", vars_filename)
+        print("File Not Found: ", variable_names_path)
         return df
-  
+    
+    if (site != ""):
+        bounds_df = bounds_df.loc[bounds_df['site'] == site]
+        
     bounds_df = bounds_df.loc[:, ["variable_name", "lower_bound", "upper_bound"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
