@@ -83,3 +83,20 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
         df = df.drop(columns=["Condensate_oz"])
 
     return df
+
+def gas_valve_diff(df : pd.DataFrame, site : str, site_info_path : str) -> pd.DataFrame:
+    try:
+        site_info = pd.read_csv(site_info_path)
+    except FileNotFoundError:
+        print("File Not Found: ", site_info_path)
+        return df
+    
+    specific_site_info = site_info.loc[site_info["site"] == site]
+    if specific_site_info["heating_type"] == "gas":
+        if ("gasvalve" in df.columns):
+            df["gasvalve"] = df["gasvalve"] - df["gasvalve"].shift(1)
+        elif (("gasvalve_lowstage" in df.columns) and ("gasvalve_highstage" in df.columns)):
+            df["gasvalve_lowstage"] = df["gasvalve_lowstage"] - df["gasvalve_lowstage"].shift(1)
+            df["gasvalve_highstage"] = df["gasvalve_highstage"] - df["gasvalve_highstage"].shift(1)
+        
+    return df
