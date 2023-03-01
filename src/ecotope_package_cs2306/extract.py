@@ -6,7 +6,7 @@ import gzip
 import os, json
 import datetime as dt
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecotope_package_cs2306.load import connectDB, getLoginInfo
+from ecotope_package_cs2306.load import connect_db, get_login_info
 from ecotope_package_cs2306.config import _config_directory, _data_directory
 import numpy as np
 import sys
@@ -19,8 +19,8 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     Input: Path to config file (defaulr is set in load.py)
     Output: One line DF of the last entry
     """
-    config_dict = getLoginInfo(["minute"])
-    db_connection, db_cursor = connectDB(config_info=config_dict['database'])
+    config_dict = get_login_info(["minute"])
+    db_connection, db_cursor = connect_db(config_info=config_dict['database'])
 
     try:
         db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")

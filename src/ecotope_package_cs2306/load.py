@@ -10,7 +10,7 @@ from datetime import datetime
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 
-def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> dict:
+def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
     Function will and return config.ini in a config var.
 
@@ -40,7 +40,7 @@ def getLoginInfo(table_headers: list, config_info : str = _config_directory) -> 
     return db_connection_info
     
 
-def connectDB(config_info: dict):
+def connect_db(config_info: dict):
     """
     Function will use login information to try and connect to the database and return a
     connection object to make a cursor.
@@ -60,7 +60,7 @@ def connectDB(config_info: dict):
     return connection, connection.cursor()
 
 
-def checkTableExists(cursor, table_name: str, dbname: str) -> int:
+def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     """
     Check if given table exists in database.
 
@@ -77,7 +77,7 @@ def checkTableExists(cursor, table_name: str, dbname: str) -> int:
     return num_tables
 
 
-def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
+def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     """
     Creates a new table to store data in the given dataframe.
 
@@ -100,7 +100,7 @@ def createNewTable(cursor, table_name: str, table_column_names: list) -> bool:
     return True
 
 
-def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
+def load_database(cursor, dataframe, config_info: dict, data_type: str):
     """
     Loads data stored in passed dataframe into mySQL database using.
 
@@ -115,8 +115,8 @@ def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
     table_name = config_info[data_type]["table_name"]
     sensor_names = config_info[data_type]['sensor_list']
 
-    if not checkTableExists(cursor, table_name, dbname):
-        if not createNewTable(cursor, table_name, config_info[data_type]['sensor_list']):
+    if not check_table_exists(cursor, table_name, dbname):
+        if not create_new_table(cursor, table_name, config_info[data_type]['sensor_list']):
             print(f"Could not create new table {table_name} in database {dbname}")
             sys.exit()
 
@@ -134,6 +134,7 @@ def loadDatabase(cursor, dataframe, config_info: dict, data_type: str):
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
 
 
+"""
 if __name__ == '__main__':
     login_dict = {'database': {'user': 'fahrigemil', 'password': 'aBC12345!', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'},
                   'day': {'table_name': 'bayview_day', 
@@ -147,3 +148,4 @@ if __name__ == '__main__':
     conn.commit()
     conn.close()
     cursor.close()
+"""
