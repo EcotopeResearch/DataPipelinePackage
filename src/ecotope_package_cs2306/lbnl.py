@@ -85,6 +85,12 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
     return df
 
 def gas_valve_diff(df : pd.DataFrame, site : str, site_info_path : str) -> pd.DataFrame:
+    """
+    Function takes in the site df, the site name, and path to the site_info file. If the site has
+    gas heating, take the lagged difference to get per minute values. 
+    Input: Dataframe for site, site name as string, path to site_info.csv as string
+    Output: Pandas Dataframe 
+    """
     try:
         site_info = pd.read_csv(site_info_path)
     except FileNotFoundError:
