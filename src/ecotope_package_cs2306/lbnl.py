@@ -86,7 +86,7 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
 
 def gas_valve_diff(df : pd.DataFrame, site : str, site_info_path : str) -> pd.DataFrame:
     """
-    Function takes in the site df, the site name, and path to the site_info file. If the site has
+    Function takes in the site dataframe, the site name, and path to the site_info file. If the site has
     gas heating, take the lagged difference to get per minute values. 
     Input: Dataframe for site, site name as string, path to site_info.csv as string
     Output: Pandas Dataframe 
@@ -106,3 +106,22 @@ def gas_valve_diff(df : pd.DataFrame, site : str, site_info_path : str) -> pd.Da
             df["gasvalve_highstage"] = df["gasvalve_highstage"] - df["gasvalve_highstage"].shift(1)
         
     return df
+
+def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
+    """
+    Function takes in a site dataframe and site name as a string. Returns a new dataframe
+    that contains time_utc, <site>_ODT, and <site>_ODRH for the site.
+    Input: Pandas Dataframe, site name as string
+    Output: Pandas Dataframe
+    """
+    if ("Power_OD_total1" in df.columns):
+        odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_OD_total1"]].copy()
+        odc_df.rename(columns={"Power_OD_total1":"Power_OD"}, inplace=True)
+    else:
+        odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_DHP"]].copy()
+        odc_df.rename(columns={"Power_DHP":"Power_OD"}, inplace=True)
+    
+    odc_df = odc_df[odc_df["Power_OD"] > 0.01] 
+    odc_df.drop("Power_OD", axis=1, inplace=True)
+    odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
+    return odc_df
