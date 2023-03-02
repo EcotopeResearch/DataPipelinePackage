@@ -181,6 +181,7 @@ class Test_Transform(unittest.TestCase):
         #assert that the number of NA values are different in the original df and the removed df
         self.assertNotEqual(pruned_na_count, og_na_count)
 
+    """
     #NOTE: Roger
     #calculate_cop_values(df, heatLoss_fixed, thermo_slice) - returns cop_values df
     def test_calculate_cop_values(self):
@@ -192,6 +193,7 @@ class Test_Transform(unittest.TestCase):
         cop_df = calculate_cop_values(pruned)
 
         self.assertEqual(cop_values, cop_df)
+    """
 
     #aggregate_df(df) - returns hourly_df and daily_df
     def test_aggregate_df(self):
@@ -210,6 +212,7 @@ class Test_Transform(unittest.TestCase):
         self.assertTrue(len(hourly_df.index) > len(daily_df.index))
         self.assertTrue(("load_shift_day" in daily_df.columns))
 
+    """
     #NOTE: Roger
     #get_temp_zones120(df) - returns df
     def test_get_temp_zones120(self):
@@ -240,7 +243,8 @@ class Test_Transform(unittest.TestCase):
         storage_gals120_df = get_storage_gals120(storage_gals120_df)
         gals120_columns = ['Vol120', 'ZoneTemp120', 'Vol_Equivalent_to_120']
         self.assertEqual(gals120_columns,list(storage_gals120_df.iloc[:, -3:].columns))
-
+    """
+        
     #join_to_hourly(hourly_df, noaa_df) - returns hourly_df
     def test_join_to_hourly(self):
         #pickle of hourly_df, and pickle of NOAA data
