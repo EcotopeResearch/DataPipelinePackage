@@ -122,21 +122,25 @@ def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str) -> pd
     site_df = pd.read_csv(site_info_path)
     metering_device = site_df.loc[site, "metering_device"]
 
-    #loop through every minute? 
-
+    #NOTE: loop through every minute once metering_device is filtered? it seems oddly done in R,
+    #but I don't trust my knowledge of R, I'd rather just focus on what needs to be the output
     if(metering_device == "txv"):
         #calculate the refrigerant charge w/the subcooling method (the easy way)
-        #start by calculating sat_temp_f by linear interpolation w/410a_pt.csv
-        sat_temp_f = ""
-        
 
-        #refrig_charge = sat_temp_f - Temp_LL_F, add it to the df
-        pass
-    elif(metering_device == "orifice"):
-        #calculate the refrigerant charge w/the superheat method (uh oh)
+        #NOTE: Potentially just call a helper on the whole df and have it apply by row?
+
+        #start by calculating sat_temp_f by linear interpolation w/410a_pt.csv
+        #grab 'pressure' and 'temp' from 410a_pt.csv at the current index, df.loc['Pressure_LL_psi']
+        sat_temp_f = ""
+
+        #we need some index to replace 0? this is gonna be weird w/apply
+        refrig_charge = sat_temp_f - df.loc[0, "Temp_LL_F"]
+        #add refrig_charge to the df at the proper index
         pass
     else:
-        #if it is neither, must be an empty row, so just do nothing? or add an empty refrig idk 
+        #calculate the refrigerant charge w/the superheat method (uh oh)
+
+        #NOTE: Potentially just call a helper on the whole df and have it apply by row?
         pass
 
     return df
