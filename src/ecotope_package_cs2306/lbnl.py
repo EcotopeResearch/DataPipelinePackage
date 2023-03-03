@@ -107,6 +107,40 @@ def gas_valve_diff(df : pd.DataFrame, site : str, site_info_path : str) -> pd.Da
         
     return df
 
+#NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
+def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str) -> pd.DataFrame:
+    """
+    Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
+    the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
+    charge per minute? 
+    Input: Pandas Dataframe, site name as a string, path to site_info.csv as a string, path to superheat.csv 
+    as a string, and the path to 410a_pt.csv as a string. 
+    Output: Pandas Dataframe
+    """
+    #Step 1: Extract 'metering_device' from site_info_path, making sure to grab from the row matching
+    #the site name! Assuming site name is in format "AZ2_01", or this will break. 
+    site_df = pd.read_csv(site_info_path)
+    metering_device = site_df.loc[site, "metering_device"]
+
+    #loop through every minute? 
+
+    if(metering_device == "txv"):
+        #calculate the refrigerant charge w/the subcooling method (the easy way)
+        #start by calculating sat_temp_f by linear interpolation w/410a_pt.csv
+        sat_temp_f = ""
+        
+
+        #refrig_charge = sat_temp_f - Temp_LL_F, add it to the df
+        pass
+    elif(metering_device == "orifice"):
+        #calculate the refrigerant charge w/the superheat method (uh oh)
+        pass
+    else:
+        #if it is neither, must be an empty row, so just do nothing? or add an empty refrig idk 
+        pass
+
+    return df
+
 def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
     """
     Function takes in a site dataframe and site name as a string. Returns a new dataframe
