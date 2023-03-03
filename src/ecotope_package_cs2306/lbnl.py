@@ -122,12 +122,13 @@ def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str) -> pd
     site_df = pd.read_csv(site_info_path)
     metering_device = site_df.loc[site, "metering_device"]
 
-    #NOTE: loop through every minute once metering_device is filtered? it seems oddly done in R,
-    #but I don't trust my knowledge of R, I'd rather just focus on what needs to be the output
+    #NOTE: loop through every minute once metering_device is filtered. it seems oddly done in R,
+    #but you need to do this calculation for every row. bruh.
     if(metering_device == "txv"):
         #calculate the refrigerant charge w/the subcooling method (the easy way)
 
         #NOTE: Potentially just call a helper on the whole df and have it apply by row?
+
 
         #start by calculating sat_temp_f by linear interpolation w/410a_pt.csv
         #grab 'pressure' and 'temp' from 410a_pt.csv at the current index, df.loc['Pressure_LL_psi']
