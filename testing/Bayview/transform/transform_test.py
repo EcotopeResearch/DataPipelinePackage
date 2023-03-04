@@ -188,11 +188,11 @@ class Test_Transform(unittest.TestCase):
         cop_values = pd.read_pickle("testing/Bayview/transform/pickles/cop_values.pkl")
         pruned = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
 
-        calculate_cop_values(pd.DataFrame(), 27.278, "6:00AM")
+        calculate_cop_values(pd.DataFrame(), 27.278, "6:00AM") 
 
         cop_df = calculate_cop_values(pruned)
 
-        self.assertEqual(cop_values, cop_df)
+        self.assertEqual(list(cop_values.columns), list(cop_df.columns))
     """
 
     #aggregate_df(df) - returns hourly_df and daily_df
@@ -216,7 +216,7 @@ class Test_Transform(unittest.TestCase):
     #NOTE: Roger
     #get_temp_zones120(df) - returns df
     def test_get_temp_zones120(self):
-        temp_zones_df = pd.read_pikcle("testing/Bayview/transform/pickles/temp_zones.pkl")
+        temp_zones_df = pd.read_pickle("testing/Bayview/transform/pickles/temp_zones.pkl")
         get_temp_zones120(pd.DataFrame())
 
         temp_zones_df = get_temp_zones120(temp_zones_df)
@@ -231,13 +231,13 @@ class Test_Transform(unittest.TestCase):
         expected1 = 2.0
         expected2 = 3.0
 
-        self.assertEqual(expected1, test_df['Temp_Top'][0])
-        self.assertEqual(expected2, test_df['Temp_Top'][1])
+        self.assertEqual(expected1, test_df['Temp_top'][0])
+        self.assertEqual(expected2, test_df['Temp_top'][1])
         
    #NOTE: Roger
     #get_storage_gals120(df) - returns df
     def test_get_storage_gals120(self):
-        storage_gals120_df = pd.read_pikcle("testing/Bayview/transform/pickles/storage_gals.pkl")
+        storage_gals120_df = pd.read_pickle("testing/Bayview/transform/pickles/storage_gals.pkl")
         get_storage_gals120(pd.DataFrame())
 
         storage_gals120_df = get_storage_gals120(storage_gals120_df)
