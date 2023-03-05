@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import pytz
 import re
 from typing import List
 import datetime as dt
@@ -176,3 +178,15 @@ def lbnl_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
     return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
+
+def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, state: str) -> pd.DataFrame:
+    df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
+    data_old = df["Humidity_ODRH"]
+
+    data_new = od_conditions.loc[od_conditions.index > date_forward.astimezone(pytz.timezone('UTC'))]
+    data_new = data_new.loc[od_conditions["state"] == state]
+    data_new = data_new["ODRH"]
+
+    df["Humidity_ODRH"] = data_old.fillna(value=data_new)
+
+    return df
