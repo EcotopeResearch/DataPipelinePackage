@@ -167,10 +167,10 @@ def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
     odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
     return odc_df
 
-
+# TODO: update this function from using a passed in date to using date from last row
 def lbnl_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
-    Function filters the filenames to only those newer than the last date.
+    Function filters the filenames list to only those newer than the last date.
     Input: Latest date, List of filenames to be filtered
     Output: Filtered list of filenames
     """
