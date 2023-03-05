@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from typing import List
 from ecotope_package_cs2306.config import configure
 
 def site_specific(df : pd.DataFrame, site : str) -> pd.DataFrame:
@@ -164,3 +165,13 @@ def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
     odc_df.drop("Power_OD", axis=1, inplace=True)
     odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
     return odc_df
+
+
+def lbnl_extract_new(last_date: str, filenames: List[str]) -> List[str]:
+    """
+    Function filters the filenames to only those newer than the last date.
+    Input: Latest date, List of filenames to be filtered
+    Output: Filtered list of filenames
+    """
+    time_int = int(last_date.strftime("%Y-%m-%d"))
+    return list(filter(lambda filename: int(filename[7:-8]) >= time_int, filenames))
