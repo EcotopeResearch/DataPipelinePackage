@@ -174,5 +174,10 @@ def lbnl_extract_new(last_date: str, filenames: List[str]) -> List[str]:
     Input: Latest date, List of filenames to be filtered
     Output: Filtered list of filenames
     """
-    time = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= time, filenames))
+    last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
+    filtered_list = []
+    for filename in filenames:
+        file_date = dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d')
+        if file_date >= last_date:
+            filtered_list.append(filename)
+    return filtered_list
