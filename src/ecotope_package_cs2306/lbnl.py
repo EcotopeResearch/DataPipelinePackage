@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 from typing import List
+import datetime as dt
 from ecotope_package_cs2306.config import configure
 
 def site_specific(df : pd.DataFrame, site : str) -> pd.DataFrame:
@@ -173,5 +174,6 @@ def lbnl_extract_new(last_date: str, filenames: List[str]) -> List[str]:
     Input: Latest date, List of filenames to be filtered
     Output: Filtered list of filenames
     """
-    time_int = int(last_date.strptime("%Y-%m-%d"))
+    time =  dt.datetime.strptime(last_date, '%Y-%m-%d')
+    time_int = int(time.strptime("%Y-%m-%d"))
     return list(filter(lambda filename: int(filename[7:-8]) >= time_int, filenames))
