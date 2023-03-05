@@ -168,16 +168,11 @@ def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
     return odc_df
 
 
-def lbnl_extract_new(last_date: str, filenames: List[str]) -> List[str]:
+def lbnl_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
     Function filters the filenames to only those newer than the last date.
     Input: Latest date, List of filenames to be filtered
     Output: Filtered list of filenames
     """
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    filtered_list = []
-    for filename in filenames:
-        file_date = dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d')
-        if file_date >= last_date:
-            filtered_list.append(filename)
-    return filtered_list
+    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
