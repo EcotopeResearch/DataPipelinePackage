@@ -170,7 +170,7 @@ def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
     return odc_df
 
 # TODO: update this function from using a passed in date to using date from last row
-def lbnl_filter_new(last_date: str, filenames: List[str]) -> List[str]:
+def aqsuite_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
     Input: Latest date, List of filenames to be filtered
