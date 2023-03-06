@@ -4,6 +4,7 @@ import pytz
 import re
 from typing import List
 import datetime as dt
+from sklearn.linear_model import LinearRegression
 from ecotope_package_cs2306.config import configure
 
 def site_specific(df : pd.DataFrame, site : str) -> pd.DataFrame:
@@ -221,3 +222,36 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     df["Humidity_ODRH"] = data_old.fillna(value=data_new)
 
     return df
+
+def create_fan_curves(cfm_info, site_info):
+    # Make a copy of the dataframes to avoid modifying the original data
+    cfm_info = cfm_info.copy()
+    site_info = site_info.copy()
+
+    # Convert furnace power from kW to W
+    site_info['furn_misc_power'] *= 1000
+
+    # Calculate furnace power to remove for each row
+    def calculate_watts_to_remove(row):
+        if np.isnan(row['ID_blower_rms_watts']) or 'heat' not in row['mode']:
+            return 0
+        site_row = site_info.loc[site_info['site'] == row['site']]
+        return site_row['furn_misc_power'].values[0]
+
+    cfm_info['watts_to_remove'] = cfm_info.apply(calculate_watts_to_remove, axis=1)
+
+    # Subtract furnace power from blower power
+    mask = cfm_info['watts_to_remove'] != 0
+    cfm_info.loc[mask, 'ID_blower_rms_watts'] -= cfm_info['watts_to_remove']
+
+    # Group by site and estimate coefficients
+    by_site = cfm_info.groupby('site')
+    def estimate_coefficients(group):
+        X = group[['ID_blower_rms_watts']].values ** 0.3333 - 1
+        y = group['ID_blower_cfm'].values
+        return pd.Series(LinearRegression().fit(X, y).coef_)
+
+    fan_coeffs = by_site.apply(estimate_coefficients)
+    fan_coeffs.columns = ['a', 'b']
+
+    return fan_coeffs
