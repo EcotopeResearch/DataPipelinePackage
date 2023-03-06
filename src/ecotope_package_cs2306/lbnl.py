@@ -179,6 +179,37 @@ def lbnl_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
     return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
 
+def aqsuite_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
+    """
+    Function takes a list of csv filenames containing aqsuite data and reads all files into a singular dataframe.
+    Input: List of filenames 
+    Output: Pandas Dataframe containing data from all files
+    """
+    temp_dfs = []
+    for filename in csv_filenames:
+        try:
+            data = pd.read_csv(filename)
+        except FileNotFoundError:
+            print("File Not Found: ", filename)
+            return
+        
+        if len(data) != 0:
+            data = add_date(data, filename)
+            temp_dfs.append(data)
+    df = pd.concat(temp_dfs, ignore_index=False)
+    return df
+
+def add_date(df : pd.DataFrame, filename : str) -> pd.DataFrame:
+    """
+    Some LBNL data files do not contain the date in the time column. This function extracts the date
+    from the filename and adds it to the data.
+    Input: Dataframe, filename as string
+    Output: Modified dataframe
+    """
+    date = filename[-18:-8]
+    df['time'] = df.apply(lambda row : date + " " + row['time'], axis = 1)
+    return df
+
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, state: str) -> pd.DataFrame:
     df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
     data_old = df["Humidity_ODRH"]
