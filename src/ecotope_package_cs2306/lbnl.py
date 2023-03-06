@@ -207,7 +207,7 @@ def add_date(df : pd.DataFrame, filename : str) -> pd.DataFrame:
     Output: Modified dataframe
     """
     date = filename[-18:-8]
-    df['time'] = df.apply(lambda row : date + " " + row['time'], axis = 1)
+    df['time'] = df.apply(lambda row : date + " " + str(row['time']), axis = 1)
     return df
 
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, state: str) -> pd.DataFrame:
