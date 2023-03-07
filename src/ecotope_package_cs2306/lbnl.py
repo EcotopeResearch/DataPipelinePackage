@@ -255,3 +255,20 @@ def create_fan_curves(cfm_info, site_info):
     fan_coeffs.columns = ['a', 'b']
 
     return fan_coeffs
+
+def get_cfm_values(df):  
+    site_cfm = pd.read_csv("sitecfminfo.csv", encoding='unicode_escape')
+    site_cfm = site_cfm[site_cfm["site"] == site]
+    site_cfm = site_cfm.set_index(["site"])
+
+    cfm_info = dict()
+    cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))][0]
+    cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
+    cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
+
+    df["Cfm_Calc"] = [cfm_info[state] if state in cfm_info.keys() else 0.0 for state in data["HVAC"]]
+
+    return df
+
+def get_cop_values(df):
+    
