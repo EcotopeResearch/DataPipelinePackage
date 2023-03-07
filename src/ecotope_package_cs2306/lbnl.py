@@ -112,8 +112,21 @@ def gas_valve_diff(df : pd.DataFrame, site : str, site_info_path : str) -> pd.Da
         
     return df
 
+#.apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
+#NOTE: Needs various CSV files
+def _superheat(row):
+    #reference superheat.R in this construction, it's very complicated
+    pass
+
+#.apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
+def _subcooling(row, lr_model):
+    #linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
+    sat_temp_f = lr_model + row.loc["Pressure_LL_psi"] #model gets passed in Pressure_LL_psi
+    difference = sat_temp_f - row.loc["Temp_LL_F"]
+    row.loc["Refrig_charge"] = difference
+
 #NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
-def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str) -> pd.DataFrame:
+def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str, four_path : str) -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
@@ -127,26 +140,25 @@ def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str) -> pd
     site_df = pd.read_csv(site_info_path)
     metering_device = site_df.loc[site, "metering_device"]
 
-    #NOTE: loop through every minute once metering_device is filtered. it seems oddly done in R,
-    #but you need to do this calculation for every row. bruh.
+    #NOTE: .apply on every row once the metering device has been determined. different calcs for each!
     if(metering_device == "txv"):
-        #calculate the refrigerant charge w/the subcooling method (the easy way)
+        #calculate the refrigerant charge w/the subcooling method
 
-        #NOTE: Now that we know it's txv, we .apply on the rows!
-        #NOTE: Train a linear regression model w/pressure and temp from 410a_pt.csv, pass that into 
+        #NOTE: Train a linear regression model HERE w/pressure and temp from 410a_pt.csv, pass that into 
         #.apply, which calculates sat_temp_f by plugging in Pressure_LL_psi, and fills out the df refrigerant charge. 
+        four_df = pd.read_csv(four_path)
+        #store pressure column in a list, and temp column in a list
+        pressure_list = four_df["pressure"].values.tolist()
+        temp_list = four_df["temp"].values.tolist()
+        #calculate our LR model, pass it in to .apply
+        lr_model = "placeholder"
 
-        #grab 'pressure' and 'temp' from 410a_pt.csv at the current index, df.loc['Pressure_LL_psi']
-        sat_temp_f = "" #.apply!
-
-        #we need some index to replace 0? this is gonna be weird w/apply
-        refrig_charge = sat_temp_f - df.loc[0, "Temp_LL_F"]
-        #add refrig_charge to the df at the proper index
-        pass
+        df.apply(_subcooling, args=(lr_model,))
     else:
-        #calculate the refrigerant charge w/the superheat method (uh oh)
+        #calculate the refrigerant charge w/the superheat method
 
-        #NOTE: Potentially just call a helper on the whole df and have it apply by row?
+        #helper call here
+        df.apply(_superheat)
         pass
 
     return df
