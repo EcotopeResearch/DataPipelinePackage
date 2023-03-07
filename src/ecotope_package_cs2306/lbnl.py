@@ -121,7 +121,11 @@ def _superheat(row):
 #.apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
 def _subcooling(row, lr_model):
     #linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
-    sat_temp_f = lr_model + row.loc["Pressure_LL_psi"] #model gets passed in Pressure_LL_psi
+
+    #NOTE: linear regression model is just m and b, right? so I'm calcing y, we do this,
+    #assuming that lr_model is a tuple w/m at 0 and b at 1. 
+    sat_temp_f = lr_model(0)*row.loc["Pressure_LL_psi"] + lr_model(1)
+
     difference = sat_temp_f - row.loc["Temp_LL_F"]
     row.loc["Refrig_charge"] = difference
 
@@ -144,18 +148,18 @@ def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str, four_
     if(metering_device == "txv"):
         #calculate the refrigerant charge w/the subcooling method
 
-        #NOTE: Train a linear regression model HERE w/pressure and temp from 410a_pt.csv, pass that into 
-        #.apply, which calculates sat_temp_f by plugging in Pressure_LL_psi, and fills out the df refrigerant charge. 
         four_df = pd.read_csv(four_path)
         #store pressure column in a list, and temp column in a list
         pressure_list = four_df["pressure"].values.tolist()
         temp_list = four_df["temp"].values.tolist()
-        #calculate our LR model, pass it in to .apply
-        lr_model = "placeholder"
+
+        #NOTE: Train a linear regression model HERE w/pressure and temp lists from 410a_pt.csv, pass into .apply
+        lr_model = ("m", "b") #m and b as in mx + b
 
         df.apply(_subcooling, args=(lr_model,))
     else:
         #calculate the refrigerant charge w/the superheat method
+        #NOTE: Think about what needs to be done 
 
         #helper call here
         df.apply(_superheat)
