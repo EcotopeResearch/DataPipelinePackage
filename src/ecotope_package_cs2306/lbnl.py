@@ -132,12 +132,12 @@ def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str) -> pd
     if(metering_device == "txv"):
         #calculate the refrigerant charge w/the subcooling method (the easy way)
 
-        #NOTE: Potentially just call a helper on the whole df and have it apply by row?
+        #NOTE: Now that we know it's txv, we .apply on the rows!
+        #NOTE: Train a linear regression model w/pressure and temp from 410a_pt.csv, pass that into 
+        #.apply, which calculates sat_temp_f by plugging in Pressure_LL_psi, and fills out the df refrigerant charge. 
 
-
-        #start by calculating sat_temp_f by linear interpolation w/410a_pt.csv
         #grab 'pressure' and 'temp' from 410a_pt.csv at the current index, df.loc['Pressure_LL_psi']
-        sat_temp_f = ""
+        sat_temp_f = "" #.apply!
 
         #we need some index to replace 0? this is gonna be weird w/apply
         refrig_charge = sat_temp_f - df.loc[0, "Temp_LL_F"]
