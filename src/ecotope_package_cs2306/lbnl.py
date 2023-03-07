@@ -256,7 +256,7 @@ def create_fan_curves(cfm_info, site_info):
 
     return fan_coeffs
 
-def get_cfm_values(df):  
+def get_cfm_values(df, site):  
     site_cfm = pd.read_csv("sitecfminfo.csv", encoding='unicode_escape')
     site_cfm = site_cfm[site_cfm["site"] == site]
     site_cfm = site_cfm.set_index(["site"])
@@ -270,5 +270,17 @@ def get_cfm_values(df):
 
     return df
 
-def get_cop_values(df):
-    
+def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
+    w_to_btuh = 3.412
+    btuh_to_w = 1 / w_to_btuh
+    air_density = 1.08
+
+    air_corr = site_air_corr.loc[site_air_corr['site'] == site, 'air_corr']
+
+    df = df.assign(Power_Output_BTUh=np.select([df['HVAC_state'] == "heat", df['HVAC_state'] == "circ"], [0, 0],
+    default=(df['Temp_SATAvg'] - df['Temp_RAT']) * df['Cfm_Calc'] * air_density * air_corr)).assign(Power_Output_kW = df['Power_Output_BTUh'] * btuh_to_w / 1000)
+                                                                                                                               
+    df["cop"] = abs(df['Power_Output_kW'] / df["Power_system1"])
+    df = df.drop(columns=['Power_Output_BTUh'], axis=1)
+
+    return df
