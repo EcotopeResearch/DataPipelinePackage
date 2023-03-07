@@ -159,7 +159,10 @@ def get_refrig_charge(df : pd.DataFrame, site : str, site_info_path : str, four_
         df.apply(_subcooling, args=(lr_model,))
     else:
         #calculate the refrigerant charge w/the superheat method
-        #NOTE: Think about what needs to be done 
+        #NOTE: Think about what needs to be done OUTSIDE of the loops. A model maybe?
+
+        #according to Madison, you convert RAT (return air temp) to celsius, calculate wet bulb, and assign xrange 
+        #BEFORE you start looping through everything. I think you do all that in superheat!
 
         #helper call here
         df.apply(_superheat)
