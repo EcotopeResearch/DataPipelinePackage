@@ -190,7 +190,7 @@ def gather_outdoor_conditions(df : pd.DataFrame, site : str) -> pd.DataFrame:
     return odc_df
 
 # TODO: update this function from using a passed in date to using date from last row
-def aqsuite_filter_new(last_date: str, filenames: List[str]) -> List[str]:
+def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
     Input: Latest date, List of filenames to be filtered
@@ -199,9 +199,9 @@ def aqsuite_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
     return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
 
-def aqsuite_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
+def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     """
-    Function takes a list of csv filenames containing aqsuite data and reads all files into a singular dataframe.
+    Function takes a list of csv filenames containing nclarity data and reads all files into a singular dataframe.
     Input: List of filenames 
     Output: Pandas Dataframe containing data from all files
     """
