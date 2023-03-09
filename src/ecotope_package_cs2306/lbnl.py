@@ -230,13 +230,12 @@ def add_date(df : pd.DataFrame, filename : str) -> pd.DataFrame:
     df['time'] = df.apply(lambda row : date + " " + str(row['time']), axis = 1)
     return df
 
-def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, state: str) -> pd.DataFrame:
+def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, site_name: str) -> pd.DataFrame:
     df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
     data_old = df["Humidity_ODRH"]
 
-    data_new = od_conditions.loc[od_conditions.index > date_forward.astimezone(pytz.timezone('UTC'))]
-    data_new = data_new.loc[od_conditions["state"] == state]
-    data_new = data_new["ODRH"]
+    data_new = od_conditions.loc[od_conditions.index > date_forward]  # .astimezone(pytz.timezone('UTC'))]
+    data_new = data_new[f"{site_name}_ODRH"]
 
     df["Humidity_ODRH"] = data_old.fillna(value=data_new)
 
@@ -285,7 +284,7 @@ def get_cfm_values(df, site):
     cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
     cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
 
-    df["Cfm_Calc"] = [cfm_info[state] if state in cfm_info.keys() else 0.0 for state in data["HVAC"]]
+    df["Cfm_Calc"] = [cfm_info[state] if state in cfm_info.keys() else 0.0 for state in df["HVAC"]]
 
     return df
 
