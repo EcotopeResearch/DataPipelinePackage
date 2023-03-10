@@ -6,8 +6,12 @@ import os
 from dateutil.parser import parse
 from ecotope_package_cs2306.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu
 from ecotope_package_cs2306.config import _input_directory, _output_directory
+import pickle
 
 pd.set_option('display.max_columns', None)
+copFunctionPickle = open('./pickles/copFunctionPickle.pkl', 'rb') # TODO: ensure that package is able to pint to correct file location    
+copFunction = pickle.load(copFunctionPickle)
+copFunctionPickle.close()
 
 def concat_last_row(df : pd.DataFrame, last_row : pd.DataFrame):
     """
@@ -271,6 +275,10 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
     cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH']
 
     return cop_inter
+
+def estimate_cop_values(df: pd.DataFrame):
+    cop_mapped = copFunction(df[['Temp_HPWHInlet', 'Temp_HPWHOutlet', 'OAT_HPWH']].values)
+    return cop_mapped
 
 
 def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> dict:
