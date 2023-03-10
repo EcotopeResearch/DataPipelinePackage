@@ -9,7 +9,8 @@ from ecotope_package_cs2306.config import _input_directory, _output_directory
 import pickle
 
 pd.set_option('display.max_columns', None)
-copFunctionPickle = open('./pickles/copFunctionPickle.pkl', 'rb') # TODO: ensure that package is able to pint to correct file location    
+func_path = os.path.join(os.path.dirname(__file__), 'pickles', 'copFunctionPickle.pkl')
+copFunctionPickle = open(func_path, 'rb')
 copFunction = pickle.load(copFunctionPickle)
 copFunctionPickle.close()
 
