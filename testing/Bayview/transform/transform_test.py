@@ -1,6 +1,5 @@
 import unittest
 import pandas as pd
-import pickle
 import numpy as np
 from ecotope_package_cs2306 import rename_sensors, avg_duplicate_times, remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, estimate_cop_values, calculate_cop_values, round_time, aggregate_df, join_to_hourly, join_to_daily, concat_last_row, get_temp_zones120, get_storage_gals120
 
@@ -209,13 +208,11 @@ class Test_Transform(unittest.TestCase):
     #estimate_cop_values(df) - returns estimated cop_values as array
     def test_estimate_cop_values(self):
         pruned = pd.read_pickle("testing/Bayview/transform/pickles/pruned_outliers.pkl")
-        pickleFile = open('testing/Bayview/transform/pickles/estimated_cop.pkl', 'rb')     
-        estimated_values = pickle.load(pickleFile)
-        pickleFile.close()
+        estimated_values = pd.read_pickle("testing/Bayview/transform/pickles/estimated_cop.pkl")
 
         cop_df = estimate_cop_values(pruned)
 
-        np.testing.assert_array_equal(estimated_values, cop_df)
+        np.testing.assert_array_equal(estimated_values['cop_mapped'], cop_df['cop_mapped'])
 
     #aggregate_df(df) - returns hourly_df and daily_df
     def test_aggregate_df_valid(self):

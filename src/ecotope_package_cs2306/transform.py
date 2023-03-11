@@ -277,9 +277,10 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
 
     return cop_inter
 
-def estimate_cop_values(df: pd.DataFrame):
+def estimate_cop_values(df: pd.DataFrame) -> pd.DataFrame:
     cop_mapped = copFunction(df[['Temp_HPWHInlet', 'Temp_HPWHOutlet', 'OAT_HPWH']].values)
-    return cop_mapped
+    df['cop_mapped'] = cop_mapped
+    return df
 
 
 def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> dict:
