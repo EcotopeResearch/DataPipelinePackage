@@ -125,28 +125,20 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
 # NOTE: Needs various CSV files
-
-
 def _superheat(row):
     # reference superheat.R in this construction, it's very complicated
     pass
 
 # .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
-
-
 def _subcooling(row, lr_model):
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
+    x = row.loc["Pressure_LL_psi"]
+    #NOTE: What is the Y in my case for the linear regression?
+    sat_temp_f = lr_model.score(x, )
 
-    # NOTE: linear regression model is just m and b, right? so I'm calcing y, we do this,
-    # assuming that lr_model is a tuple w/m at 0 and b at 1.
-    sat_temp_f = lr_model(0)*row.loc["Pressure_LL_psi"] + lr_model(1)
-
-    difference = sat_temp_f - row.loc["Temp_LL_F"]
-    row.loc["Refrig_charge"] = difference
+    row.loc["Refrig_charge"] = sat_temp_f - row.loc["Temp_LL_F"]
 
 # NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
-
-
 def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_path: str) -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
@@ -156,22 +148,21 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     as a string, and the path to 410a_pt.csv as a string. 
     Output: Pandas Dataframe
     """
-    # Step 1: Extract 'metering_device' from site_info_path, making sure to grab from the row matching
-    # the site name! Assuming site name is in format "AZ2_01", or this will break.
-    site_df = pd.read_csv(site_info_path)
-    metering_device = site_df.loc[site, "metering_device"]
+    # Step 1: Extract 'metering_device' from site_info_path w/site name
+    site_df = pd.read_csv(site_info_path, index_col=0)
+    metering_device = site_df.at[site, "metering_device"]
 
-    # NOTE: .apply on every row once the metering device has been determined. different calcs for each!
+    # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
         # calculate the refrigerant charge w/the subcooling method
 
         four_df = pd.read_csv(four_path)
-        # store pressure column in a list, and temp column in a list
-        pressure_list = four_df["pressure"].values.tolist()
-        temp_list = four_df["temp"].values.tolist()
+        #X = pressure_list, y = temp_list
+        X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
+        y = np.array(four_df["temp"].values.tolist())
 
-        # NOTE: Train a linear regression model HERE w/pressure and temp lists from 410a_pt.csv, pass into .apply
-        lr_model = ("m", "b")  # m and b as in mx + b
+        #Linear regression: 
+        lr_model = LinearRegression().fit(X, y)
 
         df.apply(_subcooling, args=(lr_model,))
     else:
@@ -179,7 +170,8 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         # NOTE: Think about what needs to be done OUTSIDE of the loops. A model maybe?
 
         # according to Madison, you convert RAT (return air temp) to celsius, calculate wet bulb, and assign xrange
-        # BEFORE you start looping through everything. I think you do all that in superheat!
+        # BEFORE you start looping through everything. I think you do all that in superheat! The question to answer
+        # is what has to happen regarding that loop, and how it translates from R. Can I throw it all in .apply?
 
         # helper call here
         df.apply(_superheat)

@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from ecotope_package_cs2306 import something#functions used in LBNL transform
+from ecotope_package_cs2306 import get_refrig_charge 
 
 class Test_Transform(unittest.TestCase):
     #class data (maybe, var_names directory)
