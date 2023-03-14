@@ -133,8 +133,9 @@ def _superheat(row):
 def _subcooling(row, lr_model):
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
     x = row.loc["Pressure_LL_psi"]
-    #NOTE: What is the Y in my case for the linear regression?
-    sat_temp_f = lr_model.score(x, )
+    m = lr_model.coef_
+    b = lr_model.intercept_
+    sat_temp_f = m*x+b
 
     row.loc["Refrig_charge"] = sat_temp_f - row.loc["Temp_LL_F"]
 
