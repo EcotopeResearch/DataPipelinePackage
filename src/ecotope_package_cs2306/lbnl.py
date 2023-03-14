@@ -152,6 +152,9 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     site_df = pd.read_csv(site_info_path, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
 
+    #NOTE: Create refrig charge row on the df
+    df["Refrig_charge"] = None
+
     # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
         # calculate the refrigerant charge w/the subcooling method
@@ -164,7 +167,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         #Linear regression: 
         lr_model = LinearRegression().fit(X, y)
 
-        df.apply(_subcooling, args=(lr_model,))
+        df.apply(_subcooling, axis=1, args=(lr_model,))
     else:
         # calculate the refrigerant charge w/the superheat method
         # NOTE: Think about what needs to be done OUTSIDE of the loops. A model maybe?
