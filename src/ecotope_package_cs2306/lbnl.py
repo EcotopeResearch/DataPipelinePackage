@@ -136,8 +136,12 @@ def _subcooling(row, lr_model):
     m = lr_model.coef_
     b = lr_model.intercept_
     sat_temp_f = m*x+b
+    #convert old temp to F
+    temp_f = (row.loc["Temp_LL_C"]*(9/5)) + 32
 
-    row.loc["Refrig_charge"] = sat_temp_f - row.loc["Temp_LL_F"]
+    r_charge = sat_temp_f - temp_f
+    row.loc["Refrig_charge"] = r_charge
+    return row
 
 # NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
 def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_path: str) -> pd.DataFrame:
@@ -149,36 +153,30 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     as a string, and the path to 410a_pt.csv as a string. 
     Output: Pandas Dataframe
     """
-    # Step 1: Extract 'metering_device' from site_info_path w/site name
     site_df = pd.read_csv(site_info_path, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
-
-    #NOTE: Create refrig charge row on the df
-    df["Refrig_charge"] = None
 
     # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
         # calculate the refrigerant charge w/the subcooling method
-
         four_df = pd.read_csv(four_path)
-        #X = pressure_list, y = temp_list
         X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
         y = np.array(four_df["temp"].values.tolist())
-
-        #Linear regression: 
         lr_model = LinearRegression().fit(X, y)
 
-        df.apply(_subcooling, axis=1, args=(lr_model,))
+        df["Refrig_charge"] = None
+        df = df.apply(_subcooling, axis=1, args=(lr_model,))
     else:
         # calculate the refrigerant charge w/the superheat method
+
         # NOTE: Think about what needs to be done OUTSIDE of the loops. A model maybe?
 
         # according to Madison, you convert RAT (return air temp) to celsius, calculate wet bulb, and assign xrange
         # BEFORE you start looping through everything. I think you do all that in superheat! The question to answer
         # is what has to happen regarding that loop, and how it translates from R. Can I throw it all in .apply?
 
-        # helper call here
-        df.apply(_superheat)
+        df["Refrig_charge"] = None
+        df.apply(_superheat, axis=1)
         pass
 
     return df
