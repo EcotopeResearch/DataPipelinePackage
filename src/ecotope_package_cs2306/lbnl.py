@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import math
 import pytz
 import re
 from typing import List
@@ -205,6 +206,31 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     return odc_df
 
 # TODO: update this function from using a passed in date to using date from last row
+
+def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
+    if ("Power_FURN1" in list(df.columns)):
+            df.rename(columns={"Power_FURN1": "Power_AH1"})
+    site_info = pd.read(site_info_path)
+    site_section = site_info[site_info["site"] == site]
+    statePowerAHThreshold = pd.to_numeric(site_section["AH_standby_power"]) * 1.5
+    df["event_ID"] = df["event_ID"].mask(df["event_ID"] == df["event_ID"])
+    df["event_ID"] = df["event_ID"].mask(df["Power_AH1"] > statePowerAHThreshold, 1)
+    event_ID = 1
+
+    for i in range(1,len(df.index)):
+        #!math.isnan(df["event_ID"][i]) && df["event"]
+        if (math.isnan((df["event_ID"][i]) == False) and (df["event_ID"][i] == 1)):
+            time_diff = (df["time"][i] - df["time"][i-1])
+            diff_minutes = time_diff.total_seconds() / 60
+            if(diff_minutes > 10):
+                event_ID += 1
+                df["event_ID"][i] = event_ID
+            continue
+        elif (math.isnan(df["event_ID"][i])):
+            if(math.isnan(df["event_ID"][i - 1])):
+                event_ID += 1
+        df["event_ID"][i] = event_ID
+    return df
 
 
 def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
