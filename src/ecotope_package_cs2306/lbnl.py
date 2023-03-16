@@ -6,6 +6,7 @@ import re
 from typing import List
 import datetime as dt
 from sklearn.linear_model import LinearRegression
+from statsmodels.formula.api import ols
 from ecotope_package_cs2306.config import configure
 import os
 
@@ -310,14 +311,32 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
 
 def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
-    Some LBNL data files do not contain the date in the time column. This function extracts the date
-    from the filename and adds it to the data.
+    LBNL's nclarity files do not contain the date in the time column. This
+    function extracts the date from the filename and adds it to the data.
     Input: Dataframe, filename as string
     Output: Modified dataframe
     """
     date = filename[-18:-8]
     df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
     return df
+
+
+def elev_correction(site_info_file : str) -> pd.DataFrame:
+    site_info = pd.read_csv(site_info_file)
+    elev_ft = [0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000]
+    alt_corr_fact = [1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63]
+    cf_df = pd.DataFrame({'elev_ft': elev_ft, 'alt_corr_fact': alt_corr_fact})
+
+    lin_model = ols(y = cf_df["alt_corr_fact"], x = cf_df['elev_ft'])
+
+    elv_cf = site_info[['elev']].rename(columns={'elev': 'elev_ft'}).fillna(0)
+
+    air_corr = {'air_corr': lin_model.predict(exog=elv_cf)}
+    site_air_corr = site_info[['site', 'elev']].assign(air_corr=lambda df: np.where(
+                            df['elev'].isna() | (df['elev'] < 1000), 1, air_corr['air_corr']))
+    
+    del cf_df, air_corr, elv_cf, lin_model
+    return site_air_corr
 
 
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, site_name: str) -> pd.DataFrame:
