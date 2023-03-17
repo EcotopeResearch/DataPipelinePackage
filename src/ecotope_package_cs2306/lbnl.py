@@ -102,8 +102,8 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
 
 def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
     """
-    Function takes in the site dataframe, the site name, and path to the site_info file. If the site has
-    gas heating, take the lagged difference to get per minute values. 
+    Function takes in the site dataframe, the site name, and path to the site_info file. If 
+    the site has gas heating, take the lagged difference to get per minute values. 
     Input: Dataframe for site, site name as string, path to site_info.csv as string
     Output: Pandas Dataframe 
     """
@@ -202,11 +202,8 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
 
     odc_df = odc_df[odc_df["Power_OD"] > 0.01]
     odc_df.drop("Power_OD", axis=1, inplace=True)
-    odc_df.rename(columns={"Temp_ODT": site + "_ODT",
-                  "Humidity_ODRH": site + "_ODRH"}, inplace=True)
+    odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
     return odc_df
-
-# TODO: update this function from using a passed in date to using date from last row
 
 def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
     if ("Power_FURN1" in list(df.columns)):
@@ -233,7 +230,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
         df["event_ID"][i] = event_ID
     return df
 
-
+# TODO: update this function from using a passed in date to using date from last row
 def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
