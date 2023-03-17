@@ -321,21 +321,33 @@ def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     return df
 
 
-def elev_correction(site_info_file : str) -> pd.DataFrame:
-    site_info = pd.read_csv(site_info_file)
+def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
+    """
+    Function creates a dataframe for a given site that contains site name, elevation, 
+    and the corrected elevation.
+    Input: Path to site_info.csv file and site's name
+    Output: Pandas dataframe
+    """
+    try:
+        site_info_df = pd.read_csv(site_info_file)
+    except FileNotFoundError:
+        print("File Not Found: ", site_info_file)
+        return
+    
+    site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
+
     elev_ft = [0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000]
     alt_corr_fact = [1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63]
     cf_df = pd.DataFrame({'elev_ft': elev_ft, 'alt_corr_fact': alt_corr_fact})
 
-    lin_model = ols(y = cf_df["alt_corr_fact"], x = cf_df['elev_ft'])
+    lin_model = ols(y = cf_df['alt_corr_fact'], x = cf_df['elev_ft'])
 
-    elv_cf = site_info[['elev']].rename(columns={'elev': 'elev_ft'}).fillna(0)
+    elv_df = site_info_df[['elev']].rename(columns={'elev': 'elev_ft'}).fillna(0)
+    air_corr = {'air_corr': lin_model.predict(exog=elv_df)}
 
-    air_corr = {'air_corr': lin_model.predict(exog=elv_cf)}
-    site_air_corr = site_info[['site', 'elev']].assign(air_corr=lambda df: np.where(
-                            df['elev'].isna() | (df['elev'] < 1000), 1, air_corr['air_corr']))
-    
-    del cf_df, air_corr, elv_cf, lin_model
+    site_air_corr = site_info_df[['site', 'elev']].assign(air_corr=lambda df: np.where(
+                            df['elev'].isna() | df['elev'] < 1000, 1, air_corr['air_corr']))
+  
     return site_air_corr
 
 
