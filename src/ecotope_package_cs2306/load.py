@@ -12,9 +12,17 @@ pd.set_option('display.max_columns', None)
 
 def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
-    Function will and return config.ini in a config var.
+    Reads the config.ini file stored in the config_info file path.   
 
-    Output: Login information
+    Input: A list of table headers. These headers must correspond to the 
+    section headers in the config.ini file. Your list must contain the section
+    header for each table you wish to write into. A path to the config.ini file 
+    must also be passed.
+
+    Output: A dictionary containing all relevant information is returned. This
+    includes information used to create a connection with a mySQL server and
+    information (table names and column names) used to load the data into 
+    tables. 
     """
 
     if not os.path.exists(config_info):
@@ -42,10 +50,13 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
 
 def connect_db(config_info: dict):
     """
-    Function will use login information to try and connect to the database and return a
-    connection object to make a cursor.
-    Input: _getLoginInfo
-    Output: Connection object
+    Create a connection with the mySQL server. 
+
+    Input: The dictionary containing the credential information. This is
+    contained in the 'database' section of the dictionary. 
+
+    Output: A connection and cursor object. THe cursor can be used to execute
+    mySQL queries and the connection object can be used to save those changes. 
     """
 
     connection = None
@@ -62,11 +73,12 @@ def connect_db(config_info: dict):
 
 def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     """
-    Check if given table exists in database.
+    Check if the given table name already exists in database.
 
-    :param cursor: Database cursor object.
-    :param config_info: configuration dictionary containing config info.
-    :return: Boolean value representing if table exists in database.
+    Input: Database cursor object and the table name.
+
+    Output: The number of tables in the database with the given table name. 
+    This can directly be used as a boolean!
     """
 
     cursor.execute(f"SELECT count(*) "
@@ -79,12 +91,12 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
 
 def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     """
-    Creates a new table to store data in the given dataframe.
+    Creates a new table in the mySQL database.
 
-    :param cursor: Database cursor object.
-    :param dataframe: Pandas data frame.
-    :param table_name: Name of table in database.
-    :return: Boolean value representing if new table was created.
+    Input: A cursor object and the name of the table to be created. Also a
+    list of columns names in the table must be passed.
+
+    Output: A boolean value indicating if a table was sucessfully created. 
     """
 
     create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
@@ -102,13 +114,15 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
 
 def load_database(cursor, dataframe, config_info: dict, data_type: str):
     """
-    Loads data stored in passed dataframe into mySQL database using.
+    Loads given pandas DataFrame into a mySQL table.
 
-    :param data_type: One of ["pump", "weather", "load_shift", "cop"]
-    :param cursor: Database cursor object.
-    :param dataframe: Pandas dataframe object.
-    :param config_info: configuration dictionary containing config info.
-    :return: Boolean value representing if data was written to database.
+    Input: A cursor object slong with the pandas DataFrame to be written into
+    the mySQL server. The dictionary containing the configuration information 
+    must also be passed along with the header name corresponding to the table
+    you wish to write data to.  
+
+    Output: A boolean value indicating if the data was successfully written to
+    the database. 
     """
 
     dbname = config_info['database']['database']
@@ -118,7 +132,7 @@ def load_database(cursor, dataframe, config_info: dict, data_type: str):
     if not check_table_exists(cursor, table_name, dbname):
         if not create_new_table(cursor, table_name, config_info[data_type]['sensor_list']):
             print(f"Could not create new table {table_name} in database {dbname}")
-            sys.exit()
+            return False
 
     date_values = dataframe.index
     for date in date_values:
@@ -132,6 +146,7 @@ def load_database(cursor, dataframe, config_info: dict, data_type: str):
         cursor.execute(query)
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
+    return True
 
 
 """
