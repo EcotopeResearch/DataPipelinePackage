@@ -206,6 +206,12 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     return odc_df
 
 def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
+    """
+    Function takes in a site dataframe along with the name and path of the site and assigns
+    a unique event_ID value whenever the system changes state.
+    Input: Pandas Dataframe, site name and path as strings.
+    Output: Pandas Dataframe
+    """
     if ("Power_FURN1" in list(df.columns)):
             df.rename(columns={"Power_FURN1": "Power_AH1"})
     site_info = pd.read(site_info_path)
@@ -216,7 +222,6 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
     event_ID = 1
 
     for i in range(1,len(df.index)):
-        #!math.isnan(df["event_ID"][i]) && df["event"]
         if (math.isnan((df["event_ID"][i]) == False) and (df["event_ID"][i] == 1)):
             time_diff = (df["time"][i] - df["time"][i-1])
             diff_minutes = time_diff.total_seconds() / 60
