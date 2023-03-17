@@ -237,6 +237,16 @@ def verify_power_energy(df : pd.DataFrame):
 
 
 def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
+    """
+    Gets daily average of data for all relevant varibles. 
+
+    Input: Pandas DataFrame of minute by minute data. Also a thermo_slice
+    string which indicates the time at which slicing begins. If none no
+    slicing is performed. THe format of the thermo_slice string is 
+    "HH:MM AM/PM".
+
+    Ouptut: Pandas DataFrame which contains the aggregated hourly data.
+    """
     avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 
     'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater', 
     'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump', 
@@ -274,6 +284,15 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> dict:
 
 
 def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> dict:
+    """
+    Performs COP calculations using the daily aggregated data. 
+
+    Input: Pandas DataFrame to add COP columns to. Also a heatloss_fixed float
+    value and the time at which slicing begins if we would like to thermo 
+    slice. 
+
+    Output: Pandas DataFrame with the added COP columns. 
+    """
     cop_inter = pd.DataFrame()
     if (len(df) != 0):
         cop_inter = aggregate_values(df, thermo_slice)
