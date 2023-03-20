@@ -222,15 +222,13 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
     event_ID = 1
 
     for i in range(1,len(df.index)):
-        if (math.isnan((df["event_ID"][i]) == False) and (df["event_ID"][i] == 1)):
+        if((math.isnan(df["event_ID"][i]) == False) and (df["event_ID"][i] == 1.0)):
             time_diff = (df["time"][i] - df["time"][i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
-                df["event_ID"][i] = event_ID
-            continue
         elif (math.isnan(df["event_ID"][i])):
-            if(math.isnan(df["event_ID"][i - 1])):
+            if(math.isnan(df["event_ID"][i - 1]) == False):
                 event_ID += 1
         df["event_ID"][i] = event_ID
     return df
