@@ -163,6 +163,10 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     as a string, and the path to 410a_pt.csv as a string. 
     Output: Pandas Dataframe
     """
+    #if DF empty, return the df as is
+    if(df.empty):
+        return df
+
     site_df = pd.read_csv(site_info_path, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
 

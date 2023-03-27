@@ -45,11 +45,10 @@ class Test_Transform(unittest.TestCase):
         #NOTE: I still need to double check whether or not it needs to be returned? It does, try that!!
         df1 = get_refrig_charge(df1, site_txv, self.site_info_path, self.four_path, self.superheat_path)
         #df2 = get_refrig_charge(df2, site_orifice, self.site_info_path, self.four_path, self.superheat_path)
-
     
         #check that the Refrig_charge column has data for df1, and that it has "None" for df2! NOTE: Probably just df2 pending atm
         #Just check the first five elements, or something like that, make sure they have values. Should be a negative float in this case!
-        proper_type = type(df1["Refrig_charge"])
+        proper_type = type(df1["Refrig_charge"]) #NOTE: THIS NEEDS TO CHECK FIRST FEW ELEMENTS, NOT HOW IT'S DONE HERE!!
         self.assertTrue(proper_type, type(10.0))
         pass
 
@@ -59,8 +58,6 @@ class Test_Transform(unittest.TestCase):
 
         #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
         empty = get_refrig_charge(empty, "FAKE_01", "fake_info.csv", "fake_four_path.csv", "fake_superheat_path.csv")
-
-        pass
 
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
