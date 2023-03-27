@@ -128,7 +128,15 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
 # NOTE: Needs various CSV files
 def _superheat(row):
-    # reference superheat.R in this construction, it's very complicated
+    # what ought to be passed in? take note!! hopefully not everything cause that'd be annoying.
+
+    #return air temperature, and something humidity? 
+    RAT_C = (row["Temp_RAT"])*(9/5) + 32
+    rh = row["Humidity_RARH"]
+
+    #calculate wet bulb temp! you verified the calc, don't worry about that part!
+    #eh, I'm tired I'll do this later when I can verify my code to minimize bugfixes. 
+
     pass
 
 # .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
@@ -146,7 +154,7 @@ def _subcooling(row, lr_model):
     return row
 
 # NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
-def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_path: str) -> pd.DataFrame:
+def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_path: str, superheat_path: str) -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
@@ -176,6 +184,15 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         # according to Madison, you convert RAT (return air temp) to celsius, calculate wet bulb, and assign xrange
         # BEFORE you start looping through everything. I think you do all that in superheat! The question to answer
         # is what has to happen regarding that loop, and how it translates from R. Can I throw it all in .apply?
+
+        # according to GPT, basically everything is just done in the loop? Huh...
+        #NOTE: If there isn't an F to C or vice versa in Python, it's just: 
+        """
+        def C_2_F(celc):
+            return 9/5 * celc + 32
+        def F_2_C(farenheit):
+            return (farenheit - 32) * (5/9)
+        """
 
         df["Refrig_charge"] = None
         df.apply(_superheat, axis=1)
