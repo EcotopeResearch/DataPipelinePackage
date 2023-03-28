@@ -9,9 +9,9 @@ class Test_Transform(unittest.TestCase):
     #pip install "PLACEHOLDER"
 
     #class data (maybe, var_names directory)
-    site_info_path = "LBNL-input/site_info.csv"
-    four_path = "LBNL-input/410a_pt.csv"
-    superheat_path = "LBNL-input/superheat.csv"
+    site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
+    four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
+    superheat_path = "testing/LBNL/transform/LBNL-input/superheat.csv"
 
     #NOTE: Instead of checking if files are missing inside functions, we instead do that at the start? 
     #Check that test function instead of all of those
@@ -33,11 +33,11 @@ class Test_Transform(unittest.TestCase):
         #we assume proper input variables!
         
         #txv pickle
-        txv = "pickles/AZ2_01_04202022.pkl"
+        txv = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
         site_txv = "AZ2_01"
         df1 = pd.read_pickle(txv)
         #superheat pickle
-        orifice = "pickles/IL2_01_06182022.pkl"
+        orifice = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
         site_orifice = " IL2_01"
         df2 = pd.read_pickle(orifice)
 
@@ -48,7 +48,7 @@ class Test_Transform(unittest.TestCase):
     
         #check that the Refrig_charge column has data for df1, and that it has "None" for df2! NOTE: Probably just df2 pending atm
         #Just check the first five elements, or something like that, make sure they have values. Should be a negative float in this case!
-        proper_type = type(df1["Refrig_charge"]) #NOTE: THIS NEEDS TO CHECK FIRST FEW ELEMENTS, NOT HOW IT'S DONE HERE!!
+        proper_type = type(df1["Refrig_charge"]) #BUG: THIS NEEDS TO CHECK FIRST FEW ELEMENTS, NOT HOW IT'S DONE HERE!!
         self.assertTrue(proper_type, type(10.0))
         pass
 
