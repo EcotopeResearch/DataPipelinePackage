@@ -131,8 +131,8 @@ def _superheat(row):
     # what ought to be passed in? take note!! hopefully not everything cause that'd be annoying.
 
     #return air temperature, and something humidity? 
-    RAT_C = (row["Temp_RAT"])*(9/5) + 32
-    rh = row["Humidity_RARH"]
+    RAT_C = (row.loc["Temp_RAT"])*(9/5) + 32
+    rh = row.loc["Humidity_RARH"]
 
     #calculate wet bulb temp! you verified the calc, don't worry about that part!
     #eh, I'm tired I'll do this later when I can verify my code to minimize bugfixes. 
@@ -454,3 +454,5 @@ def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
     df = df.drop(columns=['Power_Output_BTUh'], axis=1)
 
     return df
+
+
