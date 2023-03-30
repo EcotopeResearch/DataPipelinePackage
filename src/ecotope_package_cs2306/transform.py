@@ -374,7 +374,6 @@ def aggregate_df(df: pd.DataFrame):
     for date in date_list:
         dt_list.append(dt.datetime.strptime(date, format))
     daily_df["load_shift_day"] = False
-    #BUG: .apply not setting load_shift_day to True, despite happening in function. daily_df = daily_df.apply ?
     daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,)) 
 
     return hourly_df, daily_df
@@ -549,81 +548,3 @@ def join_to_daily(daily_data : pd.DataFrame, cop_data : pd.DataFrame) -> pd.Data
     """
     out_df = daily_data.join(cop_data)
     return out_df
-
-"""
-if __name__ == '__main__':
-    df = pd.read_pickle("testing/Bayview/transform/pickles/rounded.pkl")
-    #print(df.index.tolist())
-    #print(type(df.index.tolist()[0])
-    print(df)
-    print("Rounded data printed?")
-"""
-
-"""" Test Functions, remove once file is complete
-# #Test function
-# def outlierTest():
-#     testdf_filename = "input/ecotope_wide_data.csv"
-#     df = pd.read_csv(testdf_filename)
-
-#     print(df)
-#     print("\nTesting _removeOutliers...\n")
-#     print(remove_outliers(df, vars_filename))
-#     print("\nFinished testing _removeOutliers\n")
-
-# #Test function
-# def ffillTest():
-#     testdf_filename = "input/ecotope_wide_data.csv"
-#     df = pd.read_csv(testdf_filename)
-#     df = remove_outliers(df, vars_filename)
-
-#     print("\nTesting _fillMissing...\n")
-#     print(ffill_missing(df, vars_filename))
-#     print("\nFinished testing _fillMissing\n")
-
-# #Test function
-# def testCopCalc():
-#     df_path = "input/ecotope_wide_data.csv"
-#     ecotope_data = pd.read_csv(df_path)
-#     ecotope_data.set_index("time", inplace=True)
-
-# # Test function
-# def testPEV():
-#     testdf_filename = "input/ecotope_wide_data.csv"
-#     df = pd.read_csv(testdf_filename)
-#     df = get_energy_by_min(df)
-
-#     verify_power_energy(df)
-"""
-
-"""
-# Test main, will be removed once transform.py is complete
-def __main__():
-    file_path = "input/df.pkl"
-    vars_filename = "input/Variable_Names.csv"
-
-    df = pd.read_pickle(file_path)
-    rename_sensors(df, vars_filename)
-    df = remove_outliers(df, vars_filename)
-    df = ffill_missing(df, vars_filename)
-    hourly_df, daily_df = aggregate_df(df)
-    print(daily_df)
-    
-    df = avg_duplicate_times(df)
-    df = sensor_adjustment(df)
-    df = get_energy_by_min(df)
-    df = get_Temp_Zones(df)
-    df = get_Storage_Gals120(df)
-    verify_power_energy(df)
-    cop_values = calculate_cop_values(df)
-    hourly_df, daily_df = aggregate_df(df)
-
-    print(df.head(10))
-    print(hourly_df.head(10))
-    print(daily_df)
-
-
-    pass
-    
-if __name__ == '__main__':
-    
-"""
