@@ -127,17 +127,29 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
 # NOTE: Needs various CSV files
-def _superheat(row):
+def _superheat(row, xrange):
     # what ought to be passed in? take note!! hopefully not everything cause that'd be annoying.
+    superheat_target = []
 
-    #return air temperature, and something humidity? 
-    RAT_C = (row.loc["Temp_RAT"])*(9/5) + 32
+    #Convert F to C return air temperature
+    RAT_C = (row.loc["Temp_RAT"] - 32) * (5/9)
     rh = row.loc["Humidity_RARH"]
 
-    #calculate wet bulb temp! you verified the calc, don't worry about that part!
-    #eh, I'm tired I'll do this later when I can verify my code to minimize bugfixes. 
+    #calculate wet bulb temp w/humidity and air temp, then convert back to F
+    Temp_wb_C = RAT_C * math.atan(0.151977(rh + 8.31659)**(1/2)) + math.atan(RAT_C + rh) - math.atan(rh - 1.676331) + 0.00391838(rh)**(3/2) * math.atan(0.023101*rh) - 4.686035
+    Temp_wb_F = (Temp_wb_C * (9/5)) + 32
+    Temp_ODT = row.loc['Temp_ODT']
 
-    pass
+    #NOTE: This is where the old code and GPT loop, but I NEED to 
+    #calc this for everything, because RAT is per min!
+    #This might be really slow! 
+
+    #NOTE: Apparently, all the timesteps are contained within Temp_ODT?
+    # I GET IT NOW! DON'T DO THIS LOOP YOU ARE IN THE LOOP!
+    #for i in range(len(Temp_0DT)):
+        #pass
+
+
 
 # .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
 def _subcooling(row, lr_model):
@@ -183,13 +195,15 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     else:
         # calculate the refrigerant charge w/the superheat method
 
-        # NOTE: Think about what needs to be done OUTSIDE of the loops. A model maybe?
+        #NOTE: RAT_C and rh average calcs here? Might be more efficient 
+        #But it seems wrong to do it that way, current way is decent. 
 
-        # according to Madison, you convert RAT (return air temp) to celsius, calculate wet bulb, and assign xrange
-        # BEFORE you start looping through everything. I think you do all that in superheat! The question to answer
-        # is what has to happen regarding that loop, and how it translates from R. Can I throw it all in .apply?
+        #assign xrange from superheat.csv. column names!
+        superchart = pd.read_csv(superheat_path)
+        xrange = superchart.columns.values.tolist()
+        #ignore first element and we have our range from the col names
+        xrange.pop(0) 
 
-        # according to GPT, basically everything is just done in the loop? Huh...
         #NOTE: If there isn't an F to C or vice versa in Python, it's just: 
         """
         def C_2_F(celc):
@@ -199,8 +213,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         """
 
         df["Refrig_charge"] = None
-        df.apply(_superheat, axis=1)
-        pass
+        df.apply(_superheat, axis=1, args=(xrange,))
 
     return df
 

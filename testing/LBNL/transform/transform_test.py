@@ -61,4 +61,17 @@ class Test_Transform(unittest.TestCase):
 
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
+
+    """
+    #pure testing grabs
+    site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
+    four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
+    superheat_path = "testing/LBNL/transform/LBNL-input/superheat.csv"
+    orifice_path = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
+
+    #NOTE: What does ODT look like? Ask?
+    or_pickle = pd.read_pickle(orifice_path)
+    print(or_pickle["Temp_ODT"])
+    """
+
     unittest.main()
