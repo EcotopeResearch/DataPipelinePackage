@@ -1,5 +1,4 @@
 # Sets configurations
-# TODO This doesn't work
 import configparser
 import os
 import sys

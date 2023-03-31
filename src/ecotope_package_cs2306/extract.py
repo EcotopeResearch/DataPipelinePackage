@@ -160,21 +160,6 @@ def get_sub_dirs(dir : str) -> List[str]:
         return
     return directories
 
-
-# TODO: This does nothing
-# def merge_noaa(site: pd.DataFrame) -> pd.DataFrame:
-#     """
-#     Function takes a dataframe containing sensor data and merges it with weather data.
-#     Input: Pandas Dataframe
-#     Output: Merged Pandas Dataframe
-#     """
-#     df = []
-#     data = pd.read_csv('output/727935-24234.csv', parse_dates=['time'])
-#     data["time"] = pd.to_datetime(data["time"], utc=True)
-#     data["time"] = data["time"].dt.tz_convert('US/Pacific')
-#     df = site.merge(data, how='left', on='time')
-#     return df
-
 def get_noaa_data(station_names: List[str]) -> dict:
     """
     Function will take in a list of station names and will return a dictionary where 
@@ -346,10 +331,3 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
     with gzip.open(filename) as data:
         table = pd.read_table(data, header=None, delim_whitespace=True)
     return table
-
-
-def __main__():
-    pass
-
-if __name__ == '__main__':
-    __main__()
