@@ -3,8 +3,8 @@ import pandas as pd
 from ftplib import FTP
 from datetime import datetime
 import gzip
-import os, json
-import datetime as dt
+import os
+import json
 from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from ecotope_package_cs2306.load import connect_db, get_login_info
 from ecotope_package_cs2306.config import _config_directory, _data_directory
@@ -13,21 +13,27 @@ import sys
 from pytz import timezone
 import mysql.connector.errors as mysqlerrors
 
+
 def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     """
     Function retrieves the last line from the database with the most recent datetime.
-    Input: Path to config file (defaulr is set in load.py)
-    Output: One line DF of the last entry
+
+    Args:
+        config_file_path (str): Path to config file (default is set in load.py)
+    Returns: 
+        pd.DataFrame: One line DF of the last entry
     """
     config_dict = get_login_info(["minute"])
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
 
     try:
-        db_cursor.execute(f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
+        db_cursor.execute(
+            f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
     except mysqlerrors.Error:
         print(f"Table {config_dict['minute']['table_name']} does not exist.")
         column_names = config_dict['minute']['sensor_list']
-        return_df = pd.DataFrame(columns=column_names, index=[datetime(year=2022, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific'))])
+        return_df = pd.DataFrame(columns=column_names, index=[datetime(
+            year=2022, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific'))])
         return_df = return_df.fillna(0)
         return return_df
 
@@ -35,40 +41,49 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     last_time = last_row_data[0][0]
 
     if ((last_time.hour != 23) and (last_time.minute != 59)):
-        last_full_day = datetime(year=last_time.year, month=last_time.month, day=last_time.day-1, hour=23, minute=59, second=0)
+        last_full_day = datetime(year=last_time.year, month=last_time.month,
+                                 day=last_time.day-1, hour=23, minute=59, second=0)
         try:
-            db_cursor.execute(f"select * from {config_dict['minute']['table_name']} where time = '{last_full_day}'")
+            db_cursor.execute(
+                f"select * from {config_dict['minute']['table_name']} where time = '{last_full_day}'")
         except mysqlerrors.Error:
-            print(f"Table {config_dict['minute']['table_name']} does not exist.")
+            print(
+                f"Table {config_dict['minute']['table_name']} does not exist.")
             return 0
 
         last_row_data = pd.DataFrame(db_cursor.fetchall())
 
     try:
         db_cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
-                        f"{config_dict['database']['database']}' and table_name = '"
-                        f"{config_dict['minute']['table_name']}'")
+                          f"{config_dict['database']['database']}' and table_name = '"
+                          f"{config_dict['minute']['table_name']}'")
     except mysqlerrors.Error:
         print(f"Table {config_dict['minute']['table_name']} does not exist.")
         return 0
-    
+
     columns_names = db_cursor.fetchall()
     columns_names = [name[0] for name in columns_names]
     last_row_data.columns = columns_names
     last_row_data.set_index(last_row_data['time'], inplace=True)
     last_row_data.drop(['time'], axis=1, inplace=True)
-    last_row_data.index = last_row_data.index.tz_localize(timezone('US/Pacific'))
+    last_row_data.index = last_row_data.index.tz_localize(
+        timezone('US/Pacific'))
 
     db_cursor.close()
     db_connection.close()
-    
+
     return last_row_data
+
 
 def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
     """
     Function filters the filenames to only those newer than the last date.
-    Input: The last row in the database, List of filenames to be filtered
-    Output: Filtered list of filenames
+
+    Args: 
+        last_row (pd.DataFrame): The last row in the database
+        json_filenames (List[str]): List of filenames to be filtered
+    Returns: 
+        List[str]: Filtered list of filenames
     """
     time = last_row.squeeze()
     time = time.name
@@ -77,26 +92,34 @@ def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
     return list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
 
 
-def extract_files(extension : str, subdir : str = "") -> List[str]:
+def extract_files(extension: str, subdir: str = "") -> List[str]:
     """
-    Function takes in a file extension and returns a list of paths files in the directory of that type.
-    Input: File extension as string
-    Output: List of filenames 
+    Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
+
+    Args: 
+        extension (str): File extension as string
+        subdir (str): subdirectory (defaults no no subdir)
+    Returns: 
+        List[str]: List of filenames 
     """
     os.chdir(os.getcwd())
     filenames = []
     for file in os.listdir(os.path.join(_data_directory, subdir)):
-      if file.endswith(extension):
-        full_filename = os.path.join(_data_directory, subdir, file)
-        filenames.append(full_filename)
-    
+        if file.endswith(extension):
+            full_filename = os.path.join(_data_directory, subdir, file)
+            filenames.append(full_filename)
+
     return filenames
+
 
 def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
     """
     Function takes a list of gz/json filenames and reads all files into a singular dataframe.
-    Input: List of filenames 
-    Output: Pandas Dataframe containing data from all files
+
+    Args: 
+        json_filenames (List[str]): List of filenames 
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing data from all files
     """
     temp_dfs = []
     for file in json_filenames:
@@ -104,30 +127,37 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
             data = gzip.open(file)
         except FileNotFoundError:
             print("File Not Found: ", file)
-            return 
+            return
         try:
             data = json.load(data)
         except json.decoder.JSONDecodeError:
             print('Empty or invalid JSON File')
             return
-        
+
         # TODO: This section is BV specific, maybe move to another function
-        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=[
+                                      'device', 'connection', 'time'])
         if len(norm_data) != 0:
             norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-            norm_data = pd.pivot_table(norm_data, index="time", columns = "id", values = "data")
-        
+            norm_data["time"] = norm_data["time"].dt.tz_localize(
+                "UTC").dt.tz_convert('US/Pacific')
+            norm_data = pd.pivot_table(
+                norm_data, index="time", columns="id", values="data")
+
             temp_dfs.append(norm_data)
 
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
+
 def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe.
-    Input: List of filenames 
-    Output: Pandas Dataframe containing data from all files
+
+    Args: 
+        csv_filenames (List[str]): List of filenames 
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing data from all files
     """
     temp_dfs = []
     for file in csv_filenames:
@@ -136,18 +166,21 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
         except FileNotFoundError:
             print("File Not Found: ", file)
             return
-        
+
         if len(data) != 0:
             temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
 
-def get_sub_dirs(dir : str) -> List[str]:
+def get_sub_dirs(dir: str) -> List[str]:
     """
     Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory.
-    Input: Directory as a string.
-    Output: List of paths to subfolders.
+
+    Args: 
+        dir (str): Directory as a string.
+    Returns: 
+        List[str]: List of paths to subfolders.
     """
     directories = []
     try:
@@ -160,15 +193,19 @@ def get_sub_dirs(dir : str) -> List[str]:
         return
     return directories
 
+
 def get_noaa_data(station_names: List[str]) -> dict:
     """
-    Function will take in a list of station names and will return a dictionary where 
-    the key is the station name and the value is a dataframe with the parsed weather data.
-    Input: List of Station Names
-    Output: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
+    Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.
+
+    Args: 
+        station_names (List[str]): List of Station Names
+    Returns: 
+        dict: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
     noaa_dictionary = _get_noaa_dictionary()
-    station_ids = {noaa_dictionary[station_name] : station_name for station_name in station_names if station_name in noaa_dictionary}
+    station_ids = {noaa_dictionary[station_name]
+        : station_name for station_name in station_names if station_name in noaa_dictionary}
     noaa_filenames = _download_noaa_data(station_ids)
     noaa_dfs = _convert_to_df(station_ids, noaa_filenames)
     formatted_dfs = _format_df(station_ids, noaa_dfs)
@@ -177,15 +214,20 @@ def get_noaa_data(station_names: List[str]) -> dict:
 
 def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
     """
-    Function will take a list of station ids and a dictionary of filename and the respective file stored in a dataframe
-    The function will return a dictionary where the key is the station id and the value is a dataframe for that station
-    Input: List of station_ids, dictionary of filename and the respective file stored in a dataframe
-    Output: Dictionary where the key is the station id and the value is a dataframe for that station
+    Function will take a list of station ids and a dictionary of filename and the respective file stored in a dataframe. 
+    The function will return a dictionary where the key is the station id and the value is a dataframe for that station.
+
+    Args: 
+        station_ids (dict): Dictionary of station_ids,
+        noaa_dfs (dict): dictionary of filename and the respective file stored in a dataframe
+    Returns: 
+        dict: Dictionary where the key is the station id and the value is a dataframe for that station
     """
     formatted_dfs = {}
     for value1 in station_ids.keys():
-        # Append all DataFrames with the same station_id 
-        temp_df = pd.DataFrame(columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour'])
+        # Append all DataFrames with the same station_id
+        temp_df = pd.DataFrame(columns=['year', 'month', 'day', 'hour', 'airTemp', 'dewPoint',
+                               'seaLevelPressure', 'windDirection', 'windSpeed', 'conditions', 'precip1Hour', 'precip6Hour'])
         for key, value in noaa_dfs.items():
             if key.startswith(value1):
                 temp_df = pd.concat([temp_df, value], ignore_index=True)
@@ -195,28 +237,36 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         temp_df = temp_df.replace(-9999, np.NaN)
 
         # Convert tz from UTC to PT and format: Y-M-D HR:00:00
-        temp_df["time"] = pd.to_datetime(temp_df[["year", "month", "day", "hour"]])
-        temp_df["time"] = temp_df["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        temp_df["time"] = pd.to_datetime(
+            temp_df[["year", "month", "day", "hour"]])
+        temp_df["time"] = temp_df["time"].dt.tz_localize(
+            "UTC").dt.tz_convert('US/Pacific')
 
         # Convert airtemp, dewpoint, sealevelpressure, windspeed
         temp_df["airTemp_F"] = temp_df["airTemp"].apply(temp_c_to_f)
         temp_df["dewPoint_F"] = temp_df["dewPoint"].apply(temp_c_to_f)
-        temp_df["seaLevelPressure_mb"] = temp_df["seaLevelPressure"].apply(divide_num_by_ten) 
-        temp_df["windSpeed_kts"] = temp_df["windSpeed"].apply(windspeed_mps_to_knots)  
-        
+        temp_df["seaLevelPressure_mb"] = temp_df["seaLevelPressure"].apply(
+            divide_num_by_ten)
+        temp_df["windSpeed_kts"] = temp_df["windSpeed"].apply(
+            windspeed_mps_to_knots)
+
         # Convert precip
-        temp_df["precip1Hour_mm"] = temp_df["precip1Hour"].apply(precip_cm_to_mm)
-        temp_df["precip6Hour_mm"] = temp_df["precip6Hour"].apply(precip_cm_to_mm)
-        
+        temp_df["precip1Hour_mm"] = temp_df["precip1Hour"].apply(
+            precip_cm_to_mm)
+        temp_df["precip6Hour_mm"] = temp_df["precip6Hour"].apply(
+            precip_cm_to_mm)
+
         # Match case conditions
-        temp_df["conditions"] = temp_df["conditions"].apply(conditions_index_to_desc)
+        temp_df["conditions"] = temp_df["conditions"].apply(
+            conditions_index_to_desc)
 
         # Rename windDirections
         temp_df["windDirection_deg"] = temp_df["windDirection"]
 
         # Drop columns that were replaced
-        temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour", "precip6Hour", "year", "month", "day", "hour", "windDirection"], axis = 1)
-        
+        temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour",
+                               "precip6Hour", "year", "month", "day", "hour", "windDirection"], axis=1)
+
         temp_df.set_index(["time"], inplace=True)
         # Save df in dict
         formatted_dfs[station_ids[value1]] = temp_df
@@ -227,8 +277,11 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
 def _get_noaa_dictionary() -> dict:
     """
     This function downloads a dictionary of equivalent station id for each station name
-    Input: None
-    Output: Dictionary of station id and corrosponding station name
+
+    Args: 
+        None
+    Returns: 
+        dict: Dictionary of station id and corrosponding station name
     """
 
     if not os.path.isdir(f"{_data_directory}weather"):
@@ -266,10 +319,12 @@ def _get_noaa_dictionary() -> dict:
 
 def _download_noaa_data(stations: dict) -> List[str]:
     """
-    This function takes in a list of the stations and downloads the corrosponding NOAA weather data
-    via FTP and returns it in a List of filenames
-    Input: List of station_ids who's data needs to be downloaded
-    Output: List of filenames that were downloaded
+    This function takes in a list of the stations and downloads the corrosponding NOAA weather data via FTP and returns it in a List of filenames
+
+    Args: 
+        stations (dict): dictionary of station_ids who's data needs to be downloaded
+    Returns: 
+        List[str]: List of filenames that were downloaded
     """
     noaa_filenames = list()
     year_end = datetime.today().year
@@ -306,17 +361,21 @@ def _download_noaa_data(stations: dict) -> List[str]:
 
 def _convert_to_df(stations: dict, noaa_filenames: List[str]) -> dict:
     """
-    Gets the list of downloaded filenames and imports the files
-    and converts it to a dictionary of DataFrames
-    Input: Dict of stations, List of downloaded filenames
-    Output: Dictionary where key is filename and value is dataframe for the file
+    Gets the list of downloaded filenames and imports the files and converts it to a dictionary of DataFrames
+
+    Args: 
+        stations (dict): Dict of stations 
+        noaa_filenames (List[str]): List of downloaded filenames
+    Returns: 
+        dict: Dictionary where key is filename and value is dataframe for the file
     """
     noaa_dfs = []
     for station in stations.keys():
         for filename in noaa_filenames:
             table = _gz_to_df(
                 f"{_data_directory}weather/{stations[station]}/{filename}")
-            table.columns = ['year','month','day','hour','airTemp','dewPoint','seaLevelPressure','windDirection','windSpeed','conditions','precip1Hour','precip6Hour']
+            table.columns = ['year', 'month', 'day', 'hour', 'airTemp', 'dewPoint', 'seaLevelPressure',
+                             'windDirection', 'windSpeed', 'conditions', 'precip1Hour', 'precip6Hour']
             noaa_dfs.append(table)
     noaa_dfs_dict = dict(zip(noaa_filenames, noaa_dfs))
     return noaa_dfs_dict
@@ -325,8 +384,11 @@ def _convert_to_df(stations: dict, noaa_filenames: List[str]) -> dict:
 def _gz_to_df(filename: str) -> pd.DataFrame:
     """
     Opens the file and returns it as a pd.DataFrame
-    Input: String of filename to be converted
-    Output: DataFrame of the corrosponding file
+
+    Args: 
+        filename (str): String of filename to be converted
+    Returns: 
+        pd.DataFrame: DataFrame of the corrosponding file
     """
     with gzip.open(filename) as data:
         table = pd.read_table(data, header=None, delim_whitespace=True)
