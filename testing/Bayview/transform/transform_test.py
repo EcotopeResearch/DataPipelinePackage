@@ -86,7 +86,7 @@ class Test_Transform(unittest.TestCase):
         #function takes times w/more than one entry, averages them into one
         print(averaged_df.head(5).index.tolist())
         averaged_df = avg_duplicate_times(averaged_df, "US/Pacific")
-        print(df.head(5).index.tolist())
+        print(averaged_df.head(5).index.tolist())
         averaged_count = len(averaged_df.index)
 
         #we make sure that the count has changed and duplicates have been removed
