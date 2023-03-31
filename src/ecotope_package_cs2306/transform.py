@@ -81,8 +81,8 @@ def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_direct
 
 def avg_duplicate_times(df: pd.DataFrame, timezone: str) -> pd.DataFrame:
     """
-    Function will take in a dataframe and the timezone of the data and looks for duplicate 
-    timestamps due to daylight savings. Takes the average values between the duplicate timestamps.
+    Function will take in a dataframe and look for duplicate timestamps due to 
+    daylight savings. Takes the average values between the duplicate timestamps.
 
     Args: 
         df (pd.DataFrame): Pandas dataframe
@@ -91,8 +91,9 @@ def avg_duplicate_times(df: pd.DataFrame, timezone: str) -> pd.DataFrame:
         pd.DataFrame: Pandas dataframe 
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
+    print(df.head(5).index.tolist())
     df = df.groupby(df.index).mean()
-    df.index = (df.index).tz_convert('US/Pacific')#.tz_localize("UTC")#.tz_convert('US/Pacific')
+    df.index = (df.index).tz_localize("UTC")#.tz_convert('US/Pacific')
     return df
 
 def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
