@@ -126,9 +126,22 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
     return df
 
 
+# .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
+def _subcooling(row, lr_model):
+    # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
+    x = row.loc["Pressure_LL_psi"]
+    m = lr_model.coef_
+    b = lr_model.intercept_
+    sat_temp_f = m*x+b
+    #convert old temp to F
+    temp_f = (row.loc["Temp_LL_C"]*(9/5)) + 32
+
+    r_charge = sat_temp_f - temp_f
+    row.loc["Refrig_charge"] = r_charge
+    return row
+
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
-def _superheat(row, x_range, row_range, superchart):
-    #superheat_target used here or part of the df?
+def _superheat(row, x_range, row_range, superchart, lr_model):
     superheat_target = None
 
     #Convert F to C return air temperature
@@ -139,11 +152,6 @@ def _superheat(row, x_range, row_range, superchart):
     Temp_wb_C = RAT_C * math.atan(0.151977(rh + 8.31659)**(1/2)) + math.atan(RAT_C + rh) - math.atan(rh - 1.676331) + 0.00391838(rh)**(3/2) * math.atan(0.023101*rh) - 4.686035
     Temp_wb_F = (Temp_wb_C * (9/5)) + 32
     Temp_ODT = row.loc['Temp_ODT']
-
-    #TODO: Calculation of superheat_target and superheat_calc
-
-    #NOTE: If the NA check or bounds check trigger, you need to 
-    #immediately skip to the refrigerant charge calc part. 
 
     #NA checks, elif bound check, else interpolations
     if math.isnan(Temp_ODT or math.isnan(Temp_wb_F)):
@@ -157,33 +165,25 @@ def _superheat(row, x_range, row_range, superchart):
         y_min = math.floor(Temp_ODT/5) * 5
         y_range = [y_min, y_max]
 
-        #table_v1 = interpolation of current Temp_wb_F w/min
         table_v1 = np.interp(Temp_wb_F, x_range, superchart.loc[str(y_min)])
         if(y_max == y_min):
             superheat_target = table_v1 
         else: 
-            #table_v2 = interpolation again w/max
-            #confusing part, line 52-58
-            pass
+            table_v2 = np.interp(Temp_wb_F, x_range, superchart.loc[str(max)])
+            xvalue_range3 = [table_v1, table_v2]
+            if(any(np.isnan(xvalue_range3))):
+                superheat_target = None
+            else:
+                superheat_target = np.interp(Temp_ODT, y_range, xvalue_range3)
 
-    #NOTE: End of loop, calcs happen here. We only calc one at a time though!
-    #row.loc["Refrig_charge"] = superheat_calc - superheat_target
+    #finding superheat_calc
+    sat_temp_f = lr_model.coef_*row.loc["Pressure_LL_psi"]+lr_model.intercept_
+    Temp_SL_F = (row.loc["Temp_SL_C"])*(9/5) + 32
+    superheat_calc = Temp_SL_F - sat_temp_f
 
-    return row
-
-
-# .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
-def _subcooling(row, lr_model):
-    # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
-    x = row.loc["Pressure_LL_psi"]
-    m = lr_model.coef_
-    b = lr_model.intercept_
-    sat_temp_f = m*x+b
-    #convert old temp to F
-    temp_f = (row.loc["Temp_LL_C"]*(9/5)) + 32
-
-    r_charge = sat_temp_f - temp_f
-    row.loc["Refrig_charge"] = r_charge
+    #now that we have superheat_calc and superheat_target, we calc
+    #refrigerant charge and add it back to the series. 
+    row.loc["Refrig_charge"] = superheat_calc - superheat_target
     return row
 
 # NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
@@ -203,32 +203,28 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     site_df = pd.read_csv(site_info_path, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
 
+    #NOTE: this specific lr_model is needed for both superheat AND subcooling!
+    four_df = pd.read_csv(four_path)
+    X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
+    y = np.array(four_df["temp"].values.tolist())
+    lr_model = LinearRegression().fit(X, y)
+
+    #Creating Refrig_charge column populated w/None
+    df["Refrig_charge"] = None
+
     # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
-        # calculate the refrigerant charge w/the subcooling method
-        four_df = pd.read_csv(four_path)
-        X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
-        y = np.array(four_df["temp"].values.tolist())
-        lr_model = LinearRegression().fit(X, y)
-
-        #NOTE: Do this before the if?
-        df["Refrig_charge"] = None
+        #calculate the refrigerant charge w/the subcooling method
         df = df.apply(_subcooling, axis=1, args=(lr_model,))
     else:
         # calculate the refrigerant charge w/the superheat method
-
-        #assign xrange and row_range from superheat.csv.
         superchart = pd.read_csv(superheat_path)
         x_range = superchart.columns.values.tolist()
         row_range = superchart.iloc[:,0].tolist()
         #ignore first element and we have our range from the col names
         x_range.pop(0) 
 
-        #NOTE: Do this before the if?
-        df["Refrig_charge"] = None
-        #NOTE: If this isn't needed after, we can always drop from the df
-        df["superheat_target"] = None
-        df = df.apply(_superheat, axis=1, args=(x_range, row_range, superchart))
+        df = df.apply(_superheat, axis=1, args=(x_range, row_range, superchart, lr_model))
 
     return df
 
