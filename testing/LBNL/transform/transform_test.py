@@ -71,7 +71,16 @@ if __name__ == '__main__':
 
     #NOTE: What does ODT look like? Ask?
     or_pickle = pd.read_pickle(orifice_path)
-    print(or_pickle["Temp_ODT"])
+    
+    #assign xrange from superheat.csv. column names!
+    superchart = pd.read_csv(superheat_path)
+    xrange = superchart.columns.values.tolist()
+    yrange = superchart.iloc[:,0].tolist()
+    #ignore first element and we have our range from the col names
+    xrange.pop(0) 
+
+    print(yrange)
     """
+    
 
     unittest.main()

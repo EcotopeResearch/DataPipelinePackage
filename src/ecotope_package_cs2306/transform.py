@@ -79,6 +79,13 @@ def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
 
 
 def _rm_cols(col, bounds_df): #Helper function for remove_outliers
+    """
+    Function will take in a pandas series and bounds information
+    stored in a dataframe, then check each element of that column and set it to nan
+    if it is outside the given bounds. 
+    Input: Pandas series, pandas dataframe
+    Output: None (modifies df, not returned)
+    """
     if(col.name in bounds_df.index):
         c_lower = float(bounds_df.loc[col.name]["lower_bound"])
         c_upper = float(bounds_df.loc[col.name]["upper_bound"])
@@ -114,6 +121,13 @@ def remove_outliers(df : pd.DataFrame, variable_names_path: str = f"{_input_dire
 
 
 def _ffill(col, ffill_df): #Helper function for ffill_missing
+    """
+    Function will take in a pandas series and ffill information from a pandas dataframe,
+    then for each entry in the series, either forward fill unconditionally or up to the 
+    provided limit based on the information in provided dataframe. 
+    Input: Pandas series, pandas dataframe
+    Output: None (df is modified, not returned)
+    """
     if(col.name in ffill_df.index):
         cp = ffill_df.loc[col.name]["changepoint"]
         length = ffill_df.loc[col.name]["ffill_length"]
@@ -331,6 +345,13 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
 #loops through a list of dateTime objects, compares if the date of that object matches the 
 #date of the row name, which is also a dateTime object. If it matches, load_shift is True (happened that day)
 def _ls_helper(row, dt_list):
+    """
+    Function takes in a pandas series and a list of dates, then checks
+    each entry in the series and if it matches a date in the list of dates,
+    sets the series load_shift_day to True. 
+    Input: Pandas series, list
+    Output: Pandas series
+    """
     for date in dt_list:
         if(row.name.date() == date.date()):
             row.loc["load_shift_day"] = True
@@ -338,6 +359,8 @@ def _ls_helper(row, dt_list):
  
 def aggregate_df(df: pd.DataFrame):
     """
+    Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
+    dataframes, appends some loadshift data onto the daily df, and then returns those. 
     Input: Single pandas dataframe of minute-by-minute sensor data.
     Output: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.
     """

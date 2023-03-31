@@ -126,9 +126,9 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
     return df
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
-def _superheat(row, xrange):
+def _superheat(row, xrange, yrange):
     #superheat_target used here or part of the df?
-    superheat_target = None
+    #superheat_target = None
 
     #Convert F to C return air temperature
     RAT_C = (row.loc["Temp_RAT"] - 32) * (5/9)
@@ -142,11 +142,18 @@ def _superheat(row, xrange):
     #TODO: NA checks, bounds checks, calculation of superheat_target
     #and superheat_calc, then we're done here.
 
-    #NA checks 
-    if math.isnan(row.loc["Temp_ODT"]):
+    #NOTE: If the NA check or bounds check trigger, you need to 
+    #immediately skip to the refrigerant charge calc part. 
+
+    #NA checks, elif bound check
+    if math.isnan(row.loc["Temp_ODT"] or math.isnan(Temp_wb_F)):
         #filtering out na's in recorded data
-        row.loc['superheat_target']
-    
+        row.loc['superheat_target'] = None
+    elif(row.loc['Temp_ODT'] > max(yrange) or Temp_ODT < min(yrange) or Temp_wb_F > max(xrange) or Temp_wb_F < min(xrange)):
+        row.loc['superheat_target'] = None
+
+
+    #NOTE: This is where you skip to!
     #row.loc["Refrig_charge"] = superheat_calc - superheat_target
 
     #apply shenanigans
@@ -202,9 +209,12 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         #NOTE: RAT_C and rh average calcs here? Might be more efficient 
         #But it seems wrong to do it that way, current way is decent. 
 
+        #TODO: Calculate yrange as well, pass it in!
+
         #assign xrange from superheat.csv. column names!
         superchart = pd.read_csv(superheat_path)
         xrange = superchart.columns.values.tolist()
+        yrange = superchart.iloc[:,0].tolist()
         #ignore first element and we have our range from the col names
         xrange.pop(0) 
 
@@ -220,7 +230,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         df["Refrig_charge"] = None
         #NOTE: If this isn't needed after, we can always drop from the df
         df["superheat_target"] = None
-        df = df.apply(_superheat, axis=1, args=(xrange,))
+        df = df.apply(_superheat, axis=1, args=(xrange, yrange))
 
     return df
 
