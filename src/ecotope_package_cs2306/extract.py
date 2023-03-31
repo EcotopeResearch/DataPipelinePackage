@@ -135,14 +135,11 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
             return
 
         # TODO: This section is BV specific, maybe move to another function
-        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=[
-                                      'device', 'connection', 'time'])
+        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
             norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize(
-                "UTC").dt.tz_convert('US/Pacific')
-            norm_data = pd.pivot_table(
-                norm_data, index="time", columns="id", values="data")
+            norm_data["time"] = norm_data["time"].dt.tz_convert('US/Pacific')
+            norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
 
             temp_dfs.append(norm_data)
 
