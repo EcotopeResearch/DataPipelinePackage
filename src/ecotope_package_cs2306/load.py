@@ -1,12 +1,8 @@
 import configparser
 import mysql.connector
-from mysql.connector import errorcode
 import sys
 import pandas as pd
 import os
-import numpy as np
-import datetime
-from datetime import datetime
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 
@@ -14,15 +10,17 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     """
     Reads the config.ini file stored in the config_info file path.   
 
-    Input: A list of table headers. These headers must correspond to the 
-    section headers in the config.ini file. Your list must contain the section
-    header for each table you wish to write into. A path to the config.ini file 
-    must also be passed.
+    Args: 
+        table_headers (list): A list of table headers. These headers must correspond to the 
+            section headers in the config.ini file. Your list must contain the section
+            header for each table you wish to write into. 
+        config_info (str): A path to the config.ini file must also be passed.
 
-    Output: A dictionary containing all relevant information is returned. This
-    includes information used to create a connection with a mySQL server and
-    information (table names and column names) used to load the data into 
-    tables. 
+    Returns: 
+        dict: A dictionary containing all relevant information is returned. This
+            includes information used to create a connection with a mySQL server and
+            information (table names and column names) used to load the data into 
+            tables. 
     """
 
     if not os.path.exists(config_info):
@@ -52,11 +50,13 @@ def connect_db(config_info: dict):
     """
     Create a connection with the mySQL server. 
 
-    Input: The dictionary containing the credential information. This is
-    contained in the 'database' section of the dictionary. 
+    Args: 
+        config_info (dict): The dictionary containing the credential information. This is
+            contained in the 'database' section of the dictionary. 
 
-    Output: A connection and cursor object. THe cursor can be used to execute
-    mySQL queries and the connection object can be used to save those changes. 
+    Returns: 
+        mysql.connector.cursor.MySQLCursor: A connection and cursor object. THe cursor can be used to execute
+            mySQL queries and the connection object can be used to save those changes. 
     """
 
     connection = None
@@ -75,10 +75,14 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     """
     Check if the given table name already exists in database.
 
-    Input: Database cursor object and the table name.
+    Args: 
+        cursor: Database cursor object and the table name.
+        table_name (str): Name of the table
+        dbname (str): Name of the database
 
-    Output: The number of tables in the database with the given table name. 
-    This can directly be used as a boolean!
+    Returns: 
+        int: The number of tables in the database with the given table name.
+            This can directly be used as a boolean!
     """
 
     cursor.execute(f"SELECT count(*) "
@@ -93,10 +97,13 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     """
     Creates a new table in the mySQL database.
 
-    Input: A cursor object and the name of the table to be created. Also a
-    list of columns names in the table must be passed.
+    Args: 
+        cursor: A cursor object and the name of the table to be created.
+        table_name (str): Name of the table
+        table_column_names (list): list of columns names in the table must be passed.
 
-    Output: A boolean value indicating if a table was sucessfully created. 
+    Returns: 
+        bool: A boolean value indicating if a table was sucessfully created. 
     """
 
     create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
@@ -112,17 +119,18 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     return True
 
 
-def load_database(cursor, dataframe, config_info: dict, data_type: str):
+def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
     """
     Loads given pandas DataFrame into a mySQL table.
 
-    Input: A cursor object slong with the pandas DataFrame to be written into
-    the mySQL server. The dictionary containing the configuration information 
-    must also be passed along with the header name corresponding to the table
-    you wish to write data to.  
+    Args: 
+        cursor: A cursor object
+        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
+        config_info (dict): The dictionary containing the configuration information 
+        data_type (str): the header name corresponding to the table you wish to write data to.  
 
-    Output: A boolean value indicating if the data was successfully written to
-    the database. 
+    Returns: 
+        bool: A boolean value indicating if the data was successfully written to the database. 
     """
 
     dbname = config_info['database']['database']
@@ -147,20 +155,3 @@ def load_database(cursor, dataframe, config_info: dict, data_type: str):
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
     return True
-
-
-"""
-if __name__ == '__main__':
-    login_dict = {'database': {'user': 'fahrigemil', 'password': 'aBC12345!', 'host': 'csp70.cslab.seattleu.edu', 'database': 'testDB'},
-                  'day': {'table_name': 'bayview_day', 
-                             'sensor_list': ['sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5']}}
-    load_data = pd.DataFrame(np.random.randint(1, 10, size=(5, 5)), columns=login_dict["day"]["sensor_list"], 
-                             index=[datetime(2022, 1, i) for i in range(1, 6)])
-    
-    conn, cursor = connectDB(login_dict["database"])
-
-    loadDatabase(cursor, load_data, login_dict, "day")
-    conn.commit()
-    conn.close()
-    cursor.close()
-"""
