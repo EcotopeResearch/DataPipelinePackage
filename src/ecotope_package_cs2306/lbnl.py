@@ -126,10 +126,9 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
     return df
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
-# NOTE: Needs various CSV files
 def _superheat(row, xrange):
-    # what ought to be passed in? take note!! hopefully not everything cause that'd be annoying.
-    superheat_target = []
+    #superheat_target used here or part of the df?
+    superheat_target = None
 
     #Convert F to C return air temperature
     RAT_C = (row.loc["Temp_RAT"] - 32) * (5/9)
@@ -140,14 +139,18 @@ def _superheat(row, xrange):
     Temp_wb_F = (Temp_wb_C * (9/5)) + 32
     Temp_ODT = row.loc['Temp_ODT']
 
-    #NOTE: This is where the old code and GPT loop, but I NEED to 
-    #calc this for everything, because RAT is per min!
-    #This might be really slow! 
+    #TODO: NA checks, bounds checks, calculation of superheat_target
+    #and superheat_calc, then we're done here.
 
-    #NOTE: Apparently, all the timesteps are contained within Temp_ODT?
-    # I GET IT NOW! DON'T DO THIS LOOP YOU ARE IN THE LOOP!
-    #for i in range(len(Temp_0DT)):
-        #pass
+    #NA checks 
+    if math.isnan(row.loc["Temp_ODT"]):
+        #filtering out na's in recorded data
+        row.loc['superheat_target']
+    
+    #row.loc["Refrig_charge"] = superheat_calc - superheat_target
+
+    #apply shenanigans
+    return row
 
 
 
@@ -190,6 +193,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         y = np.array(four_df["temp"].values.tolist())
         lr_model = LinearRegression().fit(X, y)
 
+        #NOTE: Do this before the if?
         df["Refrig_charge"] = None
         df = df.apply(_subcooling, axis=1, args=(lr_model,))
     else:
@@ -212,8 +216,11 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
             return (farenheit - 32) * (5/9)
         """
 
+        #NOTE: Do this before the if?
         df["Refrig_charge"] = None
-        df.apply(_superheat, axis=1, args=(xrange,))
+        #NOTE: If this isn't needed after, we can always drop from the df
+        df["superheat_target"] = None
+        df = df.apply(_superheat, axis=1, args=(xrange,))
 
     return df
 
