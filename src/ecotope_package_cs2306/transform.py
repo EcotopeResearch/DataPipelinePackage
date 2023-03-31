@@ -91,7 +91,7 @@ def avg_duplicate_times(df: pd.DataFrame, timezone: str) -> pd.DataFrame:
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
     df = df.groupby(df.index).mean()
-    df.index = (df.index).tz_localize(timezone)
+    #df.index = (df.index).tz_localize(timezone)
     return df
 
 def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
