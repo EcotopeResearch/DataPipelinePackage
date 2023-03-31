@@ -125,6 +125,7 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
     return df
 
+
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
 def _superheat(row, xrange, yrange):
     #superheat_target used here or part of the df?
@@ -151,6 +152,9 @@ def _superheat(row, xrange, yrange):
         row.loc['superheat_target'] = None
     elif(row.loc['Temp_ODT'] > max(yrange) or Temp_ODT < min(yrange) or Temp_wb_F > max(xrange) or Temp_wb_F < min(xrange)):
         row.loc['superheat_target'] = None
+    else:
+        #this is the "meat of it" part from the R code
+        pass 
 
 
     #NOTE: This is where you skip to!
@@ -206,25 +210,12 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     else:
         # calculate the refrigerant charge w/the superheat method
 
-        #NOTE: RAT_C and rh average calcs here? Might be more efficient 
-        #But it seems wrong to do it that way, current way is decent. 
-
-        #TODO: Calculate yrange as well, pass it in!
-
-        #assign xrange from superheat.csv. column names!
+        #assign xrange and yrange from superheat.csv.
         superchart = pd.read_csv(superheat_path)
         xrange = superchart.columns.values.tolist()
         yrange = superchart.iloc[:,0].tolist()
         #ignore first element and we have our range from the col names
         xrange.pop(0) 
-
-        #NOTE: If there isn't an F to C or vice versa in Python, it's just: 
-        """
-        def C_2_F(celc):
-            return 9/5 * celc + 32
-        def F_2_C(farenheit):
-            return (farenheit - 32) * (5/9)
-        """
 
         #NOTE: Do this before the if?
         df["Refrig_charge"] = None
