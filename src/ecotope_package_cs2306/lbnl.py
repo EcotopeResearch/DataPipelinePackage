@@ -127,7 +127,7 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
-def _superheat(row, x_range, row_range):
+def _superheat(row, x_range, row_range, superchart):
     #superheat_target used here or part of the df?
     superheat_target = None
 
@@ -157,11 +157,10 @@ def _superheat(row, x_range, row_range):
         y_min = math.floor(Temp_ODT/5) * 5
         y_range = [y_min, y_max]
 
-        #linear interpolations happen here! same as subcooling
-        #NOTE: You need superheat.csv for this part?
         #table_v1 = interpolation of current Temp_wb_F w/min
+        table_v1 = np.interp(Temp_wb_F, x_range, superchart.loc[str(y_min)])
         if(y_max == y_min):
-            superheat_target = "table_v1" #PLACEHOLDER
+            superheat_target = table_v1 
         else: 
             #table_v2 = interpolation again w/max
             #confusing part, line 52-58
@@ -218,7 +217,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     else:
         # calculate the refrigerant charge w/the superheat method
 
-        #assign xrange and yrange from superheat.csv.
+        #assign xrange and row_range from superheat.csv.
         superchart = pd.read_csv(superheat_path)
         x_range = superchart.columns.values.tolist()
         row_range = superchart.iloc[:,0].tolist()
@@ -229,7 +228,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         df["Refrig_charge"] = None
         #NOTE: If this isn't needed after, we can always drop from the df
         df["superheat_target"] = None
-        df = df.apply(_superheat, axis=1, args=(x_range, row_range))
+        df = df.apply(_superheat, axis=1, args=(x_range, row_range, superchart))
 
     return df
 
