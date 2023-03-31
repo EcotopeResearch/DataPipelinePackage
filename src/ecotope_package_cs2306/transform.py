@@ -86,7 +86,7 @@ def avg_duplicate_times(df: pd.DataFrame, timezone: str) -> pd.DataFrame:
 
     Args: 
         df (pd.DataFrame): Pandas dataframe
-        timezone (str): timezone as string
+        timezone (str): Timezone as string
     Returns: 
         pd.DataFrame: Pandas dataframe 
     """
