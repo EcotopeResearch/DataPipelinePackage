@@ -127,9 +127,9 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
-def _superheat(row, xrange, yrange):
+def _superheat(row, x_range, row_range):
     #superheat_target used here or part of the df?
-    #superheat_target = None
+    superheat_target = None
 
     #Convert F to C return air temperature
     RAT_C = (row.loc["Temp_RAT"] - 32) * (5/9)
@@ -140,29 +140,34 @@ def _superheat(row, xrange, yrange):
     Temp_wb_F = (Temp_wb_C * (9/5)) + 32
     Temp_ODT = row.loc['Temp_ODT']
 
-    #TODO: NA checks, bounds checks, calculation of superheat_target
+    #TODO: Calculation of superheat_target
     #and superheat_calc, then we're done here.
 
     #NOTE: If the NA check or bounds check trigger, you need to 
     #immediately skip to the refrigerant charge calc part. 
 
     #NA checks, elif bound check
-    if math.isnan(row.loc["Temp_ODT"] or math.isnan(Temp_wb_F)):
+    if math.isnan(Temp_ODT or math.isnan(Temp_wb_F)):
         #filtering out na's in recorded data
-        row.loc['superheat_target'] = None
-    elif(row.loc['Temp_ODT'] > max(yrange) or Temp_ODT < min(yrange) or Temp_wb_F > max(xrange) or Temp_wb_F < min(xrange)):
-        row.loc['superheat_target'] = None
+        superheat_target = None
+    elif(Temp_ODT > max(row_range) or Temp_ODT < min(row_range) or Temp_wb_F > max(x_range) or Temp_wb_F < min(x_range)):
+        superheat_target = None
     else:
-        #this is the "meat of it" part from the R code
-        pass 
+        #row_range exists so this can have yrange
+        y_max = math.ceil(Temp_ODT/5) * 5
+        y_min = math.floor(Temp_ODT/5) * 5
+        y_range = [y_min, y_max]
 
+        #linear interpolations happen here! same as subcooling
+        #NOTE: You need superheat.csv for this part!
+        #table_v1 = interpolation of current Temp_wb_F
+        if(y_max == y_min):
+            superheat_target = "table_v1" #PLACEHOLDER
 
-    #NOTE: This is where you skip to!
+    #NOTE: End of loop, calcs happen here. We only calc one at a time though!
     #row.loc["Refrig_charge"] = superheat_calc - superheat_target
 
-    #apply shenanigans
     return row
-
 
 
 # .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
@@ -212,16 +217,16 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
 
         #assign xrange and yrange from superheat.csv.
         superchart = pd.read_csv(superheat_path)
-        xrange = superchart.columns.values.tolist()
-        yrange = superchart.iloc[:,0].tolist()
+        x_range = superchart.columns.values.tolist()
+        row_range = superchart.iloc[:,0].tolist()
         #ignore first element and we have our range from the col names
-        xrange.pop(0) 
+        x_range.pop(0) 
 
         #NOTE: Do this before the if?
         df["Refrig_charge"] = None
         #NOTE: If this isn't needed after, we can always drop from the df
         df["superheat_target"] = None
-        df = df.apply(_superheat, axis=1, args=(xrange, yrange))
+        df = df.apply(_superheat, axis=1, args=(x_range, row_range))
 
     return df
 
