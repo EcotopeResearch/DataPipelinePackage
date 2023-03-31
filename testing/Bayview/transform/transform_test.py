@@ -85,7 +85,7 @@ class Test_Transform(unittest.TestCase):
         #NOTE: Take a typical dataframe that we know has no duplicates, make sure it doesn't remove any rows from that. 
         #function takes times w/more than one entry, averages them into one
         print(averaged_df.head(5).index.tolist())
-        averaged_df = avg_duplicate_times(averaged_df, '')
+        averaged_df = avg_duplicate_times(averaged_df, "US/Pacific")
         print(averaged_df.head(5).index.tolist())
         averaged_count = len(averaged_df.index)
 
