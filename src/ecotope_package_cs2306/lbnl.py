@@ -140,13 +140,12 @@ def _superheat(row, x_range, row_range):
     Temp_wb_F = (Temp_wb_C * (9/5)) + 32
     Temp_ODT = row.loc['Temp_ODT']
 
-    #TODO: Calculation of superheat_target
-    #and superheat_calc, then we're done here.
+    #TODO: Calculation of superheat_target and superheat_calc
 
     #NOTE: If the NA check or bounds check trigger, you need to 
     #immediately skip to the refrigerant charge calc part. 
 
-    #NA checks, elif bound check
+    #NA checks, elif bound check, else interpolations
     if math.isnan(Temp_ODT or math.isnan(Temp_wb_F)):
         #filtering out na's in recorded data
         superheat_target = None
@@ -159,10 +158,14 @@ def _superheat(row, x_range, row_range):
         y_range = [y_min, y_max]
 
         #linear interpolations happen here! same as subcooling
-        #NOTE: You need superheat.csv for this part!
-        #table_v1 = interpolation of current Temp_wb_F
+        #NOTE: You need superheat.csv for this part?
+        #table_v1 = interpolation of current Temp_wb_F w/min
         if(y_max == y_min):
             superheat_target = "table_v1" #PLACEHOLDER
+        else: 
+            #table_v2 = interpolation again w/max
+            #confusing part, line 52-58
+            pass
 
     #NOTE: End of loop, calcs happen here. We only calc one at a time though!
     #row.loc["Refrig_charge"] = superheat_calc - superheat_target
