@@ -98,7 +98,7 @@ def extract_files(extension: str, subdir: str = "") -> List[str]:
 
     Args: 
         extension (str): File extension as string
-        subdir (str): subdirectory (defaults no no subdir)
+        subdir (str): subdirectory (defaults to no subdir)
     Returns: 
         List[str]: List of filenames 
     """

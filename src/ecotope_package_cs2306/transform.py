@@ -60,9 +60,9 @@ def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_direct
         print("File Not Found: ", variable_names_path)
         return
 
-    #variable_data = variable_data[1:86]
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
+    
     variable_data = variable_data[['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
@@ -75,8 +75,7 @@ def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_direct
     df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
 
     # drop columns that are not documented in variable names csv file at all
-    df.drop(
-        columns=[col for col in df if col not in variable_true], inplace=True)
+    df.drop(columns=[col for col in df if col not in variable_true], inplace=True)
 
 
 def avg_duplicate_times(df: pd.DataFrame, timezone: str) -> pd.DataFrame:
@@ -264,7 +263,7 @@ def verify_power_energy(df: pd.DataFrame):
     rows with conflicting power and energy variables.
 
     Prereq: 
-        Input df MUST have had get_energy_by_min() called on it previously
+        Input dataframe MUST have had get_energy_by_min() called on it previously
     Args: 
         df (pd.DataFrame): Pandas dataframe
     Returns:
@@ -288,8 +287,7 @@ def verify_power_energy(df: pd.DataFrame):
         if (pvar == 'PowerMeter_SkidAux_Power'):
             corres_energy = 'PowerMeter_SkidAux_Energty'
         if (corres_energy in energy_vars):
-            temp_df = power_energy_df[power_energy_df.columns.intersection(
-                ['time'] + list(energy_vars) + list(power_vars))]
+            temp_df = power_energy_df[power_energy_df.columns.intersection(['time'] + list(energy_vars) + list(power_vars))]
             for i, row in temp_df.iterrows():
                 expected = energy_to_power(row[corres_energy])
                 low_bound = expected - margin_error
@@ -299,11 +297,9 @@ def verify_power_energy(df: pd.DataFrame):
                                                  row[corres_energy], row[pvar], expected, abs(expected - row[pvar])]
                     path_to_output = f'{_output_directory}power_energy_conflicts.csv'
                     if not os.path.isfile(path_to_output):
-                        out_df.to_csv(path_to_output, index=False,
-                                      header=out_df.columns)
+                        out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
-                        out_df.to_csv(path_to_output, index=False,
-                                      mode='a', header=False)
+                        out_df.to_csv(path_to_output, index=False, mode='a', header=False)
 
 
 def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
