@@ -42,13 +42,13 @@ class Test_Transform(unittest.TestCase):
         df2 = pd.read_pickle(orifice)
 
         #function calls!
-        #NOTE: I still need to double check whether or not it needs to be returned? It does, try that!!
+        #NOTE: We need a pickle for df2! Waiting on completion of other functions/order
         df1 = get_refrig_charge(df1, site_txv, self.site_info_path, self.four_path, self.superheat_path)
         #df2 = get_refrig_charge(df2, site_orifice, self.site_info_path, self.four_path, self.superheat_path)
     
         #check that the Refrig_charge column has data for df1, and that it has "None" for df2! NOTE: Probably just df2 pending atm
         #Just check the first five elements, or something like that, make sure they have values. Should be a negative float in this case!
-        proper_type = type(df1["Refrig_charge"]) #BUG: THIS NEEDS TO CHECK FIRST FEW ELEMENTS, NOT HOW IT'S DONE HERE!!
+        proper_type = type(df1["Refrig_charge"]) #TODO: THIS NEEDS TO CHECK FIRST FEW ELEMENTS, NOT HOW IT'S DONE HERE!!
         self.assertTrue(proper_type, type(10.0))
         pass
 
@@ -61,7 +61,7 @@ class Test_Transform(unittest.TestCase):
 
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
-
+    
     """
     #pure testing grabs
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
@@ -69,18 +69,12 @@ if __name__ == '__main__':
     superheat_path = "testing/LBNL/transform/LBNL-input/superheat.csv"
     orifice_path = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
 
-    #NOTE: What does ODT look like? Ask?
+    #or_output_testing
     or_pickle = pd.read_pickle(orifice_path)
-    
-    #assign xrange from superheat.csv. column names!
-    superchart = pd.read_csv(superheat_path)
-    xrange = superchart.columns.values.tolist()
-    yrange = superchart.iloc[:,0].tolist()
-    #ignore first element and we have our range from the col names
-    xrange.pop(0) 
+    df = pd.DataFrame
 
-    print(yrange)
+    #NOTE: To do proper testing, I need a pickle with all the stuff that happens before superheat!
+    print(df)
     """
     
-
     unittest.main()
