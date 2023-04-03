@@ -40,7 +40,7 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     last_row_data = pd.DataFrame(db_cursor.fetchall())
     last_time = last_row_data[0][0]
 
-    if ((last_time.hour != 23) and (last_time.minute != 59)):
+    if ((last_time.hour != 23) or (last_time.minute != 59)):
         last_full_day = datetime(year=last_time.year, month=last_time.month,
                                  day=last_time.day-1, hour=23, minute=59, second=0)
         try:
@@ -66,8 +66,8 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     last_row_data.columns = columns_names
     last_row_data.set_index(last_row_data['time'], inplace=True)
     last_row_data.drop(['time'], axis=1, inplace=True)
-    # last_row_data.index = last_row_data.index.tz_localize(
-    #     timezone('US/Pacific'))
+    last_row_data.index = last_row_data.index.tz_localize(
+        timezone('US/Pacific'))
 
     db_cursor.close()
     db_connection.close()
@@ -138,7 +138,7 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
             norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+            norm_data["time"] = norm_data["time"].dt.tz_localize(timezone('US/Pacific'))
             norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
 
             temp_dfs.append(norm_data)
