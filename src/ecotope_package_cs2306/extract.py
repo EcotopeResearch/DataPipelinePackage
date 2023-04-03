@@ -66,8 +66,8 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     last_row_data.columns = columns_names
     last_row_data.set_index(last_row_data['time'], inplace=True)
     last_row_data.drop(['time'], axis=1, inplace=True)
-    last_row_data.index = last_row_data.index.tz_localize(
-        timezone('US/Pacific'))
+    # last_row_data.index = last_row_data.index.tz_localize(
+    #     timezone('US/Pacific'))
 
     db_cursor.close()
     db_connection.close()
