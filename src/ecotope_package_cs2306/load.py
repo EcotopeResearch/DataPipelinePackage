@@ -3,6 +3,7 @@ import mysql.connector
 import sys
 import pandas as pd
 import os
+import math
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 
@@ -134,24 +135,31 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
     """
 
     dbname = config_info['database']['database']
-    table_name = config_info[data_type]["table_name"]
-    sensor_names = config_info[data_type]['sensor_list']
+    table_name = config_info[data_type]["table_name"]   
+    
+    # Get string of all column names for sql insert
+    sensor_names = "time"
+    for column in dataframe.columns:
+        sensor_names += "," + column 
+
+    # create SQL statement
+    insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
+    for i in range(len(dataframe.columns)):
+        insert_str += "%s, "
+    insert_str += "%s)"
 
     if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, config_info[data_type]['sensor_list']):
+        if not create_new_table(cursor, table_name, sensor_names):
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
 
-    date_values = dataframe.index
-    for date in date_values:
-        time_data = dataframe.loc[date]
-        sensor_names = str(list(dataframe.columns)).replace("[", "").replace("]", "").replace("'", "")
-        sensor_data = str(list(time_data.values)).replace("[", "").replace("]", "")
+    for index, row in dataframe.iterrows():
+        time_data = row.values.tolist()
+        #remove nans and infinites
+        time_data = [None if math.isnan(x) else x for x in time_data]
+        time_data = [None if x == float('inf') else x for x in time_data]
 
-        query = f"INSERT INTO {table_name} (time, {sensor_names})\n" \
-                f"VALUES ('{date}', {sensor_data})"
-
-        cursor.execute(query)
+        cursor.execute(insert_str, (index, *time_data))
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
     return True
