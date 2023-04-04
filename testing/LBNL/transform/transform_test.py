@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from ecotope_package_cs2306 import get_refrig_charge 
+from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -21,8 +21,23 @@ class Test_Transform(unittest.TestCase):
         pass
 
     #Casey
-    def test_gas_valve_diff(self):
+    def test_gas_valve_diff_valid(self):
+        # site AZ2_01 uses hp (not gas) heating
+        hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
+        hp_df = pd.read_pickle(hp_pickle)
+
+        # site IL2_01 uses gas heating 
+        gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
+        gas_df = pd.read_pickle(gas_pickle)
+        
+        print(hp_df.head(5))
+        print(gas_df.head(5))
         pass
+    
+    def test_gas_valve_diff_invalid(self):
+        empty_df = pd.DataFrame()
+        result_df = gas_valve_diff(empty_df, "", self.site_info_path)
+        self.assertEquals(empty_df, result_df)
 
     #Casey 
     def test_gather_outdoor_conditions(self):
