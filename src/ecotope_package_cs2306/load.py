@@ -109,12 +109,12 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
         bool: A boolean value indicating if a table was sucessfully created. 
     """
 
-    create_table_statement = f"CREATE TABLE {table_name} (\ntime datetime,\n"
+    create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
 
     for sensor in table_column_names:
         create_table_statement += f"{sensor} float default 0.0,\n"
 
-    create_table_statement += f"PRIMARY KEY (time)\n"
+    create_table_statement += f"PRIMARY KEY (time_pt)\n"
 
     create_table_statement += ");"
     cursor.execute(create_table_statement)
@@ -140,7 +140,7 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
     table_name = config_info[data_type]["table_name"]   
     
     # Get string of all column names for sql insert
-    sensor_names = "time"
+    sensor_names = "time_pt"
     for column in dataframe.columns:
         sensor_names += "," + column 
 
@@ -185,7 +185,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     table_name = config_info[data_type]["table_name"]   
     
     # Get string of all column names for sql insert
-    sensor_names = "time"
+    sensor_names = "time_pt"
     for column in dataframe.columns:
         sensor_names += "," + column 
 
@@ -196,7 +196,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         insert_str += "%s, "
         update_str += column + " = %s, "
     update_str = update_str[:len(update_str)-2] # remove last ", "
-    update_str += " WHERE time = %s"
+    update_str += " WHERE time_pt = %s"
     insert_str += "%s)"
 
     if not check_table_exists(cursor, table_name, dbname):
@@ -208,7 +208,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     try:
         cursor.execute(
-            f"select * from {table_name} order by time DESC LIMIT 1")
+            f"select * from {table_name} order by time_pt DESC LIMIT 1")
         last_row_data = pd.DataFrame(cursor.fetchall())
         last_time = last_row_data[0][0]
     except mysqlerrors.Error:

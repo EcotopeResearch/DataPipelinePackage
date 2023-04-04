@@ -28,7 +28,7 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
 
     try:
         db_cursor.execute(
-            f"select * from {config_dict['minute']['table_name']} order by time DESC LIMIT 1")
+            f"select * from {config_dict['minute']['table_name']} order by time_pt DESC LIMIT 1")
     except mysqlerrors.Error:
         print(f"Table {config_dict['minute']['table_name']} does not exist.")
         column_names = config_dict['minute']['sensor_list']
@@ -45,7 +45,7 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
                                  day=last_time.day-1, hour=23, minute=59, second=0)
         try:
             db_cursor.execute(
-                f"select * from {config_dict['minute']['table_name']} where time = '{last_full_day}'")
+                f"select * from {config_dict['minute']['table_name']} where time_pt = '{last_full_day}'")
         except mysqlerrors.Error:
             print(
                 f"Table {config_dict['minute']['table_name']} does not exist.")
@@ -64,8 +64,8 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     columns_names = db_cursor.fetchall()
     columns_names = [name[0] for name in columns_names]
     last_row_data.columns = columns_names
-    last_row_data.set_index(last_row_data['time'], inplace=True)
-    last_row_data.drop(['time'], axis=1, inplace=True)
+    last_row_data.set_index(last_row_data['time_pt'], inplace=True)
+    last_row_data.drop(['time_pt'], axis=1, inplace=True)
     last_row_data.index = last_row_data.index.tz_localize(
         timezone('US/Pacific'))
 
@@ -137,9 +137,10 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
         # TODO: This section is BV specific, maybe move to another function
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
-            norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-            norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
+            norm_data.rename(columns={'time':'time_pt'})
+            norm_data["time_pt"] = pd.to_datetime(norm_data["time_pt"])
+            norm_data["time_pt"] = norm_data["time_pt"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+            norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
 
             temp_dfs.append(norm_data)
 
@@ -234,9 +235,9 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         temp_df = temp_df.replace(-9999, np.NaN)
 
         # Convert tz from UTC to PT and format: Y-M-D HR:00:00
-        temp_df["time"] = pd.to_datetime(
+        temp_df["time_pt"] = pd.to_datetime(
             temp_df[["year", "month", "day", "hour"]])
-        temp_df["time"] = temp_df["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        temp_df["time_pt"] = temp_df["time_pt"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
 
         # Convert airtemp, dewpoint, sealevelpressure, windspeed
         temp_df["airTemp_F"] = temp_df["airTemp"].apply(temp_c_to_f)
@@ -263,7 +264,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour",
                                "precip6Hour", "year", "month", "day", "hour", "windDirection"], axis=1)
 
-        temp_df.set_index(["time"], inplace=True)
+        temp_df.set_index(["time_pt"], inplace=True)
         # Save df in dict
         formatted_dfs[station_ids[value1]] = temp_df
 
