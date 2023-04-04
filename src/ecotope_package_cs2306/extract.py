@@ -140,10 +140,10 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
             norm_data["time_pt"] = pd.to_datetime(norm_data["time"])
             norm_data["time_pt"] = norm_data["time_pt"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
             norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
-            norm_data.drop(columns=['time'])
             temp_dfs.append(norm_data)
 
     df = pd.concat(temp_dfs, ignore_index=False)
+    df.drop(columns=['time'])
     return df
 
 
