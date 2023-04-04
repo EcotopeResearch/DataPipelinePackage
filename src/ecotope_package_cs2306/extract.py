@@ -138,7 +138,7 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
             norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize(timezone('US/Pacific'))
+            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
             norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
 
             temp_dfs.append(norm_data)
@@ -236,8 +236,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         # Convert tz from UTC to PT and format: Y-M-D HR:00:00
         temp_df["time"] = pd.to_datetime(
             temp_df[["year", "month", "day", "hour"]])
-        temp_df["time"] = temp_df["time"].dt.tz_localize(
-            "UTC").dt.tz_convert('US/Pacific')
+        temp_df["time"] = temp_df["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
 
         # Convert airtemp, dewpoint, sealevelpressure, windspeed
         temp_df["airTemp_F"] = temp_df["airTemp"].apply(temp_c_to_f)
