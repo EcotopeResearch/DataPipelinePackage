@@ -137,13 +137,12 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
         # TODO: This section is BV specific, maybe move to another function
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
-            norm_data["time_pt"] = pd.to_datetime(norm_data["time"])
-            norm_data["time_pt"] = norm_data["time_pt"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
-            norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
+            norm_data["time"] = pd.to_datetime(norm_data["time"])
+            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+            norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
             temp_dfs.append(norm_data)
 
     df = pd.concat(temp_dfs, ignore_index=False)
-    df.drop(columns=['time'])
     return df
 
 
@@ -234,9 +233,9 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         temp_df = temp_df.replace(-9999, np.NaN)
 
         # Convert tz from UTC to PT and format: Y-M-D HR:00:00
-        temp_df["time_pt"] = pd.to_datetime(
+        temp_df["time"] = pd.to_datetime(
             temp_df[["year", "month", "day", "hour"]])
-        temp_df["time_pt"] = temp_df["time_pt"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+        temp_df["time"] = temp_df["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
 
         # Convert airtemp, dewpoint, sealevelpressure, windspeed
         temp_df["airTemp_F"] = temp_df["airTemp"].apply(temp_c_to_f)
@@ -263,7 +262,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
         temp_df = temp_df.drop(["airTemp", "dewPoint", "seaLevelPressure", "windSpeed", "precip1Hour",
                                "precip6Hour", "year", "month", "day", "hour", "windDirection"], axis=1)
 
-        temp_df.set_index(["time_pt"], inplace=True)
+        temp_df.set_index(["time"], inplace=True)
         # Save df in dict
         formatted_dfs[station_ids[value1]] = temp_df
 
