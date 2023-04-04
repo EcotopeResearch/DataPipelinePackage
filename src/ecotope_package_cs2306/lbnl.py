@@ -14,8 +14,11 @@ import os
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     Does Site Specific Calculations for LBNL. The site name is searched using RegEx
-    Input: dataframe of data and site name as a string
+    Args: 
+        df (pd.DataFrame): dataframe of data 
+        site (str): site name as a string
     Output: 
+        pd.DataFrame: modified dataframe
     """
     # Bob's site notes says add 55 Pa to the Pressure
     if re.search("MO2_", site):
@@ -69,6 +72,15 @@ def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
+    """
+    Calculates condensate values for the given dataframe
+
+    Args:
+        df (pd.DataFrame): dataframe to be modified
+        site (str): name of site
+    Returns:
+        pd.DataFrame: modified dataframe
+    """
     site_info_directory = configure.get('site_info', 'directory')
     site_info = pd.read_csv(site_info_directory)
     oz_2_m3 = 1 / 33810  # [m3/oz]
@@ -104,8 +116,13 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
     """
     Function takes in the site dataframe, the site name, and path to the site_info file. If 
     the site has gas heating, take the lagged difference to get per minute values. 
-    Input: Dataframe for site, site name as string, path to site_info.csv as string
-    Output: Pandas Dataframe 
+    
+    Args: 
+        df (pd.DataFrame): Dataframe for site
+        site (str): site name as string
+        site_info_path (str): path to site_info.csv as string
+    Returns: 
+        pd.DataFrame: modified Pandas Dataframe 
     """
     try:
         site_info = pd.read_csv(site_info_path)
@@ -192,9 +209,15 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
     charge per minute? 
-    Input: Pandas Dataframe, site name as a string, path to site_info.csv as a string, path to superheat.csv 
-    as a string, and the path to 410a_pt.csv as a string. 
-    Output: Pandas Dataframe
+    
+    Args: 
+        df (pd.DataFrame): Pandas Dataframe
+        site (str): site name as a string 
+        site_info_path (str): path to site_info.csv as a string
+        four_path (str) path to 410a_pt.csv as a string
+        superheat_path (str): path to superheat.csv as a string
+    Returns: 
+        pd.DataFrame: modified Pandas Dataframe
     """
     #if DF empty, return the df as is
     if(df.empty):
@@ -233,8 +256,12 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     Function takes in a site dataframe and site name as a string. Returns a new dataframe
     that contains time_utc, <site>_ODT, and <site>_ODRH for the site.
-    Input: Pandas Dataframe, site name as string
-    Output: Pandas Dataframe
+    
+    Args: 
+        df (pd.DataFrame): Pandas Dataframe
+        site (str): site name as string
+    Returns: 
+        pd.DataFrame: modified Pandas Dataframe
     """
     if ("Power_OD_total1" in df.columns):
         odc_df = df[["time_utc", "Temp_ODT",
@@ -254,8 +281,13 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
     """
     Function takes in a site dataframe along with the name and path of the site and assigns
     a unique event_ID value whenever the system changes state.
-    Input: Pandas Dataframe, site name and path as strings.
-    Output: Pandas Dataframe
+    
+    Args: 
+        df (pd.DataFrame): Pandas Dataframe
+        site (str): site name as a string 
+        site_info_path (str): path to site_info.csv as a string
+    Returns: 
+        pd.DataFrame: modified Pandas Dataframe
     """
     if ("Power_FURN1" in list(df.columns)):
             df.rename(columns={"Power_FURN1": "Power_AH1"})
@@ -282,8 +314,12 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
 def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
-    Input: Latest date, List of filenames to be filtered
-    Output: Filtered list of filenames
+    
+    Args: 
+        last_date (str): latest date loaded prior to current runtime
+        filenames (List[str]): List of filenames to be filtered
+    Returns: 
+        List[str]: Filtered list of filenames
     """
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
     return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
@@ -292,8 +328,10 @@ def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     """
     Function takes a list of csv filenames containing nclarity data and reads all files into a singular dataframe.
-    Input: List of filenames 
-    Output: Pandas Dataframe containing data from all files
+    Args: 
+        csv_filenames (List[str]): List of filenames 
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing data from all files
     """
     temp_dfs = []
     for filename in csv_filenames:
@@ -313,8 +351,13 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
 def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = 'input/previous.pkl') -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
-    Input: Latest date, List of filenames to be filtered, site name, pkl directory for previously opened files
-    Output: Filtered list of filenames
+    Args: 
+        last_date (str): latest date loaded prior to current runtime
+        filenames (List[str]): List of filenames to be filtered
+        site (str): site name
+        prev_opened (str): pkl directory for previously opened files
+    Returns: 
+        List[str]: Filtered list of filenames
     """
     # Opens the df that contains the dictionary of what each file is
     if os.path.exists(prev_opened):
@@ -358,8 +401,12 @@ def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     LBNL's nclarity files do not contain the date in the time column. This
     function extracts the date from the filename and adds it to the data.
-    Input: Dataframe, filename as string
-    Output: Modified dataframe
+
+    Args: 
+        df (pd.DataFrame): Dataframe
+        filename (str): filename as string
+    Returns:
+        pd.DataFrame: Modified dataframe
     """
     date = filename[-18:-8]
     df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
@@ -370,8 +417,12 @@ def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
-    Input: Path to site_info.csv file and site's name
-    Output: Pandas dataframe
+
+    Args: 
+        site_info_file (str): Path to site_info.csv file 
+        site_name (str): site's name
+    Returns: 
+        pd.DataFrame: modified Pandas dataframe
     """
     try:
         site_info_df = pd.read_csv(site_info_file)
