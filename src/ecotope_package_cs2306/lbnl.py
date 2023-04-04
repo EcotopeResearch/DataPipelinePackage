@@ -114,7 +114,7 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
         return df
 
     specific_site_info = site_info.loc[site_info["site"] == site]
-    if specific_site_info["heating_type"] == "gas":
+    if (specific_site_info["heating_type"] == "gas").all():
         if ("gasvalve" in df.columns):
             df["gasvalve"] = df["gasvalve"] - df["gasvalve"].shift(1)
         elif (("gasvalve_lowstage" in df.columns) and ("gasvalve_highstage" in df.columns)):
