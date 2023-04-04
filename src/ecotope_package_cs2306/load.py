@@ -168,7 +168,7 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
 
 def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
     """
-    Loads given pandas DataFrame into a mySQL table.
+    Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.
 
     Args: 
         cursor: A cursor object
