@@ -257,12 +257,13 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
     Input: Pandas Dataframe, site name and path as strings.
     Output: Pandas Dataframe
     """
+    
     if ("Power_FURN1" in list(df.columns)):
             df.rename(columns={"Power_FURN1": "Power_AH1"})
     site_info = pd.read(site_info_path)
     site_section = site_info[site_info["site"] == site]
     statePowerAHThreshold = pd.to_numeric(site_section["AH_standby_power"]) * 1.5
-    df["event_ID"] = df["event_ID"].mask(df["event_ID"] == df["event_ID"])
+    df["event_ID"] = np.NAN
     df["event_ID"] = df["event_ID"].mask(df["Power_AH1"] > statePowerAHThreshold, 1)
     event_ID = 1
 
