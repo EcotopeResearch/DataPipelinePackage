@@ -6,6 +6,8 @@ import os
 import math
 from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
+import mysql.connector.errors as mysqlerrors
+import datetime
 
 def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
@@ -160,6 +162,69 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
         time_data = [None if x == float('inf') else x for x in time_data]
 
         cursor.execute(insert_str, (index, *time_data))
+
+    print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
+    return True
+
+def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
+    """
+    Loads given pandas DataFrame into a mySQL table.
+
+    Args: 
+        cursor: A cursor object
+        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
+        config_info (dict): The dictionary containing the configuration information 
+        data_type (str): the header name corresponding to the table you wish to write data to.  
+
+    Returns: 
+        bool: A boolean value indicating if the data was successfully written to the database. 
+    """
+
+
+    dbname = config_info['database']['database']
+    table_name = config_info[data_type]["table_name"]   
+    
+    # Get string of all column names for sql insert
+    sensor_names = "time"
+    for column in dataframe.columns:
+        sensor_names += "," + column 
+
+    # create SQL statement
+    insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
+    update_str = "UPDATE " + table_name + " SET "
+    for column in dataframe.columns:
+        insert_str += "%s, "
+        update_str += column + " = %s, "
+    update_str = update_str[:len(update_str)-2] # remove last ", "
+    update_str += " WHERE time = %s"
+    insert_str += "%s)"
+
+    if not check_table_exists(cursor, table_name, dbname):
+        if not create_new_table(cursor, table_name, sensor_names):
+            print(f"Could not create new table {table_name} in database {dbname}")
+            return False
+    
+    last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
+
+    try:
+        cursor.execute(
+            f"select * from {table_name} order by time DESC LIMIT 1")
+        last_row_data = pd.DataFrame(cursor.fetchall())
+        last_time = last_row_data[0][0]
+    except mysqlerrors.Error:
+        print(f"Table {table_name} does has no data.")
+    
+
+    for index, row in dataframe.iterrows():
+        time_data = row.values.tolist()
+        #remove nans and infinites
+        time_data = [None if math.isnan(x) else x for x in time_data]
+        time_data = [None if x == float('inf') else x for x in time_data]
+
+        if(index <= last_time):
+            cursor.execute(update_str, (*time_data, index))
+        else:
+            cursor.execute(insert_str, (index, *time_data))
 
     print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
     return True
