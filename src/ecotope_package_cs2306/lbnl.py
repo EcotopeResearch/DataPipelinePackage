@@ -406,6 +406,8 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
         od_conditions (pd.DataFrame): DataFrame containing outdoor confitions measured by field sensors.
         date_forward (dt.datetime): Datetime containing the time after which all humidity readings should be replaced.
         site_name (str): String containing the name of the site for which humidity values are to be replaced.
+    Returns:
+        pd.DataFrame: Modified DataFrame where the Humidity_ODRH column contains the field readings after the given datetime. 
     """
     df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
     data_old = df["Humidity_ODRH"]
@@ -467,7 +469,7 @@ def get_cfm_values(df: pd.DataFrame, site_cfm: pd.DataFrame, site_info: pd.DataF
         fan_coefficients (pd.DataFrame): DataFrame containing fan coefficient values. 
         site (str): String containing the name of the site for which cfm values are to be calculated. 
     Returns: 
-        pd.DataFrame: One line DF of the last entry
+        pd.DataFrame: Modified DataFrame with a column named Cfm_Calc.
     """
     site_cfm = site_cfm[site_cfm.index == site]
     fan_curve = True if site_cfm.iloc[0]["use_fan_curve"] == "TRUE" else False
