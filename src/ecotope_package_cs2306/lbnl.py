@@ -397,7 +397,16 @@ def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
     return site_air_corr
 
 
-def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, site_name: str) -> pd.DataFrame:
+def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward: dt.datetime, site_name: str) -> pd.DataFrame:
+    """
+    Function replaces all humidity readings for a given site after a given datetime. 
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the raw sensor data.
+        od_conditions (pd.DataFrame): DataFrame containing outdoor confitions measured by field sensors.
+        date_forward (dt.datetime): Datetime containing the time after which all humidity readings should be replaced.
+        site_name (str): String containing the name of the site for which humidity values are to be replaced.
+    """
     df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
     data_old = df["Humidity_ODRH"]
 
