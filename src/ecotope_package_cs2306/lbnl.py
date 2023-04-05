@@ -446,7 +446,20 @@ def create_fan_curves(cfm_info, site_info):
     return fan_coeffs
 
 
-def get_cfm_values(df, site_cfm, site_info, fan_coefficients, site):
+def get_cfm_values(df: pd.DataFrame, site_cfm: pd.DataFrame, site_info: pd.DataFrame, fan_coefficients: pd.DataFrame, site: str):
+    """
+    Function calculates the volume of air that moves through a space per minute measures in 
+    cubic feet per minute (CFM). 
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the raw sensor data.
+        site_cfm (pd.DataFrame): Configuration file containing site-specific cfm information.
+        site_info (pd.DataFrame): Configuration file containing site-specific information.
+        fan_coefficients (pd.DataFrame): DataFrame containing fan coefficient values. 
+        site (str): String containing the name of the site for which cfm values are to be calculated. 
+    Returns: 
+        pd.DataFrame: One line DF of the last entry
+    """
     site_cfm = site_cfm[site_cfm.index == site]
     fan_curve = True if site_cfm.iloc[0]["use_fan_curve"] == "TRUE" else False
 
