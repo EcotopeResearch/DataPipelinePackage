@@ -446,21 +446,32 @@ def create_fan_curves(cfm_info, site_info):
     return fan_coeffs
 
 
-def get_cfm_values(df, site):
-    site_cfm = pd.read_csv("sitecfminfo.csv", encoding='unicode_escape')
-    site_cfm = site_cfm[site_cfm["site"] == site]
-    site_cfm = site_cfm.set_index(["site"])
+def get_cfm_values(df, site_cfm, site_info, fan_coefficients, site):
+    site_cfm = site_cfm[site_cfm.index == site]
+    fan_curve = True if site_cfm.iloc[0]["use_fan_curve"] == "TRUE" else False
 
-    cfm_info = dict()
-    cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-        len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))][0]
-    cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-        len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
-    cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-        len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
+    if not fan_curve:
+        cfm_info = dict()
+        cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
+            len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))][0]
+        cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
+            len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
+        cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
+            len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
 
-    df["Cfm_Calc"] = [cfm_info[state]
-                      if state in cfm_info.keys() else 0.0 for state in df["HVAC"]]
+        df["Cfm_Calc"] = [cfm_info[state] if state in cfm_info.keys() else 0.0 for state in df["HVAC"]]
+
+    else:
+        heat_in_HVAC = "heat" in list(df["HVAC"])
+
+        cfm_temp = df["Power_AH1"]
+        if heat_in_HVAC:
+            furn_misc_power = site_info.loc[site, "furn_misc_power"]
+            furn_misc_power = 0.0 if furn_misc_power == np.nan else furn_misc_power
+            cfm_temp = cfm_temp - np.full(len(df["Power_AH1"]), furn_misc_power)
+
+        cfm_temp = (cfm_temp * 1000) ** (1/3)
+        df["Cfm_Calc"] = cfm_temp
 
     return df
 
