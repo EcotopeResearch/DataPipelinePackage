@@ -128,6 +128,16 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
 # .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
 def _subcooling(row, lr_model):
+    """
+    Function takes in a Pandas series and a linear regression model, calculates 
+    Refrig_charge for the Pandas series with that model, then inserts it into the series and returns it. 
+    
+    Args: 
+        row (pd.Series): Pandas series
+        lr_model (sklearn.linear_model.Fit): Linear regression model
+    Returns: 
+        row (pd.Series): Pandas series (Refrig_charge added!)
+    """
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
     x = row.loc["Pressure_LL_psi"]
     m = lr_model.coef_
@@ -142,6 +152,19 @@ def _subcooling(row, lr_model):
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
 def _superheat(row, x_range, row_range, superchart, lr_model):
+    """
+    Function takes in a Pandas series, ranges from a csv, and a linear regression model 
+    in order to calculate Refrig_charge for the given row through linear interpolation. 
+
+    Args: 
+        row (pd.Series): Pandas series
+        x_range (<class 'list'>): List of ints
+        row_range (<class 'list'>): List of ints
+        superchart (pd.Dataframe): Pandas dataframe, big grid of ints
+        lr_model (sklearn.linear_model.Fit): Linear regression model
+    Returns: 
+        row (pd.Series): Pandas series (Refrig_charge added!)
+    """
     superheat_target = None
 
     #Convert F to C return air temperature
@@ -192,9 +215,16 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
     charge per minute? 
-    Input: Pandas Dataframe, site name as a string, path to site_info.csv as a string, path to superheat.csv 
-    as a string, and the path to 410a_pt.csv as a string. 
-    Output: Pandas Dataframe
+
+    Args: 
+        df (pd.DataFrame): Pandas Dataframe 
+        site (String): String class
+        site_info_path (String): String class (path)
+        four_path (String): String class (path)
+        superheat_path (String): String class (path)
+    Returns: 
+        df (pd.DataFrame): Pandas Dataframe
+        
     """
     #if DF empty, return the df as is
     if(df.empty):
