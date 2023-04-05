@@ -355,6 +355,7 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
     return filtered_filenames
 
 
+
 def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     LBNL's nclarity files do not contain the date in the time column. This
@@ -514,5 +515,4 @@ def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
     df = df.drop(columns=['Power_Output_BTUh'], axis=1)
 
     return df
-
 
