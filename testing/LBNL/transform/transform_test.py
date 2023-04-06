@@ -89,19 +89,21 @@ class Test_Transform(unittest.TestCase):
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
     
-    """
     #pure testing grabs
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
     superheat_path = "testing/LBNL/transform/LBNL-input/superheat.csv"
+    subcooling_path = "testing/LBNL/transform/pickles/AZ2_01_04242022.pkl"
     orifice_path = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
 
+    #txv pickle 2.0
+
     #or_output_testing
-    or_pickle = pd.read_pickle(orifice_path)
+    #or_df = pd.read_pickle(orifice_path)
     df = pd.DataFrame
+    df = pd.read_pickle(subcooling_path)
 
     #NOTE: To do proper testing, I need a pickle with all the stuff that happens before superheat!
     print(df)
-    """
     
-    unittest.main()
+    #unittest.main()

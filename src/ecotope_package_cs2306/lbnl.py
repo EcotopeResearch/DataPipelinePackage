@@ -186,7 +186,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
 
     #TODO: IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
     # is null, just return the row early (refrig_charge will be none!)
-    if(row.loc["Temp_ODT"] == None or row.loc["Temp_RAT"] == None or row.loc["Humidity_RARH"] == None or row.loc["Pressure_LL_psi"] == None or row.loc["Temp_SL_C"] == None):
+    if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_LL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
         return row
 
     #Convert F to C return air temperature
