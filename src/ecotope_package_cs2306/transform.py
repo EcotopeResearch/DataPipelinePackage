@@ -545,7 +545,16 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
     return df
 
 
-def _calculate_average_zone_temp(df, substring):
+def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
+    """
+    Function that calculates the average temperature of the inputted zone.
+
+    Args: 
+        df (pd.Series): A Pandas Dataframe
+        substring (str)
+    Returns: 
+        pd.DataFrame: a Pandas Dataframe
+    """
     try:
         df_subset = df[[x for x in df if substring in x]]
         result = df_subset.sum(axis=1, skipna=True) / df_subset.count(axis=1)
@@ -555,7 +564,15 @@ def _calculate_average_zone_temp(df, substring):
         return 0
 
 
-def get_temp_zones120(df) -> pd.DataFrame:
+def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function that keeps track of the average temperature of each zone.
+
+    Args: 
+        df (pd.Series): A Pandas Dataframe
+    Returns: 
+        pd.DataFrame: a Pandas Dataframe
+    """
     df['Temp_top'] = _calculate_average_zone_temp(df, "Temp1")
     df['Temp_midtop'] = _calculate_average_zone_temp(df, "Temp2")
     df['Temp_mid'] = _calculate_average_zone_temp(df, "Temp3")
