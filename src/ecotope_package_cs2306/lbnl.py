@@ -313,7 +313,7 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
     return odc_df
 
-def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
+def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     Function takes in a site dataframe along with the name and path of the site and assigns
     a unique event_ID value whenever the system changes state.
@@ -328,7 +328,8 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str, site_info_path: str) -> pd.Da
     
     if ("Power_FURN1" in list(df.columns)):
             df.rename(columns={"Power_FURN1": "Power_AH1"})
-    site_info = pd.read(site_info_path)
+    site_info_directory = configure.get('site_info', 'directory')
+    site_info = pd.read_csv(site_info_directory)
     site_section = site_info[site_info["site"] == site]
     statePowerAHThreshold = pd.to_numeric(site_section["AH_standby_power"]) * 1.5
     df["event_ID"] = np.NAN
