@@ -184,6 +184,11 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     superheat_target = None
 
+    #TODO: IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
+    # is null, just return the row early (refrig_charge will be none!)
+    if(row.loc["Temp_ODT"] == None or row.loc["Temp_RAT"] == None or row.loc["Humidity_RARH"] == None or row.loc["Pressure_LL_psi"] == None or row.loc["Temp_SL_C"] == None):
+        return row
+
     #Convert F to C return air temperature
     RAT_C = (row.loc["Temp_RAT"] - 32) * (5/9)
     rh = row.loc["Humidity_RARH"]
