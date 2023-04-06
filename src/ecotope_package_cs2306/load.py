@@ -200,7 +200,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     insert_str += "%s)"
 
     if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, sensor_names):
+        if not create_new_table(cursor, table_name, sensor_names.split(",")):
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
     
