@@ -164,7 +164,7 @@ def _subcooling(row, lr_model):
     temp_f = (row.loc["Temp_LL_C"]*(9/5)) + 32
 
     r_charge = sat_temp_f - temp_f
-    row.loc["Refrig_charge"] = r_charge
+    row.loc["Refrig_charge"] = r_charge[0]
     return row
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
@@ -227,8 +227,9 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     superheat_calc = Temp_SL_F - sat_temp_f
 
     #now that we have superheat_calc and superheat_target, we calc
-    #refrigerant charge and add it back to the series. 
-    row.loc["Refrig_charge"] = superheat_calc - superheat_target
+    #refrigerant charge and add it back to the series.
+    r_charge = superheat_calc - superheat_target 
+    row.loc["Refrig_charge"] = r_charge[0]
     return row
 
 # NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
