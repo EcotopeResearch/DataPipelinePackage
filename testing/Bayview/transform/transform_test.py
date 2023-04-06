@@ -5,7 +5,7 @@ from ecotope_package_cs2306 import rename_sensors, avg_duplicate_times, remove_o
 class Test_Transform(unittest.TestCase):
 
     #CLASS DATA
-    var_names_path = "input/Variable_Names.csv"
+    var_names_path = "testing/Bayview/Bayview_input/Variable_Names.csv"
     fresh_pickle_path = "testing/Bayview/transform/pickles/trans_start.pkl"
 
     #TEST FIXTURES BELOW

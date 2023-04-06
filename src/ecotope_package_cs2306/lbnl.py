@@ -128,6 +128,16 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
 
 # .apply helper function for get_refrig_charge, calculates w/subcooling method when metering = txv
 def _subcooling(row, lr_model):
+    """
+    Function takes in a Pandas series and a linear regression model, calculates 
+    Refrig_charge for the Pandas series with that model, then inserts it into the series and returns it. 
+    
+    Args: 
+        row (pd.Series): Pandas series
+        lr_model (sklearn.linear_model.Fit): Linear regression model
+    Returns: 
+        row (pd.Series): Pandas series (Refrig_charge added!)
+    """
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
     x = row.loc["Pressure_LL_psi"]
     m = lr_model.coef_
@@ -142,6 +152,19 @@ def _subcooling(row, lr_model):
 
 # .apply helper function for get_refrig_charge, calculates w/superheat method when metering = orifice
 def _superheat(row, x_range, row_range, superchart, lr_model):
+    """
+    Function takes in a Pandas series, ranges from a csv, and a linear regression model 
+    in order to calculate Refrig_charge for the given row through linear interpolation. 
+
+    Args: 
+        row (pd.Series): Pandas series
+        x_range (<class 'list'>): List of ints
+        row_range (<class 'list'>): List of ints
+        superchart (pd.Dataframe): Pandas dataframe, big grid of ints
+        lr_model (sklearn.linear_model.Fit): Linear regression model
+    Returns: 
+        row (pd.Series): Pandas series (Refrig_charge added!)
+    """
     superheat_target = None
 
     #Convert F to C return air temperature
@@ -192,9 +215,16 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
     charge per minute? 
-    Input: Pandas Dataframe, site name as a string, path to site_info.csv as a string, path to superheat.csv 
-    as a string, and the path to 410a_pt.csv as a string. 
-    Output: Pandas Dataframe
+
+    Args: 
+        df (pd.DataFrame): Pandas Dataframe 
+        site (String): String class
+        site_info_path (String): String class (path)
+        four_path (String): String class (path)
+        superheat_path (String): String class (path)
+    Returns: 
+        df (pd.DataFrame): Pandas Dataframe
+        
     """
     #if DF empty, return the df as is
     if(df.empty):
@@ -355,6 +385,7 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
     return filtered_filenames
 
 
+
 def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     LBNL's nclarity files do not contain the date in the time column. This
@@ -397,7 +428,18 @@ def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
     return site_air_corr
 
 
-def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward, site_name: str) -> pd.DataFrame:
+def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward: dt.datetime, site_name: str) -> pd.DataFrame:
+    """
+    Function replaces all humidity readings for a given site after a given datetime. 
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the raw sensor data.
+        od_conditions (pd.DataFrame): DataFrame containing outdoor confitions measured by field sensors.
+        date_forward (dt.datetime): Datetime containing the time after which all humidity readings should be replaced.
+        site_name (str): String containing the name of the site for which humidity values are to be replaced.
+    Returns:
+        pd.DataFrame: Modified DataFrame where the Humidity_ODRH column contains the field readings after the given datetime. 
+    """
     df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
     data_old = df["Humidity_ODRH"]
 
@@ -446,21 +488,45 @@ def create_fan_curves(cfm_info, site_info):
     return fan_coeffs
 
 
-def get_cfm_values(df, site):
-    site_cfm = pd.read_csv("sitecfminfo.csv", encoding='unicode_escape')
-    site_cfm = site_cfm[site_cfm["site"] == site]
-    site_cfm = site_cfm.set_index(["site"])
+def get_cfm_values(df: pd.DataFrame, site_cfm: pd.DataFrame, site_info: pd.DataFrame, fan_coefficients: pd.DataFrame, site: str):
+    """
+    Function calculates the volume of air that moves through a space per minute measures in 
+    cubic feet per minute (CFM). 
 
-    cfm_info = dict()
-    cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-        len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))][0]
-    cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-        len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
-    cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-        len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
+    Args:
+        df (pd.DataFrame): Dataframe containing the raw sensor data.
+        site_cfm (pd.DataFrame): Configuration file containing site-specific cfm information.
+        site_info (pd.DataFrame): Configuration file containing site-specific information.
+        fan_coefficients (pd.DataFrame): DataFrame containing fan coefficient values. 
+        site (str): String containing the name of the site for which cfm values are to be calculated. 
+    Returns: 
+        pd.DataFrame: Modified DataFrame with a column named Cfm_Calc.
+    """
+    site_cfm = site_cfm[site_cfm.index == site]
+    fan_curve = True if site_cfm.iloc[0]["use_fan_curve"] == "TRUE" else False
 
-    df["Cfm_Calc"] = [cfm_info[state]
-                      if state in cfm_info.keys() else 0.0 for state in df["HVAC"]]
+    if not fan_curve:
+        cfm_info = dict()
+        cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
+            len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))][0]
+        cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
+            len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
+        cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
+            len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
+
+        df["Cfm_Calc"] = [cfm_info[state] if state in cfm_info.keys() else 0.0 for state in df["HVAC"]]
+
+    else:
+        heat_in_HVAC = "heat" in list(df["HVAC"])
+
+        cfm_temp = df["Power_AH1"]
+        if heat_in_HVAC:
+            furn_misc_power = site_info.loc[site, "furn_misc_power"]
+            furn_misc_power = 0.0 if furn_misc_power == np.nan else furn_misc_power
+            cfm_temp = cfm_temp - np.full(len(df["Power_AH1"]), furn_misc_power)
+
+        cfm_temp = (cfm_temp * 1000) ** (1/3)
+        df["Cfm_Calc"] = cfm_temp
 
     return df
 
@@ -479,5 +545,4 @@ def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
     df = df.drop(columns=['Power_Output_BTUh'], axis=1)
 
     return df
-
 
