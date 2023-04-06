@@ -82,8 +82,9 @@ class Test_Transform(unittest.TestCase):
     def test_change_ID_to_HVAC_invalid(self):
         empty_df = pd.DataFrame()
         result_df = change_ID_to_HVAC(empty_df, "AZ2_01", self.site_info_path)
-        test = {'event_ID'}
-        self.assertEqual(True)
+        test_df = pd.DataFrame(columns=['event_ID'])
+        test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
+        self.assertEqual(True, result_df.equals(test_df))
         pass
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
