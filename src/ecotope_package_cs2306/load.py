@@ -210,7 +210,8 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         cursor.execute(
             f"select * from {table_name} order by time_pt DESC LIMIT 1")
         last_row_data = pd.DataFrame(cursor.fetchall())
-        last_time = last_row_data[0][0]
+        if len(last_row_data.index) != 0:
+            last_time = last_row_data[0][0]
     except mysqlerrors.Error:
         print(f"Table {table_name} does has no data.")
     
