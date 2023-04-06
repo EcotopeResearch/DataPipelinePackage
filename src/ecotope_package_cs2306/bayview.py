@@ -6,7 +6,7 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
     """
     Gets daily average of data for all relevant varibles. 
 
-    Args: 
+    Args:
         df (pd.DataFrame): Pandas DataFrame of minute by minute data
         thermo_slice (str): indicates the time at which slicing begins. If none no slicing is performed. The format of the thermo_slice string is "HH:MM AM/PM".
 
