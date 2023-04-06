@@ -232,7 +232,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     return row
 
 # NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
-def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_path: str, superheat_path: str) -> pd.DataFrame:
+def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
@@ -247,15 +247,22 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
     Returns: 
         pd.DataFrame: modified Pandas Dataframe
     """
+    #configs
+    config = configure.get('input')
+    site_info_directory = f"{config['directory']}{config['site_info']}"
+    four_directory = f"{config['directory']}{config['410a_info']}"
+    superheat_directory = f"{config['directory']}{config['superheat_info']}"
+
+
     #if DF empty, return the df as is
     if(df.empty):
         return df
 
-    site_df = pd.read_csv(site_info_path, index_col=0)
+    site_df = pd.read_csv(site_info_directory, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
 
     #NOTE: this specific lr_model is needed for both superheat AND subcooling!
-    four_df = pd.read_csv(four_path)
+    four_df = pd.read_csv(four_directory)
     X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
     y = np.array(four_df["temp"].values.tolist())
     lr_model = LinearRegression().fit(X, y)
@@ -269,7 +276,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_path: str, four_pat
         df = df.apply(_subcooling, axis=1, args=(lr_model,))
     else:
         # calculate the refrigerant charge w/the superheat method
-        superchart = pd.read_csv(superheat_path)
+        superchart = pd.read_csv(superheat_directory)
         x_range = superchart.columns.values.tolist()
         row_range = superchart.iloc[:,0].tolist()
         #ignore first element and we have our range from the col names
