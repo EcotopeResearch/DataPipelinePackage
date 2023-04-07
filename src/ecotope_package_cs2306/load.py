@@ -137,7 +137,13 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
     """
 
     dbname = config_info['database']['database']
-    table_name = config_info[data_type]["table_name"]   
+    table_name = config_info[data_type]["table_name"] 
+
+    if(len(dataframe.index) <= 0):
+        print("Attempted to write to {table_name} but dataframe was empty.")
+        return True
+
+    print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")  
     
     # Get string of all column names for sql insert
     sensor_names = "time_pt"
@@ -163,7 +169,7 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
 
         cursor.execute(insert_str, (index, *time_data))
 
-    print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
+    print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}.")
     return True
 
 def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
@@ -183,6 +189,12 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     dbname = config_info['database']['database']
     table_name = config_info[data_type]["table_name"]   
+    
+    if(len(dataframe.index) <= 0):
+        print("Attempted to write to {table_name} but dataframe was empty.")
+        return True
+
+    print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
     
     # Get string of all column names for sql insert
     sensor_names = "time_pt"
@@ -215,7 +227,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     except mysqlerrors.Error:
         print(f"Table {table_name} does has no data.")
     
-
+    updatedRows = 0
     for index, row in dataframe.iterrows():
         time_data = row.values.tolist()
         #remove nans and infinites
@@ -224,8 +236,9 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
         if(index <= last_time):
             cursor.execute(update_str, (*time_data, index))
+            updatedRows += 1
         else:
             cursor.execute(insert_str, (index, *time_data))
 
-    print(f"Successfully wrote data frame to table {table_name} in database {dbname}.")
+    print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
