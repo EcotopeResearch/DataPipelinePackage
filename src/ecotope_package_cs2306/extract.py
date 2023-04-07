@@ -41,17 +41,17 @@ def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
     last_time = last_row_data[0][0]
 
     if ((last_time.hour != 23) or (last_time.minute != 59)):
-        last_row_data['time_pt'] = datetime(year=last_time.year, month=last_time.month,
+        last_full_day = datetime(year=last_time.year, month=last_time.month,
                                  day=last_time.day-1, hour=23, minute=59, second=0)
-        # try:
-        #     db_cursor.execute(
-        #         f"select * from {config_dict['minute']['table_name']} where time_pt = '{last_full_day}'")
-        # except mysqlerrors.Error:
-        #     print(
-        #         f"Table {config_dict['minute']['table_name']} does not exist.")
-        #     return 0
+        try:
+            db_cursor.execute(
+                f"select * from {config_dict['minute']['table_name']} where time_pt <= '{last_full_day}' order by time_pt DESC LIMIT 1") # TODO there is a bug here if there is only one partial day in db
+        except mysqlerrors.Error:
+            print(
+                f"Table {config_dict['minute']['table_name']} does not exist.")
+            return 0
 
-        # last_row_data = pd.DataFrame(db_cursor.fetchall())
+        last_row_data = pd.DataFrame(db_cursor.fetchall())
 
     try:
         db_cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
