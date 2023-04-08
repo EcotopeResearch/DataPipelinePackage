@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC
+from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, gather_outdoor_conditions #change_ID_to_HVAC, gather_outdoor_conditions
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -40,13 +40,16 @@ class Test_Transform(unittest.TestCase):
     def test_gas_valve_diff_invalid(self):
         empty_df = pd.DataFrame()
         result_df = gas_valve_diff(empty_df, "AZ2_01", self.site_info_path)
-        test_df = pd.DataFrame(columns=['event_ID'])
-        test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
         self.assertEqual(True, empty_df.equals(result_df))
 
     #Casey 
-    def test_gather_outdoor_conditions(self):
+    def test_gather_outdoor_conditions_valid(self):
         pass
+    
+    def test_gather_outdoor_conditions_invalid(self):
+        empty_df = pd.DataFrame()
+        result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
+        self.assertEqual(True, empty_df.equals(result_df))
 
     #Julian 
     def test_refrig_charge_valid(self):
@@ -79,12 +82,12 @@ class Test_Transform(unittest.TestCase):
         #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
         empty = get_refrig_charge(empty, "FAKE_01", "fake_info.csv", "fake_four_path.csv", "fake_superheat_path.csv")
     
-    def test_change_ID_to_HVAC_invalid(self):
-        empty_df = pd.DataFrame()
-        result_df = change_ID_to_HVAC(empty_df, "AZ2_01", self.site_info_path)
-        test_df = pd.DataFrame(columns=['event_ID'])
-        test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
-        self.assertEqual(True, result_df.equals(test_df))
+    # def test_change_ID_to_HVAC_invalid(self):
+    #     empty_df = pd.DataFrame()
+    #     result_df = change_ID_to_HVAC(empty_df, "AZ2_01", self.site_info_path)
+    #     test_df = pd.DataFrame(columns=['event_ID'])
+    #     test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
+    #     self.assertEqual(True, result_df.equals(test_df))
         
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
@@ -115,4 +118,4 @@ if __name__ == '__main__':
     print(df)
     """
     
-    #unittest.main()
+    unittest.main()

@@ -297,21 +297,23 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
         df (pd.DataFrame): Pandas Dataframe
         site (str): site name as string
     Returns: 
-        pd.DataFrame: modified Pandas Dataframe
+        pd.DataFrame: new Pandas Dataframe
     """
-    if ("Power_OD_total1" in df.columns):
-        odc_df = df[["time_utc", "Temp_ODT",
-                     "Humidity_ODRH", "Power_OD_total1"]].copy()
+    if (not df.empty):
+      if ("Power_OD_total1" in df.columns):
+        odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_OD_total1"]].copy()
         odc_df.rename(columns={"Power_OD_total1": "Power_OD"}, inplace=True)
-    else:
-        odc_df = df[["time_utc", "Temp_ODT",
-                     "Humidity_ODRH", "Power_DHP"]].copy()
+      else:
+        odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_DHP"]].copy()
         odc_df.rename(columns={"Power_DHP": "Power_OD"}, inplace=True)
 
-    odc_df = odc_df[odc_df["Power_OD"] > 0.01]
-    odc_df.drop("Power_OD", axis=1, inplace=True)
-    odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
-    return odc_df
+      odc_df = odc_df[odc_df["Power_OD"] > 0.01]
+      odc_df.drop("Power_OD", axis=1, inplace=True)
+      odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
+      return odc_df
+    else:
+        return df
+    
 
 def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
