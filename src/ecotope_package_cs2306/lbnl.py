@@ -122,7 +122,7 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataF
         site (str): site name as string
         site_info_path (str): path to site_info.csv as string
     Returns: 
-        pd.DataFrame: modified Pandas Dataframe 
+        pd.DataFrame: new Pandas Dataframe 
     """
     try:
         site_info = pd.read_csv(site_info_path)
@@ -461,7 +461,7 @@ def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
         site_info_file (str): Path to site_info.csv file 
         site_name (str): site's name
     Returns: 
-        pd.DataFrame: modified Pandas dataframe
+        pd.DataFrame: new Pandas dataframe
     """
     try:
         site_info_df = pd.read_csv(site_info_file)
