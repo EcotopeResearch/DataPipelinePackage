@@ -301,6 +301,7 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     if (not df.empty):
       if ("Power_OD_total1" in df.columns):
+        print(df.columns)
         odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_OD_total1"]].copy()
         print(odc_df.columns)
         odc_df.rename(columns={"Power_OD_total1": "Power_OD"}, inplace=True)
