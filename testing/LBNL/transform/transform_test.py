@@ -111,15 +111,13 @@ if __name__ == '__main__':
     #or_df = pd.read_pickle(orifice_path)
     df = pd.DataFrame
     df = pd.read_pickle(subcooling_path)
-    df2 = pd.read_pickle(subcooling_path_2)
+    #df2 = pd.read_pickle(subcooling_path_2)
 
     #NOTE: To do proper testing, I need a pickle with all the stuff that happens before superheat!
-    #print(df)
-    print(df2)
-    df = get_refrig_charge(df, 'AZ2_01', site_info_path, four_path, superheat_path)
-    df2 = get_refrig_charge(df2, 'AZ2_01', site_info_path, four_path, superheat_path)
-    print(df2)
+    df = get_refrig_charge(df, 'AZ2_01')
+    #df2 = get_refrig_charge(df2, 'AZ2_01', site_info_path, four_path, superheat_path)
+    #print(df2)
     print(df)
     """
     
-    unittest.main()
+    #unittest.main()
