@@ -250,10 +250,14 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     #configs
     config = configure.get('input', 'directory')
+    site_info_directory = config + configure.get('input', 'site_info')
+    four_directory = config + configure.get('input', '410a_info')
+    superheat_directory = config + configure.get('input', 'superheat_info')
+    """ saving this method 
     site_info_directory = f"{config}{config['site_info']}"
     four_directory = f"{config}{config['410a_info']}"
     superheat_directory = f"{config}{config['superheat_info']}"
-
+    """
 
     #if DF empty, return the df as is
     if(df.empty):
