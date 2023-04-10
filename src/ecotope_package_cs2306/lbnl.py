@@ -253,11 +253,12 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_info_directory = config + configure.get('input', 'site_info')
     four_directory = config + configure.get('input', '410a_info')
     superheat_directory = config + configure.get('input', 'superheat_info')
-    """ saving this method 
-    site_info_directory = f"{config}{config['site_info']}"
-    four_directory = f"{config}{config['410a_info']}"
-    superheat_directory = f"{config}{config['superheat_info']}"
-    """
+
+    #NOTE: This code is for testing purposes only and replaces the config!
+    site_info_directory = "testing/LBNL/transform/LBNL-input/site_info.csv"
+    four_directory = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
+    superheat_directory = "testing/LBNL/transform/LBNL-input/superheat.csv"
+    
 
     #if DF empty, return the df as is
     if(df.empty):
