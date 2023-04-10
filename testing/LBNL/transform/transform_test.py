@@ -96,7 +96,7 @@ class Test_Transform(unittest.TestCase):
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
     
-    """
+    
     #pure testing grabs
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
@@ -118,6 +118,6 @@ if __name__ == '__main__':
     #df2 = get_refrig_charge(df2, 'AZ2_01', site_info_path, four_path, superheat_path)
     #print(df2)
     print(df)
-    """
+    
     
     #unittest.main()

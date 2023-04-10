@@ -249,10 +249,10 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
         pd.DataFrame: modified Pandas Dataframe
     """
     #configs
-    config = configure.get('input')
-    site_info_directory = f"{config['directory']}{config['site_info']}"
-    four_directory = f"{config['directory']}{config['410a_info']}"
-    superheat_directory = f"{config['directory']}{config['superheat_info']}"
+    config = configure.get('input', 'directory')
+    site_info_directory = f"{config}{config['site_info']}"
+    four_directory = f"{config}{config['410a_info']}"
+    superheat_directory = f"{config}{config['superheat_info']}"
 
 
     #if DF empty, return the df as is
