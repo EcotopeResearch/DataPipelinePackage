@@ -7,7 +7,7 @@ from typing import List
 import datetime as dt
 from sklearn.linear_model import LinearRegression
 from statsmodels.formula.api import ols
-from ecotope_package_cs2306.config import configure
+from ecopipeline.config import configure
 import os
 
 

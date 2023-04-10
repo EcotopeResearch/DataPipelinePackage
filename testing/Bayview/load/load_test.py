@@ -11,8 +11,8 @@ import datetime
 import pandas as pd
 import unittest
 from datetime import datetime
-from ecotope_package_cs2306 import getLoginInfo, connectDB, checkTableExists, createNewTable, loadDatabase
-from ecotope_package_cs2306.config import _config_directory
+from ecopipeline import getLoginInfo, connectDB, checkTableExists, createNewTable, loadDatabase
+from ecopipeline.config import _config_directory
 
 """
 NOTE: Unit tests can be called individually from the command line if you don't want to run all the tests!

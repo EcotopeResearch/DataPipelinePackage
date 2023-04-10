@@ -5,91 +5,65 @@ from datetime import datetime
 import gzip
 import os
 import json
-from ecotope_package_cs2306.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecotope_package_cs2306.load import connect_db, get_login_info
-from ecotope_package_cs2306.config import _config_directory, _data_directory
+from ecopipeline.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from ecopipeline.load import connect_db, get_login_info
+from ecopipeline.config import _config_directory, _data_directory
 import numpy as np
 import sys
 from pytz import timezone
 import mysql.connector.errors as mysqlerrors
 
 
-def get_last_line(config_file_path: str = _config_directory) -> pd.DataFrame:
+def get_last_full_day_from_db(config_file_path: str = _config_directory) -> datetime:
     """
     Function retrieves the last line from the database with the most recent datetime.
 
     Args:
-        config_file_path (str): Path to config file (default is set in load.py)
+        config_file_path (str): Path to config file (default is set in load.py) TODO this is not used lol
     Returns: 
-        pd.DataFrame: One line DF of the last entry
+        datetime: end of last full day populated in database or default past time if no data found
     """
     config_dict = get_login_info(["minute"])
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
+    return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
 
     try:
         db_cursor.execute(
             f"select * from {config_dict['minute']['table_name']} order by time_pt DESC LIMIT 1")
-    except mysqlerrors.Error:
-        print(f"Table {config_dict['minute']['table_name']} does not exist.")
-        column_names = config_dict['minute']['sensor_list']
-        return_df = pd.DataFrame(columns=column_names, index=[datetime(
-            year=2022, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific'))])
-        return_df = return_df.fillna(0)
-        return return_df
-
-    last_row_data = pd.DataFrame(db_cursor.fetchall())
-    last_time = last_row_data[0][0]
-
-    if ((last_time.hour != 23) or (last_time.minute != 59)):
-        last_full_day = datetime(year=last_time.year, month=last_time.month,
-                                 day=last_time.day-1, hour=23, minute=59, second=0)
-        try:
-            db_cursor.execute(
-                f"select * from {config_dict['minute']['table_name']} where time_pt <= '{last_full_day}' order by time_pt DESC LIMIT 1") # TODO there is a bug here if there is only one partial day in db
-        except mysqlerrors.Error:
-            print(
-                f"Table {config_dict['minute']['table_name']} does not exist.")
-            return 0
 
         last_row_data = pd.DataFrame(db_cursor.fetchall())
+        if len(last_row_data.index) > 0:
+            last_time = last_row_data[0][0] # get time from last_data_row[0][0] TODO probably better way to do this
 
-    try:
-        db_cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
-                          f"{config_dict['database']['database']}' and table_name = '"
-                          f"{config_dict['minute']['table_name']}'")
+            if ((last_time.hour != 23) or (last_time.minute != 59)):
+                return_time = datetime(year=last_time.year, month=last_time.month,
+                                        day=last_time.day-1, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific'))
+            else:
+                return_time = last_time.tz_localize(timezone('US/Pacific'))
+        else:
+            print("Database has no previous data. Using default time to extract data.")
     except mysqlerrors.Error:
-        print(f"Table {config_dict['minute']['table_name']} does not exist.")
-        return 0
-
-    columns_names = db_cursor.fetchall()
-    columns_names = [name[0] for name in columns_names]
-    last_row_data.columns = columns_names
-    last_row_data.set_index(last_row_data['time_pt'], inplace=True)
-    last_row_data.drop(['time_pt'], axis=1, inplace=True)
-    last_row_data.index = last_row_data.index.tz_localize(
-        timezone('US/Pacific'))
+        print("Unable to find last timestamp in database. Using default time to extract data.")
 
     db_cursor.close()
     db_connection.close()
 
-    return last_row_data
+    return return_time
 
 
-def extract_new(last_row: pd.DataFrame, json_filenames: List[str]) -> List[str]:
+def extract_new(time: datetime, json_filenames: List[str]) -> List[str]:
     """
     Function filters the filenames to only those newer than the last date.
 
     Args: 
-        last_row (pd.DataFrame): The last row in the database
+        time (datetime): The point in time for which we want to start the data extraction from
         json_filenames (List[str]): List of filenames to be filtered
     Returns: 
         List[str]: Filtered list of filenames
     """
-    time = last_row.squeeze()
-    time = time.name
-    time = time.to_pydatetime()
     time_int = int(time.strftime("%Y%m%d%H%M%S"))
-    return list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
+    return_list = list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
+    return return_list
 
 
 def extract_files(extension: str, subdir: str = "") -> List[str]:
