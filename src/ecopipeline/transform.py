@@ -402,6 +402,30 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
 
     return cop_values
 
+def cop_method_2(df: pd.DataFrame, cop_tm):
+    """
+    Performs COP calculation method 2 as deffined by Scott's whiteboard image
+    COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
+
+    Args: 
+        df (pd.DataFrame): Pandas DataFrame to add COP columns to
+        cop_tm (float): fixed COP value for temputure Maintenece system
+
+    Returns: 
+        pd.DataFrame: Pandas DataFrame with the added COP columns. 
+    """
+    columns_to_check = ['COP_PrimaryPlant', 'PowerIn_HPWH1', 'PowerIn_SwingTank', 'PowerIn_Total']
+
+    missing_columns = [col for col in columns_to_check if col not in df.columns]
+
+    if missing_columns:
+        print('Cannot calculate COP as the following columns are missing from the DataFrame:', missing_columns)
+        return df
+
+    df['COP'] = (df['COP_PrimaryPlant'] * (df['PowerIn_HPWH1']/df['PowerIn_Total'])) + (cop_tm * (df['PowerIn_SwingTank']/df['PowerIn_Total'])) # TODO confirm these values
+    return df
+
+
 # loops through a list of dateTime objects, compares if the date of that object matches the
 # date of the row name, which is also a dateTime object. If it matches, load_shift is True (happened that day)
 def _ls_helper(row, dt_list):
