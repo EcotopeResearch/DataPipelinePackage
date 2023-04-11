@@ -30,7 +30,8 @@ def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
         # Calculation goes negative to -0.001 sometimes.
         # df["Power_OD_compressor1"] = (
         #     df["Power_OD_total1"] - df["Power_OD_fan1"]).apply(lambda x: max(0, x))
-        df["Power_OD_compressor1"] = np.maximum(df["Power_OD_total1"] - df["Power_OD_fan1"], 0)
+        df["Power_OD_compressor1"] =  (df["Power_OD_total1"] - df["Power_OD_fan1"]).applymap(lambda x: max(0, x))
+
         df["Power_system1"] = df["Power_OD_total1"] + df["Power_AH1"]
 
     elif re.search("(AZ2_03)", site):
