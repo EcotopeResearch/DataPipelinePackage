@@ -346,20 +346,20 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_info = pd.read_csv(site_info_directory)
     site_section = site_info[site_info["site"] == site]
     statePowerAHThreshold = pd.to_numeric(site_section["AH_standby_power"]) * 1.5
-    df["event_ID"] = np.NAN
-    df["event_ID"] = df["event_ID"].mask(df["Power_AH1"] > statePowerAHThreshold, 1)
+    df["event_ID"] = 0
+    df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
     event_ID = 1
 
     for i in range(1,len(df.index)):
-        if((math.isnan(df["event_ID"][i]) == False) and (df["event_ID"][i] == 1.0)):
+        if((df["event_ID"][i] > 0) and (df["event_ID"][i] == 1.0)):
             time_diff = (df["time"][i] - df["time"][i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
-        elif (math.isnan(df["event_ID"][i])):
-            if(math.isnan(df["event_ID"][i - 1]) == False):
+        elif (df["event_ID"][i] == 0):
+            if(df["event_ID"][i - 1] > 0):
                 event_ID += 1
-        df["event_ID"][i] = event_ID
+        df.at[i, "event_ID"] = event_ID
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
