@@ -31,7 +31,7 @@ def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
         # df["Power_OD_compressor1"] = (
         #     df["Power_OD_total1"] - df["Power_OD_fan1"]).apply(lambda x: max(0, x))
         df["Power_OD_compressor1"] = (
-            df["Power_OD_total1"] - df["Power_OD_fan1"]).map(lambda x: max(0, x))
+            df["Power_OD_total1"] - df["Power_OD_fan1"]).clip(lower=0)
 
         df["Power_system1"] = df["Power_OD_total1"] + df["Power_AH1"]
 
