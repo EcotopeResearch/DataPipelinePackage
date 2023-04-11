@@ -96,7 +96,7 @@ class Test_Transform(unittest.TestCase):
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
     
-    """
+    
     #pure testing grabs
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
@@ -116,17 +116,7 @@ if __name__ == '__main__':
     #df2 = get_refrig_charge(df2, 'AZ2_01', site_info_path, four_path, superheat_path)
     #print(df2)
     #or_df = get_refrig_charge(or_df, 'IL2_01')
-    #print(or_df)
+    print(or_df.columns.tolist())
     #print(tx_df)
-
-    sample = pd.Series(tx_df.loc[0].keys().tolist())
-    print(sample)
-
-    if 'time_utc' in sample:
-        print("Found with in")
-    for item in sample:
-        if(item == 'time_utc'):
-            print("Found in loop")
-    """
     
     #unittest.main()

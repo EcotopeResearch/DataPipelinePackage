@@ -184,18 +184,6 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     superheat_target = None
 
-    #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C 
-    # are not in the series keys, just return the row early.
-    #NOTE: this code is implemented because I was having issues with the in keyword not returning true
-    var_names = row.keys().tolist()
-    count = 0
-    for name in var_names:
-        if("Temp_ODT" == name or "Temp_RAT" == name or "Humidity_RARH" == name or "Pressure_LL_psi" == name or "Temp_SL_C" == name):
-            count += 1
-    #if any of these are missing from the list, we return the row
-    if(count < 4): 
-        return row
-
     #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
     # is null, just return the row early. 
     if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_LL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
@@ -292,7 +280,18 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     if (metering_device == "txv"):
         #calculate the refrigerant charge w/the subcooling method
         df = df.apply(_subcooling, axis=1, args=(lr_model,))
-    else:
+    elif (metering_device == "orifice"):
+        #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C are not in the df column names, we return df prematurely
+        #NOTE: this code is implemented because I was having issues with the in keyword not returning true
+        var_names = df.columns.tolist()
+        count = 0
+        for name in var_names:
+            if("Temp_ODT" == name or "Temp_RAT" == name or "Humidity_RARH" == name or "Pressure_LL_psi" == name or "Temp_SL_C" == name):
+                count += 1
+     #if any of these are missing from the list, we return the row
+        if(count < 4): 
+           return df
+
         # calculate the refrigerant charge w/the superheat method
         superchart = pd.read_csv(superheat_directory)
         x_range = superchart.columns.values.tolist()
