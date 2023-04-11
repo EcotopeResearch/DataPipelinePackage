@@ -28,10 +28,8 @@ def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     # All MO & IL sites.
     if re.search("(AZ2_01|AZ2_02|MO2_|IL2_|NW2_01)", site):
         # Calculation goes negative to -0.001 sometimes.
-        # df["Power_OD_compressor1"] = (
-        #     df["Power_OD_total1"] - df["Power_OD_fan1"]).apply(lambda x: max(0, x))
-        df["Power_OD_compressor1"] = (
-            df["Power_OD_total1"] - df["Power_OD_fan1"]).clip(lower=0)
+        df["Power_OD_compressor1"] = df["Power_OD_total1"] - df["Power_OD_fan1"]
+        df["Power_OD_compressor1"] = df["Power_OD_compressor1"].clip(lower=0)
 
         df["Power_system1"] = df["Power_OD_total1"] + df["Power_AH1"]
 
