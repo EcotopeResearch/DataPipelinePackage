@@ -259,7 +259,6 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     four_directory = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
     superheat_directory = "testing/LBNL/transform/LBNL-input/superheat.csv"
     
-
     #if DF empty, return the df as is
     if(df.empty):
         return df
@@ -281,16 +280,10 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
         #calculate the refrigerant charge w/the subcooling method
         df = df.apply(_subcooling, axis=1, args=(lr_model,))
     elif (metering_device == "orifice"):
-        #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C are not in the df column names, we return df prematurely
-        #NOTE: this code is implemented because I was having issues with the in keyword not returning true
-        var_names = df.columns.tolist()
-        count = 0
-        for name in var_names:
-            if("Temp_ODT" == name or "Temp_RAT" == name or "Humidity_RARH" == name or "Pressure_LL_psi" == name or "Temp_SL_C" == name):
-                count += 1
-     #if any of these are missing from the list, we return the row
-        if(count < 4): 
-           return df
+        #If any crucial vars for calculating refrigerant charge are missing, we return early
+        var_names = df.columns.tolist() 
+        if "Temp_ODT" not in var_names or "Temp_RAT" not in var_names or "Humidity_RARH" not in var_names or "Pressure_LL_psi" not in var_names or "Temp_SL_C" not in var_names:
+            return df
 
         # calculate the refrigerant charge w/the superheat method
         superchart = pd.read_csv(superheat_directory)

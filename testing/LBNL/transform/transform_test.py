@@ -115,8 +115,8 @@ if __name__ == '__main__':
     #df = get_refrig_charge(df, 'AZ2_01')
     #df2 = get_refrig_charge(df2, 'AZ2_01', site_info_path, four_path, superheat_path)
     #print(df2)
-    #or_df = get_refrig_charge(or_df, 'IL2_01')
-    print(or_df.columns.tolist())
+    or_df = get_refrig_charge(or_df, 'IL2_01')
+    print(or_df)
     #print(tx_df)
     
     #unittest.main()
