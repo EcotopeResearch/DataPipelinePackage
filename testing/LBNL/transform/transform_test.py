@@ -95,11 +95,12 @@ class Test_Transform(unittest.TestCase):
         test_df = pd.DataFrame(columns=['event_ID'])
         test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
         self.assertEqual(True, result_df.equals(test_df))
-        
+    """    
+
 if __name__ == '__main__':
+    """
     #runs test_xxx functions, shows what passed or failed. 
     
-    """
     #pure testing grabs
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
