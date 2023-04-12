@@ -414,15 +414,25 @@ def cop_method_2(df: pd.DataFrame, cop_tm):
     Returns: 
         pd.DataFrame: Pandas DataFrame with the added COP columns. 
     """
-    columns_to_check = ['COP_PrimaryPlant', 'PowerIn_HPWH1', 'PowerIn_SwingTank', 'PowerIn_Total']
+    columns_to_check = ['COP_Primary', 'PowerIn_HPWH1', 'PowerIn_SwingTank', 'PowerIn_Total']
 
     missing_columns = [col for col in columns_to_check if col not in df.columns]
 
     if missing_columns:
         print('Cannot calculate COP as the following columns are missing from the DataFrame:', missing_columns)
         return df
+    
+    # Create list of column names to sum
+    sum_cols = [col for col in df.columns if col.startswith('PowerIn_HPWH') or col == 'PowerIn_SecLoopPump']
 
-    df['COP'] = (df['COP_PrimaryPlant'] * (df['PowerIn_HPWH1']/df['PowerIn_Total'])) + (cop_tm * (df['PowerIn_SwingTank']/df['PowerIn_Total'])) # TODO confirm these values
+    if len(sum_cols) == 0:
+        print('Cannot calculate COP as the primary power columns (such as PowerIn_HPWH and PowerIn_SecLoopPump) are missing from the DataFrame')
+        return df
+
+    # Create new DataFrame with one column called 'PowerIn_Primary' that contains the sum of the specified columns
+    new_df = pd.DataFrame({'PowerIn_Primary': df[sum_cols].sum(axis=1)})
+
+    df['COP'] = (df['COP_Primary'] * (new_df['PowerIn_Primary']/df['PowerIn_Total'])) + (cop_tm * (df['PowerIn_SwingTank']/df['PowerIn_Total'])) # TODO confirm these values
     return df
 
 
