@@ -238,10 +238,6 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     row.loc["Refrig_charge"] = r_charge[0]
     return row
 
-#variable_names_path: str = f"{_input_directory}Variable_Names.csv"
-#site_info_path: str = f"{_input_directory}site_info.csv"
-#superheat_path: f"{_input_directory}superheat.csv"
-#four_path: f"{_input_directory}410a_pt.csv"
 def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"{_input_directory}site_info.csv", four_directory: str = f"{_input_directory}410a_pt.csv", superheat_directory: str = f"{_input_directory}superheat.csv") -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
@@ -264,7 +260,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
     site_df = pd.read_csv(site_info_directory, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
 
-    #NOTE: this specific lr_model is needed for both superheat AND subcooling!
+    #this specific lr_model is needed for both superheat AND subcooling!
     four_df = pd.read_csv(four_directory)
     X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
     y = np.array(four_df["temp"].values.tolist())
