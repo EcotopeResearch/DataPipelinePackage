@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import datetime as dt
-from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, replace_humidity
+from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, replace_humidity, create_fan_curves, condensate_calculations, site_specific
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -19,7 +19,54 @@ class Test_Transform(unittest.TestCase):
     #Check that test function instead of all of those
 
     #Carlos
-    def test_create_fan_curves(self):
+    def test_create_fan_curves_valid(self):
+        #test valid input
+        pass
+    def test_create_fan_curves_invalid(self):
+        #test invalid input
+        pass
+    def test_create_fan_curves_missing(self):
+        #test that it doesn't explode with improper values
+        empty = pd.DataFrame()
+        #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
+        empty = create_fan_curves(empty, "FAKE_01")
+        pass
+
+    #Carlos
+    def test_condensate_calculations_valid(self):
+        #test valid input
+        pass
+    def test_condensate_calculations_invalid(self):
+        #test invalid input
+        pass
+    def test_condensate_calculations_missing(self):
+        #test that it doesn't explode with improper values
+        empty = pd.DataFrame()
+        #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
+        empty = condensate_calculations(empty, "FAKE_01")
+        pass
+
+    #Carlos
+    def test_site_specific_valid_case1(self):
+        # test valid input where "MO2_"
+        pass
+    def test_site_specific_valid_case2(self):
+        # test valid input where "AZ2_01|AZ2_02|MO2_|IL2_|NW2_01"
+        pass
+    def test_site_specific_valid_case3(self):
+        # test valid input where "AZ2_03"
+        pass
+    def test_site_specific_valid_case4(self):
+        # test valid input where "AZ2_04|AZ2_05"
+        pass
+    def test_site_specific_invalid(self):
+        #test invalid input
+        pass
+    def test_site_specific_missing(self):
+        #test that it doesn't explode with improper values
+        empty = pd.DataFrame()
+        #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
+        empty = site_specific(empty, "FAKE_01")
         pass
     """
     #Casey

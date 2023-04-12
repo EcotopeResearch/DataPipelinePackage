@@ -519,7 +519,15 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     return df
 
 
-def create_fan_curves(cfm_info, site_info):
+def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create fan curves for each site.
+    Args:
+        cfm_info (pd.DataFrame): Dataframe containing the fan curve information.
+        site_info (pd.DataFrame): Dataframe containing the site information.
+    Returns:
+        pd.DataFrame: Dataframe containing the fan curves for each site.
+    """
     # Make a copy of the dataframes to avoid modifying the original data
     cfm_info = cfm_info.copy()
     site_info = site_info.copy()
@@ -528,7 +536,14 @@ def create_fan_curves(cfm_info, site_info):
     site_info['furn_misc_power'] *= 1000
 
     # Calculate furnace power to remove for each row
-    def calculate_watts_to_remove(row):
+    def calculate_watts_to_remove(row: pd.Series):
+        """
+        Calculate the amount of furnace power to remove from the blower power.
+        Args:
+            row (pd.Series): Series containing the row data.
+        Returns:
+            float: Amount of furnace power to remove.
+        """
         if np.isnan(row['ID_blower_rms_watts']) or 'heat' not in row['mode']:
             return 0
         site_row = site_info.loc[site_info['site'] == row['site']]
