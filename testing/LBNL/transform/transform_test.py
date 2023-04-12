@@ -61,20 +61,16 @@ class Test_Transform(unittest.TestCase):
         
         #txv pickle
         txv = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
-        site_txv = "AZ2_01"
+        site_txv = 'AZ2_01'
         df1 = pd.read_pickle(txv)
         #superheat pickle
         orifice = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
-        site_orifice = " IL2_01"
+        site_orifice = 'IL2_01'
         df2 = pd.read_pickle(orifice)
 
         #function calls
-        #df1 = get_refrig_charge(df1, site_txv)
-        #df2 = get_refrig_charge(df2, site_orifice)
-        #BUG: Just to avoid errors within other tests for the time being, below code. will replace with above later once
-        #config issues are fixed!
-        df1["Refrig_charge"] = 10.0
-        df2["Refrig_charge"] = None
+        df1 = get_refrig_charge(df1, site_txv, self.site_info_path, self.four_path, self.superheat_path)
+        df2 = get_refrig_charge(df2, site_orifice, self.site_info_path, self.four_path, self.superheat_path)
     
         #check that the Refrig_charge column has data type float for df1, and that it has "None" for df2! 
         proper_type = type(df1["Refrig_charge"][0])
@@ -115,12 +111,10 @@ if __name__ == '__main__':
     tx_df = pd.read_pickle(subcooling_path)
 
     #NOTE: To do proper testing, I need a pickle with all the stuff that happens before superheat!
-    #df = get_refrig_charge(df, 'AZ2_01')
-    #df2 = get_refrig_charge(df2, 'AZ2_01', site_info_path, four_path, superheat_path)
-    #print(df2)
-    or_df = get_refrig_charge(or_df, 'IL2_01')
+    tx_df = get_refrig_charge(tx_df, 'AZ2_01', site_info_path, four_path, superheat_path)
+    or_df = get_refrig_charge(or_df, 'IL2_01', site_info_path, four_path, superheat_path)
     print(or_df)
-    #print(tx_df)
+    print(tx_df)
     """
-    
+
     unittest.main()
