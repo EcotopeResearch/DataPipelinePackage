@@ -503,14 +503,14 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     Returns:
         pd.DataFrame: Modified DataFrame where the Humidity_ODRH column contains the field readings after the given datetime. 
     """
-    df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
-    data_old = df["Humidity_ODRH"]
+    if len(od_conditions):
+        df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
+        data_old = df["Humidity_ODRH"]
 
-    # .astimezone(pytz.timezone('UTC'))]
-    data_new = od_conditions.loc[od_conditions.index > date_forward]
-    data_new = data_new[f"{site_name}_ODRH"]
+        data_new = od_conditions.loc[od_conditions.index > date_forward]
+        data_new = data_new[f"{site_name}_ODRH"]
 
-    df["Humidity_ODRH"] = data_old.fillna(value=data_new)
+        df["Humidity_ODRH"] = data_old.fillna(value=data_new)
 
     return df
 

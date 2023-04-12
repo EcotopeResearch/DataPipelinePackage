@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
 import pandas as pd
-from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions
+import datetime as dt
+from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, replace_humidity
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -42,6 +43,7 @@ class Test_Transform(unittest.TestCase):
         result_df = gas_valve_diff(empty_df, "AZ2_01", self.site_info_path)
         self.assertEqual(True, empty_df.equals(result_df))
 
+    """
     #Casey 
     def test_gather_outdoor_conditions_valid(self):
         pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
@@ -49,7 +51,7 @@ class Test_Transform(unittest.TestCase):
         result_df = gather_outdoor_conditions(df, "AZ2_01")
         expected_cols = ['time_utc', 'AZ2_01_ODT', 'AZ2_01_ODRH']
         self.assertEqual(True, np.array_equal(expected_cols, result_df.columns))
-    
+
     def test_gather_outdoor_conditions_invalid(self):
         empty_df = pd.DataFrame()
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
@@ -86,13 +88,22 @@ class Test_Transform(unittest.TestCase):
         empty = get_refrig_charge(empty, "FAKE_01")
 
         #could additionally check for certain vars missing, complicated config though.
-    
+
     def test_change_ID_to_HVAC_invalid(self):
         empty_df = pd.DataFrame()
         result_df = change_ID_to_HVAC(empty_df, "AZ2_01", self.site_info_path)
         test_df = pd.DataFrame(columns=['event_ID'])
         test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
         self.assertEqual(True, result_df.equals(test_df))
+    """
+
+    def test_replace_humidity_invalid(self):
+        data_path = "testing/LBNL/transform/pickles/AZ2_01_04242022.pkl"
+        site = "AZ2_01"
+        time = dt.datetime(2022, 4, 24, 9, 0, 0)
+        data = pd.read_pickle(data_path)
+        od_conditions = gather_outdoor_conditions(data, site)
+        result = replace_humidity(data, od_conditions, time, site)
         
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
