@@ -118,18 +118,20 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
     return df
 
 
-def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
+def gas_valve_diff(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
-    Function takes in the site dataframe, the site name, and path to the site_info file. If 
-    the site has gas heating, take the lagged difference to get per minute values. 
+    Function takes in the site dataframe and the site name. If the site has gas 
+    heating, take the lagged difference to get per minute values. 
     
     Args: 
         df (pd.DataFrame): Dataframe for site
         site (str): site name as string
-        site_info_path (str): path to site_info.csv as string
     Returns: 
         pd.DataFrame: new Pandas Dataframe 
     """
+    input_dir = configure.get('input', 'directory')
+    site_info_path = input_dir + configure.get('input', 'site_info')
+
     try:
         site_info = pd.read_csv(site_info_path)
     except FileNotFoundError:
@@ -385,7 +387,7 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
             return
 
         if len(data) != 0:
-            data = add_date(data, filename)
+            data = _add_date(data, filename)
             temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
@@ -441,7 +443,7 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
 
 
 
-def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
+def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     LBNL's nclarity files do not contain the date in the time column. This
     function extracts the date from the filename and adds it to the data.
@@ -457,21 +459,23 @@ def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     return df
 
 
-def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
+def elev_correction(site_name : str) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
 
     Args: 
-        site_info_file (str): Path to site_info.csv file 
         site_name (str): site's name
     Returns: 
         pd.DataFrame: new Pandas dataframe
     """
+    input_dir = configure.get('input', 'directory')
+    site_info_path = input_dir + configure.get('input', 'site_info')
+
     try:
-        site_info_df = pd.read_csv(site_info_file)
+        site_info_df = pd.read_csv(site_info_path)
     except FileNotFoundError:
-        print("File Not Found: ", site_info_file)
+        print("File Not Found: ", site_info_path)
         return
     
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
