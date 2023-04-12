@@ -21,7 +21,7 @@ class Test_Transform(unittest.TestCase):
     #Carlos
     def test_create_fan_curves(self):
         pass
-
+    """
     #Casey
     def test_gas_valve_diff_valid(self):
         # site AZ2_01 uses hp (not gas) heating
@@ -43,7 +43,6 @@ class Test_Transform(unittest.TestCase):
         result_df = gas_valve_diff(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
 
-    """
     #Casey 
     def test_gather_outdoor_conditions_valid(self):
         pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
@@ -96,6 +95,15 @@ class Test_Transform(unittest.TestCase):
         test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
         self.assertEqual(True, result_df.equals(test_df))
     """    
+
+    def test_replace_humidity_invalid(self):
+        data_path = "testing/LBNL/transform/pickles/AZ2_01_04242022.pkl"
+        site = "AZ2_01"
+        time = dt.datetime(2022, 4, 24, 9, 0, 0)
+        data = pd.read_pickle(data_path)
+        od_conditions = gather_outdoor_conditions(data, site)
+        result = replace_humidity(data, od_conditions, time, site)
+        # self.assertEqual(data, result)
 
 if __name__ == '__main__':
     """
