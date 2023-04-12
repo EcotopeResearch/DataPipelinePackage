@@ -20,10 +20,7 @@ def concat_last_row(df: pd.DataFrame, last_row: pd.DataFrame) -> pd.DataFrame:
     Returns: 
         pd.DataFrame: Pandas dataframe with last row concatenated
     """
-    # cols = df.columns
-    # last_row = last_row.iloc[:, last_row.columns.isin(cols)]
     df = pd.concat([last_row, df], join="inner")
-    # df.sort_index(inplace=True)
     return df
 
 
@@ -237,7 +234,7 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-
+# NOTE: Move to bayview.py
 def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
     """
     Energy is recorded cummulatively. Function takes the lagged differences in 
@@ -254,7 +251,7 @@ def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
         df[var] = df[var] - df[var].shift(1)
     return df
 
-
+# NOTE: Move to bayview.py
 def verify_power_energy(df: pd.DataFrame):
     """
     Verifies that for each timestamp, corresponding power and energy variables are consistent
@@ -301,6 +298,7 @@ def verify_power_energy(df: pd.DataFrame):
                         out_df.to_csv(path_to_output, index=False, mode='a', header=False)
 
 
+# NOTE: Move to bayview.py
 # loops through a list of dateTime objects, compares if the date of that object matches the
 # date of the row name, which is also a dateTime object. If it matches, load_shift is True (happened that day)
 def _ls_helper(row, dt_list):
@@ -319,7 +317,7 @@ def _ls_helper(row, dt_list):
             row.loc["load_shift_day"] = True
     return row
 
-
+# NOTE: Move to bayview.py
 def aggregate_df(df: pd.DataFrame):
     """
     Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
@@ -367,7 +365,7 @@ def aggregate_df(df: pd.DataFrame):
 
     return hourly_df, daily_df
 
-
+# NOTE: Move to bayview.py
 def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that initializes the dataframe that holds the volumes of each zone.
@@ -390,7 +388,7 @@ def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -
     gals_per_zone = pd.DataFrame({'Zone': zone_list, 'Zone_vol_g': zone_gals})
     return gals_per_zone
 
-
+# NOTE: Move to bayview.py
 def _largest_less_than(df_row: pd.Series, target: int) -> str:
     """
     Function takes a list of gz/json filenames and a target temperature and determines
@@ -412,7 +410,7 @@ def _largest_less_than(df_row: pd.Series, target: int) -> str:
 
     return largest_less_than_120_tmp
 
-
+# NOTE: Move to bayview.py
 def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series) -> float:
     """
     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
@@ -459,7 +457,7 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-
+# NOTE: Move to bayview.py
 def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
     """
     Function takes a row of sensor data and determines the volume of water > 120 degrees
@@ -495,7 +493,7 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-
+# NOTE: Move to bayview.py
 def _get_zone_Temp120(df_row: pd.Series) -> float:
     """
     Function takes a row of sensor data and determines the highest sensor < 120 degrees.
@@ -521,7 +519,7 @@ def _get_zone_Temp120(df_row: pd.Series) -> float:
     zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
     return zone_Temp_120
 
-
+# NOTE: Move to bayview.py
 def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that creates and appends the Gals120 data onto the Dataframe
@@ -544,7 +542,7 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
 
     return df
 
-
+# NOTE: Move to bayview.py
 def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
     """
     Function that calculates the average temperature of the inputted zone.
@@ -563,7 +561,7 @@ def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-
+# NOTE: Move to bayview.py
 def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
     """
     Function that keeps track of the average temperature of each zone.
