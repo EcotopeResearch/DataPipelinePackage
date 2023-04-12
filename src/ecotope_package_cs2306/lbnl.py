@@ -10,6 +10,8 @@ from statsmodels.formula.api import ols
 from ecotope_package_cs2306.config import configure
 import os
 
+#until I can figure out how to import input directory, declaring a global var here.
+_input_directory = configure.get('input', 'directory')
 
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
@@ -236,8 +238,11 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     row.loc["Refrig_charge"] = r_charge[0]
     return row
 
-# NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
-def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
+#variable_names_path: str = f"{_input_directory}Variable_Names.csv"
+#site_info_path: str = f"{_input_directory}site_info.csv"
+#superheat_path: f"{_input_directory}superheat.csv"
+#four_path: f"{_input_directory}410a_pt.csv"
+def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"{_input_directory}site_info.csv", four_directory: str = f"{_input_directory}410a_pt.csv", superheat_directory: str = f"{_input_directory}superheat.csv") -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
@@ -251,20 +256,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
         superheat_path (str): path to superheat.csv as a string
     Returns: 
         pd.DataFrame: modified Pandas Dataframe
-    """
-    #configs
-    config = configure.get('input', 'directory')
-    site_info_directory = config + configure.get('input', 'site_info')
-    four_directory = config + configure.get('input', '410a_info')
-    superheat_directory = config + configure.get('input', 'superheat_info')
-
-    """
-    #NOTE: This code is for testing purposes only and replaces the config!
-    site_info_directory = "testing/LBNL/transform/LBNL-input/site_info.csv"
-    four_directory = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
-    superheat_directory = "testing/LBNL/transform/LBNL-input/superheat.csv"
-    """
-    
+    """   
     #if DF empty, return the df as is
     if(df.empty):
         return df
