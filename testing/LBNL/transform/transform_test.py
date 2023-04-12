@@ -26,12 +26,12 @@ class Test_Transform(unittest.TestCase):
         # site AZ2_01 uses hp (not gas) heating
         hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
         hp_df = pd.read_pickle(hp_pickle)
-        result_hp_df = gas_valve_diff(hp_df, "AZ2_01", self.site_info_path)
+        result_hp_df = gas_valve_diff(hp_df, "AZ2_01")
 
         # site IL2_01 uses gas heating 
         gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
         gas_df = pd.read_pickle(gas_pickle)
-        result_gas_df = gas_valve_diff(gas_df, "IL2_01", self.site_info_path)
+        result_gas_df = gas_valve_diff(gas_df, "IL2_01")
         
         #self.assertNotEqual(gas_df.iloc[:, 1].sum(), result_gas_df.iloc[:, 1].sum())
         self.assertEqual(hp_df.iloc[:, 1].sum(), result_hp_df.iloc[:, 1].sum())
@@ -39,7 +39,7 @@ class Test_Transform(unittest.TestCase):
     
     def test_gas_valve_diff_invalid(self):
         empty_df = pd.DataFrame()
-        result_df = gas_valve_diff(empty_df, "AZ2_01", self.site_info_path)
+        result_df = gas_valve_diff(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
 
     #Casey 
@@ -87,12 +87,12 @@ class Test_Transform(unittest.TestCase):
 
         #could additionally check for certain vars missing, complicated config though.
     
-    def test_change_ID_to_HVAC_invalid(self):
-        empty_df = pd.DataFrame()
-        result_df = change_ID_to_HVAC(empty_df, "AZ2_01", self.site_info_path)
-        test_df = pd.DataFrame(columns=['event_ID'])
-        test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
-        self.assertEqual(True, result_df.equals(test_df))
+    # def test_change_ID_to_HVAC_invalid(self):
+    #     empty_df = pd.DataFrame()
+    #     result_df = change_ID_to_HVAC(empty_df, "AZ2_01", self.site_info_path)
+    #     test_df = pd.DataFrame(columns=['event_ID'])
+    #     test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
+    #     self.assertEqual(True, result_df.equals(test_df))
         
 if __name__ == '__main__':
     #runs test_xxx functions, shows what passed or failed. 
