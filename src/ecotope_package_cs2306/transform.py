@@ -234,69 +234,6 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-# NOTE: Move to bayview.py
-def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Energy is recorded cummulatively. Function takes the lagged differences in 
-    order to get a per/minute value for each of the energy variables.
-
-    Args: 
-        df (pd.DataFrame): Pandas dataframe
-    Returns: 
-        pd.DataFrame: Pandas dataframe
-    """
-    energy_vars = df.filter(regex=".*Energy.*")
-    energy_vars = energy_vars.filter(regex=".*[^BTU]$")
-    for var in energy_vars:
-        df[var] = df[var] - df[var].shift(1)
-    return df
-
-# NOTE: Move to bayview.py
-def verify_power_energy(df: pd.DataFrame):
-    """
-    Verifies that for each timestamp, corresponding power and energy variables are consistent
-    with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
-    rows with conflicting power and energy variables.
-
-    Prereq: 
-        Input dataframe MUST have had get_energy_by_min() called on it previously
-    Args: 
-        df (pd.DataFrame): Pandas dataframe
-    Returns:
-        None
-    """
-
-    out_df = pd.DataFrame(columns=['time_pt', 'power_variable', 'energy_variable',
-                          'energy_value', 'power_value', 'expected_power', 'difference_from_expected'])
-    energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
-    power_vars = (df.filter(regex=".*Power.*")
-                  ).filter(regex="^((?!Energy).)*$")
-    df['time_pt'] = df.index
-    power_energy_df = df[df.columns.intersection(
-        ['time_pt'] + list(energy_vars) + list(power_vars))]
-    del df['time_pt']
-
-    margin_error = 5.0          # margin of error still TBD, 5.0 for testing purposes
-    for pvar in power_vars:
-        if (pvar != 'PowerMeter_SkidAux_Power'):
-            corres_energy = pvar.replace('Power', 'Energy')
-        if (pvar == 'PowerMeter_SkidAux_Power'):
-            corres_energy = 'PowerMeter_SkidAux_Energty'
-        if (corres_energy in energy_vars):
-            temp_df = power_energy_df[power_energy_df.columns.intersection(['time_pt'] + list(energy_vars) + list(power_vars))]
-            for i, row in temp_df.iterrows():
-                expected = energy_to_power(row[corres_energy])
-                low_bound = expected - margin_error
-                high_bound = expected + margin_error
-                if (row[pvar] != expected):
-                    out_df.loc[len(df.index)] = [row['time_pt'], pvar, corres_energy,
-                                                 row[corres_energy], row[pvar], expected, abs(expected - row[pvar])]
-                    path_to_output = f'{_output_directory}power_energy_conflicts.csv'
-                    if not os.path.isfile(path_to_output):
-                        out_df.to_csv(path_to_output, index=False, header=out_df.columns)
-                    else:
-                        out_df.to_csv(path_to_output, index=False, mode='a', header=False)
-
 
 # NOTE: Move to bayview.py
 # loops through a list of dateTime objects, compares if the date of that object matches the
