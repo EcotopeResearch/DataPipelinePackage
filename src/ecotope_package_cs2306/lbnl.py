@@ -8,10 +8,9 @@ import datetime as dt
 from sklearn.linear_model import LinearRegression
 from statsmodels.formula.api import ols
 from ecotope_package_cs2306.config import configure
+from ecotope_package_cs2306.config import _input_directory, _output_directory
 import os
 
-#until I can figure out how to import input directory, declaring a global var here.
-_input_directory = configure.get('input', 'directory')
 
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
