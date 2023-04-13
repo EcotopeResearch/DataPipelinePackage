@@ -529,9 +529,9 @@ def create_fan_curves(cfm_info: str = f'{_input_directory}sitecfminfo.csv', site
     """
 
     # Read in data
-    cfm_info = pd.read_csv(cfm_info)
-    site_info = pd.read_csv(site_info)
-    
+    cfm_info = pd.read_csv(cfm_info, errors='ignore')
+    site_info = pd.read_csv(site_info, errors='ignore')
+
     # Convert furnace power from kW to W
     site_info['furn_misc_power'] *= 1000
 
@@ -560,6 +560,13 @@ def create_fan_curves(cfm_info: str = f'{_input_directory}sitecfminfo.csv', site
     by_site = cfm_info.groupby('site')
 
     def estimate_coefficients(group):
+        """
+        Estimate coefficients for the fan curve.
+        Args:
+            group (pd.DataFrame): Dataframe containing the data for a given site.
+        Returns:
+            pd.Series: Series containing the coefficients for the fan curve.
+        """
         X = group[['ID_blower_rms_watts']].values ** 0.3333 - 1
         y = group['ID_blower_cfm'].values
         return pd.Series(LinearRegression().fit(X, y).coef_)
