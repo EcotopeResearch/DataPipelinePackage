@@ -76,34 +76,31 @@ def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
+
+def condensate_calculations(df: pd.DataFrame, site: str, site_info: pd.Series) -> pd.DataFrame:
     """
     Calculates condensate values for the given dataframe
 
     Args:
         df (pd.DataFrame): dataframe to be modified
         site (str): name of site
+        site_info (pd.Series): Series of site info
     Returns:
         pd.DataFrame: modified dataframe
     """
-    site_info_directory = configure.get('site_info', 'directory')
-    site_info = pd.read_csv(site_info_directory)
     oz_2_m3 = 1 / 33810  # [m3/oz]
     water_density = 997  # [kg/m³]
     water_latent_vaporization = 2264.705  # [kJ/kg]
 
     # Condensate calculations
     if "Condensate_ontime" in df.columns:
-        cycle_length = site_info.loc[site_info["site"]
-                                     == site, "condensate_cycle_length"].iloc[0]
-        oz_per_tip = site_info.loc[site_info["site"]
-                                   == site, "condensate_oz_per_tip"].iloc[0]
+        cycle_length = site_info["condensate_cycle_length"]
+        oz_per_tip = site_info["condensate_oz_per_tip"]
 
         df["Condensate_oz"] = df["Condensate_ontime"].diff().shift(-1).apply(
             lambda x: x / cycle_length * oz_per_tip if x else x)
     elif "Condensate_pulse_avg" in df.columns:
-        oz_per_tip = site_info.loc[site_info["site"]
-                                   == site, "condensate_oz_per_tip"].iloc[0]
+        oz_per_tip = site_info["condensate_oz_per_tip"]
 
         df["Condensate_oz"] = df["Condensate_pulse_avg"].apply(
             lambda x: x * oz_per_tip)
@@ -518,41 +515,24 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     return df
 
 
-def create_fan_curves(cfm_info: str = f'{_input_directory}sitecfminfo.csv', site_info: str = f'{_input_directory}site_info.csv') -> pd.DataFrame:
+def create_fan_curves(cfm_info: pd.Series, site_info: pd.Series) -> pd.DataFrame:
     """
     Create fan curves for each site.
     Args:
-        cfm_info (str): string containing the csv directory of fan curve information. (Default: f'{_input_directory}sitecfminfo.csv')
-        site_info (str): string containing the csv directory containing the site information. (Default: f'{_input_directory}site_info.csv')
+        cfm_info (pd.Series): Series of fan curve information.
+        site_info (pd.Series): Series containing the site information.
     Returns:
         pd.DataFrame: Dataframe containing the fan curves for each site.
     """
 
-    # Read in data
-    cfm_info = pd.read_csv(cfm_info, encoding_errors='ignore')
-    site_info = pd.read_csv(site_info, encoding_errors='ignore')
-
     # Convert furnace power from kW to W
     site_info['furn_misc_power'] *= 1000
 
-    # Calculate furnace power to remove for each row
-    def calculate_watts_to_remove(row: pd.Series):
-        """
-        Calculate the amount of furnace power to remove from the blower power.
-        Args:
-            row (pd.Series): Series containing the row data.
-        Returns:
-            float: Amount of furnace power to remove.
-        """
-        if np.isnan(row['ID_blower_rms_watts']) or 'heat' not in row['mode']:
-            return 0
-        site_row = site_info.loc[site_info['site'] == row['site']]
-        return site_row['furn_misc_power'].values[0]
+    # Calculate furnace power to remove from blower power
+    cfm_info['watts_to_remove'] = site_info['furn_misc_power']
+    cfm_info['watts_to_remove'] = cfm_info['watts_to_remove'].fillna(0)
+    cfm_info['watts_to_remove'] = cfm_info['watts_to_remove'].where(cfm_info['mode'].str.contains('heat'), 0)
 
-    cfm_info['watts_to_remove'] = cfm_info.apply(
-        calculate_watts_to_remove, axis=1)
-    
-    print(cfm_info['watts_to_remove'])
     # Subtract furnace power from blower power
     mask = cfm_info['watts_to_remove'] != 0
     cfm_info.loc[mask, 'ID_blower_rms_watts'] = cfm_info.loc[mask,
@@ -638,3 +618,36 @@ def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
 
     return df
 
+
+def get_site_info(site: str) -> pd.Series:
+    """
+    Returns a dataframe of the site information for the given site
+    
+    Args:
+        site (str): The site name
+        
+    Returns:
+        df (pd.Series): The Series of the site information
+    """
+    site_info_path = _input_directory + configure.get('input', 'site_info')
+    df = pd.read_csv(site_info_path, skiprows=[1])
+    df.dropna(how='all', inplace=True)
+    df = df[df['site'] == site]
+    return df.squeeze()
+
+
+def get_site_cfm_info(site: str) -> pd.Series:
+    """
+    Returns a dataframe of the site cfm information for the given site
+    NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.
+    
+    Args:
+        site (str): The site name
+        
+    Returns:
+        df (pd.Series): The Series of the site cfm information
+    """
+    site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
+    df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
+    df = df.loc[df['site'] == site]
+    return df.squeeze()
