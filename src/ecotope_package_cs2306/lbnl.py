@@ -355,18 +355,18 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
-def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
+def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
     """
-    Function filters the filenames list to only those newer than the last date.
+    Function filters the filenames list to only those from the given date.
     
     Args: 
-        last_date (str): latest date loaded prior to current runtime
+        date (str): target date
         filenames (List[str]): List of filenames to be filtered
     Returns: 
         List[str]: Filtered list of filenames
     """
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
+    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') == last_date, filenames))
 
 
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
