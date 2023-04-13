@@ -551,10 +551,13 @@ def create_fan_curves(cfm_info: str = f'{_input_directory}sitecfminfo.csv', site
 
     cfm_info['watts_to_remove'] = cfm_info.apply(
         calculate_watts_to_remove, axis=1)
-
+    
+    print(cfm_info['watts_to_remove'])
     # Subtract furnace power from blower power
     mask = cfm_info['watts_to_remove'] != 0
-    cfm_info.loc[mask, 'ID_blower_rms_watts'] -= cfm_info['watts_to_remove']
+    cfm_info.loc[mask, 'ID_blower_rms_watts'] = cfm_info.loc[mask,
+                                                             'ID_blower_rms_watts'] - cfm_info.loc[mask, 'watts_to_remove']
+    #cfm_info.loc[mask, 'ID_blower_rms_watts'] -= cfm_info['watts_to_remove']
 
     # Group by site and estimate coefficients
     by_site = cfm_info.groupby('site')
