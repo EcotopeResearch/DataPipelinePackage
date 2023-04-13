@@ -529,8 +529,8 @@ def create_fan_curves(cfm_info: str = f'{_input_directory}sitecfminfo.csv', site
     """
 
     # Read in data
-    cfm_info = pd.read_csv(cfm_info, errors='ignore')
-    site_info = pd.read_csv(site_info, errors='ignore')
+    cfm_info = pd.read_csv(cfm_info, encoding_errors='ignore')
+    site_info = pd.read_csv(site_info, encoding_errors='ignore')
 
     # Convert furnace power from kW to W
     site_info['furn_misc_power'] *= 1000
