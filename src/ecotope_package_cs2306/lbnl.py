@@ -445,7 +445,8 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
 def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     LBNL's nclarity files do not contain the date in the time column. This
-    function extracts the date from the filename and adds it to the data.
+    helper function extracts the date from the filename and adds it to the 
+    time column of the data.
 
     Args: 
         df (pd.DataFrame): Dataframe
