@@ -365,8 +365,8 @@ def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
     Returns: 
         List[str]: Filtered list of filenames
     """
-    last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') == last_date, filenames))
+    date = dt.datetime.strptime(date, '%Y-%m-%d')
+    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') == date, filenames))
 
 
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
