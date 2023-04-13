@@ -392,7 +392,7 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     return df
 
 
-def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = 'input/previous.pkl') -> List[str]:
+def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = f'{_input_directory}previous.pkl') -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
     Args: 
@@ -518,19 +518,20 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     return df
 
 
-def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.DataFrame) -> pd.DataFrame:
+def create_fan_curves(cfm_info: str = f'{_input_directory}sitecfminfo.csv', site_info: str = f'{_input_directory}site_info.csv') -> pd.DataFrame:
     """
     Create fan curves for each site.
     Args:
-        cfm_info (pd.DataFrame): Dataframe containing the fan curve information.
-        site_info (pd.DataFrame): Dataframe containing the site information.
+        cfm_info (str): string containing the csv directory of fan curve information. (Default: f'{_input_directory}sitecfminfo.csv')
+        site_info (str): string containing the csv directory containing the site information. (Default: f'{_input_directory}site_info.csv')
     Returns:
         pd.DataFrame: Dataframe containing the fan curves for each site.
     """
-    # Make a copy of the dataframes to avoid modifying the original data
-    cfm_info = cfm_info.copy()
-    site_info = site_info.copy()
 
+    # Read in data
+    cfm_info = pd.read_csv(cfm_info)
+    site_info = pd.read_csv(site_info)
+    
     # Convert furnace power from kW to W
     site_info['furn_misc_power'] *= 1000
 
