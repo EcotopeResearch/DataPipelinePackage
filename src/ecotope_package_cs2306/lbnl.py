@@ -453,6 +453,7 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     date = filename[-18:-8]
     df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
+    df['time'] = pd.to_datetime(df['time'])
     return df
 
 
