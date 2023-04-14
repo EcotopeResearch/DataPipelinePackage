@@ -382,7 +382,7 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
             print("File Not Found: ", filename)
             return
 
-        if len(data) != 0:
+        if not data.empty:
             data = _add_date(data, filename)
             temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
