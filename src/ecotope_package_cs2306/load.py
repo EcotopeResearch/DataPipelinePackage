@@ -8,6 +8,7 @@ from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 import mysql.connector.errors as mysqlerrors
 import datetime
+import numpy as np
 
 def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
@@ -43,7 +44,7 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     }
 
     db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
-                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
+                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers[1:]}
     
     db_connection_info.update(db_table_info)
 
@@ -268,3 +269,23 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
+
+
+if __name__ == "__main__":
+    dummy_index1 = [f'2022-01-01 09:{min}:00' for min in range(60)]
+    dummy_index2 = [f'2022-01-01 10:{min}:00' for min in range(60)]
+
+    # w/o Flow_CityWater_atSkid, Temp_PrimaryPlantDelta_BTU, EnergyOut_PrimaryPlant_BTU
+    dummy_column1 = ['Temp_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Vol_CityWater_Tot', 'EnergyIn_CircPump', 'PowerIn_CircPump', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1_FM', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2_FM', 'Temp_HotStorageInMechRoom', 'Temp_RecircSupply_MXV1', 'ValvePosition_MXV1', 'Temp_HotInlet_MXV1', 'Temp_RecircReturn_MXV1', 'Temp_RecircSupply_MXV2', 'ValvePosition_MXV2', 'Temp_HotInlet_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SkidControlPanel', 'EnergyIn_SkidControlPanel', 'EnergyIn_SkidLights', 'PowerIn_SkidLights', 'EnergyIn_HPWH', 'PowerIn_HPWH', 'EnergyIn_SkidPump', 'PowerIn_SkidPump', 'EnergyIn_ERTank1', 'PowerIn_ERTank1', 'EnergyIn_ERTank2', 'PowerIn_ERTank2', 'EnergyIn_ERTank5', 'PowerIn_ERTank5', 'EnergyIn_ERTank6', 'PowerIn_ERTank6', 'Temp_HPWHCondensing', 'Temp_HPWHEvaporating', 'Temp1_ST2_high_TH15', 'Temp5_ST2_low_TH16', 'Temp_PrimaryStorageOutBottom_TH17', 'Code_QAHVFault', 'Frequency_QAHV', 'Status_QAHV_HPOnOff', 'OAT_HPWH', 'Status_QAHV_RCProhibitMode', 'Status_QAHV_RCProhibitOnOff', 'Status_QAHV_RCProhibitSetTemp', 'Temp_HPWH_Setpoint', 'Temp_ThermoOff_Setpoint', 'Status_QAHV_3WayValve', 'Temp_HPWHInlet', 'Temp_HPWHOutlet', 'Status_QAHVPump', 'Duty_QAHVPump', 'Capacity_QAHV', 'Temp_SecLoopHexInlet', 'Temp_SecLoopHexOutlet', 'Flow_SecLoop', 'PowerIn_SecLoopPump', 'Temp_Pump_Setpoint', 'Temp_SecLoopSetPt', 'Temp5_ST1_low', 'Temp4_ST1', 'Temp3_ST1', 'Temp2_ST1', 'Temp1_ST1_high', 'Temp4_ST2', 'Temp3_ST2', 'Temp2_ST2', 'Temp5_ST3_low', 'Temp4_ST3', 'Temp3_ST3', 'Temp2_ST3', 'Temp1_ST3_high', 'MXV1_ErrorCode', 'MXV2_ErrorCode', 'MXV1_MixedOutletSetpoint_F', 'MXV2_MixedOutletSetpoint_F', 'PowerMeter_SkidAux_Energy', 'PowerMeter_SkidAux_Power', 'ProconA1M_CapacityOfSupplyingElectricity', 'ProconA1M_ExternalWaterTemperature2_TH16_1_Calc', 'ProconA1M_ExternalWaterTemperature4_TH15_2', 'ProconA1M_ExternalWaterTemperature6_TH17_2']
+    dummy_column2 = ['Temp_PrimaryPlantDelta_BTU', 'EnergyOut_PrimaryPlant_BTU', 'Flow_CityWater_atSkid', 'Temp_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Vol_CityWater_Tot', 'EnergyIn_CircPump', 'PowerIn_CircPump', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1_FM', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2_FM', 'Temp_HotStorageInMechRoom', 'Temp_RecircSupply_MXV1', 'ValvePosition_MXV1', 'Temp_HotInlet_MXV1', 'Temp_RecircReturn_MXV1', 'Temp_RecircSupply_MXV2', 'ValvePosition_MXV2', 'Temp_HotInlet_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SkidControlPanel', 'EnergyIn_SkidControlPanel', 'EnergyIn_SkidLights', 'PowerIn_SkidLights', 'EnergyIn_HPWH', 'PowerIn_HPWH', 'EnergyIn_SkidPump', 'PowerIn_SkidPump', 'EnergyIn_ERTank1', 'PowerIn_ERTank1', 'EnergyIn_ERTank2', 'PowerIn_ERTank2', 'EnergyIn_ERTank5', 'PowerIn_ERTank5', 'EnergyIn_ERTank6', 'PowerIn_ERTank6', 'Temp_HPWHCondensing', 'Temp_HPWHEvaporating', 'Temp1_ST2_high_TH15', 'Temp5_ST2_low_TH16', 'Temp_PrimaryStorageOutBottom_TH17', 'Code_QAHVFault', 'Frequency_QAHV', 'Status_QAHV_HPOnOff', 'OAT_HPWH', 'Status_QAHV_RCProhibitMode', 'Status_QAHV_RCProhibitOnOff', 'Status_QAHV_RCProhibitSetTemp', 'Temp_HPWH_Setpoint', 'Temp_ThermoOff_Setpoint', 'Status_QAHV_3WayValve', 'Temp_HPWHInlet', 'Temp_HPWHOutlet', 'Status_QAHVPump', 'Duty_QAHVPump', 'Capacity_QAHV', 'Temp_SecLoopHexInlet', 'Temp_SecLoopHexOutlet', 'Flow_SecLoop', 'PowerIn_SecLoopPump', 'Temp_Pump_Setpoint', 'Temp_SecLoopSetPt', 'Temp5_ST1_low', 'Temp4_ST1', 'Temp3_ST1', 'Temp2_ST1', 'Temp1_ST1_high', 'Temp4_ST2', 'Temp3_ST2', 'Temp2_ST2', 'Temp5_ST3_low', 'Temp4_ST3', 'Temp3_ST3', 'Temp2_ST3', 'Temp1_ST3_high', 'MXV1_ErrorCode', 'MXV2_ErrorCode', 'MXV1_MixedOutletSetpoint_F', 'MXV2_MixedOutletSetpoint_F', 'PowerMeter_SkidAux_Energy', 'PowerMeter_SkidAux_Power', 'ProconA1M_CapacityOfSupplyingElectricity', 'ProconA1M_ExternalWaterTemperature2_TH16_1_Calc', 'ProconA1M_ExternalWaterTemperature4_TH15_2', 'ProconA1M_ExternalWaterTemperature6_TH17_2']
+
+    dummy_1 = pd.DataFrame(np.random.randint(0, 100, size=(60, 85)), columns=dummy_column1, index=dummy_index1)
+    dummy_2 = pd.DataFrame(np.random.randint(0, 100, size=(60, 88)), columns=dummy_column2, index=dummy_index2)
+    
+    db_info = get_login_info(["database", "minute", "hour", "day"], "config.ini")
+    cxn, cursor = connect_db(db_info["database"])
+
+    load_database(cursor, dummy_1, db_info, "minute")
+    # load_database(cursor, dummy_2, db_info, "minute")
+
+    cxn.commit()
