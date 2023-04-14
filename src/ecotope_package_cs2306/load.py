@@ -16,7 +16,9 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     Args: 
         table_headers (list): A list of table headers. These headers must correspond to the 
             section headers in the config.ini file. Your list must contain the section
-            header for each table you wish to write into. 
+            header for each table you wish to write into. The first header must correspond 
+            to the login information of the database. The other are the tables which you wish
+            to write to. 
         config_info (str): A path to the config.ini file must also be passed.
 
     Returns: 
@@ -122,6 +124,26 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     return True
 
 
+def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, data_type: str):
+    cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
+                          f"{config_dict['database']['database']}' and table_name = '"
+                          f"{config_dict[data_type]['table_name']}'")
+    
+    current_table_names = list(cursor.fetchall())
+    current_table_names = [name[0] for name in current_table_names]
+    df_names = list(dataframe.columns)
+
+    return [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
+
+
+def create_new_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, data_type: str, new_columns: list):
+    table_name = config_dict[data_type]["table_name"] 
+    alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} float default null;" for column in new_columns]
+
+    for sql_statement in alter_table_statements:
+        cursor.execute(sql_statement)
+
+
 def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
     """
     Loads given pandas DataFrame into a mySQL table.
@@ -160,6 +182,10 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
         if not create_new_table(cursor, table_name, sensor_names.split(",")[1:]): #split on colums and remove first column aka time_pt
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
+        
+    missing_cols = find_missing_columns(cursor, dataframe, config_info, data_type)
+    if len(missing_cols):
+        create_new_columns(cursor, dataframe, config_info, data_type, missing_cols)
 
     for index, row in dataframe.iterrows():
         time_data = row.values.tolist()
