@@ -388,7 +388,7 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
-def aqsuite_prep_time(df : pd.DataFrame) -> pd.Dataframe:
+def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
     """
     Function takes an aqsuite dataframe and converts the time column into datetime type
     and sorts the entire dataframe by time.
