@@ -8,7 +8,7 @@ from ecotope_package_cs2306.config import _config_directory
 pd.set_option('display.max_columns', None)
 import mysql.connector.errors as mysqlerrors
 import datetime
-import numpy as np
+
 
 def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
@@ -126,9 +126,29 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
 
 
 def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, data_type: str):
-    cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
-                          f"{config_dict['database']['database']}' and table_name = '"
-                          f"{config_dict[data_type]['table_name']}'")
+    """
+    Finds the column names which are not in the database table currently but are present
+    in the pandas DataFrame to be written to the database. If communication with database
+    is not possible, an empty list will be returned meaning no column will be added. 
+
+    Args: 
+        cursor: A cursor object and the name of the table to be created.
+        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
+        config_info (dict): The dictionary containing the configuration information 
+        data_type (str): the header name corresponding to the table you wish to write data to.  
+
+    Returns: 
+        list: list of column names which must be added to the database table for the pandas 
+        DataFrame to be properly written into the database. 
+    """
+
+    try:
+        cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
+                            f"{config_dict['database']['database']}' and table_name = '"
+                            f"{config_dict[data_type]['table_name']}'")
+    except mysqlerrors.DatabaseError:
+        print("Check if the mysql table to be written to exists.")
+        return []
     
     current_table_names = list(cursor.fetchall())
     current_table_names = [name[0] for name in current_table_names]
@@ -137,12 +157,32 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, dat
     return [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
 
 
-def create_new_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, data_type: str, new_columns: list):
+def create_new_columns(cursor, config_dict: dict, data_type: str, new_columns: list):
+    """
+    Create the new, necessary column in the database. Catches error if communication with mysql database
+    is not possible.
+
+    Args: 
+        cursor: A cursor object and the name of the table to be created.`
+        config_info (dict): The dictionary containing the configuration information.
+        data_type (str): the header name corresponding to the table you wish to write data to.  
+        new_columns (list): list of columns that must be added to the database table.
+
+    Returns: 
+        bool: boolean indicating if the the column were successfully added to the database. 
+    """
+        
     table_name = config_dict[data_type]["table_name"] 
     alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} float default null;" for column in new_columns]
 
     for sql_statement in alter_table_statements:
-        cursor.execute(sql_statement)
+        try:
+            cursor.execute(sql_statement)
+        except mysqlerrors.DatabaseError:
+            print("Error communicating with the mysql database.")
+            return False
+
+    return True
 
 
 def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
@@ -186,7 +226,8 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
         
     missing_cols = find_missing_columns(cursor, dataframe, config_info, data_type)
     if len(missing_cols):
-        create_new_columns(cursor, dataframe, config_info, data_type, missing_cols)
+        if not create_new_columns(cursor, dataframe, config_info, data_type, missing_cols):
+            print("Unable to add new column due to database error.")
 
     for index, row in dataframe.iterrows():
         time_data = row.values.tolist()
@@ -269,23 +310,3 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
-
-
-if __name__ == "__main__":
-    dummy_index1 = [f'2022-01-01 09:{min}:00' for min in range(60)]
-    dummy_index2 = [f'2022-01-01 10:{min}:00' for min in range(60)]
-
-    # w/o Flow_CityWater_atSkid, Temp_PrimaryPlantDelta_BTU, EnergyOut_PrimaryPlant_BTU
-    dummy_column1 = ['Temp_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Vol_CityWater_Tot', 'EnergyIn_CircPump', 'PowerIn_CircPump', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1_FM', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2_FM', 'Temp_HotStorageInMechRoom', 'Temp_RecircSupply_MXV1', 'ValvePosition_MXV1', 'Temp_HotInlet_MXV1', 'Temp_RecircReturn_MXV1', 'Temp_RecircSupply_MXV2', 'ValvePosition_MXV2', 'Temp_HotInlet_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SkidControlPanel', 'EnergyIn_SkidControlPanel', 'EnergyIn_SkidLights', 'PowerIn_SkidLights', 'EnergyIn_HPWH', 'PowerIn_HPWH', 'EnergyIn_SkidPump', 'PowerIn_SkidPump', 'EnergyIn_ERTank1', 'PowerIn_ERTank1', 'EnergyIn_ERTank2', 'PowerIn_ERTank2', 'EnergyIn_ERTank5', 'PowerIn_ERTank5', 'EnergyIn_ERTank6', 'PowerIn_ERTank6', 'Temp_HPWHCondensing', 'Temp_HPWHEvaporating', 'Temp1_ST2_high_TH15', 'Temp5_ST2_low_TH16', 'Temp_PrimaryStorageOutBottom_TH17', 'Code_QAHVFault', 'Frequency_QAHV', 'Status_QAHV_HPOnOff', 'OAT_HPWH', 'Status_QAHV_RCProhibitMode', 'Status_QAHV_RCProhibitOnOff', 'Status_QAHV_RCProhibitSetTemp', 'Temp_HPWH_Setpoint', 'Temp_ThermoOff_Setpoint', 'Status_QAHV_3WayValve', 'Temp_HPWHInlet', 'Temp_HPWHOutlet', 'Status_QAHVPump', 'Duty_QAHVPump', 'Capacity_QAHV', 'Temp_SecLoopHexInlet', 'Temp_SecLoopHexOutlet', 'Flow_SecLoop', 'PowerIn_SecLoopPump', 'Temp_Pump_Setpoint', 'Temp_SecLoopSetPt', 'Temp5_ST1_low', 'Temp4_ST1', 'Temp3_ST1', 'Temp2_ST1', 'Temp1_ST1_high', 'Temp4_ST2', 'Temp3_ST2', 'Temp2_ST2', 'Temp5_ST3_low', 'Temp4_ST3', 'Temp3_ST3', 'Temp2_ST3', 'Temp1_ST3_high', 'MXV1_ErrorCode', 'MXV2_ErrorCode', 'MXV1_MixedOutletSetpoint_F', 'MXV2_MixedOutletSetpoint_F', 'PowerMeter_SkidAux_Energy', 'PowerMeter_SkidAux_Power', 'ProconA1M_CapacityOfSupplyingElectricity', 'ProconA1M_ExternalWaterTemperature2_TH16_1_Calc', 'ProconA1M_ExternalWaterTemperature4_TH15_2', 'ProconA1M_ExternalWaterTemperature6_TH17_2']
-    dummy_column2 = ['Temp_PrimaryPlantDelta_BTU', 'EnergyOut_PrimaryPlant_BTU', 'Flow_CityWater_atSkid', 'Temp_CityWater_atSkid', 'Temp_PrimaryStorageOutTop', 'Vol_CityWater_Tot', 'EnergyIn_CircPump', 'PowerIn_CircPump', 'Flow_CityWater', 'Temp_CityWater', 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1_FM', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2_FM', 'Temp_HotStorageInMechRoom', 'Temp_RecircSupply_MXV1', 'ValvePosition_MXV1', 'Temp_HotInlet_MXV1', 'Temp_RecircReturn_MXV1', 'Temp_RecircSupply_MXV2', 'ValvePosition_MXV2', 'Temp_HotInlet_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SkidControlPanel', 'EnergyIn_SkidControlPanel', 'EnergyIn_SkidLights', 'PowerIn_SkidLights', 'EnergyIn_HPWH', 'PowerIn_HPWH', 'EnergyIn_SkidPump', 'PowerIn_SkidPump', 'EnergyIn_ERTank1', 'PowerIn_ERTank1', 'EnergyIn_ERTank2', 'PowerIn_ERTank2', 'EnergyIn_ERTank5', 'PowerIn_ERTank5', 'EnergyIn_ERTank6', 'PowerIn_ERTank6', 'Temp_HPWHCondensing', 'Temp_HPWHEvaporating', 'Temp1_ST2_high_TH15', 'Temp5_ST2_low_TH16', 'Temp_PrimaryStorageOutBottom_TH17', 'Code_QAHVFault', 'Frequency_QAHV', 'Status_QAHV_HPOnOff', 'OAT_HPWH', 'Status_QAHV_RCProhibitMode', 'Status_QAHV_RCProhibitOnOff', 'Status_QAHV_RCProhibitSetTemp', 'Temp_HPWH_Setpoint', 'Temp_ThermoOff_Setpoint', 'Status_QAHV_3WayValve', 'Temp_HPWHInlet', 'Temp_HPWHOutlet', 'Status_QAHVPump', 'Duty_QAHVPump', 'Capacity_QAHV', 'Temp_SecLoopHexInlet', 'Temp_SecLoopHexOutlet', 'Flow_SecLoop', 'PowerIn_SecLoopPump', 'Temp_Pump_Setpoint', 'Temp_SecLoopSetPt', 'Temp5_ST1_low', 'Temp4_ST1', 'Temp3_ST1', 'Temp2_ST1', 'Temp1_ST1_high', 'Temp4_ST2', 'Temp3_ST2', 'Temp2_ST2', 'Temp5_ST3_low', 'Temp4_ST3', 'Temp3_ST3', 'Temp2_ST3', 'Temp1_ST3_high', 'MXV1_ErrorCode', 'MXV2_ErrorCode', 'MXV1_MixedOutletSetpoint_F', 'MXV2_MixedOutletSetpoint_F', 'PowerMeter_SkidAux_Energy', 'PowerMeter_SkidAux_Power', 'ProconA1M_CapacityOfSupplyingElectricity', 'ProconA1M_ExternalWaterTemperature2_TH16_1_Calc', 'ProconA1M_ExternalWaterTemperature4_TH15_2', 'ProconA1M_ExternalWaterTemperature6_TH17_2']
-
-    dummy_1 = pd.DataFrame(np.random.randint(0, 100, size=(60, 85)), columns=dummy_column1, index=dummy_index1)
-    dummy_2 = pd.DataFrame(np.random.randint(0, 100, size=(60, 88)), columns=dummy_column2, index=dummy_index2)
-    
-    db_info = get_login_info(["database", "minute", "hour", "day"], "config.ini")
-    cxn, cursor = connect_db(db_info["database"])
-
-    load_database(cursor, dummy_1, db_info, "minute")
-    # load_database(cursor, dummy_2, db_info, "minute")
-
-    cxn.commit()
