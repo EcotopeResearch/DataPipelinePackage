@@ -467,8 +467,8 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
         pd.DataFrame: Modified dataframe
     """
     date = filename[-18:-8]
-    df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
-    df['time'] = pd.to_datetime(df['time'])
+    format = '%Y-%m-%d %H:%M'
+    df['time'] = df.apply(lambda row: dt.datetime.strptime(date + " " + str(row['time']), format), axis=1)
     return df
 
 
