@@ -388,6 +388,21 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
+def aqsuite_prep_time(df : pd.DataFrame) -> pd.Dataframe:
+    """
+    Function takes an aqsuite dataframe and converts the time column into datetime type
+    and sorts the entire dataframe by time.
+    Prereq: 
+        Input dataframe MUST be an aqsuite Dataframe whose columns have not yet been renamed
+    Args: 
+        df (pd.DataFrame): Aqsuite DataFrame
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing data from all files
+    """
+    df['time(UTC)'] = pd.to_datetime(df['time_utc'])
+    df = df.sort_values(by='time(UTC)')
+    return df
+
 
 def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = f'{_input_directory}previous.pkl') -> List[str]:
     """
