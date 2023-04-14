@@ -399,7 +399,8 @@ def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
     Returns: 
         pd.DataFrame: Pandas Dataframe containing data from all files
     """
-    df['time(UTC)'] = pd.to_datetime(df['time(UTC)'])
+    format = "%Y-%m-%d %H:%M"
+    df['time(UTC)'] = df.apply(lambda row: dt.datetime.strptime(row['time(UTC)'], format), axis=1)
     df = df.sort_values(by='time(UTC)')
     return df
 
