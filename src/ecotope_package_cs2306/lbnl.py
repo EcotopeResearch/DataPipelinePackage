@@ -492,7 +492,7 @@ def add_local_time(df : pd.DataFrame, site_name : str) -> pd.DataFrame:
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
     if not site_info_df.empty:
         local_tz = pytz.timezone(site_info_df['local_tz'])
-        df['time_local'] = df.apply(lambda row: row['time_utc'].replace(tzinfo=pytz.utc).astimezone(local_tz), axis=1)
+        df['time_local'] = df.apply(lambda row: row['time_utc'].astimezone(pytz.timezone(local_tz)), axis=1)
 
     return df
 
