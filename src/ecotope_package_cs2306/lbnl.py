@@ -472,6 +472,30 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     return df
 
 
+def add_local_time(df : pd.DataFrame, site_name : str) -> pd.DataFrame:
+    """
+    Function adds a column to the dataframe with the local time.
+
+    Args:
+        df (pd.DataFrame): Dataframe
+        site_name (str): site name 
+    """
+    input_dir = configure.get('input', 'directory')
+    site_info_path = input_dir + configure.get('input', 'site_info')
+
+    try:
+        site_info_df = pd.read_csv(site_info_path)
+    except FileNotFoundError:
+        print("File Not Found: ", site_info_path)
+        return
+    
+    site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
+    if not site_info_df.empty:
+        local_tz = pytz.timezone(site_info_df['local_tz'])
+        df['time_local'] = df.apply(lambda row: row['time_utc'].replace(tzinfo=pytz.utc).astimezone(local_tz), axis=1)
+
+    return df
+
 def elev_correction(site_name : str) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
