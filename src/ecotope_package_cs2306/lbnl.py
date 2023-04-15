@@ -399,8 +399,7 @@ def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
     Returns: 
         pd.DataFrame: Pandas Dataframe containing data from all files
     """
-    format = "%Y-%m-%d %H:%M"
-    df['time(UTC)'] = df.apply(lambda row: dt.datetime.strptime(row['time(UTC)'], format), axis=1)
+    df['time(UTC)'] = pd.to_datetime(df['time(UTC)'])
     df = df.sort_values(by='time(UTC)')
     return df
 
@@ -468,8 +467,8 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
         pd.DataFrame: Modified dataframe
     """
     date = filename[-18:-8]
-    format = "%Y-%m-%d %H:%M"
-    df['time'] = df.apply(lambda row: dt.datetime.strptime(date + " " + str(row['time']), format), axis=1)
+    df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
+    df['time'] = pd.to_datetime(df['time'])
     return df
 
 
