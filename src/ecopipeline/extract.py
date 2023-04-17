@@ -50,6 +50,34 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
 
     return return_time
 
+def get_db_row_from_time(time: datetime) -> pd.DataFrame:
+    """
+    Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists
+
+    Args:
+        time (datetime): The time index to get the row from
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing the row or empty if no row exists for the timestamp
+    """
+    config_dict = get_login_info(["minute"])
+    db_connection, db_cursor = connect_db(config_info=config_dict['database'])
+    row_data = pd.DataFrame()
+
+    try:
+        db_cursor.execute(
+            f"SELECT * FROM {config_dict['minute']['table_name']} WHERE time_pt = '{time}'")
+
+        row_data = pd.DataFrame(db_cursor.fetchall())
+    except mysqlerrors.Error as e:
+        print("Error executing sql query.")
+        print("MySQL error: {}".format(e))
+
+    db_cursor.close()
+    db_connection.close()
+
+    return row_data
+
+
 
 def extract_new(time: datetime, json_filenames: List[str]) -> List[str]:
     """

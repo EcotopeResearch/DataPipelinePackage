@@ -86,3 +86,6 @@ def energy_btu_to_kwh(sensor_readings):
 
 def energy_kwh_to_kbtu(gpm, delta_t):
     return 60 * 8.33 * gpm * delta_t / 1000
+
+def power_flow_to_kW(gpm, delta_t):
+    return 60 * 8.33 * gpm * delta_t / 3412
