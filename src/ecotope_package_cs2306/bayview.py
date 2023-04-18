@@ -5,7 +5,7 @@ from ecotope_package_cs2306.unit_convert import energy_btu_to_kwh, energy_kwh_to
 
 
 
-def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
+def _set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that initializes the dataframe that holds the volumes of each zone.
 
@@ -66,7 +66,7 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
     try:
         tvadder = 0
         vadder = 0
-        gals_per_zone = set_zone_vol(location, gals, total, zones)
+        gals_per_zone = _set_zone_vol(location, gals, total, zones)
         dfcheck = df_row.filter(regex='top|mid|bottom')
         # An empty or invalid dataframe would have Vol120 and ZoneTemp120 as columns with
         # values of 0, so we check if the size is 0 without those columns if the dataframe has no data.
@@ -112,7 +112,7 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
         float: A float of the total volume of water > 120 degrees     
     """
     try:
-        gals_per_zone = set_zone_vol(location, gals, total, zones)
+        gals_per_zone = _set_zone_vol(location, gals, total, zones)
         temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
         if (temp_cols.size <= 3):
             return 0
