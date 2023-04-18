@@ -6,7 +6,6 @@ import re
 from typing import List
 import datetime as dt
 from sklearn.linear_model import LinearRegression
-from statsmodels.formula.api import ols
 from ecotope_package_cs2306.config import configure
 from ecotope_package_cs2306.config import _input_directory, _output_directory
 import os
@@ -517,19 +516,22 @@ def elev_correction(site_name : str) -> pd.DataFrame:
     
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
 
-    elev_ft = [0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000]
-    alt_corr_fact = [1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63]
-    cf_df = pd.DataFrame({'elev_ft': elev_ft, 'alt_corr_fact': alt_corr_fact})
+    if not site_info_df.empty and 'elev' in site_info_df.columns:
+        elev_ft = np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000])
+        alt_corr_fact = np.array([1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63])
+        cf_df = pd.DataFrame({'elev': elev_ft, 'alt_corr_fact': alt_corr_fact})
 
-    lin_model = ols(y = cf_df['alt_corr_fact'], x = cf_df['elev_ft'])
+        lin_model = LinearRegression().fit(cf_df['elev'], cf_df['alt_corr_fact'])
+        elv_df = site_info_df[['elev']].fillna(0)
+        air_corr = lin_model.predict(elv_df)
 
-    elv_df = site_info_df[['elev']].rename(columns={'elev': 'elev_ft'}).fillna(0)
-    air_corr = {'air_corr': lin_model.predict(exog=elv_df)}
-
-    site_air_corr = site_info_df[['site', 'elev']].assign(air_corr=lambda df: np.where(
-                            df['elev'].isna() | df['elev'] < 1000, 1, air_corr['air_corr']))
-  
-    return site_air_corr
+        site_air_corr = site_info_df[['site','elev']].copy()
+        site_air_corr = site_air_corr.assign(air_corr=1)
+        site_air_corr.loc[site_air_corr["elev"].notnull() & (site_air_corr["elev"] >= 1000), "air_corr"] = air_corr
+      
+        return site_air_corr
+    else:
+        return pd.DataFrame()
 
 
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward: dt.datetime, site_name: str) -> pd.DataFrame:
