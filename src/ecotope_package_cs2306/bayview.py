@@ -3,6 +3,220 @@ import os
 from ecotope_package_cs2306.config import _input_directory, _output_directory
 from ecotope_package_cs2306.unit_convert import energy_btu_to_kwh, energy_kwh_to_kbtu, energy_to_power
 
+
+
+def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
+    """
+    Function that initializes the dataframe that holds the volumes of each zone.
+
+    Args:
+        location (pd.Series)
+        gals (int) 
+        total (int) 
+        zones (pd.Series)
+    Returns: 
+        pd.DataFrame: Pandas dataframe
+    """
+    relative_loc = location
+    tank_frxn = relative_loc.subtract(relative_loc.shift(-1))
+    gal_per_tank = gals
+    tot_storage = total
+    zone_gals = tank_frxn * tot_storage
+    zone_gals = pd.Series.dropna(zone_gals)  # remove NA from leading math
+    zone_list = zones
+    gals_per_zone = pd.DataFrame({'Zone': zone_list, 'Zone_vol_g': zone_gals})
+    return gals_per_zone
+
+
+def _largest_less_than(df_row: pd.Series, target: int) -> str:
+    """
+    Function takes a list of gz/json filenames and a target temperature and determines
+    the zone with the highest temperature < 120 degrees.
+
+    Args: 
+        df_row (pd.DataFrame): A single row of a sensor Pandas Dataframe in a series 
+        target (int): integer target
+    Output: 
+        str: A string of the name of the zone.
+    """
+    count = 0
+    largest_less_than_120_tmp = []
+    for val in df_row:
+        if val < target:
+            largest_less_than_120_tmp = df_row.index[count]
+            break
+        count = count + 1
+
+    return largest_less_than_120_tmp
+
+# NOTE: Move to bayview.py
+def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series) -> float:
+    """
+    Function takes a row of sensor data and finds the total volume of water > 120 degrees.
+
+    Args: 
+        df_row (pd.Series) 
+        location (pd.Series)
+        gals (int)
+        total (int)
+        zones (pd.Series)
+    Returns: 
+        float: A float of the total volume of water > 120 degrees
+    """
+    try:
+        tvadder = 0
+        vadder = 0
+        gals_per_zone = set_zone_vol(location, gals, total, zones)
+        dfcheck = df_row.filter(regex='top|mid|bottom')
+        # An empty or invalid dataframe would have Vol120 and ZoneTemp120 as columns with
+        # values of 0, so we check if the size is 0 without those columns if the dataframe has no data.
+        if (dfcheck.size == 0):
+            return 0
+        dftemp = df_row.filter(
+            regex='Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
+        count = 1
+        for val in dftemp:
+            if dftemp.index[count] == "Temp_low":
+                vadder += gals_per_zone[gals_per_zone.columns[1]][count]
+                tvadder += val * gals_per_zone[gals_per_zone.columns[1]][count]
+                break
+            elif dftemp[dftemp.index[count + 1]] >= 120:
+                vadder += gals_per_zone[gals_per_zone.columns[1]][count]
+                tvadder += (dftemp[dftemp.index[count + 1]] + val) / \
+                    2 * gals_per_zone[gals_per_zone.columns[1]][count]
+            elif dftemp[dftemp.index[count + 1]] < 120:
+                vadder += dftemp.get('Vol120')
+                tvadder += dftemp.get('Vol120') * dftemp.get('ZoneTemp120')
+                break
+            count += 1
+        avg_temp_above_120 = tvadder / vadder
+        temp_ratio = (avg_temp_above_120 - dftemp[0]) / (120 - dftemp[0])
+        return (temp_ratio * vadder)
+    except ZeroDivisionError:
+        print("DIVIDED BY ZERO ERROR")
+        return 0
+
+# NOTE: Move to bayview.py
+def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
+    """
+    Function takes a row of sensor data and determines the volume of water > 120 degrees
+    in the zone that has the highest sensor < 120 degrees.
+
+    Args: 
+        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
+        location (pd.Series)
+        gals (int)
+        total (int)
+        zones (pd.Series)
+    Returns: 
+        float: A float of the total volume of water > 120 degrees     
+    """
+    try:
+        gals_per_zone = set_zone_vol(location, gals, total, zones)
+        temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
+        if (temp_cols.size <= 3):
+            return 0
+        name_cols = ""
+        name_cols = _largest_less_than(temp_cols, 120)
+        count = 0
+        for index in temp_cols.index:
+            if index == name_cols:
+                name_col_index = count
+                break
+            count += 1
+        dV = gals_per_zone['Zone_vol_g'][name_col_index]
+        V120 = (temp_cols[temp_cols.index[name_col_index]] - 120) / (
+            temp_cols[temp_cols.index[name_col_index]] - temp_cols[temp_cols.index[name_col_index - 1]]) * dV
+        return V120
+    except ZeroDivisionError:
+        print("DIVIDED BY ZERO ERROR")
+        return 0
+
+# NOTE: Move to bayview.py
+def _get_zone_Temp120(df_row: pd.Series) -> float:
+    """
+    Function takes a row of sensor data and determines the highest sensor < 120 degrees.
+
+    Args: 
+        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
+    Returns: 
+        float: A float of the average temperature of the zone < 120 degrees
+    """
+    # if df_row["Temp_120"] != 120:
+    #    return 0
+    temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
+    if (temp_cols.size <= 3):
+        return 0
+    name_cols = _largest_less_than(temp_cols, 120)
+    count = 0
+    for index in temp_cols.index:
+        if index == name_cols:
+            name_col_index = count
+            break
+        count += 1
+
+    zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
+    return zone_Temp_120
+
+# NOTE: Move to bayview.py
+def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
+    """
+    Function that creates and appends the Gals120 data onto the Dataframe
+
+    Args: 
+        df (pd.Series): A Pandas Dataframe
+        location (pd.Series)
+        gals (int)
+        total (int)
+        zones (pd.Series)
+    Returns: 
+        pd.DataFrame: a Pandas Dataframe
+    """
+    if (len(df) > 0):
+        df['Vol120'] = df.apply(_get_V120, args=(
+            location, gals, total, zones), axis=1)
+        df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
+        df['Vol_Equivalent_to_120'] = df.apply(
+            _get_vol_equivalent_to_120, args=(location, gals, total, zones), axis=1)
+
+    return df
+
+# NOTE: Move to bayview.py
+def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
+    """
+    Function that calculates the average temperature of the inputted zone.
+
+    Args: 
+        df (pd.Series): A Pandas Dataframe
+        substring (str)
+    Returns: 
+        pd.DataFrame: a Pandas Dataframe
+    """
+    try:
+        df_subset = df[[x for x in df if substring in x]]
+        result = df_subset.sum(axis=1, skipna=True) / df_subset.count(axis=1)
+        return result
+    except ZeroDivisionError:
+        print("DIVIDED BY ZERO ERROR")
+        return 0
+
+# NOTE: Move to bayview.py
+def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function that keeps track of the average temperature of each zone.
+
+    Args: 
+        df (pd.Series): A Pandas Dataframe
+    Returns: 
+        pd.DataFrame: a Pandas Dataframe
+    """
+    df['Temp_top'] = _calculate_average_zone_temp(df, "Temp1")
+    df['Temp_midtop'] = _calculate_average_zone_temp(df, "Temp2")
+    df['Temp_mid'] = _calculate_average_zone_temp(df, "Temp3")
+    df['Temp_midbottom'] = _calculate_average_zone_temp(df, "Temp4")
+    df['Temp_bottom'] = _calculate_average_zone_temp(df, "Temp5")
+    return df
+
 def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
     """
     Energy is recorded cummulatively. Function takes the lagged differences in 
