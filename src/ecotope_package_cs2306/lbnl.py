@@ -558,11 +558,11 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     return df
 
 
-def create_fan_curves(cfm_info: pd.Series, site_info: pd.Series) -> pd.DataFrame:
+def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
     """
     Create fan curves for each site.
     Args:
-        cfm_info (pd.Series): Series of fan curve information.
+        cfm_info (pd.DataFrame): DataFrame of fan curve information.
         site_info (pd.Series): Series containing the site information.
     Returns:
         pd.DataFrame: Dataframe containing the fan curves for each site.
@@ -679,7 +679,7 @@ def get_site_info(site: str) -> pd.Series:
     return df.squeeze()
 
 
-def get_site_cfm_info(site: str) -> pd.Series:
+def get_site_cfm_info(site: str) -> pd.DataFrame:
     """
     Returns a dataframe of the site cfm information for the given site
     NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.
@@ -688,9 +688,9 @@ def get_site_cfm_info(site: str) -> pd.Series:
         site (str): The site name
         
     Returns:
-        df (pd.Series): The Series of the site cfm information
+        df (pd.DataFrame): The DataFrame of the site cfm information
     """
     site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
     df = df.loc[df['site'] == site]
-    return df.squeeze()
+    return df
