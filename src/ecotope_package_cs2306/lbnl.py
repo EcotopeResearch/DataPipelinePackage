@@ -596,10 +596,11 @@ def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.Series) -> pd.DataFr
         X = group[['ID_blower_rms_watts']].values ** 0.3333 - 1
         y = group['ID_blower_cfm'].values
         return pd.Series(LinearRegression().fit(X, y).coef_)
-
+    print("HERE")
     fan_coeffs = by_site.apply(estimate_coefficients)
+    print(fan_coeffs)
+    fan_coeffs = fan_coeffs.reset_index()
     fan_coeffs.columns = ['a', 'b']
-
     return fan_coeffs
 
 
