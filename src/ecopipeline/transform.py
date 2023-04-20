@@ -402,46 +402,46 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
 #     return cop_values
 
-# def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
-#     # TODO this is specific for Maria and Antonia
-#     """
-#     Performs COP calculation method 2 as deffined by Scott's whiteboard image
-#     COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
+def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
+    # TODO this is specific for Maria and Antonia
+    """
+    Performs COP calculation method 2 as deffined by Scott's whiteboard image
+    COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
 
-#     Args: 
-#         df (pd.DataFrame): Pandas DataFrame to add COP columns to
-#         cop_tm (float): fixed COP value for temputure Maintenece system
-#         cop_primary_column_name (str): Name of the column used for COP_Primary values
+    Args: 
+        df (pd.DataFrame): Pandas DataFrame to add COP columns to
+        cop_tm (float): fixed COP value for temputure Maintenece system
+        cop_primary_column_name (str): Name of the column used for COP_Primary values
 
-#     Returns: 
-#         pd.DataFrame: Pandas DataFrame with the added COP columns. 
-#     """
-#     columns_to_check = [cop_primary_column_name, 'PowerIn_Total']
+    Returns: 
+        pd.DataFrame: Pandas DataFrame with the added COP columns. 
+    """
+    columns_to_check = [cop_primary_column_name, 'PowerIn_Total']
 
-#     missing_columns = [col for col in columns_to_check if col not in df.columns]
+    missing_columns = [col for col in columns_to_check if col not in df.columns]
 
-#     if missing_columns:
-#         print('Cannot calculate COP as the following columns are missing from the DataFrame:', missing_columns)
-#         return df
+    if missing_columns:
+        print('Cannot calculate COP as the following columns are missing from the DataFrame:', missing_columns)
+        return df
     
-#     # Create list of column names to sum
-#     sum_primary_cols = [col for col in df.columns if col.startswith('PowerIn_HPWH') or col == 'PowerIn_SecLoopPump']
-#     sum_tm_cols = [col for col in df.columns if col.startswith('PowerIn_SwingTank')]
+    # Create list of column names to sum
+    sum_primary_cols = [col for col in df.columns if col.startswith('PowerIn_HPWH') or col == 'PowerIn_SecLoopPump']
+    sum_tm_cols = [col for col in df.columns if col.startswith('PowerIn_SwingTank')]
 
-#     if len(sum_primary_cols) == 0:
-#         print('Cannot calculate COP as the primary power columns (such as PowerIn_HPWH and PowerIn_SecLoopPump) are missing from the DataFrame')
-#         return df
+    if len(sum_primary_cols) == 0:
+        print('Cannot calculate COP as the primary power columns (such as PowerIn_HPWH and PowerIn_SecLoopPump) are missing from the DataFrame')
+        return df
 
-#     if len(sum_tm_cols) == 0:
-#         print('Cannot calculate COP as the temperature maintenance power columns (such as PowerIn_SwingTank) are missing from the DataFrame')
-#         return df
+    if len(sum_tm_cols) == 0:
+        print('Cannot calculate COP as the temperature maintenance power columns (such as PowerIn_SwingTank) are missing from the DataFrame')
+        return df
     
-#     # Create new DataFrame with one column called 'PowerIn_Primary' that contains the sum of the specified columns
-#     sum_power_in_df = pd.DataFrame({'PowerIn_Primary': df[sum_primary_cols].sum(axis=1),
-#                                     'PowerIn_TM': df[sum_tm_cols].sum(axis=1)})
+    # Create new DataFrame with one column called 'PowerIn_Primary' that contains the sum of the specified columns
+    sum_power_in_df = pd.DataFrame({'PowerIn_Primary': df[sum_primary_cols].sum(axis=1),
+                                    'PowerIn_TM': df[sum_tm_cols].sum(axis=1)})
 
-#     df['COP_DHWSys_2'] = (df[cop_primary_column_name] * (sum_power_in_df['PowerIn_Primary']/df['PowerIn_Total'])) + (cop_tm * (sum_power_in_df['PowerIn_TM']/df['PowerIn_Total']))
-#     return df
+    df['COP_DHWSys_2'] = (df[cop_primary_column_name] * (sum_power_in_df['PowerIn_Primary']/df['PowerIn_Total'])) + (cop_tm * (sum_power_in_df['PowerIn_TM']/df['PowerIn_Total']))
+    return df
 
 # NOTE: Move to bayview.py
 # loops through a list of dateTime objects, compares if the date of that object matches the
