@@ -185,7 +185,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     Returns: 
         row (pd.Series): Pandas series (Refrig_charge added!)
     """
-    superheat_target = np.Nan
+    superheat_target = np.NaN
 
     #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
     # is null, just return the row early. 
@@ -204,9 +204,9 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     #NA checks, elif bound check, else interpolations
     if math.isnan(Temp_ODT or math.isnan(Temp_wb_F)):
         #filtering out na's in recorded data
-        superheat_target = np.Nan
+        superheat_target = np.NaN
     elif(Temp_ODT > max(row_range) or Temp_ODT < min(row_range) or Temp_wb_F > max(x_range) or Temp_wb_F < min(x_range)):
-        superheat_target = np.Nan
+        superheat_target = np.NaN
     else:
         #row_range exists so this can have yrange
         y_max = math.ceil(Temp_ODT/5) * 5
@@ -264,7 +264,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
     lr_model = LinearRegression().fit(X, y)
 
     #Creating Refrig_charge column populated w/None
-    df["Refrig_charge"] = np.Nan
+    df["Refrig_charge"] = np.NaN
 
     # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
