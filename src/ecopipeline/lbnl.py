@@ -8,6 +8,7 @@ import datetime as dt
 from sklearn.linear_model import LinearRegression
 from statsmodels.formula.api import ols
 from ecopipeline.config import configure
+from ecopipeline.config import _input_directory, _output_directory
 import os
 
 
@@ -28,8 +29,12 @@ def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     # All MO & IL sites.
     if re.search("(AZ2_01|AZ2_02|MO2_|IL2_|NW2_01)", site):
         # Calculation goes negative to -0.001 sometimes.
-        df["Power_OD_compressor1"] = (
-            df["Power_OD_total1"] - df["Power_OD_fan1"]).apply(lambda x: max(0, x))
+        print(df["Power_OD_total1"])
+        print(df["Power_OD_fan1"])
+        print(df["Power_OD_total1"] - df["Power_OD_fan1"])
+        df["Power_OD_compressor1"] = df["Power_OD_total1"] - df["Power_OD_fan1"]
+        df["Power_OD_compressor1"] = df["Power_OD_compressor1"].clip(lower=0)
+
         df["Power_system1"] = df["Power_OD_total1"] + df["Power_AH1"]
 
     elif re.search("(AZ2_03)", site):
@@ -71,34 +76,31 @@ def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
+
+def condensate_calculations(df: pd.DataFrame, site: str, site_info: pd.Series) -> pd.DataFrame:
     """
     Calculates condensate values for the given dataframe
 
     Args:
         df (pd.DataFrame): dataframe to be modified
         site (str): name of site
+        site_info (pd.Series): Series of site info
     Returns:
         pd.DataFrame: modified dataframe
     """
-    site_info_directory = configure.get('site_info', 'directory')
-    site_info = pd.read_csv(site_info_directory)
     oz_2_m3 = 1 / 33810  # [m3/oz]
     water_density = 997  # [kg/m³]
     water_latent_vaporization = 2264.705  # [kJ/kg]
 
     # Condensate calculations
     if "Condensate_ontime" in df.columns:
-        cycle_length = site_info.loc[site_info["site"]
-                                     == site, "condensate_cycle_length"].iloc[0]
-        oz_per_tip = site_info.loc[site_info["site"]
-                                   == site, "condensate_oz_per_tip"].iloc[0]
+        cycle_length = site_info["condensate_cycle_length"]
+        oz_per_tip = site_info["condensate_oz_per_tip"]
 
         df["Condensate_oz"] = df["Condensate_ontime"].diff().shift(-1).apply(
             lambda x: x / cycle_length * oz_per_tip if x else x)
     elif "Condensate_pulse_avg" in df.columns:
-        oz_per_tip = site_info.loc[site_info["site"]
-                                   == site, "condensate_oz_per_tip"].iloc[0]
+        oz_per_tip = site_info["condensate_oz_per_tip"]
 
         df["Condensate_oz"] = df["Condensate_pulse_avg"].apply(
             lambda x: x * oz_per_tip)
@@ -112,18 +114,20 @@ def condensate_calculations(df: pd.DataFrame, site: str) -> pd.DataFrame:
     return df
 
 
-def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str) -> pd.DataFrame:
+def gas_valve_diff(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
-    Function takes in the site dataframe, the site name, and path to the site_info file. If 
-    the site has gas heating, take the lagged difference to get per minute values. 
+    Function takes in the site dataframe and the site name. If the site has gas 
+    heating, take the lagged difference to get per minute values. 
     
     Args: 
         df (pd.DataFrame): Dataframe for site
         site (str): site name as string
-        site_info_path (str): path to site_info.csv as string
     Returns: 
         pd.DataFrame: new Pandas Dataframe 
     """
+    input_dir = configure.get('input', 'directory')
+    site_info_path = input_dir + configure.get('input', 'site_info')
+
     try:
         site_info = pd.read_csv(site_info_path)
     except FileNotFoundError:
@@ -184,8 +188,8 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     superheat_target = None
 
-    #TODO: IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
-    # is null, just return the row early (refrig_charge will be none!)
+    #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
+    # is null, just return the row early. 
     if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_LL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
         return row
 
@@ -232,8 +236,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     row.loc["Refrig_charge"] = r_charge[0]
     return row
 
-# NOTE: This function needs a THREE external csv files, do I really want them all in the parameter?
-def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
+def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"{_input_directory}site_info.csv", four_directory: str = f"{_input_directory}410a_pt.csv", superheat_directory: str = f"{_input_directory}superheat.csv") -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
@@ -247,14 +250,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
         superheat_path (str): path to superheat.csv as a string
     Returns: 
         pd.DataFrame: modified Pandas Dataframe
-    """
-    #configs
-    config = configure.get('input')
-    site_info_directory = f"{config['directory']}{config['site_info']}"
-    four_directory = f"{config['directory']}{config['410a_info']}"
-    superheat_directory = f"{config['directory']}{config['superheat_info']}"
-
-
+    """   
     #if DF empty, return the df as is
     if(df.empty):
         return df
@@ -262,7 +258,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_df = pd.read_csv(site_info_directory, index_col=0)
     metering_device = site_df.at[site, "metering_device"]
 
-    #NOTE: this specific lr_model is needed for both superheat AND subcooling!
+    #this specific lr_model is needed for both superheat AND subcooling!
     four_df = pd.read_csv(four_directory)
     X = np.array(four_df["pressure"].values.tolist()).reshape((-1, 1))
     y = np.array(four_df["temp"].values.tolist())
@@ -275,7 +271,12 @@ def get_refrig_charge(df: pd.DataFrame, site: str) -> pd.DataFrame:
     if (metering_device == "txv"):
         #calculate the refrigerant charge w/the subcooling method
         df = df.apply(_subcooling, axis=1, args=(lr_model,))
-    else:
+    elif (metering_device == "orifice"):
+        #If any crucial vars for calculating refrigerant charge are missing, we return early
+        var_names = df.columns.tolist() 
+        if "Temp_ODT" not in var_names or "Temp_RAT" not in var_names or "Humidity_RARH" not in var_names or "Pressure_LL_psi" not in var_names or "Temp_SL_C" not in var_names:
+            return df
+
         # calculate the refrigerant charge w/the superheat method
         superchart = pd.read_csv(superheat_directory)
         x_range = superchart.columns.values.tolist()
@@ -334,35 +335,35 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_info = pd.read_csv(site_info_directory)
     site_section = site_info[site_info["site"] == site]
     statePowerAHThreshold = pd.to_numeric(site_section["AH_standby_power"]) * 1.5
-    df["event_ID"] = np.NAN
-    df["event_ID"] = df["event_ID"].mask(df["Power_AH1"] > statePowerAHThreshold, 1)
+    df["event_ID"] = 0
+    df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
     event_ID = 1
 
     for i in range(1,len(df.index)):
-        if((math.isnan(df["event_ID"][i]) == False) and (df["event_ID"][i] == 1.0)):
+        if((df["event_ID"][i] > 0) and (df["event_ID"][i] == 1.0)):
             time_diff = (df["time"][i] - df["time"][i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
-        elif (math.isnan(df["event_ID"][i])):
-            if(math.isnan(df["event_ID"][i - 1]) == False):
+        elif (df["event_ID"][i] == 0):
+            if(df["event_ID"][i - 1] > 0):
                 event_ID += 1
-        df["event_ID"][i] = event_ID
+        df.at[i, "event_ID"] = event_ID
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
-def nclarity_filter_new(last_date: str, filenames: List[str]) -> List[str]:
+def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
     """
-    Function filters the filenames list to only those newer than the last date.
+    Function filters the filenames list to only those from the given date.
     
     Args: 
-        last_date (str): latest date loaded prior to current runtime
+        date (str): target date
         filenames (List[str]): List of filenames to be filtered
     Returns: 
         List[str]: Filtered list of filenames
     """
-    last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= last_date, filenames))
+    date = dt.datetime.strptime(date, '%Y-%m-%d')
+    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') == date, filenames))
 
 
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
@@ -381,14 +382,29 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
             print("File Not Found: ", filename)
             return
 
-        if len(data) != 0:
-            data = add_date(data, filename)
+        if not data.empty:
+            data = _add_date(data, filename)
             temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
     return df
 
+def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
+    """
+    Function takes an aqsuite dataframe and converts the time column into datetime type
+    and sorts the entire dataframe by time.
+    Prereq: 
+        Input dataframe MUST be an aqsuite Dataframe whose columns have not yet been renamed
+    Args: 
+        df (pd.DataFrame): Aqsuite DataFrame
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing data from all files
+    """
+    df['time(UTC)'] = pd.to_datetime(df['time(UTC)'])
+    df = df.sort_values(by='time(UTC)')
+    return df
 
-def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = 'input/previous.pkl') -> List[str]:
+
+def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = f'{_input_directory}previous.pkl') -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
     Args: 
@@ -438,10 +454,11 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
 
 
 
-def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
+def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     LBNL's nclarity files do not contain the date in the time column. This
-    function extracts the date from the filename and adds it to the data.
+    helper function extracts the date from the filename and adds it to the 
+    time column of the data.
 
     Args: 
         df (pd.DataFrame): Dataframe
@@ -451,41 +468,71 @@ def add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     """
     date = filename[-18:-8]
     df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
+    df['time'] = pd.to_datetime(df['time'])
     return df
 
 
-def elev_correction(site_info_file : str, site_name : str) -> pd.DataFrame:
+def add_local_time(df : pd.DataFrame, site_name : str) -> pd.DataFrame:
+    """
+    Function adds a column to the dataframe with the local time.
+
+    Args:
+        df (pd.DataFrame): Dataframe
+        site_name (str): site name 
+    """
+    input_dir = configure.get('input', 'directory')
+    site_info_path = input_dir + configure.get('input', 'site_info')
+
+    try:
+        site_info_df = pd.read_csv(site_info_path)
+    except FileNotFoundError:
+        print("File Not Found: ", site_info_path)
+        return
+    
+    site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
+    if not site_info_df.empty:
+        local_tz = pytz.timezone(site_info_df['local_tz'].str.upper())
+        df['time_local'] = df.apply(lambda row: row['time_utc'].astimezone(pytz.timezone(local_tz)), axis=1)
+
+    return df
+
+def elev_correction(site_name : str) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
 
     Args: 
-        site_info_file (str): Path to site_info.csv file 
         site_name (str): site's name
     Returns: 
         pd.DataFrame: new Pandas dataframe
     """
+    input_dir = configure.get('input', 'directory')
+    site_info_path = input_dir + configure.get('input', 'site_info')
+
     try:
-        site_info_df = pd.read_csv(site_info_file)
+        site_info_df = pd.read_csv(site_info_path)
     except FileNotFoundError:
-        print("File Not Found: ", site_info_file)
+        print("File Not Found: ", site_info_path)
         return
     
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
 
-    elev_ft = [0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000]
-    alt_corr_fact = [1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63]
-    cf_df = pd.DataFrame({'elev_ft': elev_ft, 'alt_corr_fact': alt_corr_fact})
+    if not site_info_df.empty and 'elev' in site_info_df.columns:
+        elev_ft = np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000])
+        alt_corr_fact = np.array([1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63])
+        cf_df = pd.DataFrame({'elev': elev_ft, 'alt_corr_fact': alt_corr_fact})
 
-    lin_model = ols(y = cf_df['alt_corr_fact'], x = cf_df['elev_ft'])
+        lin_model = LinearRegression().fit(cf_df['elev'], cf_df['alt_corr_fact'])
+        elv_df = site_info_df[['elev']].fillna(0)
+        air_corr = lin_model.predict(elv_df)
 
-    elv_df = site_info_df[['elev']].rename(columns={'elev': 'elev_ft'}).fillna(0)
-    air_corr = {'air_corr': lin_model.predict(exog=elv_df)}
-
-    site_air_corr = site_info_df[['site', 'elev']].assign(air_corr=lambda df: np.where(
-                            df['elev'].isna() | df['elev'] < 1000, 1, air_corr['air_corr']))
-  
-    return site_air_corr
+        site_air_corr = site_info_df[['site','elev']].copy()
+        site_air_corr = site_air_corr.assign(air_corr=1)
+        site_air_corr.loc[site_air_corr["elev"].notnull() & (site_air_corr["elev"] >= 1000), "air_corr"] = air_corr
+      
+        return site_air_corr
+    else:
+        return pd.DataFrame()
 
 
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward: dt.datetime, site_name: str) -> pd.DataFrame:
@@ -500,51 +547,63 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
     Returns:
         pd.DataFrame: Modified DataFrame where the Humidity_ODRH column contains the field readings after the given datetime. 
     """
-    df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
-    data_old = df["Humidity_ODRH"]
+    if len(od_conditions):
+        df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
+        data_old = df["Humidity_ODRH"]
 
-    # .astimezone(pytz.timezone('UTC'))]
-    data_new = od_conditions.loc[od_conditions.index > date_forward]
-    data_new = data_new[f"{site_name}_ODRH"]
+        data_new = od_conditions.loc[od_conditions.index > date_forward]
+        data_new = data_new[f"{site_name}_ODRH"]
 
-    df["Humidity_ODRH"] = data_old.fillna(value=data_new)
-
+        df["Humidity_ODRH"] = data_old.fillna(value=data_new)
+    
     return df
 
 
-def create_fan_curves(cfm_info, site_info):
-    # Make a copy of the dataframes to avoid modifying the original data
-    cfm_info = cfm_info.copy()
-    site_info = site_info.copy()
+def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
+    """
+    Create fan curves for each site.
+    Args:
+        cfm_info (pd.DataFrame): DataFrame of fan curve information.
+        site_info (pd.Series): Series containing the site information.
+    Returns:
+        pd.DataFrame: Dataframe containing the fan curves for each site.
+    """
 
     # Convert furnace power from kW to W
     site_info['furn_misc_power'] *= 1000
 
-    # Calculate furnace power to remove for each row
-    def calculate_watts_to_remove(row):
-        if np.isnan(row['ID_blower_rms_watts']) or 'heat' not in row['mode']:
-            return 0
-        site_row = site_info.loc[site_info['site'] == row['site']]
-        return site_row['furn_misc_power'].values[0]
-
-    cfm_info['watts_to_remove'] = cfm_info.apply(
-        calculate_watts_to_remove, axis=1)
+    # Calculate furnace power to remove from blower power
+    cfm_info['watts_to_remove'] = site_info['furn_misc_power']
+    cfm_info['watts_to_remove'] = cfm_info['watts_to_remove'].fillna(0)
+    cfm_info['watts_to_remove'] = cfm_info['watts_to_remove'].where(cfm_info['mode'].str.contains('heat'), 0)
 
     # Subtract furnace power from blower power
     mask = cfm_info['watts_to_remove'] != 0
-    cfm_info.loc[mask, 'ID_blower_rms_watts'] -= cfm_info['watts_to_remove']
+    cfm_info.loc[mask, 'ID_blower_rms_watts'] = cfm_info.loc[mask,
+                                                             'ID_blower_rms_watts'] - cfm_info.loc[mask, 'watts_to_remove']
+    #cfm_info.loc[mask, 'ID_blower_rms_watts'] -= cfm_info['watts_to_remove']
 
     # Group by site and estimate coefficients
     by_site = cfm_info.groupby('site')
 
     def estimate_coefficients(group):
+        """
+        Estimate coefficients for the fan curve.
+        Args:
+            group (pd.DataFrame): Dataframe containing the data for a given site.
+        Returns:
+            pd.Series: Series containing the coefficients for the fan curve.
+        """
         X = group[['ID_blower_rms_watts']].values ** 0.3333 - 1
         y = group['ID_blower_cfm'].values
-        return pd.Series(LinearRegression().fit(X, y).coef_)
 
+        # For the linear regression model generated below, return the a and b coefficients
+        fan_model = LinearRegression().fit(X, y)
+        a, b = fan_model.intercept_, fan_model.coef_
+        coefficients = pd.Series({'a': a, 'b': b[0]})
+        return coefficients
     fan_coeffs = by_site.apply(estimate_coefficients)
-    fan_coeffs.columns = ['a', 'b']
-
+    fan_coeffs = fan_coeffs.reset_index()
     return fan_coeffs
 
 
@@ -606,3 +665,36 @@ def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
 
     return df
 
+
+def get_site_info(site: str) -> pd.Series:
+    """
+    Returns a dataframe of the site information for the given site
+    
+    Args:
+        site (str): The site name
+        
+    Returns:
+        df (pd.Series): The Series of the site information
+    """
+    site_info_path = _input_directory + configure.get('input', 'site_info')
+    df = pd.read_csv(site_info_path, skiprows=[1])
+    df.dropna(how='all', inplace=True)
+    df = df[df['site'] == site]
+    return df.squeeze()
+
+
+def get_site_cfm_info(site: str) -> pd.DataFrame:
+    """
+    Returns a dataframe of the site cfm information for the given site
+    NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.
+    
+    Args:
+        site (str): The site name
+        
+    Returns:
+        df (pd.DataFrame): The DataFrame of the site cfm information
+    """
+    site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
+    df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
+    df = df.loc[df['site'] == site]
+    return df

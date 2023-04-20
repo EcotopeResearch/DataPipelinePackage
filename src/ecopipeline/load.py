@@ -16,7 +16,9 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     Args: 
         table_headers (list): A list of table headers. These headers must correspond to the 
             section headers in the config.ini file. Your list must contain the section
-            header for each table you wish to write into. 
+            header for each table you wish to write into. The first header must correspond 
+            to the login information of the database. The other are the tables which you wish
+            to write to. 
         config_info (str): A path to the config.ini file must also be passed.
 
     Returns: 
@@ -40,8 +42,9 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
                      'database': configure.get('database', 'database')}
     }
 
+    #TODO: do we still need sensor_list logic?
     db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
-                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
+                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers[1:]}
     
     db_connection_info.update(db_table_info)
 
@@ -122,6 +125,66 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     return True
 
 
+def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, data_type: str):
+    """
+    Finds the column names which are not in the database table currently but are present
+    in the pandas DataFrame to be written to the database. If communication with database
+    is not possible, an empty list will be returned meaning no column will be added. 
+
+    Args: 
+        cursor: A cursor object and the name of the table to be created.
+        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
+        config_info (dict): The dictionary containing the configuration information 
+        data_type (str): the header name corresponding to the table you wish to write data to.  
+
+    Returns: 
+        list: list of column names which must be added to the database table for the pandas 
+        DataFrame to be properly written into the database. 
+    """
+
+    try:
+        cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
+                            f"{config_dict['database']['database']}' and table_name = '"
+                            f"{config_dict[data_type]['table_name']}'")
+    except mysqlerrors.DatabaseError:
+        print("Check if the mysql table to be written to exists.")
+        return []
+    
+    current_table_names = list(cursor.fetchall())
+    current_table_names = [name[0] for name in current_table_names]
+    df_names = list(dataframe.columns)
+
+    return [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
+
+
+def create_new_columns(cursor, config_dict: dict, data_type: str, new_columns: list):
+    """
+    Create the new, necessary column in the database. Catches error if communication with mysql database
+    is not possible.
+
+    Args: 
+        cursor: A cursor object and the name of the table to be created.`
+        config_info (dict): The dictionary containing the configuration information.
+        data_type (str): the header name corresponding to the table you wish to write data to.  
+        new_columns (list): list of columns that must be added to the database table.
+
+    Returns: 
+        bool: boolean indicating if the the column were successfully added to the database. 
+    """
+        
+    table_name = config_dict[data_type]["table_name"] 
+    alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} float default null;" for column in new_columns]
+
+    for sql_statement in alter_table_statements:
+        try:
+            cursor.execute(sql_statement)
+        except mysqlerrors.DatabaseError:
+            print("Error communicating with the mysql database.")
+            return False
+
+    return True
+
+
 def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
     """
     Loads given pandas DataFrame into a mySQL table.
@@ -160,6 +223,11 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
         if not create_new_table(cursor, table_name, sensor_names.split(",")[1:]): #split on colums and remove first column aka time_pt
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
+        
+    missing_cols = find_missing_columns(cursor, dataframe, config_info, data_type)
+    if len(missing_cols):
+        if not create_new_columns(cursor, dataframe, config_info, data_type, missing_cols):
+            print("Unable to add new column due to database error.")
 
     for index, row in dataframe.iterrows():
         time_data = row.values.tolist()
@@ -226,6 +294,11 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
             last_time = last_row_data[0][0]
     except mysqlerrors.Error:
         print(f"Table {table_name} does has no data.")
+
+    missing_cols = find_missing_columns(cursor, dataframe, config_info, data_type)
+    if len(missing_cols):
+        if not create_new_columns(cursor, dataframe, config_info, data_type, missing_cols):
+            print("Unable to add new column due to database error.")
     
     updatedRows = 0
     for index, row in dataframe.iterrows():

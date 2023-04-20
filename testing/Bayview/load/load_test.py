@@ -11,7 +11,7 @@ import datetime
 import pandas as pd
 import unittest
 from datetime import datetime
-from ecopipeline import getLoginInfo, connectDB, checkTableExists, createNewTable, loadDatabase
+from ecopipeline import get_login_info, connect_db, load_database
 from ecopipeline.config import _config_directory
 
 """
@@ -46,27 +46,27 @@ class Test_Load(unittest.TestCase):
     bad_dtype_data.at["2022-01-06", "sensor2"] = "bad"
     
     def test_correctheader_getLoginInfo(self):
-        config_dict = getLoginInfo(self.test_headers, self.test_config_path)
+        config_dict = get_login_info(self.test_headers, self.test_config_path)
         self.assertDictEqual(config_dict, self.login_dict)
 
     def test_incorrectheader_getLoginInfo(self):
-        self.assertRaises(configparser.NoSectionError, getLoginInfo, ["bad"], self.test_config_path)
+        self.assertRaises(configparser.NoSectionError, get_login_info, ["bad"], self.test_config_path)
         
     def test_incorrectpassword_connectDB(self):
-        cxn, cursor = connectDB(self.incorrect_login_dict)
+        cxn, cursor = connect_db(self.incorrect_login_dict)
         self.assertEqual(cxn, None)
         self.assertEqual(cursor, None)
 
     def test_connectDB(self):
-        cxn, cursor = connectDB(self.login_dict["database"])
+        cxn, cursor = connect_db(self.login_dict["database"])
         self.assertNotEqual(cxn, None)
         self.assertNotEqual(cursor, None)
         cxn.close()
         cursor.close()
 
     def test_empty_table_loadDatabase(self):
-        cxn, cursor = connectDB(self.login_dict["database"])
-        loadDatabase(cursor, self.load_data, self.login_dict, "day")
+        cxn, cursor = connect_db(self.login_dict["database"])
+        load_database(cursor, self.load_data, self.login_dict, "day")
         cxn.commit()
 
         cursor.execute("select * from bayview_day")
@@ -87,12 +87,12 @@ class Test_Load(unittest.TestCase):
         cursor.close()
 
     def test_existing_table_loadDatabase(self):
-        cxn, cursor = connectDB(self.login_dict["database"])
+        cxn, cursor = connect_db(self.login_dict["database"])
 
-        loadDatabase(cursor, self.load_data, self.login_dict, "day")
+        load_database(cursor, self.load_data, self.login_dict, "day")
         cxn.commit()
 
-        loadDatabase(cursor, self.new_data, self.login_dict, "day")
+        load_database(cursor, self.new_data, self.login_dict, "day")
         cxn.commit()
 
         cursor.execute("select * from bayview_day")
@@ -113,8 +113,8 @@ class Test_Load(unittest.TestCase):
         cursor.close()
     
     def test_bad_dataFrame_loadDatabase(self):
-        cxn, cursor = connectDB(self.login_dict["database"])
-        self.assertRaises(mysql.connector.errors.ProgrammingError, loadDatabase, cursor, self.bad_columns_data, self.login_dict, "day")
+        cxn, cursor = connect_db(self.login_dict["database"])
+        self.assertRaises(mysql.connector.errors.ProgrammingError, load_database, cursor, self.bad_columns_data, self.login_dict, "day")
         cursor.execute("drop table bayview_day")
 
         cxn.commit()
@@ -122,15 +122,15 @@ class Test_Load(unittest.TestCase):
         cursor.close()
 
     def test_bad_type_loadDatabase(self):
-        cxn, cursor = connectDB(self.login_dict["database"])
-        self.assertRaises(KeyError, loadDatabase, cursor, self.load_data, self.login_dict, "bad")
+        cxn, cursor = connect_db(self.login_dict["database"])
+        self.assertRaises(KeyError, load_database, cursor, self.load_data, self.login_dict, "bad")
 
         cxn.close()
         cursor.close()
 
     def test_bad_data_loadDatabase(self):
-        cxn, cursor = connectDB(self.login_dict["database"])
-        self.assertRaises(mysql.connector.errors.DatabaseError, loadDatabase, cursor, self.bad_dtype_data, self.login_dict, "day")
+        cxn, cursor = connect_db(self.login_dict["database"])
+        self.assertRaises(mysql.connector.errors.DatabaseError, load_database, cursor, self.bad_dtype_data, self.login_dict, "day")
 
         cxn.close()
         cursor.close()
