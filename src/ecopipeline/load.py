@@ -44,7 +44,7 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
 
     #TODO: do we still need sensor_list logic?
     db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
-                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers[1:]}
+                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
     
     db_connection_info.update(db_table_info)
 
