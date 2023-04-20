@@ -186,7 +186,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     Returns: 
         row (pd.Series): Pandas series (Refrig_charge added!)
     """
-    superheat_target = None
+    superheat_target = np.NaN
 
     #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
     # is null, just return the row early. 
@@ -205,9 +205,9 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     #NA checks, elif bound check, else interpolations
     if math.isnan(Temp_ODT or math.isnan(Temp_wb_F)):
         #filtering out na's in recorded data
-        superheat_target = None
+        superheat_target = np.NaN
     elif(Temp_ODT > max(row_range) or Temp_ODT < min(row_range) or Temp_wb_F > max(x_range) or Temp_wb_F < min(x_range)):
-        superheat_target = None
+        superheat_target = np.NaN
     else:
         #row_range exists so this can have yrange
         y_max = math.ceil(Temp_ODT/5) * 5
@@ -265,7 +265,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
     lr_model = LinearRegression().fit(X, y)
 
     #Creating Refrig_charge column populated w/None
-    df["Refrig_charge"] = None
+    df["Refrig_charge"] = np.NaN
 
     # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
@@ -341,7 +341,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
 
     for i in range(1,len(df.index)):
         if((df["event_ID"][i] > 0) and (df["event_ID"][i] == 1.0)):
-            time_diff = (df["time"][i] - df["time"][i-1])
+            time_diff = (df["time_utc"][i] - df["time_utc"][i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
@@ -520,9 +520,8 @@ def elev_correction(site_name : str) -> pd.DataFrame:
     if not site_info_df.empty and 'elev' in site_info_df.columns:
         elev_ft = np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000])
         alt_corr_fact = np.array([1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63])
-        cf_df = pd.DataFrame({'elev': elev_ft, 'alt_corr_fact': alt_corr_fact})
 
-        lin_model = LinearRegression().fit(cf_df['elev'], cf_df['alt_corr_fact'])
+        lin_model = LinearRegression().fit(elev_ft, alt_corr_fact)
         elv_df = site_info_df[['elev']].fillna(0)
         air_corr = lin_model.predict(elv_df)
 
