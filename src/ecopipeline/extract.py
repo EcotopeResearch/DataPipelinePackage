@@ -66,8 +66,10 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
     try:
         db_cursor.execute(
             f"SELECT * FROM {config_dict['minute']['table_name']} WHERE time_pt = '{time}'")
-
-        row_data = pd.DataFrame(db_cursor.fetchall())
+        row = db_cursor.fetchone()
+        if row is not None:
+            col_names = [desc[0] for desc in db_cursor.description]
+            row_data = pd.DataFrame([row], columns=col_names)
     except mysqlerrors.Error as e:
         print("Error executing sql query.")
         print("MySQL error: {}".format(e))

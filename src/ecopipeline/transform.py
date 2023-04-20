@@ -161,8 +161,8 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
     """
     if (col.name in ffill_df.index):
         #set initial fill value where needed for first row
-        if previous_fill is not None and len(col) > 0 and col[0] == np.nan:
-            col[0] = previous_fill[col.name][0]
+        if previous_fill is not None and len(col) > 0 and pd.isna(col.iloc[0]):
+            col.iloc[0] = previous_fill[col.name].iloc[0]
         cp = ffill_df.loc[col.name]["changepoint"]
         length = ffill_df.loc[col.name]["ffill_length"]
         if (length != length):  # check for nan, set to 0
