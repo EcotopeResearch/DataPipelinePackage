@@ -335,7 +335,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
     site_section = site_info[site_info["site"] == site]
     statePowerAHThreshold = pd.to_numeric(site_section["AH_standby_power"]) * 1.5
     df["event_ID"] = 0
-    df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
+    df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > pd.to_numeric(statePowerAHThreshold, 1))
     event_ID = 1
 
     for i in range(1,len(df.index)):
