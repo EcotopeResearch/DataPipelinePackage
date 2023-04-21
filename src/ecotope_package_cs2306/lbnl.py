@@ -300,11 +300,13 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
         pd.DataFrame: new Pandas Dataframe
     """
     if (not df.empty):
-      if ("Power_OD_total1" in df.columns):
-        odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_OD_total1"]].copy()
+      df_temp = df.copy()
+      df_temp = df_temp.reset_index()
+      if ("Power_OD_total1" in df_temp.columns):
+        odc_df = df_temp[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_OD_total1"]]
         odc_df.rename(columns={"Power_OD_total1": "Power_OD"}, inplace=True)
       else:
-        odc_df = df[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_DHP"]].copy()
+        odc_df = df_temp[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_DHP"]]
         odc_df.rename(columns={"Power_DHP": "Power_OD"}, inplace=True)
 
       odc_df = odc_df.loc[odc_df["Power_OD"] > 0.01] 
