@@ -91,10 +91,11 @@ class Test_Transform(unittest.TestCase):
         self.assertEqual(True, empty_df.equals(result_df))
 """
     def test_gather_outdoor_conditions_valid(self):
-        pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
+        pickle = "testing/LBNL/transform/pickles/IL2_01_10052022.pkl"
         df = pd.read_pickle(pickle)
-        result_df = gather_outdoor_conditions(df, "AZ2_01")
-        expected_cols = ['time_utc', 'AZ2_01_ODT', 'AZ2_01_ODRH']
+        df = df.loc[:,~df.columns.duplicated()]
+        result_df = gather_outdoor_conditions(df, "IL2_01")
+        expected_cols = ['time_utc', 'IL2_01_ODT', 'IL2_01_ODRH']
         self.assertEqual(True, np.array_equal(expected_cols, result_df.columns))
 
     def test_gather_outdoor_conditions_invalid(self):
