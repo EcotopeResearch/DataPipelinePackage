@@ -302,6 +302,7 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     if (not df.empty):
       df = df.reset_index()
       df_temp = df.copy()
+      df_temp = df_temp.loc[:,~df_temp.columns.duplicated()]
       if ("Power_OD_total1" in df_temp.columns):
         odc_df = df_temp[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_OD_total1"]]
         odc_df.rename(columns={"Power_OD_total1": "Power_OD"}, inplace=True)
