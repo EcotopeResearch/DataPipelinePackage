@@ -309,7 +309,7 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
         odc_df = df_temp[["time_utc", "Temp_ODT", "Humidity_ODRH", "Power_DHP"]]
         odc_df.rename(columns={"Power_DHP": "Power_OD"}, inplace=True)
 
-      odc_df = odc_df.loc[odc_df["Power_OD"] > 0.01] 
+      odc_df = odc_df[odc_df["Power_OD"] > 0.01] 
       odc_df.drop("Power_OD", axis=1, inplace=True)
       odc_df.rename(columns={"Temp_ODT": site + "_ODT", "Humidity_ODRH": site + "_ODRH"}, inplace=True)
       return odc_df

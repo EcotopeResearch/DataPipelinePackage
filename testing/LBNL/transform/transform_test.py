@@ -68,8 +68,8 @@ class Test_Transform(unittest.TestCase):
         #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
         empty = site_specific(empty, "FAKE_01")
         pass
+    
     """
-    #Casey
     def test_gas_valve_diff_valid(self):
         # site AZ2_01 uses hp (not gas) heating
         hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
@@ -89,8 +89,7 @@ class Test_Transform(unittest.TestCase):
         empty_df = pd.DataFrame()
         result_df = gas_valve_diff(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
-
-    #Casey 
+"""
     def test_gather_outdoor_conditions_valid(self):
         pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
         df = pd.read_pickle(pickle)
@@ -102,7 +101,7 @@ class Test_Transform(unittest.TestCase):
         empty_df = pd.DataFrame()
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
-
+    """
     #Julian 
     def test_refrig_charge_valid(self):
         #we assume proper input variables!
