@@ -122,7 +122,7 @@ def gas_valve_diff(df: pd.DataFrame, site: str) -> pd.DataFrame:
         df (pd.DataFrame): Dataframe for site
         site (str): site name as string
     Returns: 
-        pd.DataFrame: new Pandas Dataframe 
+        pd.DataFrame: modified Pandas Dataframe 
     """
     input_dir = configure.get('input', 'directory')
     site_info_path = input_dir + configure.get('input', 'site_info')
