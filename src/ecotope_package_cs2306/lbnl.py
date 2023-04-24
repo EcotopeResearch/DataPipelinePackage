@@ -518,6 +518,7 @@ def elev_correction(site_name : str) -> pd.DataFrame:
         return
     
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
+    print(site_info_df)
 
     if not site_info_df.empty and 'elev' in site_info_df.columns:
         elev_ft = np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000])

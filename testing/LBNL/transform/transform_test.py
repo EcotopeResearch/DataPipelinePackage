@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import datetime as dt
-from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, replace_humidity, create_fan_curves, condensate_calculations, site_specific
+from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -89,7 +89,7 @@ class Test_Transform(unittest.TestCase):
         empty_df = pd.DataFrame()
         result_df = gas_valve_diff(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
-"""
+
     def test_gather_outdoor_conditions_valid(self):
         pickle = "testing/LBNL/transform/pickles/IL2_01_10052022.pkl"
         df = pd.read_pickle(pickle)
@@ -102,6 +102,17 @@ class Test_Transform(unittest.TestCase):
         empty_df = pd.DataFrame()
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
+
+    """
+    def test_elev_correction_valid(self):
+        pass
+    
+    def test_elev_correction_invalid(self):
+        empty_df = pd.DataFrame()
+        result_df = elev_correction("FAKE1_01")
+        print(result_df)
+        self.assertEqual(True, empty_df.equals(result_df)) 
+    
     """
     #Julian 
     def test_refrig_charge_valid(self):
@@ -141,7 +152,7 @@ class Test_Transform(unittest.TestCase):
         test_df = pd.DataFrame(columns=['event_ID'])
         test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
         self.assertEqual(True, result_df.equals(test_df))
-    """    
+       
 
     def test_replace_humidity_invalid(self):
         data_path = "testing/LBNL/transform/pickles/AZ2_01_04242022.pkl"
@@ -151,7 +162,8 @@ class Test_Transform(unittest.TestCase):
         od_conditions = gather_outdoor_conditions(data, site)
         result = replace_humidity(data, od_conditions, time, site)
         # self.assertEqual(data, result)
-
+  """
+    
 if __name__ == '__main__':
     """
     #runs test_xxx functions, shows what passed or failed. 
