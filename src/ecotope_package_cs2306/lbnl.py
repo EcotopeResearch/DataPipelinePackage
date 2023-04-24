@@ -520,8 +520,9 @@ def elev_correction(site_name : str) -> pd.DataFrame:
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
 
     if not site_info_df.empty and 'elev' in site_info_df.columns:
-        elev_ft = np.array([[0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000]])
-        alt_corr_fact = np.array([[1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63]])
+        elev_ft = np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000])
+        elev_ft = elev_ft.reshape(-1,1)
+        alt_corr_fact = np.array([1,0.97,0.93,0.89,0.87,0.84,0.80,0.77,0.75,0.72,0.69,0.66,0.63])
 
         lin_model = LinearRegression().fit(elev_ft, alt_corr_fact)
         elv_df = site_info_df[['elev']].fillna(0)
