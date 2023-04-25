@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import datetime as dt
-from ecopipeline import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, replace_humidity, create_fan_curves, condensate_calculations, site_specific
+from ecopipeline import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -68,8 +68,8 @@ class Test_Transform(unittest.TestCase):
         #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
         empty = site_specific(empty, "FAKE_01")
         pass
+    
     """
-    #Casey
     def test_gas_valve_diff_valid(self):
         # site AZ2_01 uses hp (not gas) heating
         hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
@@ -90,12 +90,12 @@ class Test_Transform(unittest.TestCase):
         result_df = gas_valve_diff(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
 
-    #Casey 
     def test_gather_outdoor_conditions_valid(self):
-        pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
+        pickle = "testing/LBNL/transform/pickles/IL2_01_10052022.pkl"
         df = pd.read_pickle(pickle)
-        result_df = gather_outdoor_conditions(df, "AZ2_01")
-        expected_cols = ['time_utc', 'AZ2_01_ODT', 'AZ2_01_ODRH']
+        df = df.loc[:,~df.columns.duplicated()]
+        result_df = gather_outdoor_conditions(df, "IL2_01")
+        expected_cols = ['time_utc', 'IL2_01_ODT', 'IL2_01_ODRH']
         self.assertEqual(True, np.array_equal(expected_cols, result_df.columns))
 
     def test_gather_outdoor_conditions_invalid(self):
@@ -103,6 +103,18 @@ class Test_Transform(unittest.TestCase):
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
 
+    
+    def test_elev_correction_valid(self):
+        result_df = elev_correction("IL2_01")
+        expected_cols = ['site', 'elev', 'air_corr']
+        self.assertEqual(True,  np.array_equal(expected_cols, result_df.columns))
+    
+    def test_elev_correction_invalid(self):
+        empty_df = pd.DataFrame()
+        result_df = elev_correction("FAKE1_01")
+        self.assertEqual(True, (result_df.equals(empty_df)))
+    
+    
     #Julian 
     def test_refrig_charge_valid(self):
         #we assume proper input variables!
@@ -141,7 +153,7 @@ class Test_Transform(unittest.TestCase):
         test_df = pd.DataFrame(columns=['event_ID'])
         test_df['event_ID'] = test_df['event_ID'].astype(np.int64)
         self.assertEqual(True, result_df.equals(test_df))
-    """    
+       
 
     def test_replace_humidity_invalid(self):
         data_path = "testing/LBNL/transform/pickles/AZ2_01_04242022.pkl"
@@ -151,7 +163,8 @@ class Test_Transform(unittest.TestCase):
         od_conditions = gather_outdoor_conditions(data, site)
         result = replace_humidity(data, od_conditions, time, site)
         # self.assertEqual(data, result)
-
+  """
+    
 if __name__ == '__main__':
     """
     #runs test_xxx functions, shows what passed or failed. 

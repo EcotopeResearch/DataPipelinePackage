@@ -40,7 +40,7 @@ class Test_Transform(unittest.TestCase):
         var_names.pop(0) #first entry is nan
 
         #correct input, function returns nothing. we take the columns names as a list to compare
-        rename_sensors(rename_df)
+        rename_sensors(rename_df, variable_names_path = self.var_names_path)
         renamed_names = rename_df.columns.tolist()
 
         #See if first few elements in each list match
