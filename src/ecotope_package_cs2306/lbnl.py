@@ -339,7 +339,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
 
     for i in range(1,len(df.index)):
         if((df["event_ID"][i] > 0) and (df["event_ID"][i] == 1.0)):
-            time_diff = (df["time_utc"][i] - df["time_utc"][i-1])
+            time_diff = (df.index[i] - df.index[i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
