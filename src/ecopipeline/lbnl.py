@@ -316,25 +316,21 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
         return df
     
 
-def change_ID_to_HVAC(df: pd.DataFrame, site: str) -> pd.DataFrame:
+def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     """
     Function takes in a site dataframe along with the name and path of the site and assigns
     a unique event_ID value whenever the system changes state.
     
     Args: 
         df (pd.DataFrame): Pandas Dataframe
-        site (str): site name as a string 
-        site_info_path (str): path to site_info.csv as a string
+        site_info (pd.Series):site_info.csv as a pd.Series
     Returns: 
         pd.DataFrame: modified Pandas Dataframe
     """
     
     if ("Power_FURN1" in list(df.columns)):
             df.rename(columns={"Power_FURN1": "Power_AH1"})
-    site_info_directory = configure.get('site_info', 'directory')
-    site_info = pd.read_csv(site_info_directory)
-    site_section = site_info[site_info["site"] == site]
-    statePowerAHThreshold = site_section['AH_standby_power'].iloc[0] * 1.5
+    statePowerAHThreshold = site_info['AH_standby_power'] * 1.5
     df["event_ID"] = 0
     df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
     event_ID = 1
