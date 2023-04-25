@@ -103,17 +103,18 @@ class Test_Transform(unittest.TestCase):
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
 
-    """
+    
     def test_elev_correction_valid(self):
-        pass
+        result_df = elev_correction("IL2_01")
+        expected_cols = ['site', 'elev', 'air_corr']
+        self.assertEqual(True,  np.array_equal(expected_cols, result_df.columns))
     
     def test_elev_correction_invalid(self):
         empty_df = pd.DataFrame()
         result_df = elev_correction("FAKE1_01")
-        pass
-        #self.assertEqual(True, empty_df.equals(result_df)) 
+        self.assertEqual(True, (result_df.equals(empty_df)))
     
-    """
+    
     #Julian 
     def test_refrig_charge_valid(self):
         #we assume proper input variables!
