@@ -10,7 +10,6 @@ from ecopipeline.config import configure
 from ecopipeline.config import _input_directory, _output_directory
 import os
 
-
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     Does Site Specific Calculations for LBNL. The site name is searched using RegEx
