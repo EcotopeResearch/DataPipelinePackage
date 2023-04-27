@@ -338,13 +338,13 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     event_ID = 1
 
     for i in range(1,len(df.index)):
-        if((df["event_ID"][i] > 0) and (df["event_ID"][i] == 1.0)):
+        if((df["event_ID"].iloc[i] > 0) and (df["event_ID"].iloc[i] == 1.0)):
             time_diff = (df.index[i] - df.index[i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
-        elif (df["event_ID"][i] == 0):
-            if(df["event_ID"][i - 1] > 0):
+        elif (df["event_ID"].iloc[i] == 0):
+            if(df["event_ID"].iloc[i - 1] > 0):
                 event_ID += 1
         df.at[i, "event_ID"] = event_ID
     return df
