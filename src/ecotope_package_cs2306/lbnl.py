@@ -606,33 +606,20 @@ def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.Series) -> pd.DataFr
     return fan_coeffs
 
 
-def get_cfm_values(df: pd.DataFrame, site_cfm: pd.DataFrame, site_info: pd.DataFrame, fan_coefficients: pd.DataFrame, site: str):
-    """
-    Function calculates the volume of air that moves through a space per minute measures in 
-    cubic feet per minute (CFM). 
-
-    Args:
-        df (pd.DataFrame): Dataframe containing the raw sensor data.
-        site_cfm (pd.DataFrame): Configuration file containing site-specific cfm information.
-        site_info (pd.DataFrame): Configuration file containing site-specific information.
-        fan_coefficients (pd.DataFrame): DataFrame containing fan coefficient values. 
-        site (str): String containing the name of the site for which cfm values are to be calculated. 
-    Returns: 
-        pd.DataFrame: Modified DataFrame with a column named Cfm_Calc.
-    """
+def get_cfm_values(df, site_cfm, site_info, site):
     site_cfm = site_cfm[site_cfm.index == site]
     fan_curve = True if site_cfm.iloc[0]["use_fan_curve"] == "TRUE" else False
 
     if not fan_curve:
         cfm_info = dict()
         cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-            len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))][0]
+            len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))]
         cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-            len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))][0]
+            len(site_cfm.index)) if bool(re.search(".*heat.*", site_cfm["mode"].iloc[i]))]
         cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
-            len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))][0]
+            len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))]
 
-        df["Cfm_Calc"] = [cfm_info[state] if state in cfm_info.keys() else 0.0 for state in df["HVAC"]]
+        df["Cfm_Calc"] = [np.mean(cfm_info[state]) if len(cfm_info[state]) != 0 else 0.0 for state in df["HVAC"]]
 
     else:
         heat_in_HVAC = "heat" in list(df["HVAC"])
@@ -649,18 +636,36 @@ def get_cfm_values(df: pd.DataFrame, site_cfm: pd.DataFrame, site_info: pd.DataF
     return df
 
 
-def get_cop_values(df: pd.DataFrame, site_air_corr: pd.DataFrame, site: str):
+def get_acf(elev):
+    if (elev == np.NaN) | (elev < 1000):
+        return 1
+
+    # create arrays for elevation in feet and altitude correction factor
+    elev_ft = np.array([0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000])
+    acf = np.array([1, 0.97, 0.93, 0.89, 0.87, 0.84, 0.80, 0.77, 0.75, 0.72, 0.69, 0.66, 0.63])
+    cf_df = pd.DataFrame({'elev_ft': elev_ft, 'acf': acf})
+    dens_cor_reg = LinearRegression().fit(cf_df[['elev_ft']], cf_df['acf'])
+
+    # use the linear regression model to predict the air correction factor for each site
+    site_elevation = elev.values.reshape(-1, 1)
+    air_corr = dens_cor_reg.predict(site_elevation)
+
+    return air_corr[0]
+
+
+def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     w_to_btuh = 3.412
     btuh_to_w = 1 / w_to_btuh
     air_density = 1.08
+    air_correction_factor = get_acf(site_info["elev"])
 
-    air_corr = site_air_corr.loc[site_air_corr['site'] == site, 'air_corr']
-
-    df = df.assign(Power_Output_BTUh=np.select([df['HVAC_state'] == "heat", df['HVAC_state'] == "circ"], [0, 0],
-                                               default=(df['Temp_SATAvg'] - df['Temp_RAT']) * df['Cfm_Calc'] * air_density * air_corr)).assign(Power_Output_kW=df['Power_Output_BTUh'] * btuh_to_w / 1000)
-
-    df["cop"] = abs(df['Power_Output_kW'] / df["Power_system1"])
-    df = df.drop(columns=['Power_Output_BTUh'], axis=1)
+    df["Power_Output_BTUh"] = (df["Temp_SAT1"] - df["Temp_RAT"]) * df["Cfm_Calc"] * air_density * air_correction_factor
+    df.loc[(df["HVAC"] == "heat") | (df["HVAC"] == "circ"), "Power_Output_BTUh"] = 0.0
+    df["Power_Output_kW"] = (df["Power_Output_BTUh"] * btuh_to_w) * (1/1000)
+    df["cop"] = np.abs(df["Power_Output_kW"] / df["Power_system1"]) 
+    df.loc[(df["cop"] == np.inf) | (df["cop"].isna()), "cop"] = 0.0
+    
+    df.drop(["Power_Output_BTUh", "Power_Output_kW"], axis=1)
 
     return df
 
