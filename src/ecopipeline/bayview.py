@@ -256,6 +256,7 @@ def verify_power_energy(df: pd.DataFrame):
     power_energy_df = df[df.columns.intersection(
         ['time_pt'] + list(energy_vars) + list(power_vars))]
     del df['time_pt']
+    # HEy it's a comment
 
     margin_error = 5.0          # margin of error still TBD, 5.0 for testing purposes
     for pvar in power_vars:
