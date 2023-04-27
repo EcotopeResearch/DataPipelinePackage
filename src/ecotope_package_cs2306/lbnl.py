@@ -337,7 +337,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
     event_ID = 1
 
-    for i in range(1,len(df.index)):
+    for i in range(1,int(len(df.index)/2)):
         if((df["event_ID"].iloc[i] > 0) and (df["event_ID"].iloc[i] == 1.0)):
             time_diff = (df.index[i] - df.index[i-1])
             diff_minutes = time_diff.total_seconds() / 60
