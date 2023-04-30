@@ -6,10 +6,9 @@ import re
 from typing import List
 import datetime as dt
 from sklearn.linear_model import LinearRegression
-from ecotope_package_cs2306.config import configure
-from ecotope_package_cs2306.config import _input_directory, _output_directory
+from ecopipeline.config import configure
+from ecopipeline.config import _input_directory, _output_directory
 import os
-
 
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
@@ -79,7 +78,6 @@ def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
 def condensate_calculations(df: pd.DataFrame, site: str, site_info: pd.Series) -> pd.DataFrame:
     """
     Calculates condensate values for the given dataframe
-
     Args:
         df (pd.DataFrame): dataframe to be modified
         site (str): name of site
@@ -175,7 +173,6 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     Function takes in a Pandas series, ranges from a csv, and a linear regression model 
     in order to calculate Refrig_charge for the given row through linear interpolation. 
-
     Args: 
         row (pd.Series): Pandas series
         x_range (<class 'list'>): List of ints
@@ -457,7 +454,6 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     LBNL's nclarity files do not contain the date in the time column. This
     helper function extracts the date from the filename and adds it to the 
     time column of the data.
-
     Args: 
         df (pd.DataFrame): Dataframe
         filename (str): filename as string
@@ -473,7 +469,6 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
 def add_local_time(df : pd.DataFrame, site_name : str) -> pd.DataFrame:
     """
     Function adds a column to the dataframe with the local time.
-
     Args:
         df (pd.DataFrame): Dataframe
         site_name (str): site name 
@@ -498,7 +493,6 @@ def elev_correction(site_name : str) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
-
     Args: 
         site_name (str): site's name
     Returns: 
@@ -537,7 +531,6 @@ def elev_correction(site_name : str) -> pd.DataFrame:
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward: dt.datetime, site_name: str) -> pd.DataFrame:
     """
     Function replaces all humidity readings for a given site after a given datetime. 
-
     Args:
         df (pd.DataFrame): Dataframe containing the raw sensor data.
         od_conditions (pd.DataFrame): DataFrame containing outdoor confitions measured by field sensors.

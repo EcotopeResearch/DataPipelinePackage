@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "ecotope-datapipeline"
-version = "0.0.1"
+name = "ecopipeline"
+version = "0.0.13"
 description = "Contains functions for use in Ecotope's Datapipelines"
-authors = ["Carlos Bello, <bellocarlos@seattleu.edu>, Emil Fahrig <fahrigemil@seattleu.edu>, Casey Mang <cmang@seattleu.edu>, Julian Harris <harrisjulian@seattleu.edu>, Roger Tram <rtram@seattleu.edu>"]
+authors = ["Carlos Bello, <bellocarlos@seattleu.edu>, Emil Fahrig <fahrigemil@seattleu.edu>, Casey Mang <cmang@seattleu.edu>, Julian Harris <harrisjulian@seattleu.edu>, Roger Tram <rtram@seattleu.edu>, Nolan Price, <nolan@ecotope.com>"]
 readme = "README.md"
-packages = [{include = "ecotope_datapipeline"}]
+packages = [{include = "ecopipeline"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -12,4 +12,3 @@ pandas = "^1.5.3"
 numpy = "^1.24.1"
 mysql-connector-python = "^8.0.32"
 scikit-learn = "^1.2.1"
-

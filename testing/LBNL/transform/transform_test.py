@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import datetime as dt
-from ecotope_package_cs2306 import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific
+from ecopipeline import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 

@@ -9,14 +9,15 @@ from pandas.testing import assert_frame_equal
 import gzip
 import os, json
 import datetime as dt
-from ecotope_package_cs2306.config import _config_directory, _data_directory, _output_directory
-from ecotope_package_cs2306 import get_last_line, extract_files, json_to_df, get_noaa_data
+from ecopipeline.config import _config_directory, _data_directory, _output_directory
+from ecopipeline import get_last_full_day_from_db, extract_files, json_to_df, get_noaa_data
 
 class Test_Extract(unittest.TestCase):
 
-    def test_get_last_line(self):
-        df = get_last_line()
-        self.assertNotEqual(pd.DataFrame(), df)
+    # def test_get_last_line(self):
+    #     df = get_last_line()
+    #     self.assertNotEqual(pd.DataFrame(), df)
+    # TODO new test needed
 
     def test_extract_files(self):
         test_extract = extract_files(".csv")
