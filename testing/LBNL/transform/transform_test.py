@@ -187,5 +187,8 @@ if __name__ == '__main__':
     print(or_df)
     print(tx_df)
     """
+    #sh_tester_path = "testing/LBNL/transform/pickles/sh_tester.csv"
+    #sh_df = pd.read_pickle(sh_tester_path)
+    #print(sh_df)
 
     unittest.main()
