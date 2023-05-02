@@ -194,7 +194,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     rh = row.loc["Humidity_RARH"]
 
     #calculate wet bulb temp w/humidity and air temp, then convert back to F
-    Temp_wb_C = RAT_C * math.atan(0.151977(rh + 8.31659)**(1/2)) + math.atan(RAT_C + rh) - math.atan(rh - 1.676331) + 0.00391838(rh)**(3/2) * math.atan(0.023101*rh) - 4.686035
+    Temp_wb_C = RAT_C * math.atan(0.151977*(rh + 8.31659)**(1/2)) + math.atan(RAT_C + rh) - math.atan(rh - 1.676331) + 0.00391838*(rh)**(3/2) * math.atan(0.023101*rh) - 4.686035
     Temp_wb_F = (Temp_wb_C * (9/5)) + 32
     Temp_ODT = row.loc['Temp_ODT']
 
