@@ -277,6 +277,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
         # calculate the refrigerant charge w/the superheat method
         superchart = pd.read_csv(superheat_directory)
         x_range = superchart.columns.values.tolist()
+        print(x_range)
         row_range = superchart.iloc[:,0].tolist()
         #ignore first element and we have our range from the col names
         x_range.pop(0) 
