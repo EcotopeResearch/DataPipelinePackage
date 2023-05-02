@@ -166,29 +166,20 @@ class Test_Transform(unittest.TestCase):
   """
     
 if __name__ == '__main__':
+
     """
-    #runs test_xxx functions, shows what passed or failed. 
-    
-    #pure testing grabs
+    sh_tester_path = "testing/LBNL/transform/pickles/sh_tester.csv"
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
     superheat_path = "testing/LBNL/transform/LBNL-input/superheat.csv"
-    subcooling_path = "testing/LBNL/transform/pickles/AZ2_01_04242022.pkl"
-    subcooling_path_2 = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
-    orifice_path = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
-
-    #or_output_testing
-    or_df = pd.read_pickle(orifice_path)
-    tx_df = pd.read_pickle(subcooling_path)
-
-    #NOTE: To do proper testing, I need a pickle with all the stuff that happens before superheat!
-    tx_df = get_refrig_charge(tx_df, 'AZ2_01', site_info_path, four_path, superheat_path)
-    or_df = get_refrig_charge(or_df, 'IL2_01', site_info_path, four_path, superheat_path)
-    print(or_df)
-    print(tx_df)
-    """
-    #sh_tester_path = "testing/LBNL/transform/pickles/sh_tester.csv"
-    #sh_df = pd.read_pickle(sh_tester_path)
+    sh_df = pd.read_csv(sh_tester_path)
     #print(sh_df)
 
-    unittest.main()
+    sh_df = get_refrig_charge(sh_df, 'IL2_01', site_info_path, four_path, superheat_path)
+    
+    print(sh_df)
+
+    #testing stuff, specifically refrigerant
+    """
+
+    #unittest.main()

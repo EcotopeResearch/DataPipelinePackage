@@ -270,7 +270,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
     elif (metering_device == "orifice"):
         #If any crucial vars for calculating refrigerant charge are missing, we return early
         var_names = df.columns.tolist() 
-        if "Temp_ODT" not in var_names or "Temp_RAT" not in var_names or "Humidity_RARH" not in var_names or "Pressure_LL_psi" not in var_names or "Temp_SL_C" not in var_names:
+        if "Temp_ODT" not in var_names or "Temp_RAT" not in var_names or "Humidity_RARH" not in var_names or "Pressure_SL_psi" not in var_names or "Temp_SL_C" not in var_names:
             return df
 
         # calculate the refrigerant charge w/the superheat method
