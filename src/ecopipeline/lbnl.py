@@ -230,6 +230,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     #refrigerant charge and add it back to the series.
     r_charge = superheat_calc - superheat_target 
     row.loc["Refrig_charge"] = r_charge[0]
+    print("Reached the end of superheat!")
     return row
 
 def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"{_input_directory}site_info.csv", four_directory: str = f"{_input_directory}410a_pt.csv", superheat_directory: str = f"{_input_directory}superheat.csv") -> pd.DataFrame:
