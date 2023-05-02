@@ -1,7 +1,7 @@
 from typing import List
 import pandas as pd
 from ftplib import FTP
-from datetime import datetime
+from datetime import datetime, timedelta
 import gzip
 import os
 import json
@@ -36,8 +36,9 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
             last_time = last_row_data[0][0] # get time from last_data_row[0][0] TODO probably better way to do this
 
             if ((last_time.hour != 23) or (last_time.minute != 59)):
-                return_time = datetime(year=last_time.year, month=last_time.month,
-                                        day=last_time.day-1, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific'))
+                pacific_tz = timezone('US/Pacific')
+                return_time = last_time - timedelta(days=1)
+                return_time = return_time.replace(hour=23, minute=59, second=0)
             else:
                 return_time = last_time.tz_localize(timezone('US/Pacific'))
         else:

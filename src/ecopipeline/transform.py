@@ -507,8 +507,22 @@ def aggregate_df(df: pd.DataFrame):
         dt_list.append(dt.datetime.strptime(date, format))
     daily_df["load_shift_day"] = False
     daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,))
-
+    
+    # if any day in hourly table is incomplete, we should delete that day from the daily table as the averaged data it contains will be from an incomplete day.
+    daily_df = remove_incomplete_days(hourly_df, daily_df)
     return hourly_df, daily_df
+
+def remove_incomplete_days(hourly_df, daily_df):
+    '''
+    Helper function for removing daily averages that have been calculated from incomplete data
+    '''
+    hourly_dates = pd.to_datetime(hourly_df.index)
+    daily_dates = pd.to_datetime(daily_df.index)
+
+    missing_data_days = [date for date in daily_dates if not ((date in hourly_dates) and (date + pd.Timedelta(hours=23) in hourly_dates) and (date + pd.Timedelta(hours=1) in hourly_dates))]
+    daily_df = daily_df.drop(missing_data_days)
+    
+    return daily_df
 
 # def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
 #     """
