@@ -157,7 +157,7 @@ def _subcooling(row, lr_model):
         row (pd.Series): Pandas series (Refrig_charge added!)
     """
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
-    x = row.loc["Pressure_LL_psi"]
+    x = row.loc["Pressure_SL_psi"]
     m = lr_model.coef_
     b = lr_model.intercept_
     sat_temp_f = m*x+b
@@ -184,9 +184,9 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     superheat_target = np.NaN
 
-    #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
+    #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_SL_psi, or Temp_SL_C
     # is null, just return the row early. 
-    if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_LL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
+    if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_SL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
         return row
 
     #Convert F to C return air temperature
@@ -222,7 +222,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
                 superheat_target = np.interp(Temp_ODT, y_range, xvalue_range3)
 
     #finding superheat_calc
-    sat_temp_f = lr_model.coef_*row.loc["Pressure_LL_psi"]+lr_model.intercept_
+    sat_temp_f = lr_model.coef_*row.loc["Pressure_SL_psi"]+lr_model.intercept_
     Temp_SL_F = (row.loc["Temp_SL_C"])*(9/5) + 32
     superheat_calc = Temp_SL_F - sat_temp_f
 

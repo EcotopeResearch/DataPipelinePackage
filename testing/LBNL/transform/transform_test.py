@@ -167,7 +167,6 @@ class Test_Transform(unittest.TestCase):
     
 if __name__ == '__main__':
 
-    """
     sh_tester_path = "testing/LBNL/transform/pickles/sh_tester.csv"
     site_info_path = "testing/LBNL/transform/LBNL-input/site_info.csv"
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
@@ -180,6 +179,5 @@ if __name__ == '__main__':
     print(sh_df)
 
     #testing stuff, specifically refrigerant
-    """
 
     #unittest.main()
