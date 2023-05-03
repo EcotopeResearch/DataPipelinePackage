@@ -664,7 +664,7 @@ def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     df["cop"] = np.abs(df["Power_Output_kW"] / df["Power_system1"]) 
     df.loc[(df["cop"] == np.inf) | (df["cop"].isna()), "cop"] = 0.0
     
-    df.drop(["Power_Output_BTUh", "Power_Output_kW"], axis=1)
+    df = df.drop(["Power_Output_BTUh", "Power_Output_kW"], axis=1)
 
     return df
 
@@ -700,4 +700,23 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
     df = df.loc[df['site'] == site]
+    return df
+
+def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
+    df = pd.read_pickle(file_path)
+
+    df["time_utc"] = df["time_utc"].dt.round("min")
+
+    to_del = list()
+    for i in range(len(df) - 1):
+        if df.iloc[i]["time_utc"] == df.iloc[i+1]["time_utc"]:
+            data_combined = [x if math.isnan(y) else y for (x,y) in zip(df.iloc[i].values[1:], df.iloc[i+1].values[1:])]
+            data_combined.insert(0, df.iloc[i]["time_utc"])
+
+            df.iloc[i+1] = data_combined
+            to_del.append(i)
+
+    df = df.drop(to_del)
+    df = df.set_index(["time_utc"])
+
     return df
