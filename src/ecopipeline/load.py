@@ -8,8 +8,9 @@ from ecopipeline.config import _config_directory
 pd.set_option('display.max_columns', None)
 import mysql.connector.errors as mysqlerrors
 import datetime
+import numpy as np
 
-def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
+def get_login_info(config_info : str = _config_directory) -> dict:
     """
     Reads the config.ini file stored in the config_info file path.   
 
@@ -43,10 +44,10 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     }
 
     #TODO: do we still need sensor_list logic?
-    db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
-                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
+    # db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
+    #               "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
     
-    db_connection_info.update(db_table_info)
+    # db_connection_info.update(db_table_info)
 
     print(f"Successfully fetched configuration information from file path {config_info}.")
     return db_connection_info
@@ -125,7 +126,7 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     return True
 
 
-def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, data_type: str):
+def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, table_name: str):
     """
     Finds the column names which are not in the database table currently but are present
     in the pandas DataFrame to be written to the database. If communication with database
@@ -145,7 +146,7 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, dat
     try:
         cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
                             f"{config_dict['database']['database']}' and table_name = '"
-                            f"{config_dict[data_type]['table_name']}'")
+                            f"{table_name}'")
     except mysqlerrors.DatabaseError:
         print("Check if the mysql table to be written to exists.")
         return []
@@ -157,7 +158,7 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, dat
     return [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
 
 
-def create_new_columns(cursor, config_dict: dict, data_type: str, new_columns: list):
+def create_new_columns(cursor, config_dict: dict, table_name: str, new_columns: list):
     """
     Create the new, necessary column in the database. Catches error if communication with mysql database
     is not possible.
@@ -171,8 +172,7 @@ def create_new_columns(cursor, config_dict: dict, data_type: str, new_columns: l
     Returns: 
         bool: boolean indicating if the the column were successfully added to the database. 
     """
-        
-    table_name = config_dict[data_type]["table_name"] 
+    
     alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} float default null;" for column in new_columns]
 
     for sql_statement in alter_table_statements:
@@ -185,7 +185,7 @@ def create_new_columns(cursor, config_dict: dict, data_type: str, new_columns: l
     return True
 
 
-def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
+def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, table_name: str):
     """
     Loads given pandas DataFrame into a mySQL table.
 
@@ -200,7 +200,6 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
     """
 
     dbname = config_info['database']['database']
-    table_name = config_info[data_type]["table_name"] 
 
     if(len(dataframe.index) <= 0):
         print("Attempted to write to {table_name} but dataframe was empty.")
@@ -224,9 +223,9 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
         
-    missing_cols = find_missing_columns(cursor, dataframe, config_info, data_type)
+    missing_cols = find_missing_columns(cursor, dataframe, config_info, table_name)
     if len(missing_cols):
-        if not create_new_columns(cursor, dataframe, config_info, data_type, missing_cols):
+        if not create_new_columns(cursor, dataframe, config_info, table_name, missing_cols):
             print("Unable to add new column due to database error.")
 
     for index, row in dataframe.iterrows():
@@ -315,3 +314,19 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
+
+
+if __name__ == "__main__":
+    config_dict = get_login_info("config.ini")
+    db_connection, db_cursor = connect_db(config_dict['database'])
+
+    df = pd.read_csv("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/rowdata.csv")
+    df = df.set_index(["time_utc"])
+
+    # load data stored in data frame to database
+    load_database(cursor=db_cursor, dataframe=df, config_info=config_dict, table_name="lbnl_minute")
+
+    # commit changes to database and close connections
+    db_connection.commit()
+    db_connection.close()
+    db_cursor.close()
