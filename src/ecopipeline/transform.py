@@ -198,6 +198,35 @@ def ffill_missing(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Var
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
+def nullify_erroneous(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
+    """
+    Function will take a pandas dataframe and make erroneous values NaN. 
+    Args: 
+        df (pd.DataFrame): Pandas dataframe
+        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+    Returns: 
+        pd.DataFrame: Pandas dataframe
+    """
+    try:
+        # ffill dataframe holds ffill length and changepoint bool
+        error_df = pd.read_csv(vars_filename)
+    except FileNotFoundError:
+        print("File Not Found: ", vars_filename)
+        return df
+
+    error_df = error_df.loc[:, [
+        "variable_name", "error_value"]]
+    # drop data without changepoint AND ffill_length
+    error_df.dropna(axis=0, thresh=2, inplace=True)
+    error_df.set_index(['variable_name'], inplace=True)
+    error_df = error_df[error_df.index.notnull()]  # drop data without names
+    for col in error_df.index:
+        if col in df.columns:
+            error_value = error_df.loc[col, 'error_value']
+            df[col] = df[col].replace(error_value, np.nan)
+
+    return df
+
 def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
     """
     Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
@@ -237,173 +266,7 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-
-# def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
-#     """
-#     Energy is recorded cummulatively. Function takes the lagged differences in 
-#     order to get a per/minute value for each of the energy variables.
-
-#     Args: 
-#         df (pd.DataFrame): Pandas dataframe
-#     Returns: 
-#         pd.DataFrame: Pandas dataframe
-#     """
-#     energy_vars = df.filter(regex=".*Energy.*")
-#     energy_vars = energy_vars.filter(regex=".*[^BTU]$")
-#     for var in energy_vars:
-#         df[var] = df[var] - df[var].shift(1)
-#     return df
-
-
-# def verify_power_energy(df: pd.DataFrame):
-#     """
-#     Verifies that for each timestamp, corresponding power and energy variables are consistent
-#     with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
-#     rows with conflicting power and energy variables.
-
-#     Prereq: 
-#         Input dataframe MUST have had get_energy_by_min() called on it previously
-#     Args: 
-#         df (pd.DataFrame): Pandas dataframe
-#     Returns:
-#         None
-#     """
-
-#     out_df = pd.DataFrame(columns=['time_pt', 'power_variable', 'energy_variable',
-#                           'energy_value', 'power_value', 'expected_power', 'difference_from_expected'])
-#     energy_vars = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
-#     power_vars = (df.filter(regex=".*Power.*")
-#                   ).filter(regex="^((?!Energy).)*$")
-#     df['time_pt'] = df.index
-#     power_energy_df = df[df.columns.intersection(
-#         ['time_pt'] + list(energy_vars) + list(power_vars))]
-#     del df['time_pt']
-
-#     margin_error = 5.0          # margin of error still TBD, 5.0 for testing purposes
-#     for pvar in power_vars:
-#         if (pvar != 'PowerMeter_SkidAux_Power'):
-#             corres_energy = pvar.replace('Power', 'Energy')
-#         if (pvar == 'PowerMeter_SkidAux_Power'):
-#             corres_energy = 'PowerMeter_SkidAux_Energty'
-#         if (corres_energy in energy_vars):
-#             temp_df = power_energy_df[power_energy_df.columns.intersection(['time_pt'] + list(energy_vars) + list(power_vars))]
-#             for i, row in temp_df.iterrows():
-#                 expected = energy_to_power(row[corres_energy])
-#                 low_bound = expected - margin_error
-#                 high_bound = expected + margin_error
-#                 if (row[pvar] != expected):
-#                     out_df.loc[len(df.index)] = [row['time_pt'], pvar, corres_energy,
-#                                                  row[corres_energy], row[pvar], expected, abs(expected - row[pvar])]
-#                     path_to_output = f'{_output_directory}power_energy_conflicts.csv'
-#                     if not os.path.isfile(path_to_output):
-#                         out_df.to_csv(path_to_output, index=False, header=out_df.columns)
-#                     else:
-#                         out_df.to_csv(path_to_output, index=False, mode='a', header=False)
-
-
-# def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
-#     """
-#     Gets daily average of data for all relevant varibles. 
-
-#     Args: 
-#         df (pd.DataFrame): Pandas DataFrame of minute by minute data
-#         thermo_slice (str): indicates the time at which slicing begins. If none no slicing is performed. The format of the thermo_slice string is "HH:MM AM/PM".
-
-#     TODO: FIX RETURN VALUE
-#     Returns: 
-#         pd.DataFrame: Pandas DataFrame which contains the aggregated hourly data.
-#     """
-#     avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop',
-#                  'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater',
-#                  'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump',
-#                  'EnergyIn_HPWH']].resample('D').mean()
-
-#     if thermo_slice is not None:
-#         avg_sd_6 = df.between_time(thermo_slice, "11:59PM")[
-#             ['Temp_CityWater_atSkid', 'Temp_CityWater']].resample('D').mean()
-#     else:
-#         avg_sd_6 = df[['Temp_CityWater_atSkid',
-#                        'Temp_CityWater']].resample('D').mean()
-
-#     cop_inter = pd.DataFrame(index=avg_sd.index)
-#     cop_inter['Temp_RecircSupply_avg'] = (
-#         avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
-#     cop_inter['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
-#                                                            avg_sd['Temp_PrimaryStorageOutTop'] -
-#                                                            avg_sd['Temp_CityWater_atSkid'])
-#     cop_inter['HeatOut_PrimaryPlant_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
-#                                                                  avg_sd['Temp_PrimaryStorageOutTop'] -
-#                                                                  avg_sd_6['Temp_CityWater_atSkid'])
-#     cop_inter['HeatOut_SecLoop'] = energy_kwh_to_kbtu(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
-#                                                       avg_sd['Temp_SecLoopHexInlet'])
-#     cop_inter['HeatOut_HW'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
-#                                                  avg_sd['Temp_CityWater'])
-#     cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
-#                                                        avg_sd_6['Temp_CityWater'])
-#     cop_inter['HeatLoss_TempMaint_MXV1'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV1'],
-#                                                               avg_sd['Temp_RecircSupply_MXV1'] -
-#                                                               avg_sd['Temp_RecircReturn_MXV1'])
-#     cop_inter['HeatLoss_TempMaint_MXV2'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV2'],
-#                                                               avg_sd['Temp_RecircSupply_MXV2'] -
-#                                                               avg_sd['Temp_RecircReturn_MXV2'])
-#     cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * \
-#         (1/60) * (1/1000)
-#     cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH']
-
-#     return cop_inter
-
-
-# def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: str) -> pd.DataFrame:
-#     """
-#     Performs COP calculations using the daily aggregated data. 
-
-#     Args: 
-#         df (pd.DataFrame): Pandas DataFrame to add COP columns to
-#         heatloss_fixed (float): fixed heatloss value 
-#         thermo_slice (str): the time at which slicing begins if we would like to thermo slice. 
-
-#     Returns: 
-#         pd.DataFrame: Pandas DataFrame with the added COP columns. 
-#     """
-#     cop_inter = pd.DataFrame()
-#     if (len(df) != 0):
-#         cop_inter = aggregate_values(df, thermo_slice)
-
-#     cop_values = pd.DataFrame(index=cop_inter.index, columns=[
-#                               "COP_DHWSys", "COP_DHWSys_dyavg", "COP_DHWSys_fixTMloss", "COP_PrimaryPlant", "COP_PrimaryPlant_dyavg"])
-
-#     try:
-#         cop_values['COP_DHWSys'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW']) + (
-#             energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-#             energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-#                 cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
-
-#         if thermo_slice is not None:
-#             cop_values['COP_DHWSys_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_HW_dyavg']) + (
-#                 energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV1'])) + (
-#                 energy_btu_to_kwh(cop_inter['HeatLoss_TempMaint_MXV2']))) / (
-#                     cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
-
-#         cop_values['COP_DHWSys_fixTMloss'] = ((energy_btu_to_kwh(cop_inter['HeatOut_HW'])) + (
-#             energy_btu_to_kwh(heatLoss_fixed))) / ((cop_inter['EnergyIn_HPWH'] +
-#                                                     cop_inter['EnergyIn_SecLoopPump']))
-
-#         cop_values['COP_PrimaryPlant'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant'])) / \
-#             (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
-
-#         if thermo_slice is not None:
-#             cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
-#                 (cop_inter['EnergyIn_HPWH'] +
-#                  cop_inter['EnergyIn_SecLoopPump'])
-
-#     except ZeroDivisionError:
-#         print("DIVIDED BY ZERO ERROR")
-#         return df
-
-#     return cop_values
-
 def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
-    # TODO this is specific for Maria and Antonia
     """
     Performs COP calculation method 2 as deffined by Scott's whiteboard image
     COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
@@ -426,7 +289,7 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
     
     # Create list of column names to sum
     sum_primary_cols = [col for col in df.columns if col.startswith('PowerIn_HPWH') or col == 'PowerIn_SecLoopPump']
-    sum_tm_cols = [col for col in df.columns if col.startswith('PowerIn_SwingTank')]
+    sum_tm_cols = [col for col in df.columns if col.startswith('PowerIn_SwingTank') or col.startswith('PowerIn_ERTank')]
 
     if len(sum_primary_cols) == 0:
         print('Cannot calculate COP as the primary power columns (such as PowerIn_HPWH and PowerIn_SecLoopPump) are missing from the DataFrame')
@@ -507,204 +370,22 @@ def aggregate_df(df: pd.DataFrame):
         dt_list.append(dt.datetime.strptime(date, format))
     daily_df["load_shift_day"] = False
     daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,))
-
+    
+    # if any day in hourly table is incomplete, we should delete that day from the daily table as the averaged data it contains will be from an incomplete day.
+    daily_df = remove_incomplete_days(hourly_df, daily_df)
     return hourly_df, daily_df
 
-# def set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
-#     """
-#     Function that initializes the dataframe that holds the volumes of each zone.
+def remove_incomplete_days(hourly_df, daily_df):
+    '''
+    Helper function for removing daily averages that have been calculated from incomplete data
+    '''
+    hourly_dates = pd.to_datetime(hourly_df.index)
+    daily_dates = pd.to_datetime(daily_df.index)
 
-#     Args:
-#         location (pd.Series)
-#         gals (int) 
-#         total (int) 
-#         zones (pd.Series)
-#     Returns: 
-#         pd.DataFrame: Pandas dataframe
-#     """
-#     relative_loc = location
-#     tank_frxn = relative_loc.subtract(relative_loc.shift(-1))
-#     gal_per_tank = gals
-#     tot_storage = total
-#     zone_gals = tank_frxn * tot_storage
-#     zone_gals = pd.Series.dropna(zone_gals)  # remove NA from leading math
-#     zone_list = zones
-#     gals_per_zone = pd.DataFrame({'Zone': zone_list, 'Zone_vol_g': zone_gals})
-#     return gals_per_zone
-
-
-# def _largest_less_than(df_row: pd.Series, target: int) -> str:
-#     """
-#     Function takes a list of gz/json filenames and a target temperature and determines
-#     the zone with the highest temperature < 120 degrees.
-
-#     Args: 
-#         df_row (pd.DataFrame): A single row of a sensor Pandas Dataframe in a series 
-#         target (int): integer target
-#     Output: 
-#         str: A string of the name of the zone.
-#     """
-#     count = 0
-#     largest_less_than_120_tmp = []
-#     for val in df_row:
-#         if val < target:
-#             largest_less_than_120_tmp = df_row.index[count]
-#             break
-#         count = count + 1
-
-#     return largest_less_than_120_tmp
-
-
-# def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series) -> float:
-#     """
-#     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
-
-#     Args: 
-#         df_row (pd.Series) 
-#         location (pd.Series)
-#         gals (int)
-#         total (int)
-#         zones (pd.Series)
-#     Returns: 
-#         float: A float of the total volume of water > 120 degrees
-#     """
-#     try:
-#         tvadder = 0
-#         vadder = 0
-#         gals_per_zone = set_zone_vol(location, gals, total, zones)
-#         dfcheck = df_row.filter(regex='top|mid|bottom')
-#         # An empty or invalid dataframe would have Vol120 and ZoneTemp120 as columns with
-#         # values of 0, so we check if the size is 0 without those columns if the dataframe has no data.
-#         if (dfcheck.size == 0):
-#             return 0
-#         dftemp = df_row.filter(
-#             regex='Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
-#         count = 1
-#         for val in dftemp:
-#             if dftemp.index[count] == "Temp_low":
-#                 vadder += gals_per_zone[gals_per_zone.columns[1]][count]
-#                 tvadder += val * gals_per_zone[gals_per_zone.columns[1]][count]
-#                 break
-#             elif dftemp[dftemp.index[count + 1]] >= 120:
-#                 vadder += gals_per_zone[gals_per_zone.columns[1]][count]
-#                 tvadder += (dftemp[dftemp.index[count + 1]] + val) / \
-#                     2 * gals_per_zone[gals_per_zone.columns[1]][count]
-#             elif dftemp[dftemp.index[count + 1]] < 120:
-#                 vadder += dftemp.get('Vol120')
-#                 tvadder += dftemp.get('Vol120') * dftemp.get('ZoneTemp120')
-#                 break
-#             count += 1
-#         avg_temp_above_120 = tvadder / vadder
-#         temp_ratio = (avg_temp_above_120 - dftemp[0]) / (120 - dftemp[0])
-#         return (temp_ratio * vadder)
-#     except ZeroDivisionError:
-#         print("DIVIDED BY ZERO ERROR")
-#         return 0
-
-
-# def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
-#     """
-#     Function takes a row of sensor data and determines the volume of water > 120 degrees
-#     in the zone that has the highest sensor < 120 degrees.
-
-#     Args: 
-#         df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
-#         location (pd.Series)
-#         gals (int)
-#         total (int)
-#         zones (pd.Series)
-#     Returns: 
-#         float: A float of the total volume of water > 120 degrees     
-#     """
-#     try:
-#         gals_per_zone = set_zone_vol(location, gals, total, zones)
-#         temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
-#         if (temp_cols.size <= 3):
-#             return 0
-#         name_cols = ""
-#         name_cols = _largest_less_than(temp_cols, 120)
-#         count = 0
-#         for index in temp_cols.index:
-#             if index == name_cols:
-#                 name_col_index = count
-#                 break
-#             count += 1
-#         dV = gals_per_zone['Zone_vol_g'][name_col_index]
-#         V120 = (temp_cols[temp_cols.index[name_col_index]] - 120) / (
-#             temp_cols[temp_cols.index[name_col_index]] - temp_cols[temp_cols.index[name_col_index - 1]]) * dV
-#         return V120
-#     except ZeroDivisionError:
-#         print("DIVIDED BY ZERO ERROR")
-#         return 0
-
-
-# def _get_zone_Temp120(df_row: pd.Series) -> float:
-#     """
-#     Function takes a row of sensor data and determines the highest sensor < 120 degrees.
-
-#     Args: 
-#         df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
-#     Returns: 
-#         float: A float of the average temperature of the zone < 120 degrees
-#     """
-#     # if df_row["Temp_120"] != 120:
-#     #    return 0
-#     temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
-#     if (temp_cols.size <= 3):
-#         return 0
-#     name_cols = _largest_less_than(temp_cols, 120)
-#     count = 0
-#     for index in temp_cols.index:
-#         if index == name_cols:
-#             name_col_index = count
-#             break
-#         count += 1
-
-#     zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
-#     return zone_Temp_120
-
-
-# def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
-#     """
-#     Function that creates and appends the Gals120 data onto the Dataframe
-
-#     Args: 
-#         df (pd.Series): A Pandas Dataframe
-#         location (pd.Series)
-#         gals (int)
-#         total (int)
-#         zones (pd.Series)
-#     Returns: 
-#         pd.DataFrame: a Pandas Dataframe
-#     """
-#     if (len(df) > 0):
-#         df['Vol120'] = df.apply(_get_V120, args=(
-#             location, gals, total, zones), axis=1)
-#         df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
-#         df['Vol_Equivalent_to_120'] = df.apply(
-#             _get_vol_equivalent_to_120, args=(location, gals, total, zones), axis=1)
-
-#     return df
-
-
-# def _calculate_average_zone_temp(df, substring):
-#     try:
-#         df_subset = df[[x for x in df if substring in x]]
-#         result = df_subset.sum(axis=1, skipna=True) / df_subset.count(axis=1)
-#         return result
-#     except ZeroDivisionError:
-#         print("DIVIDED BY ZERO ERROR")
-#         return 0
-
-
-# def get_temp_zones120(df) -> pd.DataFrame:
-#     df['Temp_top'] = _calculate_average_zone_temp(df, "Temp1")
-#     df['Temp_midtop'] = _calculate_average_zone_temp(df, "Temp2")
-#     df['Temp_mid'] = _calculate_average_zone_temp(df, "Temp3")
-#     df['Temp_midbottom'] = _calculate_average_zone_temp(df, "Temp4")
-#     df['Temp_bottom'] = _calculate_average_zone_temp(df, "Temp5")
-#     return df
-
+    missing_data_days = [date for date in daily_dates if not ((date in hourly_dates) and (date + pd.Timedelta(hours=23) in hourly_dates) and (date + pd.Timedelta(hours=1) in hourly_dates))]
+    daily_df = daily_df.drop(missing_data_days)
+    
+    return daily_df
 
 def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame) -> pd.DataFrame:
     """
