@@ -734,6 +734,6 @@ def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
     df = df.drop(to_del)
     df = df.set_index(["time_utc"])
 
-    df.index = df.index.strftime('%Y-%m-%d %H:%M:%S')
+    df.index = pd.to_datetime(df.index)
 
     return df
