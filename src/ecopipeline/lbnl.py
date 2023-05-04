@@ -713,6 +713,7 @@ def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
     """
 
+    df = pd.read_pickle(file_path)
     df["time_utc"] = df["time_utc"].dt.round("min")
 
     df = df.set_index(["time_utc"])
