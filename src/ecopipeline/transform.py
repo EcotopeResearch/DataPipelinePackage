@@ -198,6 +198,35 @@ def ffill_missing(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Var
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
+def nullify_erroneous(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
+    """
+    Function will take a pandas dataframe and make erroneous values NaN. 
+    Args: 
+        df (pd.DataFrame): Pandas dataframe
+        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+    Returns: 
+        pd.DataFrame: Pandas dataframe
+    """
+    try:
+        # ffill dataframe holds ffill length and changepoint bool
+        error_df = pd.read_csv(vars_filename)
+    except FileNotFoundError:
+        print("File Not Found: ", vars_filename)
+        return df
+
+    error_df = error_df.loc[:, [
+        "variable_name", "error_value"]]
+    # drop data without changepoint AND ffill_length
+    error_df.dropna(axis=0, thresh=2, inplace=True)
+    error_df.set_index(['variable_name'], inplace=True)
+    error_df = error_df[error_df.index.notnull()]  # drop data without names
+    for col in error_df.index:
+        if col in df.columns:
+            error_value = error_df.loc[col, 'error_value']
+            df[col] = df[col].replace(error_value, np.nan)
+
+    return df
+
 def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
     """
     Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
@@ -260,7 +289,7 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
     
     # Create list of column names to sum
     sum_primary_cols = [col for col in df.columns if col.startswith('PowerIn_HPWH') or col == 'PowerIn_SecLoopPump']
-    sum_tm_cols = [col for col in df.columns if col.startswith('PowerIn_SwingTank')]
+    sum_tm_cols = [col for col in df.columns if col.startswith('PowerIn_SwingTank') or col.startswith('PowerIn_ERTank')]
 
     if len(sum_primary_cols) == 0:
         print('Cannot calculate COP as the primary power columns (such as PowerIn_HPWH and PowerIn_SecLoopPump) are missing from the DataFrame')
