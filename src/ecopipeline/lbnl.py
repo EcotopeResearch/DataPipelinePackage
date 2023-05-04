@@ -712,9 +712,14 @@ def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
     Returns:
         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
     """
-    df = pd.read_pickle(file_path)
 
     df["time_utc"] = df["time_utc"].dt.round("min")
+
+    df = df.set_index(["time_utc"])
+    df = df.sort_index(ascending=True)
+
+    df.insert(0, 'time_utc', list(df.index))
+    df.index = np.arange(len(df.index))
 
     to_del = list()
     for i in range(len(df) - 1):
@@ -727,5 +732,7 @@ def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
 
     df = df.drop(to_del)
     df = df.set_index(["time_utc"])
+
+    df.index = df.index.strftime('%Y-%m-%d %H:%M:%S')
 
     return df
