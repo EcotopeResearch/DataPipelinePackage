@@ -233,7 +233,7 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type:
         time_data = row.values.tolist()
         #remove nans and infinites
         time_data = [None if math.isnan(x) else x for x in time_data]
-        time_data = [None if x == float('inf') else x for x in time_data]
+        time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
         cursor.execute(insert_str, (index, *time_data))
 
@@ -305,7 +305,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         time_data = row.values.tolist()
         #remove nans and infinites
         time_data = [None if math.isnan(x) else x for x in time_data]
-        time_data = [None if x == float('inf') else x for x in time_data]
+        time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
         if(index <= last_time):
             cursor.execute(update_str, (*time_data, index))
