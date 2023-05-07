@@ -210,11 +210,11 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
         y_min = math.floor(Temp_ODT/5) * 5
         y_range = [y_min, y_max]
 
-        table_v1 = np.interp(Temp_wb_F, x_range, superchart.loc[str(y_min)])
+        table_v1 = np.interp(Temp_wb_F, x_range, superchart.loc[y_min])
         if(y_max == y_min):
             superheat_target = table_v1 
         else: 
-            table_v2 = np.interp(Temp_wb_F, x_range, superchart.loc[str(max)])
+            table_v2 = np.interp(Temp_wb_F, x_range, superchart.loc[y_max])
             xvalue_range3 = [table_v1, table_v2]
             if(any(np.isnan(xvalue_range3))):
                 superheat_target = None
@@ -230,7 +230,6 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     #refrigerant charge and add it back to the series.
     r_charge = superheat_calc - superheat_target 
     row.loc["Refrig_charge"] = r_charge[0]
-    print("Reached the end of superheat!")
     return row
 
 def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"{_input_directory}site_info.csv", four_directory: str = f"{_input_directory}410a_pt.csv", superheat_directory: str = f"{_input_directory}superheat.csv") -> pd.DataFrame:
@@ -275,14 +274,11 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
             return df
 
         # calculate the refrigerant charge w/the superheat method
-        superchart = pd.read_csv(superheat_directory)
+        superchart = pd.read_csv(superheat_directory, index_col=0)
         x_range = superchart.columns.values.tolist()
-        x_range.pop(0)
         x_range = [int(x) for x in x_range] 
-        row_range = superchart.iloc[:,0].tolist()
+        row_range = superchart.index.values.tolist()
         row_range = [int(x) for x in row_range]
-        #ignore first element and we have our range from the col names
-        print(x_range)
 
         df = df.apply(_superheat, axis=1, args=(x_range, row_range, superchart, lr_model))
 
