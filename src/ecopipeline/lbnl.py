@@ -347,9 +347,9 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
-def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
+def nclarity_filter_new(date: str, filenames: List[str]) -> List[str]:
     """
-    Function filters the filenames list to only those from the given date.
+    Function filters the filenames list to only those from the given date or later.
     
     Args: 
         date (str): target date
@@ -358,7 +358,7 @@ def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
         List[str]: Filtered list of filenames
     """
     date = dt.datetime.strptime(date, '%Y-%m-%d')
-    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') == date, filenames))
+    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= date, filenames))
 
 
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
@@ -417,13 +417,11 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
     else:
         prev_df = pd.DataFrame(
             columns=['site', 'filename', 'start_datetime', 'end_datetime'])
-        prev_df[['start_datetime', 'end_datetime']] = prev_df[[
-            'start_datetime', 'end_datetime']].apply(pd.to_datetime)
+        prev_df[['start_datetime', 'end_datetime']] = prev_df[['start_datetime', 'end_datetime']].apply(pd.to_datetime)
 
     # Filter files by what has not been opened
     prev_filename_set = set(prev_df['filename'])
-    new_filenames = [
-        filename for filename in filenames if filename not in prev_filename_set]
+    new_filenames = [filename for filename in filenames if filename not in prev_filename_set]
 
     # Add files to prev_df
     for filename in new_filenames:
@@ -431,18 +429,15 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
         data["time(UTC)"] = pd.to_datetime(data["time(UTC)"])
         max_date = data["time(UTC)"].max()
         min_date = data["time(UTC)"].min()
-        new_entry = {'site': site, 'filename': filename,
-                     'start_datetime': min_date, 'end_datetime': max_date}
-        prev_df = pd.concat([prev_df, pd.DataFrame(
-            new_entry, index=[0])], ignore_index=True)
+        new_entry = {'site': site, 'filename': filename,'start_datetime': min_date, 'end_datetime': max_date}
+        prev_df = pd.concat([prev_df, pd.DataFrame(new_entry, index=[0])], ignore_index=True)
 
     # Save new prev_df
     prev_df.to_pickle(prev_opened)
 
     # List all files with the date equal or newer than last_date
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    filtered_prev_df = prev_df[(['site'] == site) & (
-        prev_df['start_datetime'] >= last_date)]
+    filtered_prev_df = prev_df[(prev_df['site'] == site) & (prev_df['start_datetime'] >= last_date)]
     filtered_filenames = filtered_prev_df['filename'].tolist()
 
     return filtered_filenames
