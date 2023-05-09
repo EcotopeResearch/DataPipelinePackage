@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ecopipeline.load &mdash; Ecotope Datapipeline (Ecopipeline) 0.0.13 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Ecotope Datapipeline (Ecopipeline)
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Ecotope Datapipeline (Ecopipeline)</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ecopipeline.load</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ecopipeline.load</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">import</span> <span class="nn">mysql.connector</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">ecopipeline.config</span> <span class="kn">import</span> <span class="n">_config_directory</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_columns&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">mysql.connector.errors</span> <span class="k">as</span> <span class="nn">mysqlerrors</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="get_login_info"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.get_login_info">[docs]</a><span class="k">def</span> <span class="nf">get_login_info</span><span class="p">(</span><span class="n">config_info</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_config_directory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads the config.ini file stored in the config_info file path.   </span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        table_headers (list): A list of table headers. These headers must correspond to the </span>
+<span class="sd">            section headers in the config.ini file. Your list must contain the section</span>
+<span class="sd">            header for each table you wish to write into. The first header must correspond </span>
+<span class="sd">            to the login information of the database. The other are the tables which you wish</span>
+<span class="sd">            to write to. </span>
+<span class="sd">        config_info (str): A path to the config.ini file must also be passed.</span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        dict: A dictionary containing all relevant information is returned. This</span>
+<span class="sd">            includes information used to create a connection with a mySQL server and</span>
+<span class="sd">            information (table names and column names) used to load the data into </span>
+<span class="sd">            tables. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config_info</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File path &#39;</span><span class="si">{</span><span class="n">config_info</span><span class="si">}</span><span class="s2">&#39; does not exist.&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="n">configure</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+    <span class="n">configure</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">config_info</span><span class="p">)</span>
+
+    <span class="n">db_connection_info</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">configure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;database&#39;</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">),</span>
+                     <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">configure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;database&#39;</span><span class="p">,</span> <span class="s1">&#39;password&#39;</span><span class="p">),</span>
+                     <span class="s1">&#39;host&#39;</span><span class="p">:</span> <span class="n">configure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;database&#39;</span><span class="p">,</span> <span class="s1">&#39;host&#39;</span><span class="p">),</span>
+                     <span class="s1">&#39;database&#39;</span><span class="p">:</span> <span class="n">configure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;database&#39;</span><span class="p">,</span> <span class="s1">&#39;database&#39;</span><span class="p">)}</span>
+    <span class="p">}</span>
+
+    <span class="c1">#TODO: do we still need sensor_list logic?</span>
+    <span class="c1"># db_table_info = {header: {&quot;table_name&quot;: configure.get(header, &#39;table_name&#39;), </span>
+    <span class="c1">#               &quot;sensor_list&quot;: list(configure.get(header, &#39;sensor_list&#39;).split(&#39;,&#39;))} for header in table_headers}</span>
+    
+    <span class="c1"># db_connection_info.update(db_table_info)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully fetched configuration information from file path </span><span class="si">{</span><span class="n">config_info</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">db_connection_info</span></div>
+    
+
+<div class="viewcode-block" id="connect_db"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.connect_db">[docs]</a><span class="k">def</span> <span class="nf">connect_db</span><span class="p">(</span><span class="n">config_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a connection with the mySQL server. </span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        config_info (dict): The dictionary containing the credential information. This is</span>
+<span class="sd">            contained in the &#39;database&#39; section of the dictionary. </span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        mysql.connector.cursor.MySQLCursor: A connection and cursor object. THe cursor can be used to execute</span>
+<span class="sd">            mySQL queries and the connection object can be used to save those changes. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">connection</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">mysql</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="o">**</span><span class="n">config_info</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">mysql</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unable to connect to database with given credentials.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully connected to database.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">connection</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="check_table_exists"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.check_table_exists">[docs]</a><span class="k">def</span> <span class="nf">check_table_exists</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dbname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if the given table name already exists in database.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        cursor: Database cursor object and the table name.</span>
+<span class="sd">        table_name (str): Name of the table</span>
+<span class="sd">        dbname (str): Name of the database</span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        int: The number of tables in the database with the given table name.</span>
+<span class="sd">            This can directly be used as a boolean!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELECT count(*) &quot;</span>
+                   <span class="sa">f</span><span class="s2">&quot;FROM information_schema.TABLES &quot;</span>
+                   <span class="sa">f</span><span class="s2">&quot;WHERE (TABLE_SCHEMA = &#39;</span><span class="si">{</span><span class="n">dbname</span><span class="si">}</span><span class="s2">&#39;) AND (TABLE_NAME = &#39;</span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">&#39;)&quot;</span><span class="p">)</span>
+
+    <span class="n">num_tables</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">num_tables</span></div>
+
+
+<div class="viewcode-block" id="create_new_table"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.create_new_table">[docs]</a><span class="k">def</span> <span class="nf">create_new_table</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">table_column_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a new table in the mySQL database.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        cursor: A cursor object and the name of the table to be created.</span>
+<span class="sd">        table_name (str): Name of the table</span>
+<span class="sd">        table_column_names (list): list of columns names in the table must be passed.</span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        bool: A boolean value indicating if a table was sucessfully created. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">create_table_statement</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;CREATE TABLE </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> (</span><span class="se">\n</span><span class="s2">time_pt datetime,</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="k">for</span> <span class="n">sensor</span> <span class="ow">in</span> <span class="n">table_column_names</span><span class="p">:</span>
+        <span class="n">create_table_statement</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sensor</span><span class="si">}</span><span class="s2"> float default 0.0,</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="n">create_table_statement</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;PRIMARY KEY (time_pt)</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="n">create_table_statement</span> <span class="o">+=</span> <span class="s2">&quot;);&quot;</span>
+    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">create_table_statement</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="find_missing_columns"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.find_missing_columns">[docs]</a><span class="k">def</span> <span class="nf">find_missing_columns</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds the column names which are not in the database table currently but are present</span>
+<span class="sd">    in the pandas DataFrame to be written to the database. If communication with database</span>
+<span class="sd">    is not possible, an empty list will be returned meaning no column will be added. </span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        cursor: A cursor object and the name of the table to be created.</span>
+<span class="sd">        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. </span>
+<span class="sd">        config_info (dict): The dictionary containing the configuration information </span>
+<span class="sd">        data_type (str): the header name corresponding to the table you wish to write data to.  </span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        list: list of column names which must be added to the database table for the pandas </span>
+<span class="sd">        DataFrame to be properly written into the database. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;select column_name from information_schema.columns where table_schema = &#39;&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;database&#39;</span><span class="p">][</span><span class="s1">&#39;database&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; and table_name = &#39;&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">mysqlerrors</span><span class="o">.</span><span class="n">DatabaseError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Check if the mysql table to be written to exists.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    
+    <span class="n">current_table_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+    <span class="n">current_table_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">current_table_names</span><span class="p">]</span>
+    <span class="n">df_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">sensor_name</span> <span class="k">for</span> <span class="n">sensor_name</span> <span class="ow">in</span> <span class="n">df_names</span> <span class="k">if</span> <span class="n">sensor_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_table_names</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="create_new_columns"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.create_new_columns">[docs]</a><span class="k">def</span> <span class="nf">create_new_columns</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create the new, necessary column in the database. Catches error if communication with mysql database</span>
+<span class="sd">    is not possible.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        cursor: A cursor object and the name of the table to be created.`</span>
+<span class="sd">        config_info (dict): The dictionary containing the configuration information.</span>
+<span class="sd">        data_type (str): the header name corresponding to the table you wish to write data to.  </span>
+<span class="sd">        new_columns (list): list of columns that must be added to the database table.</span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        bool: boolean indicating if the the column were successfully added to the database. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">alter_table_statements</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;ALTER TABLE </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> ADD COLUMN </span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2"> float default null;&quot;</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">new_columns</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">sql_statement</span> <span class="ow">in</span> <span class="n">alter_table_statements</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_statement</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">mysqlerrors</span><span class="o">.</span><span class="n">DatabaseError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error communicating with the mysql database.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="load_database"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.load_database">[docs]</a><span class="k">def</span> <span class="nf">load_database</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">config_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads given pandas DataFrame into a mySQL table.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        cursor: A cursor object</span>
+<span class="sd">        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. </span>
+<span class="sd">        config_info (dict): The dictionary containing the configuration information </span>
+<span class="sd">        data_type (str): the header name corresponding to the table you wish to write data to.  </span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        bool: A boolean value indicating if the data was successfully written to the database. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dbname</span> <span class="o">=</span> <span class="n">config_info</span><span class="p">[</span><span class="s1">&#39;database&#39;</span><span class="p">][</span><span class="s1">&#39;database&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Attempted to write to </span><span class="si">{table_name}</span><span class="s2"> but dataframe was empty.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attempting to write data for </span><span class="si">{</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> into </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  
+    
+    <span class="c1"># Get string of all column names for sql insert</span>
+    <span class="n">sensor_names</span> <span class="o">=</span> <span class="s2">&quot;time_pt&quot;</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">sensor_names</span> <span class="o">+=</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="n">column</span> 
+
+    <span class="c1"># create SQL statement</span>
+    <span class="n">insert_str</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; (&quot;</span> <span class="o">+</span> <span class="n">sensor_names</span> <span class="o">+</span> <span class="s2">&quot;) VALUES (&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">)):</span>
+        <span class="n">insert_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">, &quot;</span>
+    <span class="n">insert_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">)&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_table_exists</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">dbname</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">create_new_table</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sensor_names</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]):</span> <span class="c1">#split on colums and remove first column aka time_pt</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not create new table </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> in database </span><span class="si">{</span><span class="n">dbname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+    <span class="n">missing_cols</span> <span class="o">=</span> <span class="n">find_missing_columns</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">,</span> <span class="n">config_info</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_cols</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">create_new_columns</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">,</span> <span class="n">config_info</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">missing_cols</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unable to add new column due to database error.&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">time_data</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="c1">#remove nans and infinites</span>
+        <span class="n">time_data</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">time_data</span><span class="p">]</span>
+        <span class="n">time_data</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">time_data</span><span class="p">]</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_str</span><span class="p">,</span> <span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">time_data</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully wrote </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows to table </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> in database </span><span class="si">{</span><span class="n">dbname</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="load_overwrite_database"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.load.load_overwrite_database">[docs]</a><span class="k">def</span> <span class="nf">load_overwrite_database</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">config_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        cursor: A cursor object</span>
+<span class="sd">        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. </span>
+<span class="sd">        config_info (dict): The dictionary containing the configuration information </span>
+<span class="sd">        data_type (str): the header name corresponding to the table you wish to write data to.  </span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        bool: A boolean value indicating if the data was successfully written to the database. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="n">dbname</span> <span class="o">=</span> <span class="n">config_info</span><span class="p">[</span><span class="s1">&#39;database&#39;</span><span class="p">][</span><span class="s1">&#39;database&#39;</span><span class="p">]</span>
+    <span class="n">table_name</span> <span class="o">=</span> <span class="n">config_info</span><span class="p">[</span><span class="n">data_type</span><span class="p">][</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span>   
+    
+    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Attempted to write to </span><span class="si">{table_name}</span><span class="s2"> but dataframe was empty.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attempting to write data for </span><span class="si">{</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> into </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Get string of all column names for sql insert</span>
+    <span class="n">sensor_names</span> <span class="o">=</span> <span class="s2">&quot;time_pt&quot;</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">sensor_names</span> <span class="o">+=</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="n">column</span> 
+
+    <span class="c1"># create SQL statement</span>
+    <span class="n">insert_str</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; (&quot;</span> <span class="o">+</span> <span class="n">sensor_names</span> <span class="o">+</span> <span class="s2">&quot;) VALUES (&quot;</span>
+    <span class="n">update_str</span> <span class="o">=</span> <span class="s2">&quot;UPDATE &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; SET &quot;</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">insert_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">, &quot;</span>
+        <span class="n">update_str</span> <span class="o">+=</span> <span class="n">column</span> <span class="o">+</span> <span class="s2">&quot; = </span><span class="si">%s</span><span class="s2">, &quot;</span>
+    <span class="n">update_str</span> <span class="o">=</span> <span class="n">update_str</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">update_str</span><span class="p">)</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># remove last &quot;, &quot;</span>
+    <span class="n">update_str</span> <span class="o">+=</span> <span class="s2">&quot; WHERE time_pt = </span><span class="si">%s</span><span class="s2">&quot;</span>
+    <span class="n">insert_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">)&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_table_exists</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">dbname</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">create_new_table</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sensor_names</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]):</span> <span class="c1">#split on colums and remove first column aka time_pt</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not create new table </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> in database </span><span class="si">{</span><span class="n">dbname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    
+    <span class="n">last_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s1">&#39;20/01/1990&#39;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">/%m/%Y&quot;</span><span class="p">)</span> <span class="c1"># arbitrary past date</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;select * from </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> order by time_pt DESC LIMIT 1&quot;</span><span class="p">)</span>
+        <span class="n">last_row_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">last_row_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">last_time</span> <span class="o">=</span> <span class="n">last_row_data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="n">mysqlerrors</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Table </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> does has no data.&quot;</span><span class="p">)</span>
+
+    <span class="n">missing_cols</span> <span class="o">=</span> <span class="n">find_missing_columns</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">,</span> <span class="n">config_info</span><span class="p">,</span> <span class="n">data_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_cols</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">create_new_columns</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">,</span> <span class="n">config_info</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">missing_cols</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unable to add new column due to database error.&quot;</span><span class="p">)</span>
+    
+    <span class="n">updatedRows</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">time_data</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="c1">#remove nans and infinites</span>
+        <span class="n">time_data</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">time_data</span><span class="p">]</span>
+        <span class="n">time_data</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">time_data</span><span class="p">]</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">last_time</span><span class="p">):</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">update_str</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">time_data</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
+            <span class="n">updatedRows</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_str</span><span class="p">,</span> <span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">time_data</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully wrote </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows to table </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> in database </span><span class="si">{</span><span class="n">dbname</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">updatedRows</span><span class="si">}</span><span class="s2"> existing rows were overwritten.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config_dict</span> <span class="o">=</span> <span class="n">get_login_info</span><span class="p">(</span><span class="s2">&quot;config.ini&quot;</span><span class="p">)</span>
+    <span class="n">db_connection</span><span class="p">,</span> <span class="n">db_cursor</span> <span class="o">=</span> <span class="n">connect_db</span><span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;database&#39;</span><span class="p">])</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/rowdata.csv&quot;</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s2">&quot;time_utc&quot;</span><span class="p">])</span>
+
+    <span class="c1"># load data stored in data frame to database</span>
+    <span class="n">load_database</span><span class="p">(</span><span class="n">cursor</span><span class="o">=</span><span class="n">db_cursor</span><span class="p">,</span> <span class="n">dataframe</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">config_info</span><span class="o">=</span><span class="n">config_dict</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;lbnl_minute&quot;</span><span class="p">)</span>
+
+    <span class="c1"># commit changes to database and close connections</span>
+    <span class="n">db_connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">db_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">db_cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Ecotope Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

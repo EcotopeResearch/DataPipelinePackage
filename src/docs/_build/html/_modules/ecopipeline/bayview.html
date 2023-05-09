@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ecopipeline.bayview &mdash; Ecotope Datapipeline (Ecopipeline) 0.0.13 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Ecotope Datapipeline (Ecopipeline)
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Ecotope Datapipeline (Ecopipeline)</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ecopipeline.bayview</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ecopipeline.bayview</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span> 
+<span class="kn">from</span> <span class="nn">ecopipeline.config</span> <span class="kn">import</span> <span class="n">_input_directory</span><span class="p">,</span> <span class="n">_output_directory</span>
+<span class="kn">from</span> <span class="nn">ecopipeline.unit_convert</span> <span class="kn">import</span> <span class="n">energy_btu_to_kwh</span><span class="p">,</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">,</span> <span class="n">energy_to_power</span>
+
+
+
+<span class="k">def</span> <span class="nf">_set_zone_vol</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">gals</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">zones</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function that initializes the dataframe that holds the volumes of each zone.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        location (pd.Series)</span>
+<span class="sd">        gals (int) </span>
+<span class="sd">        total (int) </span>
+<span class="sd">        zones (pd.Series)</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: Pandas dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">relative_loc</span> <span class="o">=</span> <span class="n">location</span>
+    <span class="n">tank_frxn</span> <span class="o">=</span> <span class="n">relative_loc</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">relative_loc</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">gal_per_tank</span> <span class="o">=</span> <span class="n">gals</span>
+    <span class="n">tot_storage</span> <span class="o">=</span> <span class="n">total</span>
+    <span class="n">zone_gals</span> <span class="o">=</span> <span class="n">tank_frxn</span> <span class="o">*</span> <span class="n">tot_storage</span>
+    <span class="n">zone_gals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">zone_gals</span><span class="p">)</span>  <span class="c1"># remove NA from leading math</span>
+    <span class="n">zone_list</span> <span class="o">=</span> <span class="n">zones</span>
+    <span class="n">gals_per_zone</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;Zone&#39;</span><span class="p">:</span> <span class="n">zone_list</span><span class="p">,</span> <span class="s1">&#39;Zone_vol_g&#39;</span><span class="p">:</span> <span class="n">zone_gals</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">gals_per_zone</span>
+
+
+<span class="k">def</span> <span class="nf">_largest_less_than</span><span class="p">(</span><span class="n">df_row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function takes a sensor row and a target temperature and determines</span>
+<span class="sd">    the zone with the highest temperature &lt; 120 degrees.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df_row (pd.DataFrame): A single row of a sensor Pandas Dataframe in a series </span>
+<span class="sd">        target (int): integer target</span>
+<span class="sd">    Output: </span>
+<span class="sd">        str: A string of the name of the zone.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">largest_less_than_120_tmp</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">df_row</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">largest_less_than_120_tmp</span> <span class="o">=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span><span class="p">]</span>
+            <span class="k">break</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">count</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">largest_less_than_120_tmp</span>
+
+<span class="c1"># NOTE: Move to bayview.py</span>
+<span class="k">def</span> <span class="nf">_get_vol_equivalent_to_120</span><span class="p">(</span><span class="n">df_row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">gals</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">zones</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function takes a row of sensor data and finds the total volume of water &gt; 120 degrees.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df_row (pd.Series) </span>
+<span class="sd">        location (pd.Series)</span>
+<span class="sd">        gals (int)</span>
+<span class="sd">        total (int)</span>
+<span class="sd">        zones (pd.Series)</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        float: A float of the total volume of water &gt; 120 degrees</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">df_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Temp_PrimaryStorageOutTop&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">120</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="n">tvadder</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">vadder</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">gals_per_zone</span> <span class="o">=</span> <span class="n">_set_zone_vol</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">gals</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">zones</span><span class="p">)</span>
+        <span class="n">dfcheck</span> <span class="o">=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s1">&#39;top|mid|bottom&#39;</span><span class="p">)</span>
+        <span class="c1"># An empty or invalid dataframe would have Vol120 and ZoneTemp120 as columns with</span>
+        <span class="c1"># values of 0, so we check if the size is 0 without those columns if the dataframe has no data.</span>
+        <span class="c1"># Temp_CityWater_atSkid</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dfcheck</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="n">dftemp</span> <span class="o">=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">regex</span><span class="o">=</span><span class="s1">&#39;Temp_PrimaryStorageOutTop|top|mid|bottom&#39;</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dftemp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dftemp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Temp_bottom&quot;</span><span class="p">:</span>
+                <span class="n">vadder</span> <span class="o">+=</span> <span class="n">gals_per_zone</span><span class="p">[</span><span class="n">gals_per_zone</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">count</span><span class="p">]</span>
+                <span class="n">tvadder</span> <span class="o">+=</span> <span class="n">dftemp</span><span class="p">[</span><span class="n">dftemp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span><span class="p">]]</span> <span class="o">*</span> <span class="n">gals_per_zone</span><span class="p">[</span><span class="n">gals_per_zone</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">count</span><span class="p">]</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">dftemp</span><span class="p">[</span><span class="n">dftemp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">&gt;=</span> <span class="mi">120</span><span class="p">:</span>
+                <span class="n">vadder</span> <span class="o">+=</span> <span class="n">gals_per_zone</span><span class="p">[</span><span class="n">gals_per_zone</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">count</span><span class="p">]</span>
+                <span class="n">tvadder</span> <span class="o">+=</span> <span class="p">(</span><span class="n">dftemp</span><span class="p">[</span><span class="n">dftemp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">dftemp</span><span class="p">[</span><span class="n">dftemp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span><span class="p">]])</span> <span class="o">/</span> \
+                    <span class="mi">2</span> <span class="o">*</span> <span class="n">gals_per_zone</span><span class="p">[</span><span class="n">gals_per_zone</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">count</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">dftemp</span><span class="p">[</span><span class="n">dftemp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">&lt;</span> <span class="mi">120</span><span class="p">:</span>
+                <span class="n">vadder</span> <span class="o">+=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Vol120&#39;</span><span class="p">)</span>
+                <span class="n">tvadder</span> <span class="o">+=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Vol120&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="n">df_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ZoneTemp120&#39;</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">avg_temp_above_120</span> <span class="o">=</span> <span class="n">tvadder</span> <span class="o">/</span> <span class="n">vadder</span>
+        <span class="n">temp_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">avg_temp_above_120</span> <span class="o">-</span> <span class="n">df_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">120</span> <span class="o">-</span> <span class="n">df_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">temp_ratio</span> <span class="o">*</span> <span class="n">vadder</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DIVIDED BY ZERO ERROR&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+<span class="c1"># NOTE: Move to bayview.py</span>
+<span class="k">def</span> <span class="nf">_get_V120</span><span class="p">(</span><span class="n">df_row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">gals</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">zones</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function takes a row of sensor data and determines the volume of water &gt; 120 degrees</span>
+<span class="sd">    in the zone that has the highest sensor &lt; 120 degrees.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series</span>
+<span class="sd">        location (pd.Series)</span>
+<span class="sd">        gals (int)</span>
+<span class="sd">        total (int)</span>
+<span class="sd">        zones (pd.Series)</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        float: A float of the total volume of water &gt; 120 degrees     </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">gals_per_zone</span> <span class="o">=</span> <span class="n">_set_zone_vol</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">gals</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">zones</span><span class="p">)</span>
+        <span class="n">temp_cols</span> <span class="o">=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s1">&#39;Temp_PrimaryStorageOutTop|top|mid|bottom&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="n">name_cols</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">name_cols</span> <span class="o">=</span> <span class="n">_largest_less_than</span><span class="p">(</span><span class="n">temp_cols</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">name_col_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="n">name_cols</span><span class="p">:</span>
+                <span class="n">name_col_index</span> <span class="o">=</span> <span class="n">count</span>
+                <span class="k">break</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">name_col_index</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">name_col_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">):</span>
+            <span class="c1"># top of tank is less than 120 degrees or entire tank &gt; 120 </span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="c1"># subtract one to get index of first zone larger than 120</span>
+        <span class="n">name_col_index</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">dV</span> <span class="o">=</span> <span class="n">gals_per_zone</span><span class="p">[</span><span class="s1">&#39;Zone_vol_g&#39;</span><span class="p">][</span><span class="n">name_col_index</span><span class="p">]</span>
+        <span class="n">V120</span> <span class="o">=</span> <span class="p">((</span><span class="n">temp_cols</span><span class="p">[</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">name_col_index</span><span class="p">]]</span> <span class="o">-</span> <span class="mi">120</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="n">temp_cols</span><span class="p">[</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">name_col_index</span><span class="p">]]</span> <span class="o">-</span> <span class="n">temp_cols</span><span class="p">[</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">name_col_index</span><span class="o">+</span><span class="mi">1</span><span class="p">]]))</span> <span class="o">*</span> <span class="n">dV</span>
+        <span class="k">return</span> <span class="n">V120</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DIVIDED BY ZERO ERROR&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+<span class="c1"># NOTE: Move to bayview.py</span>
+<span class="k">def</span> <span class="nf">_get_zone_Temp120</span><span class="p">(</span><span class="n">df_row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function takes a row of sensor data and determines average temperature of the temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        float: A float of the average temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># if df_row[&quot;Temp_120&quot;] != 120:</span>
+    <span class="c1">#    return 0</span>
+    <span class="n">temp_cols</span> <span class="o">=</span> <span class="n">df_row</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s1">&#39;Temp_PrimaryStorageOutTop|top|mid|bottom&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">name_cols</span> <span class="o">=</span> <span class="n">_largest_less_than</span><span class="p">(</span><span class="n">temp_cols</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">name_col_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="n">name_cols</span><span class="p">:</span>
+            <span class="n">name_col_index</span> <span class="o">=</span> <span class="n">count</span>
+            <span class="k">break</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="k">if</span> <span class="n">name_col_index</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">name_col_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">):</span>
+        <span class="c1"># if top of tank is &lt; 120 or entire tank &gt; 120, return nan</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">zone_Temp_120</span> <span class="o">=</span> <span class="p">(</span><span class="mi">120</span> <span class="o">+</span> <span class="n">temp_cols</span><span class="p">[</span><span class="n">temp_cols</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">name_col_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">zone_Temp_120</span>
+
+<span class="c1"># NOTE: Move to bayview.py</span>
+<div class="viewcode-block" id="get_storage_gals120"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.bayview.get_storage_gals120">[docs]</a><span class="k">def</span> <span class="nf">get_storage_gals120</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">gals</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">zones</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function that creates and appends the Gals120 data onto the Dataframe</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df (pd.Series): A Pandas Dataframe</span>
+<span class="sd">        location (pd.Series)</span>
+<span class="sd">        gals (int)</span>
+<span class="sd">        total (int)</span>
+<span class="sd">        zones (pd.Series)</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: a Pandas Dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Vol120&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_get_V120</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">location</span><span class="p">,</span> <span class="n">gals</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">zones</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ZoneTemp120&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_get_zone_Temp120</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Vol_Equivalent_to_120&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">_get_vol_equivalent_to_120</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">gals</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">zones</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+<span class="c1"># NOTE: Move to bayview.py</span>
+<span class="k">def</span> <span class="nf">_calculate_average_zone_temp</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">substring</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function that calculates the average temperature of the inputted zone.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df (pd.Series): A Pandas Dataframe</span>
+<span class="sd">        substring (str)</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: a Pandas Dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df_subset</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span> <span class="k">if</span> <span class="n">substring</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">df_subset</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">skipna</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">/</span> <span class="n">df_subset</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DIVIDED BY ZERO ERROR&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+<span class="c1"># NOTE: Move to bayview.py</span>
+<div class="viewcode-block" id="get_temp_zones120"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.bayview.get_temp_zones120">[docs]</a><span class="k">def</span> <span class="nf">get_temp_zones120</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function that keeps track of the average temperature of each zone.</span>
+<span class="sd">    for this function to work, naming conventions for each parrallel tank must include &#39;Temp1&#39; as the tempature at the top of the tank, &#39;Temp5&#39; as that at the bottom of the tank, and &#39;Temp2&#39;-&#39;Temp4&#39; as the tempatures in between.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df (pd.Series): A Pandas Dataframe</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: a Pandas Dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temp_top&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calculate_average_zone_temp</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s2">&quot;Temp1&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temp_midtop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calculate_average_zone_temp</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s2">&quot;Temp2&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temp_mid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calculate_average_zone_temp</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s2">&quot;Temp3&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temp_midbottom&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calculate_average_zone_temp</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s2">&quot;Temp4&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temp_bottom&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calculate_average_zone_temp</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s2">&quot;Temp5&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="get_energy_by_min"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.bayview.get_energy_by_min">[docs]</a><span class="k">def</span> <span class="nf">get_energy_by_min</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Energy is recorded cummulatively. Function takes the lagged differences in </span>
+<span class="sd">    order to get a per/minute value for each of the energy variables.</span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df (pd.DataFrame): Pandas dataframe</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: Pandas dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">energy_vars</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;.*Energy.*&quot;</span><span class="p">)</span>
+    <span class="n">energy_vars</span> <span class="o">=</span> <span class="n">energy_vars</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;.*[^BTU]$&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">energy_vars</span><span class="p">:</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="verify_power_energy"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.bayview.verify_power_energy">[docs]</a><span class="k">def</span> <span class="nf">verify_power_energy</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Verifies that for each timestamp, corresponding power and energy variables are consistent</span>
+<span class="sd">    with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any</span>
+<span class="sd">    rows with conflicting power and energy variables.</span>
+
+<span class="sd">    Prereq: </span>
+<span class="sd">        Input dataframe MUST have had get_energy_by_min() called on it previously</span>
+<span class="sd">    Args: </span>
+<span class="sd">        df (pd.DataFrame): Pandas dataframe</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">out_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time_pt&#39;</span><span class="p">,</span> <span class="s1">&#39;power_variable&#39;</span><span class="p">,</span> <span class="s1">&#39;energy_variable&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;energy_value&#39;</span><span class="p">,</span> <span class="s1">&#39;power_value&#39;</span><span class="p">,</span> <span class="s1">&#39;expected_power&#39;</span><span class="p">,</span> <span class="s1">&#39;difference_from_expected&#39;</span><span class="p">])</span>
+    <span class="n">energy_vars</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;.*Energy.*&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;.*[^BTU]$&quot;</span><span class="p">)</span>
+    <span class="n">power_vars</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;.*Power.*&quot;</span><span class="p">)</span>
+                  <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;^((?!Energy).)*$&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;time_pt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">power_energy_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+        <span class="p">[</span><span class="s1">&#39;time_pt&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">energy_vars</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">power_vars</span><span class="p">))]</span>
+    <span class="k">del</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;time_pt&#39;</span><span class="p">]</span>
+
+    <span class="n">margin_error</span> <span class="o">=</span> <span class="mf">5.0</span>          <span class="c1"># margin of error still TBD, 5.0 for testing purposes</span>
+    <span class="k">for</span> <span class="n">pvar</span> <span class="ow">in</span> <span class="n">power_vars</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pvar</span> <span class="o">!=</span> <span class="s1">&#39;PowerMeter_SkidAux_Power&#39;</span><span class="p">):</span>
+            <span class="n">corres_energy</span> <span class="o">=</span> <span class="n">pvar</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;Power&#39;</span><span class="p">,</span> <span class="s1">&#39;Energy&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pvar</span> <span class="o">==</span> <span class="s1">&#39;PowerMeter_SkidAux_Power&#39;</span><span class="p">):</span>
+            <span class="n">corres_energy</span> <span class="o">=</span> <span class="s1">&#39;PowerMeter_SkidAux_Energty&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">corres_energy</span> <span class="ow">in</span> <span class="n">energy_vars</span><span class="p">):</span>
+            <span class="n">temp_df</span> <span class="o">=</span> <span class="n">power_energy_df</span><span class="p">[</span><span class="n">power_energy_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">intersection</span><span class="p">([</span><span class="s1">&#39;time_pt&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">energy_vars</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">power_vars</span><span class="p">))]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">expected</span> <span class="o">=</span> <span class="n">energy_to_power</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">corres_energy</span><span class="p">])</span>
+                <span class="n">low_bound</span> <span class="o">=</span> <span class="n">expected</span> <span class="o">-</span> <span class="n">margin_error</span>
+                <span class="n">high_bound</span> <span class="o">=</span> <span class="n">expected</span> <span class="o">+</span> <span class="n">margin_error</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">pvar</span><span class="p">]</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">):</span>
+                    <span class="n">out_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;time_pt&#39;</span><span class="p">],</span> <span class="n">pvar</span><span class="p">,</span> <span class="n">corres_energy</span><span class="p">,</span>
+                                                 <span class="n">row</span><span class="p">[</span><span class="n">corres_energy</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="n">pvar</span><span class="p">],</span> <span class="n">expected</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">expected</span> <span class="o">-</span> <span class="n">row</span><span class="p">[</span><span class="n">pvar</span><span class="p">])]</span>
+                    <span class="n">path_to_output</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_output_directory</span><span class="si">}</span><span class="s1">power_energy_conflicts.csv&#39;</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path_to_output</span><span class="p">):</span>
+                        <span class="n">out_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path_to_output</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">out_df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">out_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path_to_output</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="aggregate_values"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.bayview.aggregate_values">[docs]</a><span class="k">def</span> <span class="nf">aggregate_values</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">thermo_slice</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets daily average of data for all relevant varibles. </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df (pd.DataFrame): Pandas DataFrame of minute by minute data</span>
+<span class="sd">        thermo_slice (str): indicates the time at which slicing begins. If none no slicing is performed. The format of the thermo_slice string is &quot;HH:MM AM/PM&quot;.</span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: Pandas DataFrame which contains the aggregated hourly data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">avg_sd</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Temp_RecircSupply_MXV1&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_RecircSupply_MXV2&#39;</span><span class="p">,</span> <span class="s1">&#39;Flow_CityWater_atSkid&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_PrimaryStorageOutTop&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">,</span> <span class="s1">&#39;Flow_SecLoop&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_SecLoopHexOutlet&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_SecLoopHexInlet&#39;</span><span class="p">,</span> <span class="s1">&#39;Flow_CityWater&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_CityWater&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;Flow_RecircReturn_MXV1&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_RecircReturn_MXV1&#39;</span><span class="p">,</span> <span class="s1">&#39;Flow_RecircReturn_MXV2&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_RecircReturn_MXV2&#39;</span><span class="p">,</span> <span class="s1">&#39;PowerIn_SecLoopPump&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">thermo_slice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">avg_sd_6</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">between_time</span><span class="p">(</span><span class="n">thermo_slice</span><span class="p">,</span> <span class="s2">&quot;11:59PM&quot;</span><span class="p">)[</span>
+            <span class="p">[</span><span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">,</span> <span class="s1">&#39;Temp_CityWater&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">avg_sd_6</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;Temp_CityWater&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="n">cop_inter</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">avg_sd</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_avg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_MXV1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_MXV2&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_PrimaryPlant&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_CityWater_atSkid&#39;</span><span class="p">],</span>
+                                                           <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_PrimaryStorageOutTop&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                           <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_PrimaryPlant_dyavg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_CityWater_atSkid&#39;</span><span class="p">],</span>
+                                                                 <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_PrimaryStorageOutTop&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                                 <span class="n">avg_sd_6</span><span class="p">[</span><span class="s1">&#39;Temp_CityWater_atSkid&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_SecLoop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_SecLoop&#39;</span><span class="p">],</span> <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_SecLoopHexOutlet&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                      <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_SecLoopHexInlet&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_HW&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_CityWater&#39;</span><span class="p">],</span> <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_avg&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                 <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_CityWater&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_HW_dyavg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_CityWater&#39;</span><span class="p">],</span> <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_avg&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                       <span class="n">avg_sd_6</span><span class="p">[</span><span class="s1">&#39;Temp_CityWater&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatLoss_TempMaint_MXV1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_RecircReturn_MXV1&#39;</span><span class="p">],</span>
+                                                              <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_MXV1&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                              <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_RecircReturn_MXV1&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatLoss_TempMaint_MXV2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_kwh_to_kbtu</span><span class="p">(</span><span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Flow_RecircReturn_MXV2&#39;</span><span class="p">],</span>
+                                                              <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_RecircSupply_MXV2&#39;</span><span class="p">]</span> <span class="o">-</span>
+                                                              <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;Temp_RecircReturn_MXV2&#39;</span><span class="p">])</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_SecLoopPump&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;PowerIn_SecLoopPump&#39;</span><span class="p">]</span> <span class="o">*</span> \
+        <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">60</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">avg_sd</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">cop_inter</span></div>
+
+
+<div class="viewcode-block" id="calculate_cop_values"><a class="viewcode-back" href="../../ecopipeline.html#ecopipeline.bayview.calculate_cop_values">[docs]</a><span class="k">def</span> <span class="nf">calculate_cop_values</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">heatLoss_fixed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">thermo_slice</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs COP calculations using the daily aggregated data. </span>
+
+<span class="sd">    Args: </span>
+<span class="sd">        df (pd.DataFrame): Pandas DataFrame to add COP columns to</span>
+<span class="sd">        heatloss_fixed (float): fixed heatloss value </span>
+<span class="sd">        thermo_slice (str): the time at which slicing begins if we would like to thermo slice. </span>
+
+<span class="sd">    Returns: </span>
+<span class="sd">        pd.DataFrame: Pandas DataFrame with the added COP columns. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cop_inter</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">cop_inter</span> <span class="o">=</span> <span class="n">aggregate_values</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">thermo_slice</span><span class="p">)</span>
+
+    <span class="n">cop_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">cop_inter</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+                              <span class="s2">&quot;COP_DHWSys&quot;</span><span class="p">,</span> <span class="s2">&quot;COP_DHWSys_dyavg&quot;</span><span class="p">,</span> <span class="s2">&quot;COP_DHWSys_fixTMloss&quot;</span><span class="p">,</span> <span class="s2">&quot;COP_PrimaryPlant&quot;</span><span class="p">,</span> <span class="s2">&quot;COP_PrimaryPlant_dyavg&quot;</span><span class="p">])</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cop_values</span><span class="p">[</span><span class="s1">&#39;COP_DHWSys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_HW&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatLoss_TempMaint_MXV1&#39;</span><span class="p">]))</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatLoss_TempMaint_MXV2&#39;</span><span class="p">])))</span> <span class="o">/</span> <span class="p">(</span>
+                <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_SecLoopPump&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">thermo_slice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cop_values</span><span class="p">[</span><span class="s1">&#39;COP_DHWSys_dyavg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_HW_dyavg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                <span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatLoss_TempMaint_MXV1&#39;</span><span class="p">]))</span> <span class="o">+</span> <span class="p">(</span>
+                <span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatLoss_TempMaint_MXV2&#39;</span><span class="p">])))</span> <span class="o">/</span> <span class="p">(</span>
+                    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_SecLoopPump&#39;</span><span class="p">])</span>
+
+        <span class="n">cop_values</span><span class="p">[</span><span class="s1">&#39;COP_DHWSys_fixTMloss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_HW&#39;</span><span class="p">]))</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">heatLoss_fixed</span><span class="p">)))</span> <span class="o">/</span> <span class="p">((</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span> <span class="o">+</span>
+                                                    <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_SecLoopPump&#39;</span><span class="p">]))</span>
+
+        <span class="n">cop_values</span><span class="p">[</span><span class="s1">&#39;COP_PrimaryPlant&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_PrimaryPlant&#39;</span><span class="p">]))</span> <span class="o">/</span> \
+            <span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_SecLoopPump&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">thermo_slice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cop_values</span><span class="p">[</span><span class="s1">&#39;COP_PrimaryPlant_dyavg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">energy_btu_to_kwh</span><span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;HeatOut_PrimaryPlant_dyavg&#39;</span><span class="p">]))</span> <span class="o">/</span> \
+                <span class="p">(</span><span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_HPWH&#39;</span><span class="p">]</span> <span class="o">+</span>
+                 <span class="n">cop_inter</span><span class="p">[</span><span class="s1">&#39;EnergyIn_SecLoopPump&#39;</span><span class="p">])</span>
+
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DIVIDED BY ZERO ERROR&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">return</span> <span class="n">cop_values</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Ecotope Inc.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
