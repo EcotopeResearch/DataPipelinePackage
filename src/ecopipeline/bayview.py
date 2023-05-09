@@ -1,7 +1,8 @@
 import pandas as pd
+import numpy as np
 import os 
-from ecotope_package_cs2306.config import _input_directory, _output_directory
-from ecotope_package_cs2306.unit_convert import energy_btu_to_kwh, energy_kwh_to_kbtu, energy_to_power
+from ecopipeline.config import _input_directory, _output_directory
+from ecopipeline.unit_convert import energy_btu_to_kwh, energy_kwh_to_kbtu, energy_to_power
 
 
 
@@ -30,7 +31,7 @@ def _set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) 
 
 def _largest_less_than(df_row: pd.Series, target: int) -> str:
     """
-    Function takes a list of gz/json filenames and a target temperature and determines
+    Function takes a sensor row and a target temperature and determines
     the zone with the highest temperature < 120 degrees.
 
     Args: 
@@ -40,7 +41,7 @@ def _largest_less_than(df_row: pd.Series, target: int) -> str:
         str: A string of the name of the zone.
     """
     count = 0
-    largest_less_than_120_tmp = []
+    largest_less_than_120_tmp = ""
     for val in df_row:
         if val < target:
             largest_less_than_120_tmp = df_row.index[count]
@@ -64,33 +65,36 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
         float: A float of the total volume of water > 120 degrees
     """
     try:
+        if df_row.get('Temp_PrimaryStorageOutTop') < 120:
+            return 0
         tvadder = 0
         vadder = 0
         gals_per_zone = _set_zone_vol(location, gals, total, zones)
         dfcheck = df_row.filter(regex='top|mid|bottom')
         # An empty or invalid dataframe would have Vol120 and ZoneTemp120 as columns with
         # values of 0, so we check if the size is 0 without those columns if the dataframe has no data.
+        # Temp_CityWater_atSkid
         if (dfcheck.size == 0):
             return 0
         dftemp = df_row.filter(
-            regex='Temp_CityWater_atSkid|HPWHOutlet$|top|mid|bottom|120')
-        count = 1
+            regex='Temp_PrimaryStorageOutTop|top|mid|bottom')
+        count = 0
         for val in dftemp:
-            if dftemp.index[count] == "Temp_low":
+            if dftemp.index[count] == "Temp_bottom":
                 vadder += gals_per_zone[gals_per_zone.columns[1]][count]
-                tvadder += val * gals_per_zone[gals_per_zone.columns[1]][count]
+                tvadder += dftemp[dftemp.index[count]] * gals_per_zone[gals_per_zone.columns[1]][count]
                 break
             elif dftemp[dftemp.index[count + 1]] >= 120:
                 vadder += gals_per_zone[gals_per_zone.columns[1]][count]
-                tvadder += (dftemp[dftemp.index[count + 1]] + val) / \
+                tvadder += (dftemp[dftemp.index[count + 1]] + dftemp[dftemp.index[count]]) / \
                     2 * gals_per_zone[gals_per_zone.columns[1]][count]
             elif dftemp[dftemp.index[count + 1]] < 120:
-                vadder += dftemp.get('Vol120')
-                tvadder += dftemp.get('Vol120') * dftemp.get('ZoneTemp120')
+                vadder += df_row.get('Vol120')
+                tvadder += df_row.get('Vol120') * df_row.get('ZoneTemp120')
                 break
             count += 1
         avg_temp_above_120 = tvadder / vadder
-        temp_ratio = (avg_temp_above_120 - dftemp[0]) / (120 - dftemp[0])
+        temp_ratio = (avg_temp_above_120 - df_row.get('Temp_CityWater_atSkid')) / (120 - df_row.get('Temp_CityWater_atSkid'))
         return (temp_ratio * vadder)
     except ZeroDivisionError:
         print("DIVIDED BY ZERO ERROR")
@@ -113,20 +117,26 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
     """
     try:
         gals_per_zone = _set_zone_vol(location, gals, total, zones)
-        temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
+        temp_cols = df_row.filter(regex='Temp_PrimaryStorageOutTop|top|mid|bottom')
         if (temp_cols.size <= 3):
             return 0
         name_cols = ""
         name_cols = _largest_less_than(temp_cols, 120)
         count = 0
+        name_col_index = 0
         for index in temp_cols.index:
             if index == name_cols:
                 name_col_index = count
                 break
             count += 1
+        if name_col_index <= 0 or name_col_index >= len(temp_cols.index):
+            # top of tank is less than 120 degrees or entire tank > 120 
+            return 0
+        # subtract one to get index of first zone larger than 120
+        name_col_index -= 1
         dV = gals_per_zone['Zone_vol_g'][name_col_index]
-        V120 = (temp_cols[temp_cols.index[name_col_index]] - 120) / (
-            temp_cols[temp_cols.index[name_col_index]] - temp_cols[temp_cols.index[name_col_index - 1]]) * dV
+        V120 = ((temp_cols[temp_cols.index[name_col_index]] - 120) / (
+            temp_cols[temp_cols.index[name_col_index]] - temp_cols[temp_cols.index[name_col_index+1]])) * dV
         return V120
     except ZeroDivisionError:
         print("DIVIDED BY ZERO ERROR")
@@ -135,25 +145,30 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
 # NOTE: Move to bayview.py
 def _get_zone_Temp120(df_row: pd.Series) -> float:
     """
-    Function takes a row of sensor data and determines the highest sensor < 120 degrees.
+    Function takes a row of sensor data and determines average temperature of the temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
 
     Args: 
         df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
     Returns: 
-        float: A float of the average temperature of the zone < 120 degrees
+        float: A float of the average temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
     """
     # if df_row["Temp_120"] != 120:
     #    return 0
-    temp_cols = df_row.filter(regex='HPWHOutlet$|top|mid|bottom')
+    temp_cols = df_row.filter(regex='Temp_PrimaryStorageOutTop|top|mid|bottom')
     if (temp_cols.size <= 3):
         return 0
     name_cols = _largest_less_than(temp_cols, 120)
     count = 0
+    name_col_index = 0
     for index in temp_cols.index:
         if index == name_cols:
             name_col_index = count
             break
         count += 1
+    
+    if name_col_index <= 0 or name_col_index >= len(temp_cols.index):
+        # if top of tank is < 120 or entire tank > 120, return nan
+        return np.nan
 
     zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
     return zone_Temp_120
@@ -204,6 +219,7 @@ def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
 def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
     """
     Function that keeps track of the average temperature of each zone.
+    for this function to work, naming conventions for each parrallel tank must include 'Temp1' as the tempature at the top of the tank, 'Temp5' as that at the bottom of the tank, and 'Temp2'-'Temp4' as the tempatures in between.
 
     Args: 
         df (pd.Series): A Pandas Dataframe

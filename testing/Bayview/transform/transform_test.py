@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from ecotope_package_cs2306 import rename_sensors, avg_duplicate_times, remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_cop_values, round_time, aggregate_df, join_to_hourly, join_to_daily, concat_last_row, get_temp_zones120, get_storage_gals120
+from ecopipeline import rename_sensors, avg_duplicate_times, remove_outliers, ffill_missing, sensor_adjustment, get_energy_by_min, verify_power_energy, calculate_cop_values, round_time, aggregate_df, join_to_hourly, join_to_daily, concat_last_row, get_temp_zones120, get_storage_gals120
 
 class Test_Transform(unittest.TestCase):
 
@@ -40,7 +40,7 @@ class Test_Transform(unittest.TestCase):
         var_names.pop(0) #first entry is nan
 
         #correct input, function returns nothing. we take the columns names as a list to compare
-        rename_sensors(rename_df)
+        rename_sensors(rename_df, variable_names_path = self.var_names_path)
         renamed_names = rename_df.columns.tolist()
 
         #See if first few elements in each list match

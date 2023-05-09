@@ -1,5 +1,9 @@
 # DataPipelinePackage
 
+## To Install the Package
+
+    $ pip install ecopipeline
+
 ## Functions in Data Pipeline package:
 ### extract.py
 - load raw JSON-formatted data into a dataframe
