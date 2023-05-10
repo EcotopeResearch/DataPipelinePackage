@@ -691,7 +691,7 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     df = df.loc[df['site'] == site]
     return df
 
-def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
+def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
     """
     Merges index-like rows together ensuring that all relevant information for a
     certain timestamp is stored in one row - not in multiple rows. It also rounds the
@@ -704,7 +704,6 @@ def merge_indexlike_rows(file_path: str) -> pd.DataFrame:
         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
     """
 
-    df = pd.read_pickle(file_path)
     df["time_utc"] = df["time_utc"].dt.round("min")
 
     df = df.set_index(["time_utc"])
