@@ -313,7 +313,54 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
       return odc_df
     else:
         return df
-    
+
+def get_hvac_state(df: pd.DataFrame, site_specific_AH_thresh: pd.Series, site_info: pd.Series) -> pd.DataFrame:
+    stateGasValveThreshold = 1
+    stateDTThreshold = 1.5
+    statePowerODThreshold = 0.01
+    stateODTThreshold = 65
+    statePowerAHThreshold = site_specific_AH_thresh
+    heating_type = site_info["heating_type"]
+    dTavg = df[["event_ID", "Temp_ODT", "Temp_RAT", "Temp_SATAvg", "Power_AH1", "Power_OD_total1"]]
+    dTavg = dTavg[dTavg["event_ID"] != 0]
+    dTavg = dTavg.groupby("event_ID").agg({
+    "Temp_ODT" : ["mean"], 
+    "Temp_RAT" : ["mean"], 
+    "Temp_SATAvg" : ["mean"], 
+    "Power_AH1" : ["mean"],
+    "Power_OD_total1" : ["mean"]
+    })
+    dTavg["dTavg"] = dTavg["Temp_SATAvg"] - dTavg["Temp_RAT"]
+    dTavg["HVAC"] = "off"
+    if(heating_type == "gas"):
+        dTavg['HVAC'] = np.where(dTavg['Power_OD_total1'].isna(),
+                                       np.where(~dTavg['dTavg'].isna(),
+                                                np.where(dTavg['dTavg'] >= stateDTThreshold, "heat",
+                                                         np.where(dTavg['dTavg'] <= -stateDTThreshold, "cool", "circ")),
+                                                         np.where(dTavg['Temp_ODT'] > stateODTThreshold, "cool", "heat")),
+                                                         np.where(dTavg['Power_OD_total1'] >= statePowerODThreshold, "cool",
+                                                                  np.where(dTavg['Power_OD_total1'] <= 0.0001, "circ",
+                                                                           np.where(~dTavg['dTavg'].isna(),
+                                                                                    np.where(dTavg['dTavg'] >= stateDTThreshold, "heat",
+                                                                                             np.where(dTavg['dTavg'] <= -stateDTThreshold, "cool", "circ")),
+                                                                                             np.where(dTavg['Temp_ODT'] > stateODTThreshold, "cool", "heat"))))
+                                                                                             )
+    else:
+        dTavg['HVAC'] = np.where(dTavg['Power_OD_total1'].isna(),
+                                       np.where(dTavg['dTavg'].notna(),
+                                                np.where(dTavg['dTavg'] >= stateDTThreshold, 'heat',
+                                                         np.where(dTavg['dTavg'] <= -stateDTThreshold, 'cool', 'circ')),
+                                                         np.where(dTavg['Temp_ODT'] > stateODTThreshold, 'cool', 'heat')),
+                                                         np.where(dTavg['Power_OD_total1'] < statePowerODThreshold, 'circ',
+                                                                  np.where(dTavg['dTavg'].isna(),
+                                                                           np.where(dTavg['Temp_ODT'] > stateODTThreshold, 'cool', 'heat'),
+                                                                           np.where(dTavg['dTavg'] >= stateDTThreshold, 'heat', 'cool')
+                                                                           )
+                                                                    )
+                                        )
+    dTavg = dTavg.reset_index()
+    df = pd.merge(df, dTavg[['event_ID', 'HVAC']], on='event_ID', how='outer')
+    return df    
 
 def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     """
@@ -334,7 +381,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
     event_ID = 1
 
-    for i in range(1,int(len(df.index)/2)):
+    for i in range(1,int(len(df.index))):
         if((df["event_ID"].iloc[i] > 0) and (df["event_ID"].iloc[i] == 1.0)):
             time_diff = (df.index[i] - df.index[i-1])
             diff_minutes = time_diff.total_seconds() / 60
