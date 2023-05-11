@@ -315,7 +315,6 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
         return df
 
 def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
-    df["HVAC"] = "unassigned"
     stateGasValveThreshold = 1
     stateDTThreshold = 1.5
     statePowerODThreshold = 0.01
