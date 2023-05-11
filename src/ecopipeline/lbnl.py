@@ -354,14 +354,15 @@ def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
                                                                   np.where(dTavg['dTavg'].isna(),
                                                                            np.where(dTavg['Temp_ODT'] > stateODTThreshold, 'cool', 'heat'),
                                                                            np.where(dTavg['dTavg'] >= stateDTThreshold, 'heat', 'cool')
-                                                                           )
-                                                                    )
-                                        )
+                                                                          )
+                                                                 )
+                                )
     dTavg = dTavg.reset_index()
     df_merge = pd.DataFrame()
     df_merge['event_ID'] = dTavg['event_ID']
     df_merge['HVAC'] = dTavg['HVAC']
-    df = pd.merge(df, df_merge, on='event_ID')
+    df_copy = pd.merge(df, df_merge, on='event_ID')
+    df['HVAC'] = df_copy['HVAC']
     return df    
 
 def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
