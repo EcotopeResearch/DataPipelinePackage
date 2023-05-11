@@ -358,7 +358,10 @@ def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
                                                                     )
                                         )
     dTavg = dTavg.reset_index()
-    df = pd.merge(df, dTavg[['event_ID', 'HVAC']], on='event_ID', how='outer')
+    df_merge = pd.DataFrame()
+    df_merge['event_ID'] = dTavg['event_ID']
+    df_merge['HVAC'] = dTavg['HVAC']
+    df = pd.merge(df, df_merge, on='event_ID')
     return df    
 
 def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
