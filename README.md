@@ -4,22 +4,109 @@
 
     $ pip install ecopipeline
 
-## Functions in Data Pipeline package:
-### extract.py
-- load raw JSON-formatted data into a dataframe
-- merge NOAA weather data with sensor data
+## File Structure
+    .
+    ├── src
+    ├   ├── docs 
+    ├   ├   ├── 
+    ├   └── ecopipeline
+    ├       ├── extract.py               # functionality for extracting data from a file system
+    ├       ├── transform.py             # functionality for cleaning data and calcualting derived values
+    ├       ├── load.py                  # functionality for loading pandas dataframe into a mySQL database table
+    ├       ├── unit_convert.py   
+    ├       ├── config.py                # file containing all file paths 
+    ├       ├── bayview.py               # Bayview site-specific functionality
+    ├       └── lbnl.py                  # LBNL site-specific functionality
+    ├── testing
+    ├   ├── Bayview
+    ├   ├    ├── Bayview_input
+    ├   ├    ├── extract.py              
+    ├   ├    ├   └── extract_test.py     # testing for extract functionality
+    ├   ├    ├── transform.py
+    ├   ├    ├   ├── pickles             # pickles used for bayview unit testing
+    ├   ├    ├   └── transform_test.py   # testing for transform functionality
+    ├   ├    └── load.py                 
+    ├   ├        └── load_test.py        # testing for load functionality
+    ├   └── LBNL
+    ├       ├── extract.py
+    ├       ├   └── extract_test.py
+    ├       ├── transform.py 
+    ├       ├   ├── LBNL-input           # LBNL input dataframes used as testing input
+    ├       ├   ├── LBNL-output          # LBNL output dataframes used for crossreferencing our output to expected output
+    ├       ├   ├── pickles              # pickles used for bayview unit testing
+    ├       ├   └── transform_test.py
+    ├       └── load.py
+    ├           └── load_test.py
+    ├── config.ini                       # file containing all configuration parameters
+    └── README.md
+ 
+## Purpose
+This project was developed with the help of Ecotope, Inc. It containes seperate modular functionalities that, when combined, can extract, transfrom, and load data from incoming sensors. The main goal was to rewrite the existing R pipeline code with Python making the codebase more readable. In addition to that, scalability was taken into account during this project since this codebase will be used to create pipelines for different sites in the future. 
 
-### clean.py
-- remove outliers specified in the configuration file
-- send alert to Ecotope engineers about sensor malfunction
-- remove any nan values
+## Architecture
+![Screenshot](ArchitectureDiagram.png)
 
-### unit_conv.py
-- convert data into desired units
+### extract.py 
+- loading data from a local file system
+- extracting NOAA weather data from a FTP server
 
-### derived_var.py
-- calculate the COP (coefficient of preformance) values and other derived values
-- aggregate data by day and week
+### transform.py 
+- cleaning the data
+    - rounding
+    - removing outliers
+    - renaming columns
+    - filling missing values
+- calculating dervived COP (coefficient of performance) values
+- agreggating the data
 
 ### load.py
-- load the data into Ecotope's database
+- establishing a connection to the database
+- loading pandas dataframe into a table in the database
+
+### config.ini
+- database
+    - user: username for host database connection 
+    - password: password for host database connection
+    - host: name of host 
+    - database: name of database
+- minute
+    - table_name: name of table to be created in the mySQL database containing minute-by-minute data
+- hour
+    - table_name: name of table to be created in the mySQL database containing hour-by-hour data
+- day
+    - table_name: name of table to be created in the mySQL database containing day-by-day data
+- input
+    - directory: diretory of the folder containing the input files listed below
+    - site_info: name of the site information csv
+    - 410a_info: name of the 410a information csv
+    - superheat_info: name of the superheat infomation csv
+- output 
+    - directory: diretory of the folder where any pipeline output should be written to
+- data
+    - directory: diretory of the folder from which extract loads the raw sensor data
+## Unit Testing
+Alongside each of the functionalities of the pipeline, each function has a set of unit tests in the testing directory that verifies the functions when given valid and invalid inputs.
+The naming convention of each unit test function is test + the name of the function + either valid or invalid depending on what kind of input it being tested for test.
+For example
+```python
+def test_functionName_valid(self):
+```
+To run Unit tests, run the following command in the terminal in the corresponding directory:
+```bash
+python -m unittest [filename]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

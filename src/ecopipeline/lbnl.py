@@ -157,7 +157,7 @@ def _subcooling(row, lr_model):
         row (pd.Series): Pandas series (Refrig_charge added!)
     """
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
-    x = row.loc["Pressure_LL_psi"]
+    x = row.loc["Pressure_SL_psi"]
     m = lr_model.coef_
     b = lr_model.intercept_
     sat_temp_f = m*x+b
@@ -184,9 +184,9 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     superheat_target = np.NaN
 
-    #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_LL_psi, or Temp_SL_C
+    #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_SL_psi, or Temp_SL_C
     # is null, just return the row early. 
-    if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_LL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
+    if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_SL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
         return row
 
     #Convert F to C return air temperature
@@ -194,7 +194,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     rh = row.loc["Humidity_RARH"]
 
     #calculate wet bulb temp w/humidity and air temp, then convert back to F
-    Temp_wb_C = RAT_C * math.atan(0.151977(rh + 8.31659)**(1/2)) + math.atan(RAT_C + rh) - math.atan(rh - 1.676331) + 0.00391838(rh)**(3/2) * math.atan(0.023101*rh) - 4.686035
+    Temp_wb_C = RAT_C * math.atan(0.151977*(rh + 8.31659)**(1/2)) + math.atan(RAT_C + rh) - math.atan(rh - 1.676331) + 0.00391838*(rh)**(3/2) * math.atan(0.023101*rh) - 4.686035
     Temp_wb_F = (Temp_wb_C * (9/5)) + 32
     Temp_ODT = row.loc['Temp_ODT']
 
@@ -210,11 +210,11 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
         y_min = math.floor(Temp_ODT/5) * 5
         y_range = [y_min, y_max]
 
-        table_v1 = np.interp(Temp_wb_F, x_range, superchart.loc[str(y_min)])
+        table_v1 = np.interp(Temp_wb_F, x_range, superchart.loc[y_min])
         if(y_max == y_min):
             superheat_target = table_v1 
         else: 
-            table_v2 = np.interp(Temp_wb_F, x_range, superchart.loc[str(max)])
+            table_v2 = np.interp(Temp_wb_F, x_range, superchart.loc[y_max])
             xvalue_range3 = [table_v1, table_v2]
             if(any(np.isnan(xvalue_range3))):
                 superheat_target = None
@@ -222,7 +222,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
                 superheat_target = np.interp(Temp_ODT, y_range, xvalue_range3)
 
     #finding superheat_calc
-    sat_temp_f = lr_model.coef_*row.loc["Pressure_LL_psi"]+lr_model.intercept_
+    sat_temp_f = lr_model.coef_*row.loc["Pressure_SL_psi"]+lr_model.intercept_
     Temp_SL_F = (row.loc["Temp_SL_C"])*(9/5) + 32
     superheat_calc = Temp_SL_F - sat_temp_f
 
@@ -270,15 +270,15 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
     elif (metering_device == "orifice"):
         #If any crucial vars for calculating refrigerant charge are missing, we return early
         var_names = df.columns.tolist() 
-        if "Temp_ODT" not in var_names or "Temp_RAT" not in var_names or "Humidity_RARH" not in var_names or "Pressure_LL_psi" not in var_names or "Temp_SL_C" not in var_names:
+        if "Temp_ODT" not in var_names or "Temp_RAT" not in var_names or "Humidity_RARH" not in var_names or "Pressure_SL_psi" not in var_names or "Temp_SL_C" not in var_names:
             return df
 
         # calculate the refrigerant charge w/the superheat method
-        superchart = pd.read_csv(superheat_directory)
+        superchart = pd.read_csv(superheat_directory, index_col=0)
         x_range = superchart.columns.values.tolist()
-        row_range = superchart.iloc[:,0].tolist()
-        #ignore first element and we have our range from the col names
-        x_range.pop(0) 
+        x_range = [int(x) for x in x_range] 
+        row_range = superchart.index.values.tolist()
+        row_range = [int(x) for x in row_range]
 
         df = df.apply(_superheat, axis=1, args=(x_range, row_range, superchart, lr_model))
 
@@ -313,7 +313,58 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
       return odc_df
     else:
         return df
-    
+
+def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
+    stateGasValveThreshold = 1
+    stateDTThreshold = 1.5
+    statePowerODThreshold = 0.01
+    stateODTThreshold = 65
+    heating_type = site_info["heating_type"]
+    dTavg = df[["event_ID", "Temp_ODT", "Temp_RAT", "Temp_SATAvg", "Power_AH1", "Power_OD_total1"]]
+    dTavg = dTavg[dTavg["event_ID"] != 0]
+    dTavg = dTavg.groupby("event_ID").agg({
+    "Temp_ODT" : ["mean"], 
+    "Temp_RAT" : ["mean"], 
+    "Temp_SATAvg" : ["mean"], 
+    "Power_AH1" : ["mean"],
+    "Power_OD_total1" : ["mean"]
+    })
+    dTavg["dTavg"] = dTavg["Temp_SATAvg"] - dTavg["Temp_RAT"]
+    dTavg["HVAC"] = "off"
+    if(heating_type == "gas"):
+        dTavg['HVAC'] = np.where(dTavg['Power_OD_total1'].isna(),
+                                       np.where(~dTavg['dTavg'].isna(),
+                                                np.where(dTavg['dTavg'] >= stateDTThreshold, "heat",
+                                                         np.where(dTavg['dTavg'] <= -stateDTThreshold, "cool", "circ")),
+                                                         np.where(dTavg['Temp_ODT'] > stateODTThreshold, "cool", "heat")),
+                                                         np.where(dTavg['Power_OD_total1'] >= statePowerODThreshold, "cool",
+                                                                  np.where(dTavg['Power_OD_total1'] <= 0.0001, "circ",
+                                                                           np.where(~dTavg['dTavg'].isna(),
+                                                                                    np.where(dTavg['dTavg'] >= stateDTThreshold, "heat",
+                                                                                             np.where(dTavg['dTavg'] <= -stateDTThreshold, "cool", "circ")),
+                                                                                             np.where(dTavg['Temp_ODT'] > stateODTThreshold, "cool", "heat"))))
+                                                                                             )
+    else:
+        dTavg['HVAC'] = np.where(dTavg['Power_OD_total1'].isna(),
+                                       np.where(dTavg['dTavg'].notna(),
+                                                np.where(dTavg['dTavg'] >= stateDTThreshold, 'heat',
+                                                         np.where(dTavg['dTavg'] <= -stateDTThreshold, 'cool', 'circ')),
+                                                         np.where(dTavg['Temp_ODT'] > stateODTThreshold, 'cool', 'heat')),
+                                                         np.where(dTavg['Power_OD_total1'] < statePowerODThreshold, 'circ',
+                                                                  np.where(dTavg['dTavg'].isna(),
+                                                                           np.where(dTavg['Temp_ODT'] > stateODTThreshold, 'cool', 'heat'),
+                                                                           np.where(dTavg['dTavg'] >= stateDTThreshold, 'heat', 'cool')
+                                                                          )
+                                                                 )
+                                )
+    dTavg = dTavg.reset_index()
+    df_merge = pd.DataFrame()
+    df_merge['event_ID'] = dTavg['event_ID']
+    df_merge['HVAC'] = dTavg['HVAC']
+    df = df.reset_index()
+    df = pd.merge(df, df_merge, on='event_ID')
+    df = df.set_index('time_utc')
+    return df   
 
 def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     """
@@ -334,7 +385,7 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
     event_ID = 1
 
-    for i in range(1,int(len(df.index)/2)):
+    for i in range(1,int(len(df.index))):
         if((df["event_ID"].iloc[i] > 0) and (df["event_ID"].iloc[i] == 1.0)):
             time_diff = (df.index[i] - df.index[i-1])
             diff_minutes = time_diff.total_seconds() / 60
@@ -347,9 +398,9 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
-def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
+def nclarity_filter_new(date: str, filenames: List[str]) -> List[str]:
     """
-    Function filters the filenames list to only those from the given date.
+    Function filters the filenames list to only those from the given date or later.
     
     Args: 
         date (str): target date
@@ -358,7 +409,7 @@ def nclarity_filter(date: str, filenames: List[str]) -> List[str]:
         List[str]: Filtered list of filenames
     """
     date = dt.datetime.strptime(date, '%Y-%m-%d')
-    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') == date, filenames))
+    return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= date, filenames))
 
 
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
@@ -417,13 +468,11 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
     else:
         prev_df = pd.DataFrame(
             columns=['site', 'filename', 'start_datetime', 'end_datetime'])
-        prev_df[['start_datetime', 'end_datetime']] = prev_df[[
-            'start_datetime', 'end_datetime']].apply(pd.to_datetime)
+        prev_df[['start_datetime', 'end_datetime']] = prev_df[['start_datetime', 'end_datetime']].apply(pd.to_datetime)
 
     # Filter files by what has not been opened
     prev_filename_set = set(prev_df['filename'])
-    new_filenames = [
-        filename for filename in filenames if filename not in prev_filename_set]
+    new_filenames = [filename for filename in filenames if filename not in prev_filename_set]
 
     # Add files to prev_df
     for filename in new_filenames:
@@ -431,18 +480,15 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
         data["time(UTC)"] = pd.to_datetime(data["time(UTC)"])
         max_date = data["time(UTC)"].max()
         min_date = data["time(UTC)"].min()
-        new_entry = {'site': site, 'filename': filename,
-                     'start_datetime': min_date, 'end_datetime': max_date}
-        prev_df = pd.concat([prev_df, pd.DataFrame(
-            new_entry, index=[0])], ignore_index=True)
+        new_entry = {'site': site, 'filename': filename,'start_datetime': min_date, 'end_datetime': max_date}
+        prev_df = pd.concat([prev_df, pd.DataFrame(new_entry, index=[0])], ignore_index=True)
 
     # Save new prev_df
     prev_df.to_pickle(prev_opened)
 
     # List all files with the date equal or newer than last_date
     last_date = dt.datetime.strptime(last_date, '%Y-%m-%d')
-    filtered_prev_df = prev_df[(['site'] == site) & (
-        prev_df['start_datetime'] >= last_date)]
+    filtered_prev_df = prev_df[(prev_df['site'] == site) & (prev_df['start_datetime'] >= last_date)]
     filtered_filenames = filtered_prev_df['filename'].tolist()
 
     return filtered_filenames
@@ -694,4 +740,41 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
     df = df.loc[df['site'] == site]
+    return df
+
+def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merges index-like rows together ensuring that all relevant information for a
+    certain timestamp is stored in one row - not in multiple rows. It also rounds the
+    timestamps to the nearest minute.
+
+    Args:
+        file_path (str): The file path to the data.
+        
+    Returns:
+        df (pd.DataFrame): The DataFrame with all index-like rows merged. 
+    """
+
+    df["time_utc"] = df["time_utc"].dt.round("min")
+
+    df = df.set_index(["time_utc"])
+    df = df.sort_index(ascending=True)
+
+    df.insert(0, 'time_utc', list(df.index))
+    df.index = np.arange(len(df.index))
+
+    to_del = list()
+    for i in range(len(df) - 1):
+        if df.iloc[i]["time_utc"] == df.iloc[i+1]["time_utc"]:
+            data_combined = [x if math.isnan(y) else y for (x,y) in zip(df.iloc[i].values[1:], df.iloc[i+1].values[1:])]
+            data_combined.insert(0, df.iloc[i]["time_utc"])
+
+            df.iloc[i+1] = data_combined
+            to_del.append(i)
+
+    df = df.drop(to_del)
+    df = df.set_index(["time_utc"])
+
+    df.index = pd.to_datetime(df.index)
+
     return df
