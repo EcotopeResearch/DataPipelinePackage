@@ -314,12 +314,11 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     else:
         return df
 
-def get_hvac_state(df: pd.DataFrame, site_specific_AH_thresh: pd.Series, site_info: pd.Series) -> pd.DataFrame:
+def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
     stateGasValveThreshold = 1
     stateDTThreshold = 1.5
     statePowerODThreshold = 0.01
     stateODTThreshold = 65
-    statePowerAHThreshold = site_specific_AH_thresh
     heating_type = site_info["heating_type"]
     dTavg = df[["event_ID", "Temp_ODT", "Temp_RAT", "Temp_SATAvg", "Power_AH1", "Power_OD_total1"]]
     dTavg = dTavg[dTavg["event_ID"] != 0]
