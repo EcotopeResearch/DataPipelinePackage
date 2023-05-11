@@ -223,7 +223,7 @@ def nullify_erroneous(df: pd.DataFrame, vars_filename: str = f"{_input_directory
     for col in error_df.index:
         if col in df.columns:
             error_value = error_df.loc[col, 'error_value']
-            df[col] = df[col].replace(error_value, np.nan)
+            df.loc[df[col] <= error_value, col] = np.nan
 
     return df
 
