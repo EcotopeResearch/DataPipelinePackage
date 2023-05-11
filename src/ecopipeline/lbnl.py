@@ -315,6 +315,7 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
         return df
 
 def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
+    df["HVAC"] = "unassigned"
     stateGasValveThreshold = 1
     stateDTThreshold = 1.5
     statePowerODThreshold = 0.01
@@ -361,9 +362,10 @@ def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
     df_merge = pd.DataFrame()
     df_merge['event_ID'] = dTavg['event_ID']
     df_merge['HVAC'] = dTavg['HVAC']
-    df_copy = pd.merge(df, df_merge, on='event_ID')
-    df['HVAC'] = df_copy['HVAC']
-    return df    
+    df = df.reset_index()
+    df = pd.merge(df, df_merge, on='event_ID')
+    df = df.set_index('time_utc')
+    return df   
 
 def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     """
