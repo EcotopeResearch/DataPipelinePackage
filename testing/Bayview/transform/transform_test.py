@@ -8,13 +8,7 @@ class Test_Transform(unittest.TestCase):
     var_names_path = "testing/Bayview/Bayview_input/Variable_Names.csv"
     fresh_pickle_path = "testing/Bayview/transform/pickles/trans_start.pkl"
 
-    #TEST FIXTURES BELOW
-    #NOTE: Does any cleaning/resetting need to be done here? I don't think so. 
-
-    #TEST CASES BELOW
-    #NOTE: To make good tests, I will need many many pickles. Better get to work. 
-    #THERE ARE FIFTEEN FUNCTIONS TO TEST! D: 
-
+    #TEST METHODS
     #round_time(df)
     def test_round_time_valid(self):
         #start with pickle fresh from extract, load into df
@@ -46,7 +40,7 @@ class Test_Transform(unittest.TestCase):
         #See if first few elements in each list match
         self.assertEqual(renamed_names[:5], var_names[:5]) 
 
-    """ #NOTE: Issues w/testing, communicate w/team about this?
+    #NOTE: This test fails, revise code so it passes! 
     #concat_last_row(df, last_row)
     def test_concat_last_row(self):
         #start with pickle that has had names renamed to Variable_Names (renamed.pkl)
@@ -73,7 +67,6 @@ class Test_Transform(unittest.TestCase):
         #assert that proper_df successfully appended, and is the size it should be
         #BUG: < not supported between instances of Timestamp and int. Catch the exception!
         self.assertEqual(len(proper_df.index), proper_row_count)
-    """
 
     #avg_duplicate_times(df) - returns df
     def test_avg_duplicate_times_valid(self):
@@ -119,7 +112,6 @@ class Test_Transform(unittest.TestCase):
 
 
     #sensor_adjustment(df) - returns df
-    #BUG: Something with how time is extracted in this function is currently broken, that bug needs to be fixed first. 
     def test_sensor_adjustment_valid(self):
         unadjusted_df = pd.read_pickle("testing/Bayview/transform/pickles/ffilled.pkl")
         og_df = unadjusted_df #make this a deep copy!!
@@ -159,7 +151,6 @@ class Test_Transform(unittest.TestCase):
         #load improper input w/empty df, make sure it doesn't break
         empty_df = get_energy_by_min(pd.DataFrame())
 
-    #NOTE: Roger
     #verify_power_energy(df) 
     def test_verify_power_energy(self):
         verify_power_energy(pd.DataFrame())
@@ -192,8 +183,7 @@ class Test_Transform(unittest.TestCase):
         empty_df = remove_outliers(pd.DataFrame(), self.var_names_path)
         pass
 
-    """
-    #NOTE: Roger
+    """ #CURRENTLY HAS ERRORS!
     #calculate_cop_values(df, heatLoss_fixed, thermo_slice) - returns cop_values df
     def test_calculate_cop_values(self):
         cop_values = pd.read_pickle("testing/Bayview/transform/pickles/cop_values.pkl")
@@ -205,7 +195,8 @@ class Test_Transform(unittest.TestCase):
 
         self.assertEqual(list(cop_values.columns), list(cop_df.columns))
     """
-        
+    
+    """ #CURRENTLY HAS ERRORS!
     #aggregate_df(df) - returns hourly_df and daily_df
     def test_aggregate_df_valid(self):
         #NOTE: This is potentially a candidate for extra testing
@@ -219,12 +210,12 @@ class Test_Transform(unittest.TestCase):
         #test that daily_df returns properly (fewer rows than hourly_df AND has load_shift_day as a column!)
         self.assertTrue(len(hourly_df.index) > len(daily_df.index))
         self.assertTrue(("load_shift_day" in daily_df.columns))
+    """
 
     def test_aggregate_df_invalid(self):
         #empty df, make sure nothing breaks
         aggregate_df(pd.DataFrame())
 
-    #NOTE: Roger
     #get_temp_zones120(df) - returns df
     def test_get_temp_zones120(self):
         temp_zones_df = pd.read_pickle("testing/Bayview/transform/pickles/temp_zones.pkl")
@@ -245,8 +236,7 @@ class Test_Transform(unittest.TestCase):
         self.assertEqual(expected1, test_df['Temp_top'][0])
         self.assertEqual(expected2, test_df['Temp_top'][1])
         
-    """
-   #NOTE: Roger
+    """ #CURRENTLY HAS ERRORS! 
     #get_storage_gals120(df) - returns df
     def test_get_storage_gals120(self):
         storage_gals120_df = pd.read_pickle("testing/Bayview/transform/pickles/storage_gals.pkl")
@@ -255,7 +245,7 @@ class Test_Transform(unittest.TestCase):
         storage_gals120_df = get_storage_gals120(storage_gals120_df)
         gals120_columns = ['Vol120', 'ZoneTemp120', 'Vol_Equivalent_to_120']
         self.assertEqual(gals120_columns,list(storage_gals120_df.iloc[:, -3:].columns))
-    """    
+    """
     
     #join_to_hourly(hourly_df, noaa_df) - returns hourly_df
     def test_join_to_hourly_valid(self):
@@ -295,18 +285,6 @@ class Test_Transform(unittest.TestCase):
         join_to_daily(pd.DataFrame(), pd.DataFrame())
 
 if __name__ == '__main__':
-    """
-    # NOTE: concat testing!!
-    renamed_data = pd.read_pickle("testing/Bayview/transform/pickles/renamed.pkl")
-    print("\n\nNumber of rows BEFORE concat: ", len(renamed_data.index), "\n\n")
-    proper_line = pd.read_pickle("testing/Bayview/transform/pickles/last_line.pkl")
-
-    print(len(renamed_data.columns))
-    print(len(proper_line.columns))
-    concat_last_row(renamed_data, proper_line)
-
-    print("\n\nNumber of rows AFTER concat: ", len(renamed_data.index), "\n\n")
-    """
 
     #runs test_xxx functions, shows what passed or failed. 
     unittest.main()

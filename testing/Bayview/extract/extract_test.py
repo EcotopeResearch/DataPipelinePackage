@@ -14,11 +14,6 @@ from ecopipeline import get_last_full_day_from_db, extract_files, json_to_df, ge
 
 class Test_Extract(unittest.TestCase):
 
-    # def test_get_last_line(self):
-    #     df = get_last_line()
-    #     self.assertNotEqual(pd.DataFrame(), df)
-    # TODO new test needed
-
     def test_extract_files(self):
         test_extract = extract_files(".csv")
         expected = []
@@ -48,7 +43,6 @@ class Test_Extract(unittest.TestCase):
         self.assertDictEqual(expected, test_noaa_data)
 
         test_noaa_data = get_noaa_data(['KBFI'])
-        #self.assertEquals(, test_noaa_data)
         pass
         
 
