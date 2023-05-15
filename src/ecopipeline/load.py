@@ -10,7 +10,7 @@ import mysql.connector.errors as mysqlerrors
 import datetime
 import numpy as np
 
-def get_login_info(config_info : str = _config_directory) -> dict:
+def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
     Reads the config.ini file stored in the config_info file path.   
 
@@ -43,11 +43,10 @@ def get_login_info(config_info : str = _config_directory) -> dict:
                      'database': configure.get('database', 'database')}
     }
 
-    #TODO: do we still need sensor_list logic?
-    # db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
-    #               "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
+    db_table_info = {header: {"table_name": configure.get(header, 'table_name'), 
+                  "sensor_list": list(configure.get(header, 'sensor_list').split(','))} for header in table_headers}
     
-    # db_connection_info.update(db_table_info)
+    db_connection_info.update(db_table_info)
 
     print(f"Successfully fetched configuration information from file path {config_info}.")
     return db_connection_info
@@ -116,7 +115,7 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
 
     for sensor in table_column_names:
-        create_table_statement += f"{sensor} float default 0.0,\n"
+        create_table_statement += f"{sensor} float default null,\n"
 
     create_table_statement += f"PRIMARY KEY (time_pt)\n"
 
@@ -158,7 +157,7 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     return [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
 
 
-def create_new_columns(cursor, config_dict: dict, table_name: str, new_columns: list):
+def create_new_columns(cursor, table_name: str, new_columns: list):
     """
     Create the new, necessary column in the database. Catches error if communication with mysql database
     is not possible.
@@ -225,7 +224,7 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, table_name
         
     missing_cols = find_missing_columns(cursor, dataframe, config_info, table_name)
     if len(missing_cols):
-        if not create_new_columns(cursor, dataframe, config_info, table_name, missing_cols):
+        if not create_new_columns(cursor, table_name, missing_cols):
             print("Unable to add new column due to database error.")
 
     for index, row in dataframe.iterrows():
@@ -294,9 +293,9 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     except mysqlerrors.Error:
         print(f"Table {table_name} does has no data.")
 
-    missing_cols = find_missing_columns(cursor, dataframe, config_info, data_type)
+    missing_cols = find_missing_columns(cursor, dataframe, config_info, table_name)
     if len(missing_cols):
-        if not create_new_columns(cursor, dataframe, config_info, data_type, missing_cols):
+        if not create_new_columns(cursor, table_name, missing_cols):
             print("Unable to add new column due to database error.")
     
     updatedRows = 0
@@ -316,17 +315,17 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     return True
 
 
-if __name__ == "__main__":
-    config_dict = get_login_info("config.ini")
-    db_connection, db_cursor = connect_db(config_dict['database'])
+# if __name__ == "__main__":
+#     config_dict = get_login_info("config.ini")
+#     db_connection, db_cursor = connect_db(config_dict['database'])
 
-    df = pd.read_csv("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/rowdata.csv")
-    df = df.set_index(["time_utc"])
+#     df = pd.read_csv("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/rowdata.csv")
+#     df = df.set_index(["time_utc"])
 
-    # load data stored in data frame to database
-    load_database(cursor=db_cursor, dataframe=df, config_info=config_dict, table_name="lbnl_minute")
+#     # load data stored in data frame to database
+#     load_database(cursor=db_cursor, dataframe=df, config_info=config_dict, table_name="lbnl_minute")
 
-    # commit changes to database and close connections
-    db_connection.commit()
-    db_connection.close()
-    db_cursor.close()
+#     # commit changes to database and close connections
+#     db_connection.commit()
+#     db_connection.close()
+#     db_cursor.close()

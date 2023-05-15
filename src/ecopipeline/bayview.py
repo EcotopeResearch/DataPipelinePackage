@@ -76,8 +76,7 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
         # Temp_CityWater_atSkid
         if (dfcheck.size == 0):
             return 0
-        dftemp = df_row.filter(
-            regex='Temp_PrimaryStorageOutTop|top|mid|bottom')
+        dftemp = df_row[['Temp_PrimaryStorageOutTop', 'Temp_top', 'Temp_midtop', 'Temp_mid', 'Temp_midbottom', 'Temp_bottom']]
         count = 0
         for val in dftemp:
             if dftemp.index[count] == "Temp_bottom":
@@ -117,7 +116,7 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
     """
     try:
         gals_per_zone = _set_zone_vol(location, gals, total, zones)
-        temp_cols = df_row.filter(regex='Temp_PrimaryStorageOutTop|top|mid|bottom')
+        temp_cols = df_row[['Temp_PrimaryStorageOutTop', 'Temp_top', 'Temp_midtop', 'Temp_mid', 'Temp_midbottom', 'Temp_bottom']]
         if (temp_cols.size <= 3):
             return 0
         name_cols = ""
@@ -154,7 +153,7 @@ def _get_zone_Temp120(df_row: pd.Series) -> float:
     """
     # if df_row["Temp_120"] != 120:
     #    return 0
-    temp_cols = df_row.filter(regex='Temp_PrimaryStorageOutTop|top|mid|bottom')
+    temp_cols = df_row[['Temp_PrimaryStorageOutTop', 'Temp_top', 'Temp_midtop', 'Temp_mid', 'Temp_midbottom', 'Temp_bottom']]
     if (temp_cols.size <= 3):
         return 0
     name_cols = _largest_less_than(temp_cols, 120)
@@ -188,11 +187,11 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
         pd.DataFrame: a Pandas Dataframe
     """
     if (len(df) > 0):
-        df['Vol120'] = df.apply(_get_V120, args=(
-            location, gals, total, zones), axis=1)
+        df['Vol120'] = df.apply(_get_V120, axis=1, args=(
+            location, gals, total, zones))
         df['ZoneTemp120'] = df.apply(_get_zone_Temp120, axis=1)
         df['Vol_Equivalent_to_120'] = df.apply(
-            _get_vol_equivalent_to_120, args=(location, gals, total, zones), axis=1)
+            _get_vol_equivalent_to_120, axis=1, args=(location, gals, total, zones))
 
     return df
 
@@ -306,10 +305,8 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
     Returns: 
         pd.DataFrame: Pandas DataFrame which contains the aggregated hourly data.
     """
-    avg_sd = df[['Temp_RecircSupply_MXV1', 'Temp_RecircSupply_MXV2', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop',
-                 'Temp_CityWater_atSkid', 'Flow_SecLoop', 'Temp_SecLoopHexOutlet', 'Temp_SecLoopHexInlet', 'Flow_CityWater', 'Temp_CityWater',
-                 'Flow_RecircReturn_MXV1', 'Temp_RecircReturn_MXV1', 'Flow_RecircReturn_MXV2', 'Temp_RecircReturn_MXV2', 'PowerIn_SecLoopPump',
-                 'EnergyIn_HPWH']].resample('D').mean()
+    
+    avg_sd = df[['Flow_CityWater', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop']].resample('D').mean()
 
     if thermo_slice is not None:
         avg_sd_6 = df.between_time(thermo_slice, "11:59PM")[
@@ -318,30 +315,23 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
         avg_sd_6 = df[['Temp_CityWater_atSkid',
                        'Temp_CityWater']].resample('D').mean()
 
-    cop_inter = pd.DataFrame(index=avg_sd.index)
-    cop_inter['Temp_RecircSupply_avg'] = (
-        avg_sd['Temp_RecircSupply_MXV1'] + avg_sd['Temp_RecircSupply_MXV2']) / 2
-    cop_inter['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
-                                                           avg_sd['Temp_PrimaryStorageOutTop'] -
-                                                           avg_sd['Temp_CityWater_atSkid'])
+    #cop_inter = pd.DataFrame(index=avg_sd.index)
+    df['Temp_RecircSupply_avg'] = ( df['Temp_RecircSupply_MXV1'] + df['Temp_RecircSupply_MXV2']) / 2
+    df['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(df['Flow_CityWater_atSkid'], df['Temp_PrimaryStorageOutTop'] - df['Temp_CityWater_atSkid'])
+    df['HeatOut_SecLoop'] = energy_kwh_to_kbtu(df['Flow_SecLoop'], df['Temp_SecLoopHexOutlet'] - df['Temp_SecLoopHexInlet'])
+    df['HeatOut_HW'] = energy_kwh_to_kbtu(df['Flow_CityWater'], df['Temp_RecircSupply_avg'] -  df['Temp_CityWater'])
+    df['HeatLoss_TempMaint_MXV1'] = energy_kwh_to_kbtu(df['Flow_RecircReturn_MXV1'], df['Temp_RecircSupply_MXV1'] - df['Temp_RecircReturn_MXV1'])
+    df['HeatLoss_TempMaint_MXV2'] = energy_kwh_to_kbtu(df['Flow_RecircReturn_MXV2'], df['Temp_RecircSupply_MXV2'] - df['Temp_RecircReturn_MXV2'])
+    df['EnergyIn_SecLoopPump'] = df['PowerIn_SecLoopPump'] * (1/60)
+    df['EnergyIn_HPWH'] = df['EnergyIn_HPWH']
+
+    cop_inter = df [['Temp_RecircSupply_avg', 'HeatOut_PrimaryPlant', 'HeatOut_SecLoop', 'HeatOut_HW', 'HeatLoss_TempMaint_MXV1', 'HeatLoss_TempMaint_MXV2', 'EnergyIn_SecLoopPump', 'EnergyIn_HPWH']].resample('D').mean()
+
+    cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
+                                                       avg_sd_6['Temp_CityWater'])
     cop_inter['HeatOut_PrimaryPlant_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                                  avg_sd['Temp_PrimaryStorageOutTop'] -
                                                                  avg_sd_6['Temp_CityWater_atSkid'])
-    cop_inter['HeatOut_SecLoop'] = energy_kwh_to_kbtu(avg_sd['Flow_SecLoop'], avg_sd['Temp_SecLoopHexOutlet'] -
-                                                      avg_sd['Temp_SecLoopHexInlet'])
-    cop_inter['HeatOut_HW'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
-                                                 avg_sd['Temp_CityWater'])
-    cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
-                                                       avg_sd_6['Temp_CityWater'])
-    cop_inter['HeatLoss_TempMaint_MXV1'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV1'],
-                                                              avg_sd['Temp_RecircSupply_MXV1'] -
-                                                              avg_sd['Temp_RecircReturn_MXV1'])
-    cop_inter['HeatLoss_TempMaint_MXV2'] = energy_kwh_to_kbtu(avg_sd['Flow_RecircReturn_MXV2'],
-                                                              avg_sd['Temp_RecircSupply_MXV2'] -
-                                                              avg_sd['Temp_RecircReturn_MXV2'])
-    cop_inter['EnergyIn_SecLoopPump'] = avg_sd['PowerIn_SecLoopPump'] * \
-        (1/60) * (1/1000)
-    cop_inter['EnergyIn_HPWH'] = avg_sd['EnergyIn_HPWH']
 
     return cop_inter
 
