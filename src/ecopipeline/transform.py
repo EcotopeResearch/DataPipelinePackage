@@ -154,6 +154,7 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
     Args: 
         col (pd.Series): Pandas series
         ffill_df (pd.DataFrame): Pandas dataframe
+        previous_fill (pd.DataFrame): Pandas dataframe (default value of None)
     Returns: 
         None (df is modified, not returned)
     """
@@ -177,7 +178,8 @@ def ffill_missing(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Var
     Function will take a pandas dataframe and forward fill select variables with no entry. 
     Args: 
         df (pd.DataFrame): Pandas dataframe
-        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+        vars_filename (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+        previous_fill (pd.DataFrame): Pandas dataframe (default value of None)
     Returns: 
         pd.DataFrame: Pandas dataframe
     """
@@ -266,7 +268,7 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
+def cop_method_2(df: pd.DataFrame, cop_tm: float, cop_primary_column_name: str) -> pd.DataFrame:
     """
     Performs COP calculation method 2 as deffined by Scott's whiteboard image
     COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)

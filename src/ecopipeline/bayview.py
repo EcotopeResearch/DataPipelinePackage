@@ -35,7 +35,7 @@ def _largest_less_than(df_row: pd.Series, target: int) -> str:
     the zone with the highest temperature < 120 degrees.
 
     Args: 
-        df_row (pd.DataFrame): A single row of a sensor Pandas Dataframe in a series 
+        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series 
         target (int): integer target
     Output: 
         str: A string of the name of the zone.
@@ -50,7 +50,7 @@ def _largest_less_than(df_row: pd.Series, target: int) -> str:
 
     return largest_less_than_120_tmp
 
-# NOTE: Move to bayview.py
+
 def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series) -> float:
     """
     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
@@ -100,8 +100,8 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-# NOTE: Move to bayview.py
-def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
+
+def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series) -> float:
     """
     Function takes a row of sensor data and determines the volume of water > 120 degrees
     in the zone that has the highest sensor < 120 degrees.
@@ -142,7 +142,7 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-# NOTE: Move to bayview.py
+
 def _get_zone_Temp120(df_row: pd.Series) -> float:
     """
     Function takes a row of sensor data and determines average temperature of the temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
@@ -173,13 +173,13 @@ def _get_zone_Temp120(df_row: pd.Series) -> float:
     zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
     return zone_Temp_120
 
-# NOTE: Move to bayview.py
+
 def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that creates and appends the Gals120 data onto the Dataframe
 
     Args: 
-        df (pd.Series): A Pandas Dataframe
+        df (pd.DataFrame): A Pandas Dataframe
         location (pd.Series)
         gals (int)
         total (int)
@@ -196,7 +196,7 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
 
     return df
 
-# NOTE: Move to bayview.py
+
 def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
     """
     Function that calculates the average temperature of the inputted zone.
@@ -215,14 +215,14 @@ def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-# NOTE: Move to bayview.py
+
 def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
     """
     Function that keeps track of the average temperature of each zone.
     for this function to work, naming conventions for each parrallel tank must include 'Temp1' as the tempature at the top of the tank, 'Temp5' as that at the bottom of the tank, and 'Temp2'-'Temp4' as the tempatures in between.
 
     Args: 
-        df (pd.Series): A Pandas Dataframe
+        df (pd.DataFrame): A Pandas Dataframe
     Returns: 
         pd.DataFrame: a Pandas Dataframe
     """
@@ -352,7 +352,7 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
 
     Args: 
         df (pd.DataFrame): Pandas DataFrame to add COP columns to
-        heatloss_fixed (float): fixed heatloss value 
+        heatloss_fixed (int): fixed heatloss value 
         thermo_slice (str): the time at which slicing begins if we would like to thermo slice. 
 
     Returns: 

@@ -15,11 +15,6 @@ def get_login_info(config_info : str = _config_directory) -> dict:
     Reads the config.ini file stored in the config_info file path.   
 
     Args: 
-        table_headers (list): A list of table headers. These headers must correspond to the 
-            section headers in the config.ini file. Your list must contain the section
-            header for each table you wish to write into. The first header must correspond 
-            to the login information of the database. The other are the tables which you wish
-            to write to. 
         config_info (str): A path to the config.ini file must also be passed.
 
     Returns: 
@@ -135,8 +130,8 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     Args: 
         cursor: A cursor object and the name of the table to be created.
         dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
-        config_info (dict): The dictionary containing the configuration information 
-        data_type (str): the header name corresponding to the table you wish to write data to.  
+        config_dict (dict): The dictionary containing the configuration information 
+        table_name (str): the header name corresponding to the table you wish to write data to.  
 
     Returns: 
         list: list of column names which must be added to the database table for the pandas 
@@ -158,15 +153,14 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     return [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
 
 
-def create_new_columns(cursor, config_dict: dict, table_name: str, new_columns: list):
+def create_new_columns(cursor, table_name: str, new_columns: list):
     """
     Create the new, necessary column in the database. Catches error if communication with mysql database
     is not possible.
 
     Args: 
         cursor: A cursor object and the name of the table to be created.`
-        config_info (dict): The dictionary containing the configuration information.
-        data_type (str): the header name corresponding to the table you wish to write data to.  
+        table_name (str): the header name corresponding to the table you wish to write data to.  
         new_columns (list): list of columns that must be added to the database table.
 
     Returns: 
@@ -193,7 +187,7 @@ def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, table_name
         cursor: A cursor object
         dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
         config_info (dict): The dictionary containing the configuration information 
-        data_type (str): the header name corresponding to the table you wish to write data to.  
+        table_name (str): the header name corresponding to the table you wish to write data to.  
 
     Returns: 
         bool: A boolean value indicating if the data was successfully written to the database. 
