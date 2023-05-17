@@ -702,9 +702,9 @@ def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     # df.loc[(df["HVAC"] == "heat") | (df["HVAC"] == "circ"), "Power_Output_BTUh"] = 0.0
     df["Power_Output_kW"] = (df["Power_Output_BTUh"] * btuh_to_w) * (1/1000)
     df["cop"] = np.abs(df["Power_Output_kW"] / df["Power_system1"]) 
-    df.loc[(df["cop"] == np.inf) | (df["cop"].isna()), "cop"] = 0.0
+    # df.loc[(df["cop"] == np.inf) | (df["cop"].isna()), "cop"] = 0.0
     
-    df.drop(["Power_Output_BTUh", "Power_Output_kW"], axis=1)
+    df = df.drop(["Power_Output_BTUh"], axis=1)
 
     return df
 
