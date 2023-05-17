@@ -697,12 +697,12 @@ def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     btuh_to_w = 1 / w_to_btuh
     air_density = 1.08
     air_correction_factor = get_acf(site_info["elev"])
-    print(f"ACF: {air_correction_factor}")
+
     df["Power_Output_BTUh"] = (df["Temp_SAT1"] - df["Temp_RAT"]) * df["Cfm_Calc"] * air_density * air_correction_factor
     # df.loc[(df["HVAC"] == "heat") | (df["HVAC"] == "circ"), "Power_Output_BTUh"] = 0.0
     df["Power_Output_kW"] = (df["Power_Output_BTUh"] * btuh_to_w) * (1/1000)
     df["cop"] = np.abs(df["Power_Output_kW"] / df["Power_system1"]) 
-    # df.loc[(df["cop"] == np.inf) | (df["cop"].isna()), "cop"] = 0.0
+    df.loc[(df["cop"] == np.inf) | (df["cop"].isna()), "cop"] = 0.0
     
     df.drop(["Power_Output_BTUh", "Power_Output_kW"], axis=1)
 
