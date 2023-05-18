@@ -49,7 +49,7 @@ def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
 
 def lbnl_sat_calculations(df: pd.DataFrame) -> pd.DataFrame:
     df_temp = df.filter(regex=r'.*Temp_SAT.*')
-    df["Temp_SATAvg"] = df.mean(axis=0)
+    df["Temp_SATAvg"] = df_temp.mean(axis=0)
 
     return df
 
