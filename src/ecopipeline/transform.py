@@ -197,6 +197,19 @@ def ffill_missing(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Var
     ffill_df.set_index(['variable_name'], inplace=True)
     ffill_df = ffill_df[ffill_df.index.notnull()]  # drop data without names
 
+    # add any columns in previous_fill that are missing from df and fill with nans
+    if previous_fill is not None:
+       # Get column names of df and previous_fill
+        a_cols = set(df.columns)
+        b_cols = set(previous_fill.columns)
+        b_cols.discard('time_pt') # avoid duplicate column bug
+
+        # Find missing columns in df and add them with NaN values
+        missing_cols = list(b_cols - a_cols)
+        if missing_cols:
+            for col in missing_cols:
+                df[col] = np.nan 
+
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
@@ -225,7 +238,7 @@ def nullify_erroneous(df: pd.DataFrame, vars_filename: str = f"{_input_directory
     for col in error_df.index:
         if col in df.columns:
             error_value = error_df.loc[col, 'error_value']
-            df[col] = df[col].replace(error_value, np.nan)
+            df.loc[df[col] <= error_value, col] = np.nan
 
     return df
 
