@@ -391,13 +391,10 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
-                df.at[df.index[i], "event_ID"] = event_ID
-                continue
-            df.at[df.index[i], "event_ID"] = event_ID
         elif (df["event_ID"].iloc[i] == 0):
             if(df["event_ID"].iloc[i - 1] > 0):
                 event_ID += 1
-        
+        df.at[df.index[i], "event_ID"] = event_ID
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
