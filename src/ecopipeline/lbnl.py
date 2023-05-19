@@ -719,7 +719,7 @@ def get_site_info(site: str) -> pd.Series:
     Returns:
         df (pd.Series): The Series of the site information
     """
-    site_info_path = _input_directory + configure.get('input', 'site_info')
+    site_info_path = configure.get('input', 'directory') + configure.get('input', 'site_info')
     df = pd.read_csv(site_info_path, skiprows=[1])
     df.dropna(how='all', inplace=True)
     df = df[df['site'] == site]
@@ -737,7 +737,7 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     Returns:
         df (pd.DataFrame): The DataFrame of the site cfm information
     """
-    site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
+    site_cfm_info_path = configure.get('input', 'directory') + configure.get('input', 'site_cfm_info')
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
     df = df.loc[df['site'] == site]
     return df
