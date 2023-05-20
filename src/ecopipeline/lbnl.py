@@ -383,7 +383,21 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     statePowerAHThreshold = site_info['AH_standby_power'] * 1.5
     df["event_ID"] = 0
     df["event_ID"] = df["event_ID"].mask(pd.to_numeric(df["Power_AH1"]) > statePowerAHThreshold, 1)
-    
+    event_ID = 1
+
+    for i in range(1,int(len(df.index))):
+        if(df["event_ID"].iloc[i] > 0):
+            time_diff = (df.index[i] - df.index[i-1])
+            diff_minutes = time_diff.total_seconds() / 60
+            if(diff_minutes > 10):
+                event_ID += 1
+                df.at[df.index[i], "event_ID"] = event_ID
+                continue
+            df.at[df.index[i], "event_ID"] = event_ID
+        elif (df["event_ID"].iloc[i] == 0):
+            if(df["event_ID"].iloc[i - 1] > 0):
+                event_ID += 1
+        
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
