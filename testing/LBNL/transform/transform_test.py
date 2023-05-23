@@ -73,21 +73,21 @@ class Test_Transform(unittest.TestCase):
         empty = site_specific(empty, "FAKE_01")
         pass
     
-    """ #currently has errors! 
+     
     def test_gas_valve_diff_valid(self):
         # site AZ2_01 uses hp (not gas) heating
-        hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
+        hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04302022.pkl"
         hp_df = pd.read_pickle(hp_pickle)
         result_hp_df = gas_valve_diff(hp_df, "AZ2_01")
 
         # site IL2_01 uses gas heating 
-        gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
+        gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06052022.pkl"
         gas_df = pd.read_pickle(gas_pickle)
         result_gas_df = gas_valve_diff(gas_df, "IL2_01")
         
-        #self.assertNotEqual(gas_df.iloc[:, 1].sum(), result_gas_df.iloc[:, 1].sum())
-        self.assertEqual(hp_df.iloc[:, 1].sum(), result_hp_df.iloc[:, 1].sum())
-    """
+        #self.assertNotEqual(gas_df['gasvalve'].sum(), result_gas_df['gasvalve'].sum())
+        self.assertEqual(hp_df.all, result_hp_df.all)
+    
     
     def test_gas_valve_diff_invalid(self):
         empty_df = pd.DataFrame()
