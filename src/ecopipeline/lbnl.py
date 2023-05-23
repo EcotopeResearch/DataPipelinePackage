@@ -362,7 +362,8 @@ def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
     df_merge['event_ID'] = dTavg['event_ID']
     df_merge['HVAC'] = dTavg['HVAC']
     df = df.reset_index()
-    df = pd.merge(df, df_merge, on='event_ID')
+    df = pd.merge(df, df_merge, on='event_ID', how='left')
+    df = df.fillna(0)
     df = df.set_index('time_utc')
     return df   
 
