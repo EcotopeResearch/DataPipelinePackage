@@ -701,7 +701,7 @@ def get_acf(elev):
     dens_cor_reg = LinearRegression().fit(cf_df[['elev_ft']], cf_df['acf'])
 
     # use the linear regression model to predict the air correction factor for each site
-    site_elevation = elev.values.reshape(-1, 1)
+    site_elevation = elev.reshape(-1, 1)
     air_corr = dens_cor_reg.predict(site_elevation)
 
     return air_corr[0]
