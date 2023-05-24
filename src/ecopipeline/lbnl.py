@@ -362,7 +362,8 @@ def get_hvac_state(df: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
     df_merge['event_ID'] = dTavg['event_ID']
     df_merge['HVAC'] = dTavg['HVAC']
     df = df.reset_index()
-    df = pd.merge(df, df_merge, on='event_ID')
+    df = pd.merge(df, df_merge, on='event_ID', how='left')
+    df['event_ID'] = df['event_ID'].fillna(0)
     df = df.set_index('time_utc')
     return df   
 
@@ -386,15 +387,18 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     event_ID = 1
 
     for i in range(1,int(len(df.index))):
-        if((df["event_ID"].iloc[i] > 0) and (df["event_ID"].iloc[i] == 1.0)):
+        if(df["event_ID"].iloc[i] > 0):
             time_diff = (df.index[i] - df.index[i-1])
             diff_minutes = time_diff.total_seconds() / 60
             if(diff_minutes > 10):
                 event_ID += 1
+                df.at[df.index[i], "event_ID"] = event_ID
+                continue
+            df.at[df.index[i], "event_ID"] = event_ID
         elif (df["event_ID"].iloc[i] == 0):
             if(df["event_ID"].iloc[i - 1] > 0):
                 event_ID += 1
-        df.at[df.index[i], "event_ID"] = event_ID
+        
     return df
 
 # TODO: update this function from using a passed in date to using date from last row
@@ -651,6 +655,7 @@ def get_cfm_values(df, site_cfm, site_info, site):
 
     if not fan_curve:
         cfm_info = dict()
+
         cfm_info["circ"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
             len(site_cfm.index)) if bool(re.search(".*circ.*", site_cfm["mode"].iloc[i]))]
         cfm_info["heat"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
@@ -658,7 +663,17 @@ def get_cfm_values(df, site_cfm, site_info, site):
         cfm_info["cool"] = [site_cfm["ID_blower_cfm"].iloc[i] for i in range(
             len(site_cfm.index)) if bool(re.search(".*cool.*", site_cfm["mode"].iloc[i]))]
 
-        df["Cfm_Calc"] = [np.mean(cfm_info[state]) if len(cfm_info[state]) != 0 else 0.0 for state in df["HVAC"]]
+        cfm_values = list()
+        hvac_state_null = df["HVAC"].isna()
+
+        for i, hvac_state in enumerate(df["HVAC"]):
+            if hvac_state_null[i]:
+                cfm_values.append(0.0)
+            else:
+                cfm_values.append(np.mean(cfm_info[hvac_state]))
+        
+        cfm_values = [0 if math.isnan(x) else x for x in cfm_values]
+        df["Cfm_Calc"] = cfm_values
 
     else:
         heat_in_HVAC = "heat" in list(df["HVAC"])
@@ -686,7 +701,7 @@ def get_acf(elev):
     dens_cor_reg = LinearRegression().fit(cf_df[['elev_ft']], cf_df['acf'])
 
     # use the linear regression model to predict the air correction factor for each site
-    site_elevation = elev.values.reshape(-1, 1)
+    site_elevation = elev.reshape(-1, 1)
     air_corr = dens_cor_reg.predict(site_elevation)
 
     return air_corr[0]
@@ -698,7 +713,7 @@ def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     air_density = 1.08
     air_correction_factor = get_acf(site_info["elev"])
 
-    df["Power_Output_BTUh"] = (df["Temp_SAT1"] - df["Temp_RAT"]) * df["Cfm_Calc"] * air_density * air_correction_factor
+    df["Power_Output_BTUh"] = (df["Temp_SATAvg"] - df["Temp_RAT"]) * df["Cfm_Calc"] * air_density * air_correction_factor
     df.loc[(df["HVAC"] == "heat") | (df["HVAC"] == "circ"), "Power_Output_BTUh"] = 0.0
     df["Power_Output_kW"] = (df["Power_Output_BTUh"] * btuh_to_w) * (1/1000)
     df["cop"] = np.abs(df["Power_Output_kW"] / df["Power_system1"]) 
