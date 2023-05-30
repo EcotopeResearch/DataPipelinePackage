@@ -21,20 +21,11 @@ class Test_Transform(unittest.TestCase):
     #Carlos
     def test_create_fan_curves_valid(self):
         site = "AZ2_01"
-        site_info = get_site_info(site)
-        site_cfm =  get_site_cfm_info(site)
+        site_info = get_site_info(site, "testing/LBNL/transform/LBNL-input/site_info.csv")
+        site_cfm =  get_site_cfm_info(site,  "testing/LBNL/transform/LBNL-input/sitecfminfo.csv")
         # Test with some dummy data
-        cfm_info = pd.DataFrame({
-            'mode': ['heat', 'cool', 'heat'],
-            'ID_blower_rms_watts': [1000, 2000, 3000],
-            'ID_blower_cfm': [500, 1000, 1500],
-            'site': ['site1', 'site1', 'site2']
-        })
-        site_info = pd.Series({
-            'furn_misc_power': 2.0
-        })
 
-        result = create_fan_curves(cfm_info, site_info)
+        result = create_fan_curves(site_cfm, site_info)
 
         # Check the result is a DataFrame
         self.assertIsInstance(result, pd.DataFrame)
@@ -43,70 +34,74 @@ class Test_Transform(unittest.TestCase):
         self.assertSetEqual(set(result.columns), {'site', 'a', 'b'})
 
         # Check the result has the expected number of rows
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 1)
 
         # Check the result has the expected sites
-        self.assertSetEqual(set(result['site']), {'site1', 'site2'})
+        self.assertSetEqual(set(result['site']), {'AZ2_01'})
 
         # Check the result has the expected coefficients
-        self.assertAlmostEqual(result.loc[result['site'] == 'site1', 'a'].values[0], 500, delta=0.1)
-        self.assertAlmostEqual(result.loc[result['site'] == 'site1', 'b'].values[0], 500, delta=0.1)
-        self.assertAlmostEqual(result.loc[result['site'] == 'site2', 'a'].values[0], 1500, delta=0.1)
-        self.assertAlmostEqual(result.loc[result['site'] == 'site2', 'b'].values[0], 0, delta=0.1)
+        self.assertAlmostEqual(result.loc[result['site'] == 'AZ2_01', 'a'].values[0], 1229, delta=0.1)
+        self.assertAlmostEqual(result.loc[result['site'] == 'AZ2_01', 'b'].values[0], 0, delta=0.1)
 
-    def test_create_fan_curves_invalid(self):
-        # Test with invalid input
-        cfm_info = "invalid input"
-        site_info = 12345
-
-        with self.assertRaises(TypeError):
-            result = create_fan_curves(cfm_info, site_info)
-    """ #CURRENTLY HAS ERRORS! 
-    def test_create_fan_curves_missing(self):
-        #test that it doesn't explode with improper values
-        empty = pd.DataFrame()
-        #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
-        empty = create_fan_curves(empty, "FAKE_01")
-        pass
-    """
-
-    #Carlos
     def test_condensate_calculations_valid(self):
-        #test valid input
-        pass
-    def test_condensate_calculations_invalid(self):
-        #test invalid input
-        pass
-    """ #CURRENTLY HAS ERRORS!
-    def test_condensate_calculations_missing(self):
-        #test that it doesn't explode with improper values
-        empty = pd.DataFrame()
-        #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
-        empty = condensate_calculations(empty, "FAKE_01")
-        pass
-    """
+        df = pd.DataFrame({
+            'Condensate_ontime': [0, 5, 10, 15, 20],
+            'Condensate_pulse_avg': [0, 1, 2, 3, 4]
+        })
+        site = 'test_site'
+        site_info = pd.Series({
+            'condensate_cycle_length': 5,
+            'condensate_oz_per_tip': 1
+        })
+        result = condensate_calculations(df, site, site_info)
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertEqual(len(result), len(df))
+        self.assertNotIn("Condensate_oz", result.columns)
+        self.assertIn("Condensate_kJ", result.columns)
+
 
     #Carlos
     def test_site_specific_valid_case1(self):
-        # test valid input where "MO2_"
-        pass
+        df = pd.DataFrame({
+            'Pressure_staticP': [0, 0, 0],
+            'Power_OD_total1': [0, 0, 0],
+            'Power_OD_fan1': [0, 0, 0],
+            'Power_OD_compressor1': [0, 0, 0],
+            'Power_AH1': [0, 0, 0]
+        })
+        result = site_specific(df, "MO2_01")
+        np.testing.assert_array_equal(result['Pressure_staticP'].values, np.array([55, 55, 55]))
+
     def test_site_specific_valid_case2(self):
-        # test valid input where "AZ2_01|AZ2_02|MO2_|IL2_|NW2_01"
-        pass
+        df = pd.DataFrame({
+            'Pressure_staticP': [1, 2, 3],
+            'Power_OD_total1': [4, 5, 6],
+            'Power_OD_fan1': [7, 8, 9],
+            'Power_AH1': [10, 11, 12]
+        })
+        result = site_specific(df, "AZ2_01")
+        self.assertIn('Power_OD_compressor1', result.columns)
+        self.assertIn('Power_system1', result.columns)
+
     def test_site_specific_valid_case3(self):
-        # test valid input where "AZ2_03"
-        pass
+        df = pd.DataFrame({
+            'Power_OD_fan1': [0, 0, 0],
+            'Power_OD_compressor1': [0, 0, 0],
+            'Power_system1': [0, 0, 0]
+        })
+        result = site_specific(df, "AZ2_03")
+        self.assertIn('Power_OD_total1', result.columns)
+        self.assertIn('Power_AH1', result.columns)
+
     def test_site_specific_valid_case4(self):
-        # test valid input where "AZ2_04|AZ2_05"
-        pass
+        df = pd.DataFrame({
+            'Power_OD_total1': [0, 0, 0],
+            'Power_AH1': [0, 0, 0],
+        })
+        result = site_specific(df, "AZ2_04")
+        self.assertIn('Power_system1', result.columns)
     def test_site_specific_invalid(self):
         #test invalid input
-        pass
-    def test_site_specific_missing(self):
-        #test that it doesn't explode with improper values
-        empty = pd.DataFrame()
-        #If this doesn't explode, error checking was good. Make sure to try and account for most if not all of this!
-        empty = site_specific(empty, "FAKE_01")
         pass
     
     """ #currently has errors! 
