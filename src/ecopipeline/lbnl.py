@@ -111,7 +111,7 @@ def condensate_calculations(df: pd.DataFrame, site: str, site_info: pd.Series) -
     return df
 
 
-def gas_valve_diff(df: pd.DataFrame, site: str) -> pd.DataFrame:
+def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path: str = f"{_input_directory}site_info.csv") -> pd.DataFrame:
     """
     Function takes in the site dataframe and the site name. If the site has gas 
     heating, take the lagged difference to get per minute values. 
@@ -119,12 +119,10 @@ def gas_valve_diff(df: pd.DataFrame, site: str) -> pd.DataFrame:
     Args: 
         df (pd.DataFrame): Dataframe for site
         site (str): site name as string
+        site_info_path: path to site_info.csv as string 
     Returns: 
         pd.DataFrame: modified Pandas Dataframe 
     """
-    input_dir = configure.get('input', 'directory')
-    site_info_path = input_dir + configure.get('input', 'site_info')
-
     try:
         site_info = pd.read_csv(site_info_path)
     except FileNotFoundError:
@@ -435,8 +433,12 @@ def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
         if not data.empty:
             data = _add_date(data, filename)
             temp_dfs.append(data)
-    df = pd.concat(temp_dfs, ignore_index=False)
-    return df
+            
+    if len(temp_dfs) > 0:
+        df = pd.concat(temp_dfs, ignore_index=False)
+        return df
+    else:
+        return pd.DataFrame()
 
 def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
     """
@@ -539,18 +541,16 @@ def add_local_time(df : pd.DataFrame, site_name : str) -> pd.DataFrame:
 
     return df
 
-def elev_correction(site_name : str) -> pd.DataFrame:
+def elev_correction(site_name : str, site_info_path: str = f"{_input_directory}site_info.csv") -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
     Args: 
         site_name (str): site's name
+        site_info_path (str): path to site_info.csv as a string 
     Returns: 
         pd.DataFrame: new Pandas dataframe
     """
-    input_dir = configure.get('input', 'directory')
-    site_info_path = input_dir + configure.get('input', 'site_info')
-
     try:
         site_info_df = pd.read_csv(site_info_path)
     except FileNotFoundError:
@@ -558,7 +558,6 @@ def elev_correction(site_name : str) -> pd.DataFrame:
         return
     
     site_info_df = site_info_df.loc[site_info_df['site'] == site_name]
-    print(site_info_df)
 
     if not site_info_df.empty and 'elev' in site_info_df.columns:
         elev_ft = np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000])

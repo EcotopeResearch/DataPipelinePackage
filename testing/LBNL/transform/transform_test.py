@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import datetime as dt
+
 from ecopipeline import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific, get_site_info, get_site_cfm_info
 
 class Test_Transform(unittest.TestCase):
@@ -109,22 +110,23 @@ class Test_Transform(unittest.TestCase):
         empty = site_specific(empty, "FAKE_01")
         pass
     
-    """ #currently has errors! 
-    def test_gas_valve_diff_valid(self):
-        # site AZ2_01 uses hp (not gas) heating
-        hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04202022.pkl"
-        hp_df = pd.read_pickle(hp_pickle)
-        result_hp_df = gas_valve_diff(hp_df, "AZ2_01")
-
-        # site IL2_01 uses gas heating 
-        gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06182022.pkl"
-        gas_df = pd.read_pickle(gas_pickle)
-        result_gas_df = gas_valve_diff(gas_df, "IL2_01")
+     
+    # def test_gas_valve_diff_valid_case1(self):
+    #     # site IL2_01 uses gas heating 
+    #     gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06052022.pkl"
+    #     gas_df = pd.read_pickle(gas_pickle)
+    #     result_gas_df = gas_valve_diff(gas_df, "IL2_01")
         
-        #self.assertNotEqual(gas_df.iloc[:, 1].sum(), result_gas_df.iloc[:, 1].sum())
-        self.assertEqual(hp_df.iloc[:, 1].sum(), result_hp_df.iloc[:, 1].sum())
-    """
+    #     #self.assertNotEqual(gas_df['gasvalve'].sum(), result_gas_df['gasvalve'].sum())
     
+    # def test_gas_valve_diff_valid_case2(self):
+    #     # site AZ2_01 uses hp (not gas) heating
+    #     hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04302022.pkl"
+    #     hp_df = pd.read_pickle(hp_pickle)
+    #     result_hp_df = gas_valve_diff(hp_df, "AZ2_01")
+
+    #     self.assertEqual(hp_df.all, result_hp_df.all)
+  
     def test_gas_valve_diff_invalid(self):
         empty_df = pd.DataFrame()
         result_df = gas_valve_diff(empty_df, "AZ2_01")
@@ -143,12 +145,12 @@ class Test_Transform(unittest.TestCase):
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
 
-    """ #currently has errors! 
-    def test_elev_correction_valid(self):
-        result_df = elev_correction("IL2_01")
-        expected_cols = ['site', 'elev', 'air_corr']
-        self.assertEqual(True,  np.array_equal(expected_cols, result_df.columns))
-    """
+    # #currently has errors! 
+    # def test_elev_correction_valid(self):
+    #     result_df = elev_correction("IL2_01")
+    #     expected_cols = ['site', 'elev', 'air_corr']
+    #     self.assertEqual(True, np.array_equal(expected_cols, result_df.columns))
+    
     """ #currently has errors!
     def test_elev_correction_invalid(self):
         empty_df = pd.DataFrame()
