@@ -2,7 +2,8 @@ import unittest
 import numpy as np
 import pandas as pd
 import datetime as dt
-from ecopipeline import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific, get_site_info
+
+from ecopipeline import get_refrig_charge, gas_valve_diff, change_ID_to_HVAC, gather_outdoor_conditions, elev_correction, replace_humidity, create_fan_curves, condensate_calculations, site_specific, get_site_info, get_site_cfm_info
 
 class Test_Transform(unittest.TestCase):
     #NOTE: If you want to run the tests w/an updated LBNL, you have to run the install script 
@@ -20,11 +21,47 @@ class Test_Transform(unittest.TestCase):
 
     #Carlos
     def test_create_fan_curves_valid(self):
-        #test valid input
-        pass
+        site = "AZ2_01"
+        site_info = get_site_info(site)
+        site_cfm =  get_site_cfm_info(site)
+        # Test with some dummy data
+        cfm_info = pd.DataFrame({
+            'mode': ['heat', 'cool', 'heat'],
+            'ID_blower_rms_watts': [1000, 2000, 3000],
+            'ID_blower_cfm': [500, 1000, 1500],
+            'site': ['site1', 'site1', 'site2']
+        })
+        site_info = pd.Series({
+            'furn_misc_power': 2.0
+        })
+
+        result = create_fan_curves(cfm_info, site_info)
+
+        # Check the result is a DataFrame
+        self.assertIsInstance(result, pd.DataFrame)
+
+        # Check the result has the expected columns
+        self.assertSetEqual(set(result.columns), {'site', 'a', 'b'})
+
+        # Check the result has the expected number of rows
+        self.assertEqual(len(result), 2)
+
+        # Check the result has the expected sites
+        self.assertSetEqual(set(result['site']), {'site1', 'site2'})
+
+        # Check the result has the expected coefficients
+        self.assertAlmostEqual(result.loc[result['site'] == 'site1', 'a'].values[0], 500, delta=0.1)
+        self.assertAlmostEqual(result.loc[result['site'] == 'site1', 'b'].values[0], 500, delta=0.1)
+        self.assertAlmostEqual(result.loc[result['site'] == 'site2', 'a'].values[0], 1500, delta=0.1)
+        self.assertAlmostEqual(result.loc[result['site'] == 'site2', 'b'].values[0], 0, delta=0.1)
+
     def test_create_fan_curves_invalid(self):
-        #test invalid input
-        pass
+        # Test with invalid input
+        cfm_info = "invalid input"
+        site_info = 12345
+
+        with self.assertRaises(TypeError):
+            result = create_fan_curves(cfm_info, site_info)
     """ #CURRENTLY HAS ERRORS! 
     def test_create_fan_curves_missing(self):
         #test that it doesn't explode with improper values

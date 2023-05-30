@@ -723,35 +723,38 @@ def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     return df
 
 
-def get_site_info(site: str) -> pd.Series:
+def get_site_info(site: str, site_info_path: str = "default") -> pd.Series:
     """
     Returns a dataframe of the site information for the given site
     
     Args:
         site (str): The site name
+        site_info_path (str): The path to the site info csv file if the default is not desired
         
     Returns:
         df (pd.Series): The Series of the site information
     """
-    site_info_path = _input_directory + configure.get('input', 'site_info')
+    if site_info_path == "default":
+        site_info_path = configure.get('input', 'directory') + configure.get('input', 'site_info')
     df = pd.read_csv(site_info_path, skiprows=[1])
     df.dropna(how='all', inplace=True)
     df = df[df['site'] == site]
     return df.squeeze()
 
 
-def get_site_cfm_info(site: str) -> pd.DataFrame:
+def get_site_cfm_info(site: str, site_cfm_info_path: str = "default") -> pd.DataFrame:
     """
     Returns a dataframe of the site cfm information for the given site
     NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.
     
     Args:
         site (str): The site name
-        
+        site_cfm_info_path (str): The path to the site cfm info csv file if the default is not desired
     Returns:
         df (pd.DataFrame): The DataFrame of the site cfm information
     """
-    site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
+    if site_cfm_info_path == "default":
+        site_cfm_info_path = configure.get('input', 'directory') + configure.get('input', 'site_cfm_info')
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
     df = df.loc[df['site'] == site]
     return df
