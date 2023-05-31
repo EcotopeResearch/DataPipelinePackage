@@ -16,9 +16,6 @@ class Test_Transform(unittest.TestCase):
     four_path = "testing/LBNL/transform/LBNL-input/410a_pt.csv"
     superheat_path = "testing/LBNL/transform/LBNL-input/superheat.csv"
 
-    #NOTE: Instead of checking if files are missing inside functions, we instead do that at the start? 
-    #Check that test function instead of all of those
-
     #Carlos
     def test_create_fan_curves_valid(self):
         site = "AZ2_01"
@@ -106,21 +103,22 @@ class Test_Transform(unittest.TestCase):
         pass
     
      
-    # def test_gas_valve_diff_valid_case1(self):
-    #     # site IL2_01 uses gas heating 
-    #     gas_pickle = "testing/LBNL/transform/pickles/IL2_01_06052022.pkl"
-    #     gas_df = pd.read_pickle(gas_pickle)
-    #     result_gas_df = gas_valve_diff(gas_df, "IL2_01")
+    def test_gas_valve_diff_valid_case1(self):
+        # gas heating 
+        test_data = [0, 5, 6, 7, 8, 9, 10]
+        gas_df = pd.DataFrame(test_data, columns=['gasvalve'])
+        prev_sum = gas_df['gasvalve'].sum()
+        gas_valve_diff(gas_df, "IL2_01", self.site_info_path)
         
-    #     #self.assertNotEqual(gas_df['gasvalve'].sum(), result_gas_df['gasvalve'].sum())
+        self.assertNotEqual(prev_sum, gas_df['gasvalve'].sum())
     
-    # def test_gas_valve_diff_valid_case2(self):
-    #     # site AZ2_01 uses hp (not gas) heating
-    #     hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04302022.pkl"
-    #     hp_df = pd.read_pickle(hp_pickle)
-    #     result_hp_df = gas_valve_diff(hp_df, "AZ2_01")
+    def test_gas_valve_diff_valid_case2(self):
+        # hp heating
+        hp_pickle = "testing/LBNL/transform/pickles/AZ2_01_04302022.pkl"
+        hp_df = pd.read_pickle(hp_pickle)
+        result_hp_df = gas_valve_diff(hp_df, "AZ2_01")
 
-    #     self.assertEqual(hp_df.all, result_hp_df.all)
+        self.assertEqual(hp_df.all, result_hp_df.all)
   
     def test_gas_valve_diff_invalid(self):
         empty_df = pd.DataFrame()
@@ -139,19 +137,17 @@ class Test_Transform(unittest.TestCase):
         empty_df = pd.DataFrame()
         result_df = gather_outdoor_conditions(empty_df, "AZ2_01")
         self.assertEqual(True, empty_df.equals(result_df))
-
-    # #currently has errors! 
-    # def test_elev_correction_valid(self):
-    #     result_df = elev_correction("IL2_01")
-    #     expected_cols = ['site', 'elev', 'air_corr']
-    #     self.assertEqual(True, np.array_equal(expected_cols, result_df.columns))
+ 
+    def test_elev_correction_valid(self):
+        result_df = elev_correction("IL2_01")
+        expected_cols = ['site', 'elev', 'air_corr']
+        self.assertEqual(True, np.array_equal(expected_cols, result_df.columns))
     
-    """ #currently has errors!
     def test_elev_correction_invalid(self):
         empty_df = pd.DataFrame()
         result_df = elev_correction("FAKE1_01")
         self.assertEqual(True, (result_df.equals(empty_df)))
-    """
+    
     
     def test_refrig_charge_valid(self):
         #we assume proper input variables!
