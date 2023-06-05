@@ -754,10 +754,6 @@ def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
     """
-
-    df["time_utc"] = df["time_utc"].dt.round("min")
-
-    df = df.set_index(["time_utc"])
     df = df.sort_index(ascending=True)
 
     df.insert(0, 'time_utc', list(df.index))
