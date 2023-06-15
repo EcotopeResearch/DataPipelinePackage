@@ -742,35 +742,57 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     df = df.loc[df['site'] == site]
     return df
 
-def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Merges index-like rows together ensuring that all relevant information for a
-    certain timestamp is stored in one row - not in multiple rows. It also rounds the
-    timestamps to the nearest minute.
+# def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
+#     """
+#     Merges index-like rows together ensuring that all relevant information for a
+#     certain timestamp is stored in one row - not in multiple rows. It also rounds the
+#     timestamps to the nearest minute.
 
-    Args:
-        file_path (str): The file path to the data.
+#     Args:
+#         file_path (str): The file path to the data.
         
-    Returns:
-        df (pd.DataFrame): The DataFrame with all index-like rows merged. 
-    """
-    df = df.sort_index(ascending=True)
+#     Returns:
+#         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
+#     """
+#     df = df.sort_index(ascending=True)
 
-    df.insert(0, 'time_utc', list(df.index))
-    df.index = np.arange(len(df.index))
+#     df.insert(0, 'time_pt', list(df.index))
+#     df.index = np.arange(len(df.index))
 
-    to_del = list()
-    for i in range(len(df) - 1):
-        if df.iloc[i]["time_utc"] == df.iloc[i+1]["time_utc"]:
-            data_combined = [x if math.isnan(y) else y for (x,y) in zip(df.iloc[i].values[1:], df.iloc[i+1].values[1:])]
-            data_combined.insert(0, df.iloc[i]["time_utc"])
+#     to_del = list()
+#     for i in range(len(df) - 1):
+#         if df.iloc[i]["time_pt"] == df.iloc[i+1]["time_pt"]:
+#             data_combined = [x if pd.isna(y) else y for (x,y) in zip(df.iloc[i].values[1:], df.iloc[i+1].values[1:])]
+#             data_combined.insert(0, df.iloc[i]["time_pt"])
 
-            df.iloc[i+1] = data_combined
-            to_del.append(i)
+#             df.iloc[i+1] = data_combined
+#             to_del.append(i)
 
-    df = df.drop(to_del)
-    df = df.set_index(["time_utc"])
+#     print(to_del)
+#     df = df.drop(to_del)
+#     df = df.set_index(["time_pt"])
 
-    df.index = pd.to_datetime(df.index)
+#     df.index = pd.to_datetime(df.index)
 
-    return df
+#     return df
+
+def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
+     """
+     Merges index-like rows together ensuring that all relevant information for a
+     certain timestamp is stored in one row - not in multiple rows. It also rounds the
+     timestamps to the nearest minute.
+
+     Args:
+         file_path (str): The file path to the data.
+        
+     Returns:
+         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
+     """
+     
+     df = df.sort_index(ascending = True)
+     grouped_df = df.groupby(df.index).first()
+
+     return grouped_df
+
+
+

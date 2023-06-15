@@ -279,9 +279,24 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+def cop_method_1(df: pd.DataFrame, recircLosses):
+    """
+    Performs COP calculation method 1 (original AWS method).
+
+    Args:
+        df (pd.Dataframe): Pandas dataframe to add COP columns (daily)
+        recircLosses (float or pd.Series): If fixedTM from spot measurement,
+            float. If recic measurements in datastream, column of daily df.
+            Units should be in kW.
+    """
+    df['COP_DHWSys_1'] = (df['HeatOut_Primary'] + recircLosses) / df['PowerIn_Total']
+    
+    
+    return df
+
 def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
     """
-    Performs COP calculation method 2 as deffined by Scott's whiteboard image
+    Performs COP calculation method 2 as defined by Scott's whiteboard image
     COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
 
     Args: 
@@ -389,16 +404,50 @@ def aggregate_df(df: pd.DataFrame):
     return hourly_df, daily_df
 
 def remove_incomplete_days(hourly_df, daily_df):
-    '''
-    Helper function for removing daily averages that have been calculated from incomplete data
-    '''
-    hourly_dates = pd.to_datetime(hourly_df.index)
-    daily_dates = pd.to_datetime(daily_df.index)
+     '''
+     Helper function for removing hourly and daily averages that have been calculated from incomplete dys.
+     '''
+     hourly_dates = pd.to_datetime(hourly_df.index)
+     daily_dates = pd.to_datetime(daily_df.index)
 
-    missing_data_days = [date for date in daily_dates if not ((date in hourly_dates) and (date + pd.Timedelta(hours=23) in hourly_dates) and (date + pd.Timedelta(hours=1) in hourly_dates))]
-    daily_df = daily_df.drop(missing_data_days)
+     missing_data_days = [date for date in daily_dates if not ((date in hourly_dates) and (date + pd.Timedelta(hours=23) in hourly_dates) and (date + pd.Timedelta(hours=1) in hourly_dates))]
+     daily_df = daily_df.drop(missing_data_days)
     
-    return daily_df
+     return daily_df
+
+def create_summary_tables(df: pd.DataFrame):
+    """
+    Revamped version of "aggregate_data" function. Creates hourly and daily summary tables.
+    Args: 
+        df (pd.DataFrame): Single pandas dataframe of minute-by-minute sensor data.
+    Returns: 
+        pd.DataFrame: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data. 
+    """
+    # If df passed in empty, we just return empty dfs for hourly_df and daily_df
+    if (df.empty):
+        return pd.DataFrame(), pd.DataFrame()
+    
+    hourly_df = df.resample('H').mean()
+    daily_df = df.resample('D').mean()
+
+    hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)
+    return hourly_df, daily_df
+
+def remove_partial_days(df, hourly_df, daily_df):
+    '''
+    Helper function for removing daily values that are calculated from incomplete data.
+    '''
+
+    hourly_start = df.index[0].ceil("H") 
+    hourly_end = df.index[-1].floor("H") - pd.DateOffset(hours=1)
+    hourly_df = hourly_df[hourly_start: (hourly_end)]
+
+    daily_start = df.index[0].ceil("D")
+    daily_end = df.index[-1].floor("D") - pd.DateOffset(days=1)
+    daily_df = daily_df[daily_start: (daily_end)]
+
+    return hourly_df, daily_df
+
 
 def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame) -> pd.DataFrame:
     """
