@@ -44,7 +44,6 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     }
 
     db_table_info = {header: {"table_name": configure.get(header, 'table_name')} for header in table_headers} 
-    print(db_table_info)
     
     db_connection_info.update(db_table_info)
 

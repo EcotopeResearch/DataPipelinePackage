@@ -35,7 +35,7 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
         last_row_data = pd.DataFrame(db_cursor.fetchall())
         if len(last_row_data.index) > 0:
             last_time = last_row_data[0][0] # get time from last_data_row[0][0] TODO probably better way to do this
-            print('time returned from db', last_time)
+            
             if ((last_time.hour != 23) or (last_time.minute != 59)):
                 return_time = last_time - timedelta(days=1)
                 return_time = return_time.replace(hour=23, minute=59, second=0)
@@ -48,7 +48,7 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
 
     db_cursor.close()
     db_connection.close()
-    print('time returned from db', return_time)
+    
     return return_time
 
 def get_db_row_from_time(time: datetime) -> pd.DataFrame:
@@ -80,7 +80,7 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
 
     return row_data
 
-def extract_new(time: datetime, filenames: List[str], decihex: bool, timeZone: str) -> List[str]:
+def extract_new(time: datetime, filenames: List[str], decihex = False, timeZone = None) -> List[str]:
     """
     Function filters the filenames to only those newer than the last date in database.
     If filenames are in deciheximal, convert them to datetime. Note that for some projects,
