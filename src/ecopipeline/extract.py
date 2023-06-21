@@ -1,5 +1,6 @@
 from typing import List
 import pandas as pd
+import re
 from ftplib import FTP
 from datetime import datetime, timedelta
 import gzip
@@ -10,7 +11,7 @@ from ecopipeline.load import connect_db, get_login_info
 from ecopipeline.config import _config_directory, _data_directory
 import numpy as np
 import sys
-from pytz import timezone
+from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 
 
@@ -26,7 +27,7 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
     config_dict = get_login_info(["minute"])
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
-
+    
     try:
         db_cursor.execute(
             f"select * from {config_dict['minute']['table_name']} order by time_pt DESC LIMIT 1")
@@ -34,13 +35,12 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
         last_row_data = pd.DataFrame(db_cursor.fetchall())
         if len(last_row_data.index) > 0:
             last_time = last_row_data[0][0] # get time from last_data_row[0][0] TODO probably better way to do this
-
+            
             if ((last_time.hour != 23) or (last_time.minute != 59)):
-                pacific_tz = timezone('US/Pacific')
                 return_time = last_time - timedelta(days=1)
                 return_time = return_time.replace(hour=23, minute=59, second=0)
             else:
-                return_time = last_time.tz_localize(timezone('US/Pacific'))
+                return_time = last_time 
         else:
             print("Database has no previous data. Using default time to extract data.")
     except mysqlerrors.Error:
@@ -48,7 +48,7 @@ def get_last_full_day_from_db(config_file_path: str = _config_directory) -> date
 
     db_cursor.close()
     db_connection.close()
-
+    
     return return_time
 
 def get_db_row_from_time(time: datetime) -> pd.DataFrame:
@@ -80,22 +80,32 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
 
     return row_data
 
-
-
-def extract_new(time: datetime, json_filenames: List[str]) -> List[str]:
+def extract_new(time: datetime, filenames: List[str], decihex = False, timeZone = None) -> List[str]:
     """
-    Function filters the filenames to only those newer than the last date.
+    Function filters the filenames to only those newer than the last date in database.
+    If filenames are in deciheximal, convert them to datetime. Note that for some projects,
+    files are dropped at irregular intervals so data cannot be filtered by exact date. 
 
     Args: 
-        time (datetime): The point in time for which we want to start the data extraction from
-        json_filenames (List[str]): List of filenames to be filtered
+        time (datetime) : The point in time for which we want to start the data extraction from. This 
+            is local time from the data's index. 
+        filenames (List[str]) : List of filenames to be filtered
+        decihex (bool) : Whether or not the filenames need to be converted to datetime from deciheximal
+        timeZone (str): Local time zone. 
     Returns: 
         List[str]: Filtered list of filenames
     """
-    time_int = int(time.strftime("%Y%m%d%H%M%S"))
-    return_list = list(filter(lambda filename: int(filename[-17:-3]) >= time_int, json_filenames))
-    return return_list
+    if decihex: 
+        base_date = datetime(1970, 1, 1)
+        file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
+        file_dates_local = [file_date.tz_localize('UTC').tz_convert(timezone(timeZone)).tz_localize(None) for file_date in file_dates] #convert utc to local zone with no awareness
+        
+        return_list = [filename for filename, local_time in zip(filenames, file_dates_local) if local_time > time]
 
+    else: 
+        time_int = int(time.strftime("%Y%m%d%H%M%S"))
+        return_list = list(filter(lambda filename: int(filename[-17:-3]) >= time_int, filenames))
+    return return_list
 
 def extract_files(extension: str, subdir: str = "") -> List[str]:
     """
@@ -176,7 +186,8 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
 
 def get_sub_dirs(dir: str) -> List[str]:
     """
-    Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory.
+    Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory. 
+    This is used when multiple sites are being ran in same pipeline. 
 
     Args: 
         dir (str): Directory as a string.
