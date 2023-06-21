@@ -114,7 +114,7 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
 
     for sensor in table_column_names:
-        create_table_statement += f"{sensor} float default null,\n"
+        create_table_statement += f"{sensor} FLOAT DEFAULT NULL,\n"
 
     create_table_statement += f"PRIMARY KEY (time_pt)\n"
 
@@ -142,8 +142,8 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     """
 
     try:
-        cursor.execute(f"select column_name from information_schema.columns where table_schema = '"
-                            f"{config_dict['database']['database']}' and table_name = '"
+        cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '"
+                            f"{config_dict['database']['database']}' AND table_name = '"
                             f"{table_name}'")
     except mysqlerrors.DatabaseError:
         print("Check if the mysql table to be written to exists.")
@@ -182,7 +182,7 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
     Returns: 
         bool: boolean indicating if the the column were successfully added to the database. 
     """
-    alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} {data_type} default null;" for column, data_type in zip(new_columns, data_types)]
+    alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} {data_type} DEFAULT NULL;" for column, data_type in zip(new_columns, data_types)]
 
     for sql_statement in alter_table_statements:
         try:
@@ -315,7 +315,8 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
         if(index <= last_time):
-            cursor.execute(update_str, (*time_data, index))
+            # cursor.execute(update_str, (*time_data, index))
+            cursor.execute(_generate_mysql_update(row, index, table_name))
             updatedRows += 1
         else:
             cursor.execute(insert_str, (index, *time_data))
@@ -323,18 +324,18 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
 
+def _generate_mysql_update(row, index, table_name):
+    statement = f"UPDATE {table_name} SET "
+    values = []
 
-# if __name__ == "__main__":
-#     config_dict = get_login_info("config.ini")
-#     db_connection, db_cursor = connect_db(config_dict['database'])
+    for column, value in row.iteritems():
+        if not value is None and not pd.isna(value) and not (value == float('inf') or value == float('-inf')):
+            values.append(f"{column} = {value}")
 
-#     df = pd.read_csv("C:/Users/emilx/OneDrive/Documents/GitHub/DataPipelinePackage/rowdata.csv")
-#     df = df.set_index(["time_utc"])
+    if values:
+        statement += ", ".join(values)
+        statement += f" WHERE time_pt = {index};"
+    else:
+        statement = ""
 
-#     # load data stored in data frame to database
-#     load_database(cursor=db_cursor, dataframe=df, config_info=config_dict, table_name="lbnl_minute")
-
-#     # commit changes to database and close connections
-#     db_connection.commit()
-#     db_connection.close()
-#     db_cursor.close()
+    return statement
