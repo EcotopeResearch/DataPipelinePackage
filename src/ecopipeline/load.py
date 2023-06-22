@@ -95,6 +95,7 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
                    f"WHERE (TABLE_SCHEMA = '{dbname}') AND (TABLE_NAME = '{table_name}')")
 
     num_tables = cursor.fetchall()[0][0]
+    print(num_tables)
     return num_tables
 
 
@@ -260,7 +261,8 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     Returns: 
         bool: A boolean value indicating if the data was successfully written to the database. 
     """
-
+    # Drop empty columns
+    dataframe = dataframe.dropna(axis=1, how='all')
 
     dbname = config_info['database']['database']
     table_name = config_info[data_type]["table_name"]   
@@ -278,12 +280,8 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     # create SQL statement
     insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
-    update_str = "UPDATE " + table_name + " SET "
     for column in dataframe.columns:
         insert_str += "%s, "
-        update_str += column + " = %s, "
-    update_str = update_str[:len(update_str)-2] # remove last ", "
-    update_str += " WHERE time_pt = %s"
     insert_str += "%s)"
 
     if not check_table_exists(cursor, table_name, dbname):
@@ -295,7 +293,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
     try:
         cursor.execute(
-            f"select * from {table_name} order by time_pt DESC LIMIT 1")
+            f"SELECT * FROM {table_name} ORDER BY time_pt DESC LIMIT 1")
         last_row_data = pd.DataFrame(cursor.fetchall())
         if len(last_row_data.index) != 0:
             last_time = last_row_data[0][0]
@@ -315,9 +313,10 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
         if(index <= last_time):
-            # cursor.execute(update_str, (*time_data, index))
-            cursor.execute(_generate_mysql_update(row, index, table_name))
-            updatedRows += 1
+            statement = _generate_mysql_update(row, index, table_name)
+            if statement != "":
+                cursor.execute(_generate_mysql_update(row, index, table_name))
+                updatedRows += 1
         else:
             cursor.execute(insert_str, (index, *time_data))
 
@@ -328,7 +327,7 @@ def _generate_mysql_update(row, index, table_name):
     statement = f"UPDATE {table_name} SET "
     values = []
 
-    for column, value in row.iteritems():
+    for column, value in row.items():
         if not value is None and not pd.isna(value) and not (value == float('inf') or value == float('-inf')):
             values.append(f"{column} = {value}")
 
