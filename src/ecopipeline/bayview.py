@@ -50,7 +50,7 @@ def _largest_less_than(df_row: pd.Series, target: int) -> str:
 
     return largest_less_than_120_tmp
 
-# NOTE: Move to bayview.py
+
 def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series) -> float:
     """
     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
@@ -99,7 +99,7 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-# NOTE: Move to bayview.py
+
 def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zones: pd.Series):
     """
     Function takes a row of sensor data and determines the volume of water > 120 degrees
@@ -141,7 +141,7 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-# NOTE: Move to bayview.py
+
 def _get_zone_Temp120(df_row: pd.Series) -> float:
     """
     Function takes a row of sensor data and determines average temperature of the temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
@@ -172,7 +172,7 @@ def _get_zone_Temp120(df_row: pd.Series) -> float:
     zone_Temp_120 = (120 + temp_cols[temp_cols.index[name_col_index - 1]]) / 2
     return zone_Temp_120
 
-# NOTE: Move to bayview.py
+
 def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total: int, zones: pd.Series) -> pd.DataFrame:
     """
     Function that creates and appends the Gals120 data onto the Dataframe
@@ -195,7 +195,7 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
 
     return df
 
-# NOTE: Move to bayview.py
+
 def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
     """
     Function that calculates the average temperature of the inputted zone.
@@ -214,7 +214,7 @@ def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
         print("DIVIDED BY ZERO ERROR")
         return 0
 
-# NOTE: Move to bayview.py
+
 def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
     """
     Function that keeps track of the average temperature of each zone.
