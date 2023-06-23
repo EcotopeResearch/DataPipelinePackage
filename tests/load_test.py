@@ -1,15 +1,19 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import pandas as pd
 import datetime
-from ecopipeline import load_overwrite_database, create_new_table
+from ecopipeline import load_overwrite_database, create_new_table, check_table_exists, connect_db
 from ecopipeline.config import _config_directory
 import numpy as np
 import math
+import mysql.connector
 
 config_info = {
     'database' : {
-        'database' : 'test_db'
+        'database' : 'test_db',
+        'password' : 'pw',
+        'host' : 'host',
+        'user' : 'usr'
     },
     'minute' : {
         'table_name' :'minute_table'
@@ -166,30 +170,54 @@ def test_create_new_table_and_populate(mocker):
     for i in range (len(expected_queries)):
         assert cursor_mock.execute.call_args_list[i][0][0] == expected_queries[i]
 
-# def test_create_new_columns(mocker):
+def test_create_new_table(mocker):
 
-#     # Create a mock for the cursor
-#     cursor_mock = MagicMock()
-#     mocker.patch.object(cursor_mock, 'execute')
+    # Create a mock for the cursor
+    cursor_mock = MagicMock()
+    mocker.patch.object(cursor_mock, 'execute')
+    assert create_new_table(cursor_mock, 'test_table', ['test_1','test_2','test_3','test_4','test_5'], ['float','float','varchar(25)','boolean','datetime'])
 
-#     # Call the function under test with the mock cursor
-#     create_new_columns(cursor_mock, df, config_info, 'minute')
+    #  Verify the behavior and result
+    expected_queries = [
+        "CREATE TABLE test_table (\ntime_pt datetime,\n"\
+            +"test_1 float DEFAULT NULL,\n"\
+            +"test_2 float DEFAULT NULL,\n"\
+            +"test_3 varchar(25) DEFAULT NULL,\n"\
+            +"test_4 boolean DEFAULT NULL,\n"\
+            +"test_5 datetime DEFAULT NULL,\n"\
+            +"PRIMARY KEY (time_pt)\n"\
+            +");"
+    ]
+    assert cursor_mock.execute.call_count == len(expected_queries)
+    for i in range (len(expected_queries)):
+        assert cursor_mock.execute.call_args_list[i][0][0] == expected_queries[i]
 
-#     #  Verify the behavior and result
-#     expected_queries = [
-#         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
-#         "SELECT * FROM minute_table ORDER BY time_pt DESC LIMIT 1",
-#         "SELECT column_name FROM information_schema.columns WHERE table_schema = 'test_db' AND table_name = 'minute_table'",
-#         "ALTER TABLE minute_table ADD COLUMN float_column float DEFAULT NULL;",
-#         "ALTER TABLE minute_table ADD COLUMN string_column varchar(25) DEFAULT NULL;",
-#         "ALTER TABLE minute_table ADD COLUMN bool_column boolean DEFAULT NULL;",
-#         "ALTER TABLE minute_table ADD COLUMN date_column datetime DEFAULT NULL;",
-#         'UPDATE minute_table SET PowerIn_HPWH1 = 3, bool_column = True WHERE time_pt = 2022-01-01 00:00:00;',
-#         'UPDATE minute_table SET PowerIn_HPWH1 = 20, float_column = 75.2, string_column = hello, bool_column = False, date_column = 2022-01-03 00:00:00 WHERE time_pt = 2022-01-02 00:00:00;',
-#         'INSERT INTO minute_table (time_pt,PowerIn_HPWH1,float_column,string_column,bool_column,date_column) VALUES (%s, %s, %s, %s, %s, %s)'
-#     ]
-#     assert cursor_mock.fetchall.call_count == 3
-#     assert cursor_mock.execute.call_count == len(expected_queries)
-#     for i in range (len(expected_queries)):
-#         assert cursor_mock.execute.call_args_list[i][0][0] == expected_queries[i]
+def test_invalid_create_new_table(mocker):
+    cursor_mock = MagicMock()
+    mocker.patch.object(cursor_mock, 'execute')
+    with pytest.raises(Exception, match="Cannot create table. Type list and Field Name list are different lengths."):
+        create_new_table(cursor_mock, 'test_table', ['test_1','test_2','test_3','test_4','test_5'], ['boolean','datetime'])
 
+def test_check_table_exists(mocker):
+    cursor_mock = MagicMock()
+    mocker.patch.object(cursor_mock, 'execute')
+    cursor_mock.fetchall.side_effect = [
+        [(0,)],
+        [(1,)]
+    ]
+    assert check_table_exists(cursor_mock, 'dummy_table', 'dummy_db') == False
+    assert check_table_exists(cursor_mock, 'dummy_table', 'dummy_db') == True
+
+def test_connect_db():
+    with patch('mysql.connector.connect') as mock_connect:
+        # Set the desired response for mock_connect.return_value
+        mock_connection = mock_connect.return_value
+        mock_cursor = mock_connection.cursor.return_value
+
+        # Call the function that uses mysql.connector.connect()
+        connect_db(config_info['database'])
+
+        # Assert that mysql.connector.connect() was called
+        mock_connect.assert_called_once_with(user='usr', password='pw',
+                                             host='host', database='test_db')
+        

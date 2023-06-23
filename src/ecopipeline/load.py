@@ -119,7 +119,7 @@ def create_new_table(cursor, table_name: str, table_column_names: list, table_co
         bool: A boolean value indicating if a table was sucessfully created. 
     """
     if(len(table_column_names) != len(table_column_types)):
-        print("ERROR: Cannot create table. Type list and Field Name list are different lengths.")
+        raise Exception("Cannot create table. Type list and Field Name list are different lengths.")
 
     create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
 
