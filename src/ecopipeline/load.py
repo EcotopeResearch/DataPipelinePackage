@@ -10,6 +10,13 @@ import mysql.connector.errors as mysqlerrors
 import datetime
 import numpy as np
 
+data_map = {'int64':'float',
+                'float64': 'float',
+                'M8[ns]':'datetime',
+                'datetime64[ns]':'datetime',
+                'object':'varchar(25)',
+                'bool': 'boolean'}
+
 def get_login_info(table_headers: list, config_info : str = _config_directory) -> dict:
     """
     Reads the config.ini file stored in the config_info file path.   
@@ -99,7 +106,7 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     return num_tables
 
 
-def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
+def create_new_table(cursor, table_name: str, table_column_names: list, table_column_types: list) -> bool:
     """
     Creates a new table in the mySQL database.
 
@@ -111,11 +118,13 @@ def create_new_table(cursor, table_name: str, table_column_names: list) -> bool:
     Returns: 
         bool: A boolean value indicating if a table was sucessfully created. 
     """
+    if(len(table_column_names) != len(table_column_types)):
+        print("ERROR: Cannot create table. Type list and Field Name list are different lengths.")
 
     create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
 
-    for sensor in table_column_names:
-        create_table_statement += f"{sensor} FLOAT DEFAULT NULL,\n"
+    for i in range(len(table_column_names)):
+        create_table_statement += f"{table_column_names[i]} {table_column_types[i]} DEFAULT NULL,\n"
 
     create_table_statement += f"PRIMARY KEY (time_pt)\n"
 
@@ -156,13 +165,6 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     
     cols_to_add = [sensor_name for sensor_name in df_names if sensor_name not in current_table_names]
     data_types = [dataframe[column].dtype.name for column in cols_to_add]
-
-    data_map = {'int64':'float',
-                'float64': 'float',
-                'M8[ns]':'datetime',
-                'datetime64[ns]':'datetime',
-                'object':'varchar(255)',
-                'bool': 'boolean'}
     
     data_types = [data_map[data_type] for data_type in data_types]
     
@@ -194,60 +196,6 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
 
     return True
 
-
-def load_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
-    """
-    Loads given pandas DataFrame into a mySQL table.
-
-    Args: 
-        cursor: A cursor object
-        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
-        config_info (dict): The dictionary containing the configuration information 
-        data_type (str): the header name corresponding to the table you wish to write data to.  
-
-    Returns: 
-        bool: A boolean value indicating if the data was successfully written to the database. 
-    """
-    dbname = config_info['database']['database']
-    table_name = config_info[data_type]["table_name"]  
-
-    if(len(dataframe.index) <= 0):
-        print("Attempted to write to {table_name} but dataframe was empty.")
-        return True
-    print('writing to', table_name)
-    print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")  
-    
-    # Get string of all column names for sql insert
-    sensor_names = "time_pt"
-    for column in dataframe.columns:
-        sensor_names += "," + column 
-
-    # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
-    for i in range(len(dataframe.columns)):
-        insert_str += "%s, "
-    insert_str += "%s)"
-
-    if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, sensor_names.split(",")[1:]): #split on columns and remove first column aka time_pt
-            print(f"Could not create new table {table_name} in database {dbname}")
-            return False
-        
-    missing_cols, missing_types = find_missing_columns(cursor, dataframe, config_info, table_name)
-    if len(missing_cols):
-        if not create_new_columns(cursor, table_name, missing_cols, missing_types):
-            print("Unable to add new column due to database error.")
-
-    for index, row in dataframe.iterrows():
-        time_data = row.values.tolist()
-        #remove nans and infinites
-        time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
-        time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
-        cursor.execute(insert_str, (index, *time_data))
-
-    print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}.")
-    return True
-
 def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
     """
     Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.
@@ -275,35 +223,38 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     
     # Get string of all column names for sql insert
     sensor_names = "time_pt"
+    sensor_types = ["datetime"]
     for column in dataframe.columns:
-        sensor_names += "," + column 
+        sensor_names += "," + column    
+        sensor_types.append(data_map[dataframe[column].dtype.name])
 
     # create SQL statement
     insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
     for column in dataframe.columns:
         insert_str += "%s, "
     insert_str += "%s)"
-
-    if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, sensor_names.split(",")[1:]): #split on colums and remove first column aka time_pt
-            print(f"Could not create new table {table_name} in database {dbname}")
-            return False
     
     last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
 
-    try:
-        cursor.execute(
-            f"SELECT * FROM {table_name} ORDER BY time_pt DESC LIMIT 1")
-        last_row_data = pd.DataFrame(cursor.fetchall())
-        if len(last_row_data.index) != 0:
-            last_time = last_row_data[0][0]
-    except mysqlerrors.Error:
-        print(f"Table {table_name} does has no data.")
+    if not check_table_exists(cursor, table_name, dbname):
+        if not create_new_table(cursor, table_name, sensor_names.split(",")[1:], sensor_types[1:]): #split on colums and remove first column aka time_pt
+            print(f"Could not create new table {table_name} in database {dbname}")
+            return False
+    
+    else: 
+        try:
+            cursor.execute(
+                f"SELECT * FROM {table_name} ORDER BY time_pt DESC LIMIT 1")
+            last_row_data = pd.DataFrame(cursor.fetchall())
+            if len(last_row_data.index) != 0:
+                last_time = last_row_data[0][0]
+        except mysqlerrors.Error:
+            print(f"Table {table_name} does has no data.")
 
-    missing_cols, missing_types = find_missing_columns(cursor, dataframe, config_info, table_name)
-    if len(missing_cols):
-        if not create_new_columns(cursor, table_name, missing_cols, missing_types):
-            print("Unable to add new column due to database error.")
+        missing_cols, missing_types = find_missing_columns(cursor, dataframe, config_info, table_name)
+        if len(missing_cols):
+            if not create_new_columns(cursor, table_name, missing_cols, missing_types):
+                print("Unable to add new column due to database error.")
     
     updatedRows = 0
     for index, row in dataframe.iterrows():
