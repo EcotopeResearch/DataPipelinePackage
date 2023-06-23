@@ -15,12 +15,13 @@ from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 
 
-def get_last_full_day_from_db(config_file_path: str = _config_directory) -> datetime:
+def get_last_full_day_from_db() -> datetime:
     """
-    Function retrieves the last line from the database with the most recent datetime.
-
+    Function retrieves the last line from the database with the most recent datetime 
+    in local time.
+    
     Args:
-        config_file_path (str): Path to config file (default is set in load.py) TODO this is not used lol
+        None
     Returns: 
         datetime: end of last full day populated in database or default past time if no data found
     """
@@ -80,7 +81,7 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
 
     return row_data
 
-def extract_new(time: datetime, filenames: List[str], decihex = False, timeZone = None) -> List[str]:
+def extract_new(startTime: datetime, filenames: List[str], decihex = False, timeZone: str = None, endTime: datetime = None) -> List[str]:
     """
     Function filters the filenames to only those newer than the last date in database.
     If filenames are in deciheximal, convert them to datetime. Note that for some projects,
@@ -95,16 +96,18 @@ def extract_new(time: datetime, filenames: List[str], decihex = False, timeZone 
     Returns: 
         List[str]: Filtered list of filenames
     """
+    
     if decihex: 
         base_date = datetime(1970, 1, 1)
         file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
         file_dates_local = [file_date.tz_localize('UTC').tz_convert(timezone(timeZone)).tz_localize(None) for file_date in file_dates] #convert utc to local zone with no awareness
         
-        return_list = [filename for filename, local_time in zip(filenames, file_dates_local) if local_time > time]
+        return_list = [filename for filename, local_time in zip(filenames, file_dates_local) if local_time > startTime and (endTime is None or local_time < endTime)]
+
 
     else: 
-        time_int = int(time.strftime("%Y%m%d%H%M%S"))
-        return_list = list(filter(lambda filename: int(filename[-17:-3]) >= time_int, filenames))
+        startTime_int = int(startTime.strftime("%Y%m%d%H%M%S"))
+        return_list = list(filter(lambda filename: int(filename[-17:-3]) >= startTime_int and (endTime is None or int(filename[-17:-3]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
 def extract_files(extension: str, subdir: str = "") -> List[str]:
@@ -127,12 +130,13 @@ def extract_files(extension: str, subdir: str = "") -> List[str]:
     return filenames
 
 
-def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
+def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.DataFrame:
     """
     Function takes a list of gz/json filenames and reads all files into a singular dataframe.
 
     Args: 
         json_filenames (List[str]): List of filenames 
+        time_zone (str): Local timezone, default is US/Pacific
     Returns: 
         pd.DataFrame: Pandas Dataframe containing data from all files
     """
@@ -149,11 +153,10 @@ def json_to_df(json_filenames: List[str]) -> pd.DataFrame:
             print('Empty or invalid JSON File')
             return
 
-        # TODO: This section is BV specific, maybe move to another function
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
             norm_data["time"] = pd.to_datetime(norm_data["time"])
-            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert('US/Pacific')
+            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert(time_zone)
             norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
             temp_dfs.append(norm_data)
 
