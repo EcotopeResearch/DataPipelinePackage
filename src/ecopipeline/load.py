@@ -264,9 +264,10 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
         if(index <= last_time):
-            statement = _generate_mysql_update(row, index, table_name)
+            statement, values = _generate_mysql_update(row, index, table_name)
             if statement != "":
-                cursor.execute(_generate_mysql_update(row, index, table_name))
+                print("statement:", statement)
+                cursor.execute(statement, values)
                 updatedRows += 1
         else:
             cursor.execute(insert_str, (index, *time_data))
@@ -276,16 +277,17 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
 
 def _generate_mysql_update(row, index, table_name):
     statement = f"UPDATE {table_name} SET "
+    statment_elems = []
     values = []
-
     for column, value in row.items():
         if not value is None and not pd.isna(value) and not (value == float('inf') or value == float('-inf')):
-            values.append(f"{column} = {value}")
+            statment_elems.append(f"{column} = %s")
+            values.append(value)
 
     if values:
-        statement += ", ".join(values)
-        statement += f" WHERE time_pt = {index};"
+        statement += ", ".join(statment_elems)
+        statement += f" WHERE time_pt = '{index}';"
     else:
         statement = ""
 
-    return statement
+    return statement, values

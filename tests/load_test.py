@@ -43,8 +43,8 @@ def test_load_overwrite_database(mocker):
         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
         "SELECT * FROM minute_table ORDER BY time_pt DESC LIMIT 1",
         "SELECT column_name FROM information_schema.columns WHERE table_schema = 'test_db' AND table_name = 'minute_table'",
-        'UPDATE minute_table SET PowerIn_HPWH1 = 3.0 WHERE time_pt = 2022-01-01 00:00:00;',
-        'UPDATE minute_table SET PowerIn_HPWH1 = 20.0, PowerIn_HPWH2 = 75.2 WHERE time_pt = 2022-01-02 00:00:00;',
+        "UPDATE minute_table SET PowerIn_HPWH1 = %s WHERE time_pt = '2022-01-01 00:00:00';",
+        "UPDATE minute_table SET PowerIn_HPWH1 = %s, PowerIn_HPWH2 = %s WHERE time_pt = '2022-01-02 00:00:00';",
         'INSERT INTO minute_table (time_pt,PowerIn_HPWH1,PowerIn_HPWH2) VALUES (%s, %s, %s)'
     ]
 
@@ -85,8 +85,8 @@ def test_load_overwrite_database_add_columns(mocker):
         "ALTER TABLE minute_table ADD COLUMN string_column varchar(25) DEFAULT NULL;",
         "ALTER TABLE minute_table ADD COLUMN bool_column boolean DEFAULT NULL;",
         "ALTER TABLE minute_table ADD COLUMN date_column datetime DEFAULT NULL;",
-        'UPDATE minute_table SET PowerIn_HPWH1 = 3, bool_column = True WHERE time_pt = 2022-01-01 00:00:00;',
-        'UPDATE minute_table SET PowerIn_HPWH1 = 20, float_column = 75.2, string_column = hello, bool_column = False, date_column = 2022-01-03 00:00:00 WHERE time_pt = 2022-01-02 00:00:00;',
+        "UPDATE minute_table SET PowerIn_HPWH1 = %s, bool_column = %s WHERE time_pt = '2022-01-01 00:00:00';",
+        "UPDATE minute_table SET PowerIn_HPWH1 = %s, float_column = %s, string_column = %s, bool_column = %s, date_column = %s WHERE time_pt = '2022-01-02 00:00:00';",
         'INSERT INTO minute_table (time_pt,PowerIn_HPWH1,float_column,string_column,bool_column,date_column) VALUES (%s, %s, %s, %s, %s, %s)'
     ]
     assert cursor_mock.fetchall.call_count == 3
