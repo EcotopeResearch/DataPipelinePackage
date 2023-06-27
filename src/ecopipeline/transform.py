@@ -54,13 +54,12 @@ def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_direct
     try:
         variable_data = pd.read_csv(variable_names_path)
     except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
-        return
+        raise Exception("File Not Found: "+ variable_names_path)
 
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
-    
-    variable_data = variable_data[['variable_alias', 'variable_name']]
+
+    variable_data = variable_data.loc[:, ['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
@@ -87,7 +86,15 @@ def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
         pd.DataFrame: Pandas dataframe 
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
-    df = df.groupby(df.index).mean()
+
+    # Get columns with non-numeric values
+    non_numeric_cols = df.select_dtypes(exclude='number').columns
+
+    # Group by index, taking only the first value in case of duplicates
+    non_numeric_df = df.groupby(df.index)[non_numeric_cols].first()
+
+    numeric_df = df.groupby(df.index).mean(numeric_only = True)
+    df = pd.concat([non_numeric_df, numeric_df], axis=1)
     df.index = (df.index).tz_localize(timezone)
     return df
 
