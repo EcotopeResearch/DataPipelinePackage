@@ -106,7 +106,7 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     return num_tables
 
 
-def create_new_table(cursor, table_name: str, table_column_names: list, table_column_types: list) -> bool:
+def create_new_table(cursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt") -> bool:
     """
     Creates a new table in the mySQL database.
 
@@ -121,12 +121,12 @@ def create_new_table(cursor, table_name: str, table_column_names: list, table_co
     if(len(table_column_names) != len(table_column_types)):
         raise Exception("Cannot create table. Type list and Field Name list are different lengths.")
 
-    create_table_statement = f"CREATE TABLE {table_name} (\ntime_pt datetime,\n"
+    create_table_statement = f"CREATE TABLE {table_name} (\n{primary_key} datetime,\n"
 
     for i in range(len(table_column_names)):
         create_table_statement += f"{table_column_names[i]} {table_column_types[i]} DEFAULT NULL,\n"
 
-    create_table_statement += f"PRIMARY KEY (time_pt)\n"
+    create_table_statement += f"PRIMARY KEY ({primary_key})\n"
 
     create_table_statement += ");"
     cursor.execute(create_table_statement)
@@ -196,7 +196,7 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
 
     return True
 
-def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str):
+def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt"):
     """
     Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.
 
@@ -222,7 +222,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
     
     # Get string of all column names for sql insert
-    sensor_names = "time_pt"
+    sensor_names = primary_key
     sensor_types = ["datetime"]
     for column in dataframe.columns:
         sensor_names += "," + column    
@@ -237,14 +237,14 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
 
     if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, sensor_names.split(",")[1:], sensor_types[1:]): #split on colums and remove first column aka time_pt
+        if not create_new_table(cursor, table_name, sensor_names.split(",")[1:], sensor_types[1:], primary_key=primary_key): #split on colums and remove first column aka time_pt
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
     
     else: 
         try:
             cursor.execute(
-                f"SELECT * FROM {table_name} ORDER BY time_pt DESC LIMIT 1")
+                f"SELECT * FROM {table_name} ORDER BY {primary_key} DESC LIMIT 1")
             last_row_data = pd.DataFrame(cursor.fetchall())
             if len(last_row_data.index) != 0:
                 last_time = last_row_data[0][0]
@@ -264,7 +264,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
         if(index <= last_time):
-            statement, values = _generate_mysql_update(row, index, table_name)
+            statement, values = _generate_mysql_update(row, index, table_name, primary_key)
             if statement != "":
                 print("statement:", statement)
                 cursor.execute(statement, values)
@@ -275,7 +275,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
 
-def _generate_mysql_update(row, index, table_name):
+def _generate_mysql_update(row, index, table_name, primary_key):
     statement = f"UPDATE {table_name} SET "
     statment_elems = []
     values = []
@@ -286,7 +286,7 @@ def _generate_mysql_update(row, index, table_name):
 
     if values:
         statement += ", ".join(statment_elems)
-        statement += f" WHERE time_pt = '{index}';"
+        statement += f" WHERE {primary_key} = '{index}';"
     else:
         statement = ""
 

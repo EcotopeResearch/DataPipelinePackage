@@ -170,6 +170,47 @@ def test_create_new_table_and_populate(mocker):
     for i in range (len(expected_queries)):
         assert cursor_mock.execute.call_args_list[i][0][0] == expected_queries[i]
 
+def test_create_new_table_and_populate_different_primary(mocker):
+    
+    indexes = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-05'])
+    df = pd.DataFrame({'PowerIn_HPWH1': [3, 20, 30],
+                    'float_column': [None, 75.2, 35],
+                    'string_column': [None, 'hello', 'i am a test'],
+                    'bool_column': [True, False, False],
+                    'date_column': [None, datetime.datetime.strptime('03/01/2022', "%d/%m/%Y"), datetime.datetime.strptime('03/01/2022', "%d/%m/%Y")],
+                    'None_column': [None, None, None]})
+    df.index = indexes
+
+    # Create a mock for the cursor
+    cursor_mock = MagicMock()
+    mocker.patch.object(cursor_mock, 'execute')
+    cursor_mock.fetchall.side_effect = [
+        [(0,)]
+    ]
+
+    # Call the function under test with the mock cursor
+    load_overwrite_database(cursor_mock, df, config_info, 'minute', primary_key='primary_key')
+
+    #  Verify the behavior and result
+    expected_queries = [
+        "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
+        "CREATE TABLE minute_table (\nprimary_key datetime,\n"\
+            +"PowerIn_HPWH1 float DEFAULT NULL,\n"\
+            +"float_column float DEFAULT NULL,\n"\
+            +"string_column varchar(25) DEFAULT NULL,\n"\
+            +"bool_column boolean DEFAULT NULL,\n"\
+            +"date_column datetime DEFAULT NULL,\n"\
+            +"PRIMARY KEY (primary_key)\n"\
+            +");",
+        "INSERT INTO minute_table (primary_key,PowerIn_HPWH1,float_column,string_column,bool_column,date_column) VALUES (%s, %s, %s, %s, %s, %s)",
+        "INSERT INTO minute_table (primary_key,PowerIn_HPWH1,float_column,string_column,bool_column,date_column) VALUES (%s, %s, %s, %s, %s, %s)",
+        "INSERT INTO minute_table (primary_key,PowerIn_HPWH1,float_column,string_column,bool_column,date_column) VALUES (%s, %s, %s, %s, %s, %s)"
+    ]
+    assert cursor_mock.fetchall.call_count == 1
+    assert cursor_mock.execute.call_count == len(expected_queries)
+    for i in range (len(expected_queries)):
+        assert cursor_mock.execute.call_args_list[i][0][0] == expected_queries[i]
+
 def test_create_new_table(mocker):
 
     # Create a mock for the cursor
@@ -186,6 +227,34 @@ def test_create_new_table(mocker):
             +"test_4 boolean DEFAULT NULL,\n"\
             +"test_5 datetime DEFAULT NULL,\n"\
             +"PRIMARY KEY (time_pt)\n"\
+            +");"
+    ]
+    assert cursor_mock.execute.call_count == len(expected_queries)
+    for i in range (len(expected_queries)):
+        assert cursor_mock.execute.call_args_list[i][0][0] == expected_queries[i]
+
+def test_create_new_table_different_primary(mocker):
+
+    # Create a mock for the cursor
+    cursor_mock = MagicMock()
+    mocker.patch.object(cursor_mock, 'execute')
+    assert create_new_table(
+        cursor_mock, 
+        'test_table', 
+        ['test_1','test_2','test_3','test_4','test_5'], 
+        ['float','float','varchar(25)','boolean','datetime'],
+        primary_key = 'primary_key'
+    )
+
+    #  Verify the behavior and result
+    expected_queries = [
+        "CREATE TABLE test_table (\nprimary_key datetime,\n"\
+            +"test_1 float DEFAULT NULL,\n"\
+            +"test_2 float DEFAULT NULL,\n"\
+            +"test_3 varchar(25) DEFAULT NULL,\n"\
+            +"test_4 boolean DEFAULT NULL,\n"\
+            +"test_5 datetime DEFAULT NULL,\n"\
+            +"PRIMARY KEY (primary_key)\n"\
             +");"
     ]
     assert cursor_mock.execute.call_count == len(expected_queries)
