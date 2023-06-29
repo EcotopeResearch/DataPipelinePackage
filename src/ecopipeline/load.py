@@ -102,7 +102,6 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
                    f"WHERE (TABLE_SCHEMA = '{dbname}') AND (TABLE_NAME = '{table_name}')")
 
     num_tables = cursor.fetchall()[0][0]
-    print(num_tables)
     return num_tables
 
 
@@ -266,7 +265,6 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         if(index <= last_time):
             statement, values = _generate_mysql_update(row, index, table_name, primary_key)
             if statement != "":
-                print("statement:", statement)
                 cursor.execute(statement, values)
                 updatedRows += 1
         else:
