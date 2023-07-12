@@ -153,24 +153,22 @@ def test_ffill_missing():
         assert_frame_equal(df_result, df_expected)
 
 
-# def test_cop_method_1():
-#     timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
-#     df = pd.DataFrame({'PowerIn_HPWH1': [30, 50, math.nan],
-#                     'PowerIn_HPWH2': [50, 70, None],
-#                     'None_column': [None, None, None],
-#                     'string_column': ['imma','goffygoober','yeah'],
-#                     'silly_varriable': [None, None, 15]
-#                     })
-#     df.index = timestamps
-#     df_expected = pd.DataFrame({
-#                     'None_column': [None, None],
-#                     'string_column': ['imma','yeah'],
-#                     'PowerIn_HPWH1': [40, math.nan],
-#                     'PowerIn_HPWH2': [60, None],
-#                     'silly_varriable': [None, 15]
-#                     })
-#     df_expected.index = timestamps
-#     df = cop_method_1(df, None)
-#     assert_frame_equal(df, df_expected)
+def test_cop_method_1():
+    timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
+    df = pd.DataFrame({'HeatOut_Primary': [5,5,5],
+                    'PowerIn_Total': [1,1,1],
+                    'rericLosses': [None, None, None],
+                    })
+    rericLosses = 2
+    #rericLosses = df['rericLosses']
+    df.index = timestamps
+    df_expected = pd.DataFrame({'HeatOut_Primary': [5,5,5],
+                    'PowerIn_Total': [50, 70, None],
+                    'rericLosses': [None, None, None],
+                    'COP_DHWSys_1': [7,7,7]
+                    })
+    df_expected.index = timestamps
+    df = cop_method_1(df, rericLosses)
+    assert_frame_equal(df, df_expected)
 
 
