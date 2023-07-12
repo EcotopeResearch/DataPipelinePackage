@@ -129,4 +129,48 @@ def test_avg_duplicate_times_with_tz():
     df = avg_duplicate_times(df, 'US/Pacific')
     assert_frame_equal(df, df_expected)
 
+def test_ffill_missing():
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
+                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
+                        'ffill_length': [1, 2, None,None],
+                        'site': [1,2,"silly_site","silly_site"]})
+        mock_csv.return_value = csv_df
+        timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [None, 1, None, None,None],
+                        'serious_var_2': [None,5,None,None,None],
+                        'serious_var_3': [None,None,3,None,None],
+                        'serious_var_4': [None,2,3,None,4]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [None, 1, 1, 1, 1],
+                        'serious_var_2': [None,5,5,5,None],
+                        'serious_var_3': [None,None,3,None,None],
+                        'serious_var_4': [None,2,3,3,4]})
+        df_expected.index = timestamps
+        df_result = ffill_missing(df_input)
+        assert_frame_equal(df_result, df_expected)
+
+
+# def test_cop_method_1():
+#     timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
+#     df = pd.DataFrame({'PowerIn_HPWH1': [30, 50, math.nan],
+#                     'PowerIn_HPWH2': [50, 70, None],
+#                     'None_column': [None, None, None],
+#                     'string_column': ['imma','goffygoober','yeah'],
+#                     'silly_varriable': [None, None, 15]
+#                     })
+#     df.index = timestamps
+#     df_expected = pd.DataFrame({
+#                     'None_column': [None, None],
+#                     'string_column': ['imma','yeah'],
+#                     'PowerIn_HPWH1': [40, math.nan],
+#                     'PowerIn_HPWH2': [60, None],
+#                     'silly_varriable': [None, 15]
+#                     })
+#     df_expected.index = timestamps
+#     df = cop_method_1(df, None)
+#     assert_frame_equal(df, df_expected)
+
 
