@@ -215,7 +215,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     table_name = config_info[data_type]["table_name"]   
     
     if(len(dataframe.index) <= 0):
-        print("Attempted to write to {table_name} but dataframe was empty.")
+        print(f"Attempted to write to {table_name} but dataframe was empty.")
         return True
 
     print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
