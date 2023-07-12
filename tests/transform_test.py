@@ -155,20 +155,36 @@ def test_ffill_missing():
 
 def test_cop_method_1():
     timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
-    df = pd.DataFrame({'HeatOut_Primary': [5,5,5],
+    df = pd.DataFrame({'HeatOut_Primary': [4,4,4],
                     'PowerIn_Total': [1,1,1],
                     'rericLosses': [None, None, None],
                     })
     rericLosses = 2
     #rericLosses = df['rericLosses']
     df.index = timestamps
-    df_expected = pd.DataFrame({'HeatOut_Primary': [5,5,5],
-                    'PowerIn_Total': [50, 70, None],
+    df_expected = pd.DataFrame({'HeatOut_Primary': [4,4,4],
+                    'PowerIn_Total': [1, 1, 1],
                     'rericLosses': [None, None, None],
-                    'COP_DHWSys_1': [7,7,7]
+                    'COP_DHWSys_1': [6.,6.,6.]
                     })
     df_expected.index = timestamps
     df = cop_method_1(df, rericLosses)
     assert_frame_equal(df, df_expected)
 
 
+def test_cop_method_1_list():
+    timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
+    df = pd.DataFrame({'HeatOut_Primary': [4,4,4],
+                    'PowerIn_Total': [1,1,1],
+                    'rericLosses': [2, 1, 2]
+                    })
+    df.index = timestamps
+    rericLosses = df['rericLosses']
+    df_expected = pd.DataFrame({'HeatOut_Primary': [4,4,4],
+                    'PowerIn_Total': [1, 1, 1],
+                    'rericLosses': [2, 1, 2],
+                    'COP_DHWSys_1': [6.,5.,6.]
+                    })
+    df_expected.index = timestamps
+    df = cop_method_1(df, rericLosses)
+    assert_frame_equal(df, df_expected)
