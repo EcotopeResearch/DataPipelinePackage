@@ -1,8 +1,11 @@
 # DataPipelinePackage
 
 ## To Install the Package
-
+    From the internet for use elsewhere:
     $ pip install ecopipeline
+    Install locally in an editable mode:
+    Navigate to DataPipelinePackage directory and run the following command
+    $ pip install -e .
 
 ## File Structure
     .
@@ -85,15 +88,9 @@ This project was developed with the help of Ecotope, Inc. It containes seperate 
 - data
     - directory: diretory of the folder from which extract loads the raw sensor data
 ## Unit Testing
-Alongside each of the functionalities of the pipeline, each function has a set of unit tests in the testing directory that verifies the functions when given valid and invalid inputs.
-The naming convention of each unit test function is test + the name of the function + either valid or invalid depending on what kind of input it being tested for test.
-For example
-```python
-def test_functionName_valid(self):
-```
 To run Unit tests, run the following command in the terminal in the corresponding directory:
 ```bash
-python -m unittest [filename]
+python -m pytest
 ```
 
 

@@ -198,6 +198,7 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
 def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt"):
     """
     Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.
+    Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
 
     Args: 
         cursor: A cursor object
