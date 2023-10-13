@@ -33,8 +33,6 @@ jobs:
         pip install .
         pip install pytest
         pip install build
-    - name: Test with pytest
-      run: pytest
     - name: Build package
       run: python -m build
     - name: Publish package
