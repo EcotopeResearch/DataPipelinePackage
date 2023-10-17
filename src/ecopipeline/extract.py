@@ -188,7 +188,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
         if len(data) != 0:
             if mb_prefix:
                 #prepend modbus prefix
-                prefix = file.split('.')[0]
+                prefix = file.split('.')[0].split("/")[-1]
                 data = data.set_index("time(UTC)")
                 data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") for col in data.columns})
                 # data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") if col != "time(UTC)" else col for col in data.columns})
