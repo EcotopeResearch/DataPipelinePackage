@@ -184,6 +184,9 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
         except FileNotFoundError:
             print("File Not Found: ", file)
             return
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            raise e  # Raise the caught exception again
 
         if len(data) != 0:
             if mb_prefix:
