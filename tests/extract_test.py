@@ -5,6 +5,7 @@ import datetime
 from ecopipeline import get_noaa_data, json_to_df, extract_files, get_last_full_day_from_db, get_db_row_from_time, extract_new, csv_to_df, get_sub_dirs
 from ecopipeline.config import _config_directory
 import numpy as np
+from datetime import datetime
 import math
 import mysql.connector
 import gzip
@@ -54,3 +55,10 @@ def test_json_to_df():
             normal_df.set_index('time', inplace=True)
             normal_df.columns.name = 'id'
             assert_frame_equal(result_df, normal_df)
+
+def test_extract_new_mb():
+
+    date = datetime(2023, 9, 1)
+    file_names = ["mb-022.64C84441_1.log.csv", "mb-042.652939A5_1.log.csv", "mb-034.65083340_1.log.csv"]
+    assert extract_new(date, file_names, True) == ['mb-042.652939A5_1.log.csv', 'mb-034.65083340_1.log.csv']
+    assert extract_new(date, file_names, True, "US/Pacific") == ['mb-042.652939A5_1.log.csv', 'mb-034.65083340_1.log.csv']

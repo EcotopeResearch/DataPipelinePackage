@@ -195,7 +195,7 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
 
     return True
 
-def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt"):
+def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt", table_name: str = None):
     """
     Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
@@ -213,7 +213,8 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     dataframe = dataframe.dropna(axis=1, how='all')
 
     dbname = config_info['database']['database']
-    table_name = config_info[data_type]["table_name"]   
+    if table_name == None:
+        table_name = config_info[data_type]["table_name"]   
     
     if(len(dataframe.index) <= 0):
         print(f"Attempted to write to {table_name} but dataframe was empty.")

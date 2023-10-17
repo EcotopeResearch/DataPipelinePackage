@@ -100,8 +100,11 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
     if decihex: 
         base_date = datetime(1970, 1, 1)
         file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
-        file_dates_local = [file_date.tz_localize('UTC').tz_convert(timezone(timeZone)).tz_localize(None) for file_date in file_dates] #convert utc to local zone with no awareness
-        
+        if timeZone == None:
+            file_dates_local = [file_date.tz_localize('UTC').tz_localize(None) for file_date in file_dates] #convert utc 
+        else:
+            file_dates_local = [file_date.tz_localize('UTC').tz_convert(timezone(timeZone)).tz_localize(None) for file_date in file_dates] #convert utc to local zone with no awareness
+
         return_list = [filename for filename, local_time in zip(filenames, file_dates_local) if local_time > startTime and (endTime is None or local_time < endTime)]
 
 
@@ -164,12 +167,13 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     return df
 
 
-def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
+def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe.
 
     Args: 
         csv_filenames (List[str]): List of filenames 
+        mb_prefix (bool) : signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
     Returns: 
         pd.DataFrame: Pandas Dataframe containing data from all files
     """
@@ -182,6 +186,12 @@ def csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
             return
 
         if len(data) != 0:
+            if mb_prefix:
+                #prepend modbus prefix
+                prefix = file.split('.')[0]
+                data = data.set_index("time(UTC)")
+                data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") for col in data.columns})
+                # data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") if col != "time(UTC)" else col for col in data.columns})
             temp_dfs.append(data)
     df = pd.concat(temp_dfs, ignore_index=False)
     return df

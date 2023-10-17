@@ -58,7 +58,7 @@ def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_direct
 
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
-
+    
     variable_data = variable_data.loc[:, ['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
@@ -72,6 +72,44 @@ def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_direct
 
     # drop columns that are not documented in variable names csv file at all
     df.drop(columns=[col for col in df if col not in variable_true], inplace=True)
+
+def rename_sensors_by_system(original_df: pd.DataFrame, system: str, variable_names_path: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
+    """
+    Function will take in a dataframe and a string representation of a file path and renames
+    sensors from their alias to their true name for a particular system.
+
+    Args: 
+        df (pd.DataFrame): Pandas dataframe
+        system (str): string of system name
+        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+    Returns: 
+        pd.DataFrame: Pandas dataframe
+    """
+    try:
+        variable_data = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        raise Exception("File Not Found: "+ variable_names_path)
+    
+    variable_data = variable_data.loc[variable_data['system'].str.contains(system, na=False)]
+    variable_data = variable_data.loc[:, ['variable_alias', 'variable_name']]
+    variable_data.dropna(axis=0, inplace=True)
+    variable_alias = list(variable_data["variable_alias"])
+    variable_true = list(variable_data["variable_name"])
+    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+
+    # Create a copy of the original DataFrame
+    df = original_df.copy()
+
+    df.rename(columns=variable_alias_true_dict, inplace=True)
+
+    # drop columns that do not have a corresponding true name
+    df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
+
+    # drop columns that are not documented in variable names csv file at all
+    df.drop(columns=[col for col in df if col not in variable_true], inplace=True)
+    #drop null columns
+    df = df.dropna(how='all')
+    return df
 
 
 def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
