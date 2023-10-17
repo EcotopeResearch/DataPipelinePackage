@@ -431,18 +431,21 @@ def aggregate_df(df: pd.DataFrame):
     # appending loadshift data
     filename = f"{_input_directory}loadshift_matrix.csv"
     date_list = []
-    with open(filename) as datefile:
-        readCSV = csv.reader(datefile, delimiter=',')
-        for row in readCSV:
-            date_list.append(row[0])
-        date_list.pop(0)
-    # date_list is a list of strings in the following format: "1/19/2023", OR "%m/%d/%Y", now we convert to datetime!
-    format = "%m/%d/%Y"
-    dt_list = []
-    for date in date_list:
-        dt_list.append(dt.datetime.strptime(date, format))
-    daily_df["load_shift_day"] = False
-    daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,))
+    if os.path.exists(filename):
+        with open(filename) as datefile:
+            readCSV = csv.reader(datefile, delimiter=',')
+            for row in readCSV:
+                date_list.append(row[0])
+            date_list.pop(0)
+        # date_list is a list of strings in the following format: "1/19/2023", OR "%m/%d/%Y", now we convert to datetime!
+        format = "%m/%d/%Y"
+        dt_list = []
+        for date in date_list:
+            dt_list.append(dt.datetime.strptime(date, format))
+        daily_df["load_shift_day"] = False
+        daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,))
+    else:
+        print(f"The loadshift file '{filename}' does not exist. Thus loadshifting will not be added to daily dataframe.")
     
     # if any day in hourly table is incomplete, we should delete that day from the daily table as the averaged data it contains will be from an incomplete day.
     hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)
