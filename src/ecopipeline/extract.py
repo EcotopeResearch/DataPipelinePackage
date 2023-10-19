@@ -196,7 +196,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
                 data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") for col in data.columns})
                 # data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") if col != "time(UTC)" else col for col in data.columns})
             temp_dfs.append(data)
-    df = pd.concat(temp_dfs, ignore_index=False)
+    df = pd.concat(temp_dfs, ignore_index=False).groupby(level=0).mean()
     return df
 
 
