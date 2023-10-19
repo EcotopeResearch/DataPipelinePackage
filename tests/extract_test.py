@@ -98,7 +98,7 @@ def test_csv_to_df_mb():
         assert calls[0] == (("file/path/to/whatever/mb-001.652939A5_1.log.csv",), {})
         assert calls[1] == (("file/path/to/whatever/mb-002.65083340_1.log.csv",), {})
 
-        # normal_df['time(UTC)'] = pd.to_datetime(normal_df['time(UTC)'])
+        normal_df['time(UTC)'] = pd.to_datetime(normal_df['time(UTC)'])
         normal_df.set_index('time(UTC)', inplace=True)
         # normal_df.columns.name = 'id'
         assert_frame_equal(result_df, normal_df)
