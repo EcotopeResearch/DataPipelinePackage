@@ -35,7 +35,7 @@ def round_time(df: pd.DataFrame):
     """
     if (df.empty):
         return False
-    df.index = df.index.round('T')
+    df.index = df.index.floor('T')
     return True
 
 
