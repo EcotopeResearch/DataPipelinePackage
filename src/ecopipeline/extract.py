@@ -169,7 +169,7 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
 
 def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFrame:
     """
-    Function takes a list of csv filenames and reads all files into a singular dataframe.
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
 
     Args: 
         csv_filenames (List[str]): List of filenames 
@@ -186,8 +186,9 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
             return
         except Exception as e:
             print(f"Error reading {file}: {e}")
-            raise e  # Raise the caught exception again
-
+            #raise e  # Raise the caught exception again
+            continue
+        
         if len(data) != 0:
             if mb_prefix:
                 #prepend modbus prefix
@@ -195,9 +196,18 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
                 data["time(UTC)"] = pd.to_datetime(data["time(UTC)"])
                 data = data.set_index("time(UTC)")
                 data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") for col in data.columns})
-                # data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") if col != "time(UTC)" else col for col in data.columns})
+                
             temp_dfs.append(data)
-    df = pd.concat(temp_dfs, ignore_index=False).groupby(level=0).mean()
+
+    df = pd.concat(temp_dfs, ignore_index=False) 
+    
+    #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
+    df.index = df.index.floor('T')
+    
+    #group and sort index
+    df = df.groupby(df.index).mean()
+    df.sort_index(inplace = True)
+
     return df
 
 
