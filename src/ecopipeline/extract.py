@@ -210,6 +210,52 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
 
     return df
 
+def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str = 'US/Pacific') -> pd.DataFrame:
+     """
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data. 
+
+    Args: 
+        csv_filenames (List[str]): List of filenames 
+        mb_prefix (bool) : signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
+        timezone (str) : local timezone, default is pacific
+    Returns: 
+        pd.DataFrame: Pandas Dataframe containing data from all files
+    """
+     temp_dfs = []
+     for file in csv_filenames:
+        try:
+            data = pd.read_csv(file)
+        except FileNotFoundError:
+            print("File Not Found: ", file)
+            return
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            continue
+        
+        if len(data) != 0:
+            if mb_prefix:
+                #prepend modbus prefix
+                prefix = file.split('.')[0].split("/")[-1]
+
+                data['time_pt'] = pd.to_datetime(data['DateEpoch(secs)'], unit='s',  utc=True)
+                data['time_pt'] = data['time_pt'].dt.tz_convert('US/Pacific').dt.tz_localize(None)
+                data.set_index('time_pt', inplace = True)
+                data.drop(columns = 'DateEpoch(secs)', inplace = True)
+                data = data.rename(columns={col: f"{prefix}{col}".replace(" ","_").replace("*", "_") for col in data.columns})
+                
+            temp_dfs.append(data)
+
+     df = pd.concat(temp_dfs, ignore_index=False)
+     
+     #note sure if we should be rounding down but best I can do atm
+     df.index = df.index.floor('T')
+
+     #group and sort index
+     df = df.groupby(df.index).mean()
+     
+     df.sort_index(inplace = True)
+
+     return df
 
 def get_sub_dirs(dir: str) -> List[str]:
     """
