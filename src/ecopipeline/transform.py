@@ -35,7 +35,13 @@ def round_time(df: pd.DataFrame):
     """
     if (df.empty):
         return False
-    df.index = df.index.floor('T')
+    if not df.index.tz is None:
+        tz = df.index.tz
+        df.index = df.index.tz_localize(None)
+        df.index = df.index.floor('T')
+        df.index = df.index.tz_localize(tz, ambiguous='infer')
+    else:
+        df.index = df.index.floor('T')
     return True
 
 

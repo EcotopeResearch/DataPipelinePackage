@@ -223,3 +223,26 @@ def test_cop_method_1_list():
     df_expected.index = timestamps
     df = cop_method_1(df, rericLosses)
     assert_frame_equal(df, df_expected)
+
+def test_round_time():
+    # UTC
+    timestamps = pd.to_datetime(['2022-01-01 08:00:25', '2023-11-05 08:01:59', '2023-11-05 09:01:01'])
+    timestamps_expected = pd.to_datetime(['2022-01-01 08:00:00', '2023-11-05 08:01:00', '2023-11-05 09:01:00'])
+    df = pd.DataFrame({'HeatOut_Primary': [4,4,4]})
+    df.index = timestamps
+    df_expected = pd.DataFrame({'HeatOut_Primary': [4,4,4]})
+    df_expected.index = timestamps_expected
+    round_time(df)
+    assert_frame_equal(df, df_expected)
+
+    #PST
+    timestamps = timestamps.tz_localize('UTC').tz_convert('US/Pacific')
+    timestamps_expected = timestamps_expected.tz_localize('UTC').tz_convert('US/Pacific')
+    # timestamps = pd.to_datetime(['2023-11-05 01:51:00-07:00', '2023-11-05 01:51:00-07:04', '2023-11-05 01:01:00-08:00'])
+    # timestamps_expected = pd.to_datetime(['2023-11-05 01:51:00-07:00', '2023-11-05 01:51:00-07:00', '2023-11-05 01:01:00-08:00'])
+    df = pd.DataFrame({'HeatOut_Primary': [4,4,4]})
+    df.index = timestamps
+    df_expected = pd.DataFrame({'HeatOut_Primary': [4,4,4]})
+    df_expected.index = timestamps_expected
+    round_time(df)
+    assert_frame_equal(df, df_expected)
