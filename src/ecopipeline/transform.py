@@ -413,7 +413,7 @@ def aggregate_df(df: pd.DataFrame):
         return pd.DataFrame(), pd.DataFrame()
 
     # Start by splitting the dataframe into sum, which has all energy related vars, and mean, which has everything else. Time is calc'd differently because it's the index
-    sum_df = (df.filter(regex=".*Energy.*")).filter(regex=".*[^BTU]$")
+    sum_df = (df.filter(regex=".*Energy.*")).filter(regex="^(?!.*EnergyRate).*(?<!BTU)$")
     # NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
     mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$")
 
