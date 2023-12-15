@@ -11,27 +11,30 @@ pd.set_option('display.max_columns', None)
 
 def concat_last_row(df: pd.DataFrame, last_row: pd.DataFrame) -> pd.DataFrame:
     """
-    Function takes in a dataframe and the last row from the SQL database and concatenates the last row
-    to the start of the dataframe
+    This function takes in a dataframe with new data and a second data frame meant to be the
+    last row from the database the new data is being processed for. The two dataframes are then concatenated 
+    such that the new data can later be forward filled from the info the last row
 
     Args: 
-        df (pd.DataFrame): Pandas dataframe  
-        last_row (pd.DataFrame): last row Pandas dataframe
+        df: pd.DataFrame
+            dataframe with new data that needs to be forward filled from data in the last row of a database
+        last_row: pd.DataFrame 
+            last row of the database to forward fill from in a pandas dataframe
     Returns: 
         pd.DataFrame: Pandas dataframe with last row concatenated
     """
     df = pd.concat([last_row, df], join="inner")
+    df = df.sort_index()
     return df
 
 
 def round_time(df: pd.DataFrame):
     """
-    Function takes in a dataframe and rounds dataTime index to the nearest minute. Works in place
+    Function takes in a dataframe and rounds dataTime index down to the nearest minute. Works in place
 
     Args: 
-        df (pd.DataFrame): Pandas dataframe
-    Returns: 
-        None
+        df: pd.DataFrame
+            a dataframe indexed by datetimes. These date times will all be rounded down to the nearest minute.
     """
     if (df.empty):
         return False
@@ -45,58 +48,41 @@ def round_time(df: pd.DataFrame):
     return True
 
 
-def rename_sensors(df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = ""):
+def rename_sensors(original_df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = "", system: str = ""):
     """
     Function will take in a dataframe and a string representation of a file path and renames
-    sensors from their alias to their true name.
+    sensors from their alias to their true name. Also filters the dataframe by site and system if specified.
 
     Args: 
-        df (pd.DataFrame): Pandas dataframe
-        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
-        site (str): strin of site name (default to empty string)
+        original_df: pd.DataFrame
+            A dataframe that contains data labeled by the raw varriable names to be renamed.
+        variable_names_path: str 
+            file location of file containing sensor aliases to their corresponding name (default value of {_input_directory from your config file}Variable_Names.csv)
+            the csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
+            (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.
+        site: str
+            If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
+            need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe. 
+            Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called "site".
+        system: str
+            If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that 
+            need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe. 
+            Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called "system"
     Returns: 
-        pd.DataFrame: Pandas dataframe
+        df: pd.DataFrame 
+            Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
+            Varriable_Names.csv.
     """
     try:
         variable_data = pd.read_csv(variable_names_path)
     except FileNotFoundError:
         raise Exception("File Not Found: "+ variable_names_path)
-
+    
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
-    
-    variable_data = variable_data.loc[:, ['variable_alias', 'variable_name']]
-    variable_data.dropna(axis=0, inplace=True)
-    variable_alias = list(variable_data["variable_alias"])
-    variable_true = list(variable_data["variable_name"])
-    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+    if (system != ""):
+        variable_data = variable_data.loc[variable_data['system'].str.contains(system, na=False)]
 
-    df.rename(columns=variable_alias_true_dict, inplace=True)
-
-    # drop columns that do not have a corresponding true name
-    df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
-
-    # drop columns that are not documented in variable names csv file at all
-    df.drop(columns=[col for col in df if col not in variable_true], inplace=True)
-
-def rename_sensors_by_system(original_df: pd.DataFrame, system: str, variable_names_path: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
-    """
-    Function will take in a dataframe and a string representation of a file path and renames
-    sensors from their alias to their true name for a particular system.
-
-    Args: 
-        df (pd.DataFrame): Pandas dataframe
-        system (str): string of system name
-        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
-    Returns: 
-        pd.DataFrame: Pandas dataframe
-    """
-    try:
-        variable_data = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        raise Exception("File Not Found: "+ variable_names_path)
-    
-    variable_data = variable_data.loc[variable_data['system'].str.contains(system, na=False)]
     variable_data = variable_data.loc[:, ['variable_alias', 'variable_name']]
     variable_data.dropna(axis=0, inplace=True)
     variable_alias = list(variable_data["variable_alias"])
@@ -115,8 +101,8 @@ def rename_sensors_by_system(original_df: pd.DataFrame, system: str, variable_na
     df.drop(columns=[col for col in df if col not in variable_true], inplace=True)
     #drop null columns
     df = df.dropna(how='all')
-    return df
 
+    return df
 
 def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
     """
@@ -162,8 +148,6 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
         col.mask((col > c_upper) | (col < c_lower), other=np.NaN, inplace=True)
 
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
-
-
 def remove_outliers(df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = "") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,

@@ -3,11 +3,42 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import datetime
-from ecopipeline import rename_sensors, avg_duplicate_times, rename_sensors_by_system, remove_outliers, ffill_missing, nullify_erroneous, sensor_adjustment, round_time, aggregate_df, join_to_hourly, concat_last_row, join_to_daily, cop_method_1, cop_method_2, create_summary_tables, remove_partial_days
+from ecopipeline import rename_sensors, avg_duplicate_times, remove_outliers, ffill_missing, nullify_erroneous, sensor_adjustment, round_time, aggregate_df, join_to_hourly, concat_last_row, join_to_daily, cop_method_1, cop_method_2, create_summary_tables, remove_partial_days
 from ecopipeline.config import _config_directory
 import numpy as np
 import math
 import mysql.connector
+
+def test_concat_last_row():
+    df = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), float('-inf'), math.nan],
+                    'PowerIn_HPWH3': [4, 8, 6],
+                    'silly_strings': ['imma','goffygoober','yeah']})
+    df.index = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-05'])
+
+    # put last row at begining of df
+    last_row = pd.DataFrame({'PowerIn_HPWH1': [float('inf')],
+                    'PowerIn_HPWH3': [4],
+                    'silly_strings': ['imma']})
+    last_row.index = pd.to_datetime(['2021-12-25'])
+
+    expected = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), float('inf'), float('-inf'), math.nan],
+                    'PowerIn_HPWH3': [4, 4, 8, 6],
+                    'silly_strings': ['imma', 'imma','goffygoober','yeah']})
+    expected.index = pd.to_datetime(['2021-12-25', '2022-01-01', '2022-01-02', '2022-01-05'])
+
+    assert_frame_equal(concat_last_row(df, last_row), expected)
+
+    #put last row in middle of df
+    last_row = pd.DataFrame({'PowerIn_HPWH1': [float('inf')],
+                    'PowerIn_HPWH3': [4],
+                    'silly_strings': ['imma']})
+    last_row.index = pd.to_datetime(['2022-01-04'])
+    expected = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), float('-inf'), float('inf'), math.nan],
+                    'PowerIn_HPWH3': [4, 8, 4, 6],
+                    'silly_strings': ['imma', 'goffygoober', 'imma','yeah']})
+    expected.index = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-04', '2022-01-05'])
+    assert_frame_equal(concat_last_row(df, last_row), expected)
+
 
 def test_rename_sensors_no_site():
     with patch('pandas.read_csv') as mock_csv:
@@ -37,7 +68,7 @@ def test_rename_sensors_no_site():
         df_expected.index = timestamps
 
         # Call the function that uses mysql.connector.connect()
-        rename_sensors(df, 'fake/path/whatever/')
+        df = rename_sensors(df, 'fake/path/whatever/')
 
         # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/')
@@ -69,7 +100,7 @@ def test_rename_sensors_with_site():
         df_expected.index = timestamps
 
         # Call the function that uses mysql.connector.connect()
-        rename_sensors(df, 'fake/path/whatever/', "silly_site")
+        df = rename_sensors(df, 'fake/path/whatever/', "silly_site")
 
         # Assert that mysql.connector.connect() was called
         mock_csv.assert_called_once_with('fake/path/whatever/')
@@ -85,7 +116,7 @@ def test_rename_sensors_error():
         df.index = timestamps
         with pytest.raises(Exception, match="File Not Found: fake/path/whatever/"):
             # Call the function that uses mysql.connector.connect()
-            rename_sensors(df, 'fake/path/whatever/', "silly_site")
+            df = rename_sensors(df, 'fake/path/whatever/', "silly_site")
         # Assert that mysql.connector.connect() was called
         mock_csv.assert_called_once_with('fake/path/whatever/')
 
@@ -117,7 +148,7 @@ def test_rename_sensors_with_system():
         df_expected.index = timestamps
 
         # Call the function that uses mysql.connector.connect()
-        df_silly_system = rename_sensors_by_system(df, "silly_system", 'fake/path/whatever/')
+        df_silly_system = rename_sensors(df, 'fake/path/whatever/', system="silly_system")
 
         # Assert that mysql.connector.connect() was called
         mock_csv.assert_called_once_with('fake/path/whatever/')
