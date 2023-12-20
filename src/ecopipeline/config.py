@@ -17,8 +17,7 @@ _input_directory = configure.get('input', 'directory')
 _output_directory = configure.get('output', 'directory')
 _data_directory = configure.get('data', 'directory')
 
-# If working on compute3, change directory 
-print(f"input_dir {_input_directory}, _input_directory[:2] {_input_directory[:2]}")
+# If working on compute3, change directory (Ecotope specific)
 if os.name == 'posix':
     if _input_directory[:2] == 'R:':
         _input_directory = '/storage/RBSA_secure' + _input_directory[2:]
