@@ -19,9 +19,14 @@ _data_directory = configure.get('data', 'directory')
 
 # If working on compute3, change directory 
 if os.name == 'posix':
-    _input_directory = '/storage/RBSA_secure' + _input_directory[2:]
-    _output_directory = '/storage/RBSA_secure' + _output_directory[2:]
-    _data_directory = '/storage/RBSA_secure' + _data_directory[2:]
+    if _input_directory[:2] == 'R:':
+        _input_directory = '/storage/RBSA_secure' + _input_directory[2:]
+        _output_directory = '/storage/RBSA_secure' + _output_directory[2:]
+        _data_directory = '/storage/RBSA_secure' + _data_directory[2:]
+    elif _input_directory[:2] == 'F:':
+        _input_directory = '/storage/CONSULT' + _input_directory[2:]
+        _output_directory = '/storage/CONSULT' + _output_directory[2:]
+        _data_directory = '/storage/CONSULT' + _data_directory[2:]
 
 directories = [_input_directory, _output_directory, _data_directory]
 for directory in directories:

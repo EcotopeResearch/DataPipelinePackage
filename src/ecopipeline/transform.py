@@ -106,14 +106,19 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str = f"{_inp
 
 def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
     """
-    Function will take in a dataframe and look for duplicate timestamps due to 
-    daylight savings. Takes the average values between the duplicate timestamps.
+    Function will take in a dataframe and look for duplicate timestamps (ususally due to daylight savings or rounding). 
+    The dataframe will be altered to just have one line for the timestamp, takes the average values between the duplicate timestamps
+    for the columns of the line.
 
     Args: 
-        df (pd.DataFrame): Pandas dataframe
-        timezone (str): Timezone as a string
+        df: pd.DataFrame 
+            Pandas dataframe to be altered
+        timezone: str 
+            The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
+            time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
     Returns: 
-        pd.DataFrame: Pandas dataframe 
+        pd.DataFrame: 
+            Pandas dataframe with all duplicate timestamps compressed into one, averegaing data values 
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
 
