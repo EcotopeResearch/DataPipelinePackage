@@ -140,32 +140,38 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
     if it is outside the given bounds. 
 
     Args: 
-        col (pd.Series): Pandas series
-        bounds_df (pd.DataFrame): Pandas dataframe
+        col: pd.Series 
+            Pandas dataframe column from data being processed
+        bounds_df: pd.DataFrame
+            Pandas dataframe indexed by the names of the columns from the dataframe that col came from. There should be at least
+            two columns in this dataframe, lower_bound and upper_bound, for use in removing outliers
     Returns: 
         None 
     """
     if (col.name in bounds_df.index):
         c_lower = float(bounds_df.loc[col.name]["lower_bound"])
         c_upper = float(bounds_df.loc[col.name]["upper_bound"])
-        # for this to be one line, it could be the following:
-        #col.mask((col > float(bounds_df.loc[col.name]["upper_bound"])) | (col < float(bounds_df.loc[col.name]["lower_bound"])), other = np.NaN, inplace = True)
         col.mask((col > c_upper) | (col < c_lower), other=np.NaN, inplace=True)
 
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
-def remove_outliers(df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = "") -> pd.DataFrame:
+def remove_outliers(original_df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = "") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
     designated by the csv. Function then returns the resulting dataframe. 
 
     Args: 
-        df (pd.DataFrame): Pandas dataframe
-        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
-        site (str): strin of site name (default to empty string)
+        original_df: pd.DataFrame
+            Pandas dataframe for which outliers need to be removed
+        variable_names_path: str
+            Path to csv file containing sensor names and cooresponding upper/lower boundaries (default value of Variable_Names.csv in configured input location)
+        site: str
+            string of site name if processing a particular site in a Variable_Names.csv file with multiple sites
     Returns: 
-        pd.DataFrame: Pandas dataframe
+        pd.DataFrame:
+            Pandas dataframe with outliers removed and replaced with nans
     """
+    df = original_df.copy()
     try:
         bounds_df = pd.read_csv(variable_names_path)
     except FileNotFoundError:
@@ -212,15 +218,23 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
             col.fillna(method='ffill', inplace=True, limit=length)
 
 
-def ffill_missing(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv", previous_fill: pd.DataFrame = None) -> pd.DataFrame:
+def ffill_missing(original_df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv", previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
     Args: 
-        df (pd.DataFrame): Pandas dataframe
-        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+        original_df: pd.DataFrame
+            Pandas dataframe that needs to be forward filled
+        variable_names_path: str
+            Path to csv file containing variable names and cooresponding changepoint and ffill_length (default value of Variable_Names.csv in configured input location),
+            There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length"
+        previous_fill: pd.DataFrame (default None)
+            A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
+            into the destination database). The values of this will be used to forward fill into the new set of data if applicable.
     Returns: 
-        pd.DataFrame: Pandas dataframe
+        pd.DataFrame: 
+            Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv
     """
+    df = original_df.copy()
     try:
         # ffill dataframe holds ffill length and changepoint bool
         ffill_df = pd.read_csv(vars_filename)
@@ -251,15 +265,20 @@ def ffill_missing(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Var
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
-def nullify_erroneous(df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
+def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and make erroneous values NaN. 
     Args: 
-        df (pd.DataFrame): Pandas dataframe
-        variable_names_path (str): file location of file containing sensor aliases to their corresponding name (default value of Variable_Names.csv)
+        original_df: pd.DataFrame
+            Pandas dataframe that needs to be forward filled
+        variable_names_path: str
+            Path to csv file containing variable names and cooresponding error values (default value of Variable_Names.csv in configured input location),
+            There should be at least two columns in this csv: "variable_name" and "error_value"
     Returns: 
-        pd.DataFrame: Pandas dataframe
+        pd.DataFrame: 
+            Pandas dataframe with error values replaced with NaNs
     """
+    df = original_df.copy()
     try:
         # ffill dataframe holds ffill length and changepoint bool
         error_df = pd.read_csv(vars_filename)
@@ -280,6 +299,7 @@ def nullify_erroneous(df: pd.DataFrame, vars_filename: str = f"{_input_directory
 
     return df
 
+#TODO investigate if this can be removed
 def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
     """
     Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
@@ -324,13 +344,23 @@ def cop_method_1(df: pd.DataFrame, recircLosses):
     Performs COP calculation method 1 (original AWS method).
 
     Args:
-        df (pd.Dataframe): Pandas dataframe to add COP columns (daily)
-        recircLosses (float or pd.Series): If fixedTM from spot measurement,
-            float. If recic measurements in datastream, column of daily df.
+        df: pd.Dataframe
+            Pandas dataframe representing daily averaged values from datastream to add COP columns to. Adds column called 'COP_DHWSys_1' to the dataframe in place
+            The dataframe needs to already have two columns, 'HeatOut_Primary' and 'PowerIn_Total' to calculate COP_DHWSys_1
+        recircLosses: float or pd.Series
+            If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
+            If reciculation losses measurements are in datastream, this should be a column of df.
             Units should be in kW.
     """
-    df['COP_DHWSys_1'] = (df['HeatOut_Primary'] + recircLosses) / df['PowerIn_Total']
+    columns_to_check = ['HeatOut_Primary', 'PowerIn_Total']
+
+    missing_columns = [col for col in columns_to_check if col not in df.columns]
+
+    if missing_columns:
+        print('Cannot calculate COP as the following columns are missing from the DataFrame:', missing_columns)
+        return df
     
+    df['COP_DHWSys_1'] = (df['HeatOut_Primary'] + recircLosses) / df['PowerIn_Total']
     
     return df
 

@@ -209,6 +209,7 @@ def test_ffill_missing():
                         'serious_var_3': [None,None,3,None,None],
                         'serious_var_4': [None,2,3,None,4]})
         df_input.index = timestamps
+        df_unchanged = df_input.copy()
         df_expected = pd.DataFrame({
                         'serious_var_1': [None, 1, 1, 1, 1],
                         'serious_var_2': [None,5,5,5,None],
@@ -217,6 +218,8 @@ def test_ffill_missing():
         df_expected.index = timestamps
         df_result = ffill_missing(df_input)
         assert_frame_equal(df_result, df_expected)
+        # check that df_input was not changed in place
+        assert_frame_equal(df_input, df_unchanged)
 
 
 def test_cop_method_1():
@@ -277,3 +280,60 @@ def test_round_time():
     df_expected.index = timestamps_expected
     round_time(df)
     assert_frame_equal(df, df_expected)
+
+def test_remove_outliers():
+    with patch('pandas.read_csv') as mock_csv:
+
+        # Set the desired response for mock_connect.return_value
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
+                        'lower_bound': [5, 10, 5, 15],
+                        'site': ["site_1", "site_1", "site_2", "site_1"],
+                        'upper_bound': [15, 110, 15, 115]})
+        mock_csv.return_value = csv_df
+        timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [8, 1, 10, 50, -3],
+                        'serious_var_2': [8, 1, 10.7, 50, -3],
+                        'serious_var_3': [8, 1, 10, 50, -30.789],
+                        'serious_var_4': [8, 1, 10, 50, -3]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [8, np.NaN, 10, np.NaN, np.NaN],
+                        'serious_var_2': [np.NaN, np.NaN, 10.7, 50, np.NaN],
+                        'serious_var_3': [8, np.NaN, 10, np.NaN, np.NaN],
+                        'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
+        df_expected.index = timestamps
+
+        assert_frame_equal(remove_outliers(df_input), df_expected)
+
+        timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [8, np.NaN, 10, np.NaN, np.NaN],
+                        'serious_var_2': [np.NaN, np.NaN, 10.7, 50, np.NaN],
+                        'serious_var_3': [8, 1, 10, 50, -30.789],
+                        'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
+        df_expected.index = timestamps
+
+        assert_frame_equal(remove_outliers(df_input, site="site_1"), df_expected)
+
+def test_nullify_erroneous():
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
+                        'error_value': [1, 2, None,None]})
+        mock_csv.return_value = csv_df
+        timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [None, 1, 2, 3,4],
+                        'serious_var_2': [None,5,None,2,None],
+                        'serious_var_3': [None,None,3,None,None]})
+        df_input.index = timestamps
+        df_unchanged = df_input.copy()
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [None, np.NaN, 2, 3,4],
+                        'serious_var_2': [None,5,None,np.NaN,None],
+                        'serious_var_3': [None,None,3,None,None]})
+        df_expected.index = timestamps
+        df_result = nullify_erroneous(df_input)
+        assert_frame_equal(df_result, df_expected)
+        # check that df_input was not changed in place
+        assert_frame_equal(df_input, df_unchanged)
