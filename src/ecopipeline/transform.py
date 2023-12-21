@@ -339,7 +339,7 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def cop_method_1(df: pd.DataFrame, recircLosses):
+def cop_method_1(df: pd.DataFrame, recircLosses) -> pd.DataFrame:
     """
     Performs COP calculation method 1 (original AWS method).
 
@@ -351,6 +351,8 @@ def cop_method_1(df: pd.DataFrame, recircLosses):
             If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
             If reciculation losses measurements are in datastream, this should be a column of df.
             Units should be in kW.
+    Returns: 
+        pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_1
     """
     columns_to_check = ['HeatOut_Primary', 'PowerIn_Total']
 
@@ -364,18 +366,24 @@ def cop_method_1(df: pd.DataFrame, recircLosses):
     
     return df
 
-def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
+def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFrame:
     """
     Performs COP calculation method 2 as defined by Scott's whiteboard image
     COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
 
     Args: 
-        df (pd.DataFrame): Pandas DataFrame to add COP columns to
-        cop_tm (float): fixed COP value for temputure Maintenece system
-        cop_primary_column_name (str): Name of the column used for COP_Primary values
+        df: pd.DataFrame
+            Pandas DataFrame to add COP columns to. The dataframe needs to have a column for the COP of the primary system (see cop_primary_column_name)
+            as well as a column called 'PowerIn_Total' for the total system power and columns prefixed with 'PowerIn_HPWH' or 'PowerIn_SecLoopPump' for 
+            power readings taken for HPWHs/primary systems and columns prefixed with 'PowerIn_SwingTank' or 'PowerIn_ERTank' for power readings taken for 
+            Temperature Maintenance systems
+        cop_tm: float
+            fixed COP value for temputure Maintenece system
+        cop_primary_column_name: str
+            Name of the column used for COP_Primary values
 
-    Returns: 
-        pd.DataFrame: Pandas DataFrame with the added COP columns. 
+    Returns:
+        pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_2 
     """
     columns_to_check = [cop_primary_column_name, 'PowerIn_Total']
 
@@ -404,34 +412,27 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name):
     df['COP_DHWSys_2'] = (df[cop_primary_column_name] * (sum_power_in_df['PowerIn_Primary']/df['PowerIn_Total'])) + (cop_tm * (sum_power_in_df['PowerIn_TM']/df['PowerIn_Total']))
     return df
 
-# NOTE: Move to bayview.py
-# loops through a list of dateTime objects, compares if the date of that object matches the
-# date of the row name, which is also a dateTime object. If it matches, load_shift is True (happened that day)
-def _ls_helper(row, dt_list):
-    """
-    Function takes in a pandas series and a list of dates, then checks
-    each entry in the series and if it matches a date in the list of dates,
-    sets the series load_shift_day to True. 
-    Args: 
-        row (pd.Series): Pandas series 
-        list (<class 'list'>): Python list
-    Output: 
-        row (pd.Series): Pandas series
-    """
-    for date in dt_list:
-        if (row.name.date() == date.date()):
-            row.loc["load_shift_day"] = True
-    return row
-
-# NOTE: Move to bayview.py
-def aggregate_df(df: pd.DataFrame):
+def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadshift_matrix.csv") -> (pd.DataFrame, pd.DataFrame):
     """
     Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
-    dataframes, appends some loadshift data onto the daily df, and then returns those. 
+    dataframes, appends 'load_shift_day' column onto the daily_df and the 'system_state' column to
+    hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
+    The function will only trim the returned dataframes such that only averages from complete hours and
+    complete days are returned rather than agregated data from partial datasets.
+
     Args: 
-        df (pd.DataFrame): Single pandas dataframe of minute-by-minute sensor data.
-    Returns: 
-        pd.DataFrame: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.
+        df: pd.DataFrame
+            Single pandas dataframe of minute-by-minute sensor data.
+        ls_filename: str
+            Path to csv file containing load shift schedule (default value of loadshift_matrix.csv in configured input location),
+            There should be at least four columns in this csv: 'date', 'startTime', 'endTime', and 'event'
+    Returns:
+        daily_df: pd.DataFrame
+            agregated daily dataframe that contains all daily information as well as the 'load_shift_day' column if
+            relevant to the data set.
+        hourly_df: pd.DataFrame
+            agregated hourly dataframe that contains all hourly information as well as the 'system_state' column if
+            relevant to the data set.
     """
     # If df passed in empty, we just return empty dfs for hourly_df and daily_df
     if (df.empty):
@@ -454,23 +455,26 @@ def aggregate_df(df: pd.DataFrame):
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
     # appending loadshift data
-    filename = f"{_input_directory}loadshift_matrix.csv"
-    date_list = []
-    if os.path.exists(filename):
-        with open(filename) as datefile:
-            readCSV = csv.reader(datefile, delimiter=',')
-            for row in readCSV:
-                date_list.append(row[0])
-            date_list.pop(0)
-        # date_list is a list of strings in the following format: "1/19/2023", OR "%m/%d/%Y", now we convert to datetime!
-        format = "%m/%d/%Y"
-        dt_list = []
-        for date in date_list:
-            dt_list.append(dt.datetime.strptime(date, format))
+    if os.path.exists(ls_filename):
+        
+        ls_df = pd.read_csv(ls_filename)
+        # Parse 'date' and 'startTime' columns to create 'startDateTime'
+        ls_df['startDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['startTime'])
+        # Parse 'date' and 'endTime' columns to create 'endDateTime'
+        ls_df['endDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['endTime'])
         daily_df["load_shift_day"] = False
-        daily_df = daily_df.apply(_ls_helper, axis=1, args=(dt_list,))
+        hourly_df["system_state"] = 'normal'
+        for index, row in ls_df.iterrows():
+            startDateTime = row['startDateTime']
+            endDateTime = row['endDateTime']
+            event = row['event']
+
+            # Update 'system_state' in 'hourly_df' and 'load_shift_day' in 'daily_df' based on conditions
+            hourly_df.loc[(hourly_df.index >= startDateTime) & (hourly_df.index < endDateTime), 'system_state'] = event
+            daily_df.loc[daily_df.index.date == startDateTime.date(), 'load_shift_day'] = True
+            daily_df.loc[daily_df.index.date == endDateTime.date(), 'load_shift_day'] = True
     else:
-        print(f"The loadshift file '{filename}' does not exist. Thus loadshifting will not be added to daily dataframe.")
+        print(f"The loadshift file '{ls_filename}' does not exist. Thus loadshifting will not be added to daily dataframe.")
     
     # if any day in hourly table is incomplete, we should delete that day from the daily table as the averaged data it contains will be from an incomplete day.
     hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)

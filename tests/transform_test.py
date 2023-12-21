@@ -229,7 +229,6 @@ def test_cop_method_1():
                     'rericLosses': [None, None, None],
                     })
     rericLosses = 2
-    #rericLosses = df['rericLosses']
     df.index = timestamps
     df_expected = pd.DataFrame({'HeatOut_Primary': [4,4,4],
                     'PowerIn_Total': [1, 1, 1],
@@ -257,6 +256,80 @@ def test_cop_method_1_list():
     df_expected.index = timestamps
     df = cop_method_1(df, rericLosses)
     assert_frame_equal(df, df_expected)
+
+def test_cop_method_2():
+    timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
+    df = pd.DataFrame({'HeatOut_Primary': [4,4,4],
+                    'PowerIn_Total': [1,1,1],
+                    'Primary_COP': [2, 2.4, 3],
+                    'PowerIn_HPWH1': [2, 2.4, 3],
+                    'PowerIn_SecLoopPump': [2, 2.4, 3],
+                    'PowerIn_SwingTank2': [2, 2.4, 3],
+                    'PowerIn_ERTank': [2, 2.4, 3],
+                    'Not_Used': ['blah blah', 50, 100],
+                    })
+    cop_tm = 2
+    #rericLosses = df['rericLosses']
+    df.index = timestamps
+    df_expected = pd.DataFrame({'HeatOut_Primary': [4,4,4],
+                    'PowerIn_Total': [1,1,1],
+                    'Primary_COP': [2, 2.4, 3],
+                    'PowerIn_HPWH1': [2, 2.4, 3],
+                    'PowerIn_SecLoopPump': [2, 2.4, 3],
+                    'PowerIn_SwingTank2': [2, 2.4, 3],
+                    'PowerIn_ERTank': [2, 2.4, 3],
+                    'Not_Used': ['blah blah', 50, 100],
+                    'COP_DHWSys_2': [16.0, 21.119999999999997, 30.0]
+                    })
+    df_expected.index = timestamps
+    df = cop_method_2(df, cop_tm, 'Primary_COP')
+    assert_frame_equal(df, df_expected)
+
+def test_aggregate_df():
+     with patch('os.path.exists') as mock_os:
+        mock_os.return_value = True
+        with patch('pandas.read_csv') as mock_csv:
+            csv_df = pd.DataFrame({'date': ['4/21/2022', '4/21/2022', '4/22/2022', '4/24/2022'],
+                            'startTime': ['12:00', '16:00', '10:00', '10:00'],
+                            'endTime': ['16:00', '21:00', '16:00', '16:00'],
+                            'event': ['loadUp', 'shed', 'loadUp', 'loadUp']})
+            mock_csv.return_value = csv_df
+            timestamps = pd.to_datetime(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-21 16:02:00', '2022-04-22 10:03:00','2022-04-23 15:04:00','2022-04-24 00:04:00'])
+            hourly_timestamps = pd.to_datetime(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-22 10:00:00','2022-04-23 15:00:00'])
+            daily_timestamps = pd.to_datetime(['2022-04-21 00:00:00', '2022-04-22 00:00:00','2022-04-23 00:00:00'])
+            df_input = pd.DataFrame({
+                            'Energy_serious_var_1': [None, 1, 2, 3,4,0],
+                            'serious_var_2': [None,5,7,2,None,4],
+                            'serious_var_3': [2,None,3,5,8,3]})
+            df_input.index = timestamps
+            df_unchanged = df_input.copy()
+            hourly_df_expected = pd.DataFrame({
+                            'Energy_serious_var_1': [0., 3., 3.,4.],
+                            'serious_var_2': [None,6,2,None],
+                            'serious_var_3': [2,3.,5.,8],
+                            'system_state' : ['normal', 'shed', 'loadUp', 'normal']
+                            })
+            hourly_df_expected.index = hourly_timestamps
+            daily_df_expected = pd.DataFrame({
+                            'Energy_serious_var_1': [3., 3.,4.],
+                            'serious_var_2': [6,2,None],
+                            'serious_var_3': [2.5,5,8]
+                            })
+            daily_df_expected.index = daily_timestamps
+            daily_df_expected = daily_df_expected.resample("D").mean()
+            daily_df_expected['load_shift_day'] = True
+            daily_df_expected.at[daily_df_expected.index[-1], 'load_shift_day'] = False
+
+            print(daily_df_expected.columns)
+
+            hourly_result, daily_result = aggregate_df(df_input)
+            assert len(hourly_result.index) == 72
+            hourly_result = hourly_result.loc[hourly_result.index.isin(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-22 10:00:00','2022-04-23 15:00:00'])]
+            assert_frame_equal(hourly_result, hourly_df_expected)
+
+            assert_frame_equal(daily_df_expected, daily_result)
+            # check that df_input was not changed in place
+            assert_frame_equal(df_input, df_unchanged)
 
 def test_round_time():
     # UTC
