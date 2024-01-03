@@ -288,12 +288,23 @@ def get_noaa_data(station_names: List[str]) -> dict:
     Returns: 
         dict: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
-    noaa_dictionary = _get_noaa_dictionary()
-    station_ids = {noaa_dictionary[station_name]
-        : station_name for station_name in station_names if station_name in noaa_dictionary}
-    noaa_filenames = _download_noaa_data(station_ids)
-    noaa_dfs = _convert_to_df(station_ids, noaa_filenames)
-    formatted_dfs = _format_df(station_ids, noaa_dfs)
+    formatted_dfs = {}
+    try:
+        noaa_dictionary = _get_noaa_dictionary()
+        station_ids = {noaa_dictionary[station_name]
+            : station_name for station_name in station_names if station_name in noaa_dictionary}
+        noaa_filenames = _download_noaa_data(station_ids)
+        noaa_dfs = _convert_to_df(station_ids, noaa_filenames)
+        formatted_dfs = _format_df(station_ids, noaa_dfs)
+    except:
+        # temporary solution for NOAA ftp not including 2024
+        noaa_df = pd.DataFrame(index=pd.date_range(start='2024-01-01', periods=10, freq='H'))
+        noaa_df['conditions'] = None
+        noaa_df['airTemp_F'] = None
+        noaa_df['dewPoint_F'] = None
+        for station_name in station_names:
+            formatted_dfs[station_name] = noaa_df
+        print("Unable to collect NOAA data for timeframe")
     return formatted_dfs
 
 

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = 'Ecotope Datapipeline (Ecopipeline)'
 copyright = '2023, Ecotope Inc'
 author = 'Ecotope Inc'
-release = '0.0.13'
+release = '0.0.60'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -29,5 +29,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = "nature"
+html_theme_options = {
+    "sidebarwidth": 300
+}
 html_static_path = ['_static']

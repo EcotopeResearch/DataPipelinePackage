@@ -235,27 +235,32 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         insert_str += "%s, "
     insert_str += "%s)"
     
-    last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
+    # last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
+    existing_rows_list = []
 
+    # create db table if it does not exist, otherwise add missing columns to existing table
     if not check_table_exists(cursor, table_name, dbname):
         if not create_new_table(cursor, table_name, sensor_names.split(",")[1:], sensor_types[1:], primary_key=primary_key): #split on colums and remove first column aka time_pt
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
-    
-    else: 
+    else:
         try:
+            # find existing times in database for upsert statement
             cursor.execute(
-                f"SELECT * FROM {table_name} ORDER BY {primary_key} DESC LIMIT 1")
-            last_row_data = pd.DataFrame(cursor.fetchall())
-            if len(last_row_data.index) != 0:
-                last_time = last_row_data[0][0]
+                f"SELECT {primary_key} FROM {table_name} WHERE {primary_key} >= '{dataframe.index.min()}'")
+            # Fetch the results into a DataFrame
+            existing_rows = pd.DataFrame(cursor.fetchall(), columns=[primary_key])
+
+            # Convert the primary_key column to a list
+            existing_rows_list = existing_rows[primary_key].tolist()
+
         except mysqlerrors.Error:
-            print(f"Table {table_name} does has no data.")
+            print(f"Table {table_name} has no data.")
 
         missing_cols, missing_types = find_missing_columns(cursor, dataframe, config_info, table_name)
         if len(missing_cols):
             if not create_new_columns(cursor, table_name, missing_cols, missing_types):
-                print("Unable to add new column due to database error.")
+                print("Unable to add new columns due to database error.")
     
     updatedRows = 0
     for index, row in dataframe.iterrows():
@@ -264,7 +269,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
         time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
         time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
-        if(index <= last_time):
+        if index in existing_rows_list:
             statement, values = _generate_mysql_update(row, index, table_name, primary_key)
             if statement != "":
                 cursor.execute(statement, values)

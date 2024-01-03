@@ -36,7 +36,7 @@ def test_load_overwrite_database(mocker):
     # Set the desired response for cursor.execute
     cursor_mock.fetchall.side_effect = [
         [(1,)],
-        [(datetime.datetime.strptime('03/01/2022', "%d/%m/%Y"),)],
+        [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('02/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',), ('PowerIn_HPWH2',)]
     ]
 
@@ -45,7 +45,7 @@ def test_load_overwrite_database(mocker):
 
     expected_queries = [
         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
-        "SELECT * FROM minute_table ORDER BY time_pt DESC LIMIT 1",
+        "SELECT time_pt FROM minute_table WHERE time_pt >= '2022-01-01 00:00:00'",
         "SELECT column_name FROM information_schema.columns WHERE table_schema = 'test_db' AND table_name = 'minute_table'",
         "UPDATE minute_table SET PowerIn_HPWH1 = %s WHERE time_pt = '2022-01-01 00:00:00';",
         "UPDATE minute_table SET PowerIn_HPWH1 = %s, PowerIn_HPWH2 = %s WHERE time_pt = '2022-01-02 00:00:00';",
@@ -73,7 +73,7 @@ def test_load_overwrite_database_add_columns(mocker):
     mocker.patch.object(cursor_mock, 'execute')
     cursor_mock.fetchall.side_effect = [
         [(1,)],
-        [(datetime.datetime.strptime('03/01/2022', "%d/%m/%Y"),)],
+        [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('02/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',)]
     ]
 
@@ -83,7 +83,7 @@ def test_load_overwrite_database_add_columns(mocker):
     #  Verify the behavior and result
     expected_queries = [
         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
-        "SELECT * FROM minute_table ORDER BY time_pt DESC LIMIT 1",
+        "SELECT time_pt FROM minute_table WHERE time_pt >= '2022-01-01 00:00:00'",
         "SELECT column_name FROM information_schema.columns WHERE table_schema = 'test_db' AND table_name = 'minute_table'",
         "ALTER TABLE minute_table ADD COLUMN float_column float DEFAULT NULL;",
         "ALTER TABLE minute_table ADD COLUMN string_column varchar(25) DEFAULT NULL;",
@@ -111,7 +111,7 @@ def test_load_overwrite_database_all_fail_update(mocker):
     mocker.patch.object(cursor_mock, 'execute')
     cursor_mock.fetchall.side_effect = [
         [(1,)],
-        [(datetime.datetime.strptime('10/01/2022', "%d/%m/%Y"),)],
+        [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('02/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('05/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',)]
     ]
 
@@ -121,7 +121,7 @@ def test_load_overwrite_database_all_fail_update(mocker):
     #  Verify the behavior and result
     expected_queries = [
         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
-        "SELECT * FROM minute_table ORDER BY time_pt DESC LIMIT 1",
+        "SELECT time_pt FROM minute_table WHERE time_pt >= '2022-01-01 00:00:00'",
         "SELECT column_name FROM information_schema.columns WHERE table_schema = 'test_db' AND table_name = 'minute_table'"
     ]
     assert cursor_mock.fetchall.call_count == 3
