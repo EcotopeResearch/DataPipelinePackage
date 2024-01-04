@@ -20,10 +20,14 @@ def get_last_full_day_from_db() -> datetime:
     Function retrieves the last line from the database with the most recent datetime 
     in local time.
     
-    Args:
-        None
-    Returns: 
-        datetime: end of last full day populated in database or default past time if no data found
+    Parameters
+    ---------- 
+    None
+    
+    Returns
+    ------- 
+    datetime:
+        end of last full day populated in database or default past time if no data found
     """
     config_dict = get_login_info(["minute"])
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
@@ -56,10 +60,15 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
     """
     Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists
 
-    Args:
-        time (datetime): The time index to get the row from
-    Returns: 
-        pd.DataFrame: Pandas Dataframe containing the row or empty if no row exists for the timestamp
+    Parameters
+    ---------- 
+    time : datetime
+        The time index to get the row from
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing the row or empty if no row exists for the timestamp
     """
     config_dict = get_login_info(["minute"])
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
@@ -83,18 +92,35 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
 
 def extract_new(startTime: datetime, filenames: List[str], decihex = False, timeZone: str = None, endTime: datetime = None) -> List[str]:
     """
-    Function filters the filenames to only those newer than the last date in database.
-    If filenames are in deciheximal, convert them to datetime. Note that for some projects,
-    files are dropped at irregular intervals so data cannot be filtered by exact date. 
+    Function filters the filenames to only those equal to or newer than the date specified startTime.
+    If filenames are in deciheximal, The function can still handel it. Note that for some projects,
+    files are dropped at irregular intervals so data cannot be filtered by exact date.
 
-    Args: 
-        time (datetime) : The point in time for which we want to start the data extraction from. This 
-            is local time from the data's index. 
-        filenames (List[str]) : List of filenames to be filtered
-        decihex (bool) : Whether or not the filenames need to be converted to datetime from deciheximal
-        timeZone (str): Local time zone. 
-    Returns: 
-        List[str]: Filtered list of filenames
+    Currently, this function expects file names to be in one of two formats:
+
+    1. normal (set decihex = False) format assumes file names are in format such that characters [-17,-3] in the file names string
+        are the files date in the form "%Y%m%d%H%M%S"
+    2. deciheximal (set decihex = True) format assumes file names are in format such there is a deciheximal value between a '.' and '_' character in each filename string
+        that has a deciheximal value equal to the number of seconds since January 1, 1970 to represent the timestamp of the data in the file.
+
+    Parameters
+    ----------  
+    startTime: datetime
+        The point in time for which we want to start the data extraction from. This 
+        is local time from the data's index. 
+    filenames: List[str]
+        List of filenames to be filtered by those equal to or newer than startTime
+    decihex: bool
+        Defaults to False. Set to True if filenames contain date of data in deciheximal format
+    timeZone: str
+        The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
+        time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
+        defaults to None
+    
+    Returns
+    -------
+    List[str]: 
+        Filtered list of filenames
     """
     
     if decihex: 
@@ -117,11 +143,17 @@ def extract_files(extension: str, subdir: str = "") -> List[str]:
     """
     Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
 
-    Args: 
-        extension (str): File extension as string
-        subdir (str): subdirectory (defaults to no subdir)
-    Returns: 
-        List[str]: List of filenames 
+    Parameters
+    ----------  
+    extension : str
+        File extension as string
+    subdir : str
+        subdirectory (defaults to no subdir)
+    
+    Returns
+    ------- 
+    List[str]: 
+        List of filenames 
     """
     os.chdir(os.getcwd())
     filenames = []
@@ -137,11 +169,19 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     """
     Function takes a list of gz/json filenames and reads all files into a singular dataframe.
 
-    Args: 
-        json_filenames (List[str]): List of filenames 
-        time_zone (str): Local timezone, default is US/Pacific
-    Returns: 
-        pd.DataFrame: Pandas Dataframe containing data from all files
+    Parameters
+    ----------  
+    json_filenames: List[str]
+        List of filenames to be processed into a single dataframe 
+    time_zone: str
+        The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
+        time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
+        defaults to 'US/Pacific'
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
     """
     temp_dfs = []
     for file in json_filenames:
@@ -171,11 +211,18 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
 
-    Args: 
-        csv_filenames (List[str]): List of filenames 
-        mb_prefix (bool) : signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
-    Returns: 
-        pd.DataFrame: Pandas Dataframe containing data from all files
+    Parameters
+    ----------  
+    csv_filenames: List[str]
+        List of filenames to be processed into a single dataframe 
+    mb_prefix: bool
+        A boolean that signifys if the data is in modbus form- if set to true, will prepend modbus prefix to each raw varriable name
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
+        (with prepended modbus prefix if mb_prefix = True)
     """
     temp_dfs = []
     for file in csv_filenames:
@@ -214,12 +261,19 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
      """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data. 
 
-    Args: 
-        csv_filenames (List[str]): List of filenames 
-        mb_prefix (bool) : signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
-        timezone (str) : local timezone, default is pacific
-    Returns: 
-        pd.DataFrame: Pandas Dataframe containing data from all files
+    Parameters
+    ----------  
+    csv_filenames : List[str]
+        List of filenames 
+    mb_prefix : bool
+        signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
+    timezone : str
+        local timezone, default is pacific
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files
     """
      temp_dfs = []
      for file in csv_filenames:
@@ -262,10 +316,15 @@ def get_sub_dirs(dir: str) -> List[str]:
     Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory. 
     This is used when multiple sites are being ran in same pipeline. 
 
-    Args: 
-        dir (str): Directory as a string.
-    Returns: 
-        List[str]: List of paths to subfolders.
+    Parameters
+    ---------- 
+    dir : str
+        Directory as a string.
+
+    Returns
+    ------- 
+    List[str]: 
+        List of paths to subfolders.
     """
     directories = []
     try:
@@ -283,10 +342,15 @@ def get_noaa_data(station_names: List[str]) -> dict:
     """
     Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.
 
-    Args: 
-        station_names (List[str]): List of Station Names
-    Returns: 
-        dict: Dictionary with key as Station Name and Value as DF of Parsed Weather Data
+    Parameters
+    ---------- 
+    station_names : List[str]
+        List of Station Names
+    
+    Returns
+    -------
+    dict: 
+        Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
     formatted_dfs = {}
     try:

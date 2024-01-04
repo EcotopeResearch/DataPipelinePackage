@@ -14,7 +14,6 @@ import json
 from pandas.testing import assert_frame_equal
 
 def test_json_to_df():
-    
     with patch('gzip.open') as mock_gzip:
         with patch('json.load') as mock_json:
             mock_gzip.return_value = []
@@ -57,14 +56,18 @@ def test_json_to_df():
             assert_frame_equal(result_df, normal_df)
 
 def test_extract_new_mb():
-
     date = datetime(2023, 9, 1)
     file_names = ["mb-022.64C84441_1.log.csv", "mb-042.652939A5_1.log.csv", "mb-034.65083340_1.log.csv"]
     assert extract_new(date, file_names, True) == ['mb-042.652939A5_1.log.csv', 'mb-034.65083340_1.log.csv']
     assert extract_new(date, file_names, True, "US/Pacific") == ['mb-042.652939A5_1.log.csv', 'mb-034.65083340_1.log.csv']
 
-def test_csv_to_df_mb():
-    
+def test_extract_new():
+    date = datetime(2023, 9, 1)
+    file_names = ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz", "E45F012D4C0D_20230103220000.gz"]
+    assert extract_new(date, file_names, False) == ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz"]
+    assert extract_new(date, file_names, False, "US/Pacific") == ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz"]
+
+def test_csv_to_df_mb():   
     with patch('pandas.read_csv') as mock_read_csv:
         mock_read_csv.side_effect = [
             pd.DataFrame({

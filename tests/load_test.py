@@ -22,7 +22,7 @@ config_info = {
 
 def test_load_overwrite_database(mocker):
     
-    timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-05'])
+    timestamps = pd.to_datetime(['2022-01-01', '2022-01-05', '2022-01-02'])
     df = pd.DataFrame({'PowerIn_HPWH1': [3, 20, 30],
                     'PowerIn_HPWH2': [None, 75.2, 35]})
     df.index = timestamps
@@ -36,7 +36,7 @@ def test_load_overwrite_database(mocker):
     # Set the desired response for cursor.execute
     cursor_mock.fetchall.side_effect = [
         [(1,)],
-        [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('02/01/2022', "%d/%m/%Y"),)],
+        [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('05/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',), ('PowerIn_HPWH2',)]
     ]
 
@@ -48,7 +48,7 @@ def test_load_overwrite_database(mocker):
         "SELECT time_pt FROM minute_table WHERE time_pt >= '2022-01-01 00:00:00'",
         "SELECT column_name FROM information_schema.columns WHERE table_schema = 'test_db' AND table_name = 'minute_table'",
         "UPDATE minute_table SET PowerIn_HPWH1 = %s WHERE time_pt = '2022-01-01 00:00:00';",
-        "UPDATE minute_table SET PowerIn_HPWH1 = %s, PowerIn_HPWH2 = %s WHERE time_pt = '2022-01-02 00:00:00';",
+        "UPDATE minute_table SET PowerIn_HPWH1 = %s, PowerIn_HPWH2 = %s WHERE time_pt = '2022-01-05 00:00:00';",
         'INSERT INTO minute_table (time_pt,PowerIn_HPWH1,PowerIn_HPWH2) VALUES (%s, %s, %s)'
     ]
 

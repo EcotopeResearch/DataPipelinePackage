@@ -21,19 +21,24 @@ def get_login_info(table_headers: list, config_info : str = _config_directory) -
     """
     Reads the config.ini file stored in the config_info file path.   
 
-    Args: 
-        table_headers (list): A list of table headers. These headers must correspond to the 
-            section headers in the config.ini file. Your list must contain the section
-            header for each table you wish to write into. The first header must correspond 
-            to the login information of the database. The other are the tables which you wish
-            to write to. 
-        config_info (str): A path to the config.ini file must also be passed.
+    Parameters
+    ---------- 
+    table_headers : list
+        A list of table headers. These headers must correspond to the 
+        section headers in the config.ini file. Your list must contain the section
+        header for each table you wish to write into. The first header must correspond 
+        to the login information of the database. The other are the tables which you wish
+        to write to. 
+    config_info : str
+        A path to the config.ini file must also be passed.
 
-    Returns: 
-        dict: A dictionary containing all relevant information is returned. This
-            includes information used to create a connection with a mySQL server and
-            information (table names and column names) used to load the data into 
-            tables. 
+    Returns
+    ------- 
+    dict: 
+        A dictionary containing all relevant information is returned. This
+        includes information used to create a connection with a mySQL server and
+        information (table names and column names) used to load the data into 
+        tables. 
     """
 
     if not os.path.exists(config_info):
@@ -62,13 +67,17 @@ def connect_db(config_info: dict):
     """
     Create a connection with the mySQL server. 
 
-    Args: 
-        config_info (dict): The dictionary containing the credential information. This is
-            contained in the 'database' section of the dictionary. 
+    Parameters
+    ----------  
+    config_info : dict 
+        The dictionary containing the credential information. This is
+        contained in the 'database' section of the dictionary. 
 
-    Returns: 
-        mysql.connector.cursor.MySQLCursor: A connection and cursor object. THe cursor can be used to execute
-            mySQL queries and the connection object can be used to save those changes. 
+    Returns
+    ------- 
+    mysql.connector.cursor.MySQLCursor: 
+        A connection and cursor object. THe cursor can be used to execute
+        mySQL queries and the connection object can be used to save those changes. 
     """
 
     connection = None
@@ -87,14 +96,20 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     """
     Check if the given table name already exists in database.
 
-    Args: 
-        cursor: Database cursor object and the table name.
-        table_name (str): Name of the table
-        dbname (str): Name of the database
+    Parameters
+    ---------- 
+    cursor:
+        Database cursor object and the table name.
+    table_name : str 
+        Name of the table
+    dbname : str
+        Name of the database
 
-    Returns: 
-        int: The number of tables in the database with the given table name.
-            This can directly be used as a boolean!
+    Returns
+    ------- 
+    int: 
+        The number of tables in the database with the given table name.
+        This can directly be used as a boolean!
     """
 
     cursor.execute(f"SELECT count(*) "
@@ -109,13 +124,19 @@ def create_new_table(cursor, table_name: str, table_column_names: list, table_co
     """
     Creates a new table in the mySQL database.
 
-    Args: 
-        cursor: A cursor object and the name of the table to be created.
-        table_name (str): Name of the table
-        table_column_names (list): list of columns names in the table must be passed.
+    Parameters
+    ---------- 
+    cursor: 
+        A cursor object and the name of the table to be created.
+    table_name : str
+        Name of the table
+    table_column_names : list
+        list of columns names in the table must be passed.
 
-    Returns: 
-        bool: A boolean value indicating if a table was sucessfully created. 
+    Returns
+    ------- 
+    bool: 
+        A boolean value indicating if a table was sucessfully created. 
     """
     if(len(table_column_names) != len(table_column_types)):
         raise Exception("Cannot create table. Type list and Field Name list are different lengths.")
@@ -139,14 +160,21 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     in the pandas DataFrame to be written to the database. If communication with database
     is not possible, an empty list will be returned meaning no column will be added. 
 
-    Args: 
-        cursor: A cursor object and the name of the table to be created.
-        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
-        config_info (dict): The dictionary containing the configuration information 
-        data_type (str): the header name corresponding to the table you wish to write data to.  
+    Parameters
+    ---------- 
+    cursor: 
+        A cursor object and the name of the table to be created.
+    dataframe : pd.DataFrame
+        the pandas DataFrame to be written into the mySQL server. 
+    config_info : dict
+        The dictionary containing the configuration information 
+    data_type : str
+        the header name corresponding to the table you wish to write data to.  
 
-    Returns: 
-        list: list of column names which must be added to the database table for the pandas 
+    Returns
+    ------- 
+    list: 
+        list of column names which must be added to the database table for the pandas 
         DataFrame to be properly written into the database. 
     """
 
@@ -175,14 +203,21 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
     Create the new, necessary column in the database. Catches error if communication with mysql database
     is not possible.
 
-    Args: 
-        cursor: A cursor object and the name of the table to be created.
-        config_info (dict): The dictionary containing the configuration information.
-        data_type (str): the header name corresponding to the table you wish to write data to.  
-        new_columns (list): list of columns that must be added to the database table.
+    Parameters
+    ----------  
+    cursor: 
+        A cursor object and the name of the table to be created.
+    config_info : dict
+        The dictionary containing the configuration information.
+    data_type : str
+        the header name corresponding to the table you wish to write data to.  
+    new_columns : list
+        list of columns that must be added to the database table.
 
-    Returns: 
-        bool: boolean indicating if the the column were successfully added to the database. 
+    Returns
+    ------- 
+    bool:
+        boolean indicating if the the column were successfully added to the database. 
     """
     alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} {data_type} DEFAULT NULL;" for column, data_type in zip(new_columns, data_types)]
 
@@ -197,17 +232,24 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
 
 def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt", table_name: str = None):
     """
-    Loads given pandas DataFrame into a mySQL table overwriting any conflicting data.
+    Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
 
-    Args: 
-        cursor: A cursor object
-        dataframe (pd.DataFrame): the pandas DataFrame to be written into the mySQL server. 
-        config_info (dict): The dictionary containing the configuration information 
-        data_type (str): the header name corresponding to the table you wish to write data to.  
+    Parameters
+    ----------  
+    cursor: mysql.connector.cursor.MySQLCursor
+        A cursor object connected to the database where the data will land
+    dataframe: pd.DataFrame
+        The pandas DataFrame to be written into the mySQL server.
+    config_info: dict
+        The dictionary containing the configuration information in the data upload. This can be aquired through the get_login_info() function in this package
+    data_type: str
+        The header name corresponding to the table you wish to write data to.  
 
-    Returns: 
-        bool: A boolean value indicating if the data was successfully written to the database. 
+    Returns
+    ------- 
+    bool: 
+        A boolean value indicating if the data was successfully written to the database. 
     """
     # Drop empty columns
     dataframe = dataframe.dropna(axis=1, how='all')

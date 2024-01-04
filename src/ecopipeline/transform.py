@@ -15,13 +15,17 @@ def concat_last_row(df: pd.DataFrame, last_row: pd.DataFrame) -> pd.DataFrame:
     last row from the database the new data is being processed for. The two dataframes are then concatenated 
     such that the new data can later be forward filled from the info the last row
 
-    Args: 
-        df: pd.DataFrame
-            dataframe with new data that needs to be forward filled from data in the last row of a database
-        last_row: pd.DataFrame 
-            last row of the database to forward fill from in a pandas dataframe
-    Returns: 
-        pd.DataFrame: Pandas dataframe with last row concatenated
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe with new data that needs to be forward filled from data in the last row of a database
+    last_row : pd.DataFrame 
+        last row of the database to forward fill from in a pandas dataframe
+    
+    Returns
+    -------
+    pd.DataFrame: 
+        Pandas dataframe with last row concatenated
     """
     df = pd.concat([last_row, df], join="inner")
     df = df.sort_index()
@@ -32,9 +36,15 @@ def round_time(df: pd.DataFrame):
     """
     Function takes in a dataframe and rounds dataTime index down to the nearest minute. Works in place
 
-    Args: 
-        df: pd.DataFrame
-            a dataframe indexed by datetimes. These date times will all be rounded down to the nearest minute.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        a dataframe indexed by datetimes. These date times will all be rounded down to the nearest minute.
+
+    Returns
+    -------
+    boolean
+        Returns True if the indexes have been rounded down. Returns False if the fuinction failed (e.g. if df was empty)
     """
     if (df.empty):
         return False
@@ -53,25 +63,28 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str = f"{_inp
     Function will take in a dataframe and a string representation of a file path and renames
     sensors from their alias to their true name. Also filters the dataframe by site and system if specified.
 
-    Args: 
-        original_df: pd.DataFrame
-            A dataframe that contains data labeled by the raw varriable names to be renamed.
-        variable_names_path: str 
-            file location of file containing sensor aliases to their corresponding name (default value of {_input_directory from your config file}Variable_Names.csv)
-            the csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
-            (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.
-        site: str
-            If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
-            need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe. 
-            Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called "site".
-        system: str
-            If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that 
-            need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe. 
-            Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called "system"
-    Returns: 
-        df: pd.DataFrame 
-            Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
-            Varriable_Names.csv.
+    Parameters
+    ---------- 
+    original_df: pd.DataFrame
+        A dataframe that contains data labeled by the raw varriable names to be renamed.
+    variable_names_path: str 
+        file location of file containing sensor aliases to their corresponding name (default value of {_input_directory from your config file}Variable_Names.csv)
+        the csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
+        (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.
+    site: str
+        If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
+        need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe. 
+        Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called "site".
+    system: str
+        If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that 
+        need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe. 
+        Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called "system"
+    
+    Returns
+    -------  
+    df: pd.DataFrame 
+        Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
+        Varriable_Names.csv.
     """
     try:
         variable_data = pd.read_csv(variable_names_path)
@@ -110,15 +123,18 @@ def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
     The dataframe will be altered to just have one line for the timestamp, takes the average values between the duplicate timestamps
     for the columns of the line.
 
-    Args: 
-        df: pd.DataFrame 
-            Pandas dataframe to be altered
-        timezone: str 
-            The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
-            time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
-    Returns: 
-        pd.DataFrame: 
-            Pandas dataframe with all duplicate timestamps compressed into one, averegaing data values 
+    Parameters
+    ----------
+    df: pd.DataFrame 
+        Pandas dataframe to be altered
+    timezone: str 
+        The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
+        time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas dataframe with all duplicate timestamps compressed into one, averegaing data values 
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
 
@@ -160,16 +176,19 @@ def remove_outliers(original_df: pd.DataFrame, variable_names_path: str = f"{_in
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
     designated by the csv. Function then returns the resulting dataframe. 
 
-    Args: 
-        original_df: pd.DataFrame
-            Pandas dataframe for which outliers need to be removed
-        variable_names_path: str
-            Path to csv file containing sensor names and cooresponding upper/lower boundaries (default value of Variable_Names.csv in configured input location)
-        site: str
-            string of site name if processing a particular site in a Variable_Names.csv file with multiple sites
-    Returns: 
-        pd.DataFrame:
-            Pandas dataframe with outliers removed and replaced with nans
+    Parameters
+    ----------
+    original_df: pd.DataFrame
+        Pandas dataframe for which outliers need to be removed
+    variable_names_path: str
+        Path to csv file containing sensor names and cooresponding upper/lower boundaries (default value of Variable_Names.csv in configured input location)
+    site: str
+        string of site name if processing a particular site in a Variable_Names.csv file with multiple sites
+
+    Returns
+    ------- 
+    pd.DataFrame:
+        Pandas dataframe with outliers removed and replaced with nans
     """
     df = original_df.copy()
     try:
@@ -221,18 +240,22 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
 def ffill_missing(original_df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv", previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
-    Args: 
-        original_df: pd.DataFrame
-            Pandas dataframe that needs to be forward filled
-        variable_names_path: str
-            Path to csv file containing variable names and cooresponding changepoint and ffill_length (default value of Variable_Names.csv in configured input location),
-            There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length"
-        previous_fill: pd.DataFrame (default None)
-            A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
-            into the destination database). The values of this will be used to forward fill into the new set of data if applicable.
-    Returns: 
-        pd.DataFrame: 
-            Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv
+    
+    Parameters
+    ----------
+    original_df: pd.DataFrame
+        Pandas dataframe that needs to be forward filled
+    variable_names_path: str
+        Path to csv file containing variable names and cooresponding changepoint and ffill_length (default value of Variable_Names.csv in configured input location),
+        There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length"
+    previous_fill: pd.DataFrame (default None)
+        A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
+        into the destination database). The values of this will be used to forward fill into the new set of data if applicable.
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv
     """
     df = original_df.copy()
     try:
@@ -268,15 +291,19 @@ def ffill_missing(original_df: pd.DataFrame, vars_filename: str = f"{_input_dire
 def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and make erroneous values NaN. 
-    Args: 
-        original_df: pd.DataFrame
-            Pandas dataframe that needs to be forward filled
-        variable_names_path: str
-            Path to csv file containing variable names and cooresponding error values (default value of Variable_Names.csv in configured input location),
-            There should be at least two columns in this csv: "variable_name" and "error_value"
-    Returns: 
-        pd.DataFrame: 
-            Pandas dataframe with error values replaced with NaNs
+
+    Parameters
+    ---------- 
+    original_df: pd.DataFrame
+        Pandas dataframe that needs to be forward filled
+    variable_names_path: str
+        Path to csv file containing variable names and cooresponding error values (default value of Variable_Names.csv in configured input location),
+        There should be at least two columns in this csv: "variable_name" and "error_value"
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas dataframe with error values replaced with NaNs
     """
     df = original_df.copy()
     try:
@@ -302,12 +329,17 @@ def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str = f"{_input_
 #TODO investigate if this can be removed
 def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
+    TO BE DEPRICATED -- Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
 
-    Args: 
-        df (pd.DataFrame): DataFrame to be adjusted
-    Returns: 
-        pd.DataFrame: Adjusted Dataframe
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        DataFrame to be adjusted
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Adjusted Dataframe
     """
     try:
         adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
@@ -343,16 +375,19 @@ def cop_method_1(df: pd.DataFrame, recircLosses) -> pd.DataFrame:
     """
     Performs COP calculation method 1 (original AWS method).
 
-    Args:
-        df: pd.Dataframe
-            Pandas dataframe representing daily averaged values from datastream to add COP columns to. Adds column called 'COP_DHWSys_1' to the dataframe in place
-            The dataframe needs to already have two columns, 'HeatOut_Primary' and 'PowerIn_Total' to calculate COP_DHWSys_1
-        recircLosses: float or pd.Series
-            If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
-            If reciculation losses measurements are in datastream, this should be a column of df.
-            Units should be in kW.
-    Returns: 
-        pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_1
+    Parameters
+    ----------
+    df: pd.Dataframe
+        Pandas dataframe representing daily averaged values from datastream to add COP columns to. Adds column called 'COP_DHWSys_1' to the dataframe in place
+        The dataframe needs to already have two columns, 'HeatOut_Primary' and 'PowerIn_Total' to calculate COP_DHWSys_1
+    recircLosses: float or pd.Series
+        If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
+        If reciculation losses measurements are in datastream, this should be a column of df.
+        Units should be in kW.
+
+    Returns
+    -------
+    pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_1
     """
     columns_to_check = ['HeatOut_Primary', 'PowerIn_Total']
 
@@ -371,19 +406,21 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
     Performs COP calculation method 2 as defined by Scott's whiteboard image
     COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
 
-    Args: 
-        df: pd.DataFrame
-            Pandas DataFrame to add COP columns to. The dataframe needs to have a column for the COP of the primary system (see cop_primary_column_name)
-            as well as a column called 'PowerIn_Total' for the total system power and columns prefixed with 'PowerIn_HPWH' or 'PowerIn_SecLoopPump' for 
-            power readings taken for HPWHs/primary systems and columns prefixed with 'PowerIn_SwingTank' or 'PowerIn_ERTank' for power readings taken for 
-            Temperature Maintenance systems
-        cop_tm: float
-            fixed COP value for temputure Maintenece system
-        cop_primary_column_name: str
-            Name of the column used for COP_Primary values
+    Parameters
+    ---------- 
+    df: pd.DataFrame
+        Pandas DataFrame to add COP columns to. The dataframe needs to have a column for the COP of the primary system (see cop_primary_column_name)
+        as well as a column called 'PowerIn_Total' for the total system power and columns prefixed with 'PowerIn_HPWH' or 'PowerIn_SecLoopPump' for 
+        power readings taken for HPWHs/primary systems and columns prefixed with 'PowerIn_SwingTank' or 'PowerIn_ERTank' for power readings taken for 
+        Temperature Maintenance systems
+    cop_tm: float
+        fixed COP value for temputure Maintenece system
+    cop_primary_column_name: str
+        Name of the column used for COP_Primary values
 
-    Returns:
-        pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_2 
+    Returns
+    -------
+    pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_2 
     """
     columns_to_check = [cop_primary_column_name, 'PowerIn_Total']
 
@@ -420,19 +457,22 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadsh
     The function will only trim the returned dataframes such that only averages from complete hours and
     complete days are returned rather than agregated data from partial datasets.
 
-    Args: 
-        df: pd.DataFrame
-            Single pandas dataframe of minute-by-minute sensor data.
-        ls_filename: str
-            Path to csv file containing load shift schedule (default value of loadshift_matrix.csv in configured input location),
-            There should be at least four columns in this csv: 'date', 'startTime', 'endTime', and 'event'
-    Returns:
-        daily_df: pd.DataFrame
-            agregated daily dataframe that contains all daily information as well as the 'load_shift_day' column if
-            relevant to the data set.
-        hourly_df: pd.DataFrame
-            agregated hourly dataframe that contains all hourly information as well as the 'system_state' column if
-            relevant to the data set.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of minute-by-minute sensor data.
+    ls_filename : str
+        Path to csv file containing load shift schedule (default value of loadshift_matrix.csv in configured input location),
+        There should be at least four columns in this csv: 'date', 'startTime', 'endTime', and 'event'
+    
+    Returns
+    -------
+    daily_df : pd.DataFrame
+        agregated daily dataframe that contains all daily information as well as the 'load_shift_day' column if
+        relevant to the data set.
+    hourly_df : pd.DataFrame
+        agregated hourly dataframe that contains all hourly information as well as the 'system_state' column if
+        relevant to the data set.
     """
     # If df passed in empty, we just return empty dfs for hourly_df and daily_df
     if (df.empty):
@@ -484,10 +524,16 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadsh
 def create_summary_tables(df: pd.DataFrame):
     """
     Revamped version of "aggregate_data" function. Creates hourly and daily summary tables.
-    Args: 
-        df (pd.DataFrame): Single pandas dataframe of minute-by-minute sensor data.
-    Returns: 
-        pd.DataFrame: Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data. 
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of minute-by-minute sensor data.
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data. 
     """
     # If df passed in empty, we just return empty dfs for hourly_df and daily_df
     if (df.empty):
@@ -519,11 +565,17 @@ def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame) -> pd.Dat
     """
     Function left-joins the weather data to the hourly dataframe.
 
-    Args: 
-        hourly_data (pd.DataFrame):Hourly dataframe
-        noaa_data (pd.DataFrame): noaa dataframe
-    Returns: 
-        pd.DataFrame: A single, joined dataframe
+    Parameters
+    ---------- 
+    hourly_data : pd.DataFrame
+        Hourly dataframe
+    noaa_data : pd.DataFrame
+        noaa dataframe
+    
+    Returns
+    -------
+    pd.DataFrame:
+        A single, joined dataframe
     """
     out_df = hourly_data.join(noaa_data)
     return out_df
@@ -533,11 +585,17 @@ def join_to_daily(daily_data: pd.DataFrame, cop_data: pd.DataFrame) -> pd.DataFr
     """
     Function left-joins the the daily data and COP data.
 
-    Args: 
-        daily_data (pd.DataFrame): Daily dataframe
-        cop_data (pd.DataFrame): cop_values dataframe
-    Returns: 
-        pd.DataFrame: A single, joined dataframe
+    Parameters
+    ---------- 
+    daily_data : pd.DataFrame
+        Daily dataframe
+    cop_data : pd.DataFrame
+        cop_values dataframe
+    
+    Returns
+    -------
+    pd.DataFrame
+        A single, joined dataframe
     """
     out_df = daily_data.join(cop_data)
     return out_df

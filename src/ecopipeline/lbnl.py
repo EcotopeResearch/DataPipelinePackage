@@ -13,11 +13,18 @@ import os
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
     """
     Does Site Specific Calculations for LBNL. The site name is searched using RegEx
-    Args: 
-        df (pd.DataFrame): dataframe of data 
-        site (str): site name as a string
-    Output: 
-        pd.DataFrame: modified dataframe
+    
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        dataframe of data 
+    site : str
+        site name as a string
+    
+    Returns
+    -------  
+    pd.DataFrame: 
+        modified dataframe
     """
     # Bob's site notes says add 55 Pa to the Pressure
     if re.search("MO2_", site):
@@ -78,12 +85,20 @@ def lbnl_temperature_conversions(df: pd.DataFrame) -> pd.DataFrame:
 def condensate_calculations(df: pd.DataFrame, site: str, site_info: pd.Series) -> pd.DataFrame:
     """
     Calculates condensate values for the given dataframe
-    Args:
-        df (pd.DataFrame): dataframe to be modified
-        site (str): name of site
-        site_info (pd.Series): Series of site info
-    Returns:
-        pd.DataFrame: modified dataframe
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe to be modified
+    site : str
+        name of site
+    site_info : pd.Series
+        Series of site info
+    
+    Returns
+    -------
+    pd.DataFrame: 
+        modified dataframe
     """
     oz_2_m3 = 1 / 33810  # [m3/oz]
     water_density = 997  # [kg/m³]
@@ -116,11 +131,17 @@ def gas_valve_diff(df: pd.DataFrame, site: str) -> pd.DataFrame:
     Function takes in the site dataframe and the site name. If the site has gas 
     heating, take the lagged difference to get per minute values. 
     
-    Args: 
-        df (pd.DataFrame): Dataframe for site
-        site (str): site name as string
-    Returns: 
-        pd.DataFrame: modified Pandas Dataframe 
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        Dataframe for site
+    site : str
+        site name as string
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        modified Pandas Dataframe 
     """
     input_dir = configure.get('input', 'directory')
     site_info_path = input_dir + configure.get('input', 'site_info')
@@ -150,11 +171,17 @@ def _subcooling(row, lr_model):
     Function takes in a Pandas series and a linear regression model, calculates 
     Refrig_charge for the Pandas series with that model, then inserts it into the series and returns it. 
     
-    Args: 
-        row (pd.Series): Pandas series
-        lr_model (sklearn.linear_model.Fit): Linear regression model
-    Returns: 
-        row (pd.Series): Pandas series (Refrig_charge added!)
+    Parameters
+    ---------- 
+    row : pd.Series
+        Pandas series
+    lr_model : sklearn.linear_model.Fit
+        Linear regression model
+    
+    Returns
+    ------- 
+    row : pd.Series
+        Pandas series (Refrig_charge added!)
     """
     # linear regression model gets passed in, we use it to calculate sat_temp_f, then take difference
     x = row.loc["Pressure_SL_psi"]
@@ -173,13 +200,16 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     """
     Function takes in a Pandas series, ranges from a csv, and a linear regression model 
     in order to calculate Refrig_charge for the given row through linear interpolation. 
-    Args: 
+    
+    Parameters
+    ---------- 
         row (pd.Series): Pandas series
         x_range (<class 'list'>): List of ints
         row_range (<class 'list'>): List of ints
         superchart (pd.Dataframe): Pandas dataframe, big grid of ints
         lr_model (sklearn.linear_model.Fit): Linear regression model
-    Returns: 
+    Returns
+    ------- 
         row (pd.Series): Pandas series (Refrig_charge added!)
     """
     superheat_target = np.NaN
@@ -238,14 +268,23 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str = f"
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
     charge per minute? 
     
-    Args: 
-        df (pd.DataFrame): Pandas Dataframe
-        site (str): site name as a string 
-        site_info_path (str): path to site_info.csv as a string
-        four_path (str) path to 410a_pt.csv as a string
-        superheat_path (str): path to superheat.csv as a string
-    Returns: 
-        pd.DataFrame: modified Pandas Dataframe
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        Pandas Dataframe
+    site : str
+        site name as a string 
+    site_info_path : str
+        path to site_info.csv as a string
+    four_path : str
+        path to 410a_pt.csv as a string
+    superheat_path : str
+        path to superheat.csv as a string
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        modified Pandas Dataframe
     """   
     #if DF empty, return the df as is
     if(df.empty):
@@ -290,11 +329,17 @@ def gather_outdoor_conditions(df: pd.DataFrame, site: str) -> pd.DataFrame:
     Function takes in a site dataframe and site name as a string. Returns a new dataframe
     that contains time_utc, <site>_ODT, and <site>_ODRH for the site.
     
-    Args: 
-        df (pd.DataFrame): Pandas Dataframe
-        site (str): site name as string
-    Returns: 
-        pd.DataFrame: new Pandas Dataframe
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        Pandas Dataframe
+    site : str
+        site name as string
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        new Pandas Dataframe
     """
     if (not df.empty):
       df = df.reset_index()
@@ -371,11 +416,17 @@ def change_ID_to_HVAC(df: pd.DataFrame, site_info : pd.Series) -> pd.DataFrame:
     Function takes in a site dataframe along with the name and path of the site and assigns
     a unique event_ID value whenever the system changes state.
     
-    Args: 
-        df (pd.DataFrame): Pandas Dataframe
-        site_info (pd.Series):site_info.csv as a pd.Series
-    Returns: 
-        pd.DataFrame: modified Pandas Dataframe
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        Pandas Dataframe
+    site_info : pd.Series
+        site_info.csv as a pd.Series
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        modified Pandas Dataframe
     """
     
     if ("Power_FURN1" in list(df.columns)):
@@ -402,11 +453,17 @@ def nclarity_filter_new(date: str, filenames: List[str]) -> List[str]:
     """
     Function filters the filenames list to only those from the given date or later.
     
-    Args: 
-        date (str): target date
-        filenames (List[str]): List of filenames to be filtered
-    Returns: 
-        List[str]: Filtered list of filenames
+    Parameters
+    ---------- 
+    date : str
+        target date
+    filenames : List[str]
+        List of filenames to be filtered
+
+    Returns
+    ------- 
+    List[str]: 
+        Filtered list of filenames
     """
     date = dt.datetime.strptime(date, '%Y-%m-%d')
     return list(filter(lambda filename: dt.datetime.strptime(filename[-18:-8], '%Y-%m-%d') >= date, filenames))
@@ -415,10 +472,16 @@ def nclarity_filter_new(date: str, filenames: List[str]) -> List[str]:
 def nclarity_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     """
     Function takes a list of csv filenames containing nclarity data and reads all files into a singular dataframe.
-    Args: 
-        csv_filenames (List[str]): List of filenames 
-    Returns: 
-        pd.DataFrame: Pandas Dataframe containing data from all files
+    
+    Parameters
+    ---------- 
+    csv_filenames : List[str]
+        List of filenames 
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files
     """
     temp_dfs = []
     for filename in csv_filenames:
@@ -440,10 +503,16 @@ def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
     and sorts the entire dataframe by time.
     Prereq: 
         Input dataframe MUST be an aqsuite Dataframe whose columns have not yet been renamed
-    Args: 
-        df (pd.DataFrame): Aqsuite DataFrame
-    Returns: 
-        pd.DataFrame: Pandas Dataframe containing data from all files
+
+    Parameters
+    ---------- 
+    df : pd.DataFrame)
+        Aqsuite DataFrame
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files
     """
     df['time(UTC)'] = pd.to_datetime(df['time(UTC)'])
     df = df.sort_values(by='time(UTC)')
@@ -453,13 +522,22 @@ def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
 def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str = f'{_input_directory}previous.pkl') -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
-    Args: 
-        last_date (str): latest date loaded prior to current runtime
-        filenames (List[str]): List of filenames to be filtered
-        site (str): site name
-        prev_opened (str): pkl directory for previously opened files
-    Returns: 
-        List[str]: Filtered list of filenames
+    
+    Parameters
+    ---------- 
+    last_date : str
+        latest date loaded prior to current runtime
+    filenames : List[str]
+        List of filenames to be filtered
+    site : str
+        site name
+    prev_opened : str
+        pkl directory for previously opened files
+    
+    Returns
+    ------- 
+    List[str]: 
+        Filtered list of filenames
     """
     # Opens the df that contains the dictionary of what each file is
     if os.path.exists(prev_opened):
@@ -500,11 +578,18 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     LBNL's nclarity files do not contain the date in the time column. This
     helper function extracts the date from the filename and adds it to the 
     time column of the data.
-    Args: 
-        df (pd.DataFrame): Dataframe
-        filename (str): filename as string
-    Returns:
-        pd.DataFrame: Modified dataframe
+    
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        Dataframe
+    filename :str
+        filename as string
+    
+    Returns
+    -------
+    pd.DataFrame: 
+        Modified dataframe
     """
     date = filename[-18:-8]
     df['time'] = df.apply(lambda row: date + " " + str(row['time']), axis=1)
@@ -515,9 +600,13 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
 def add_local_time(df : pd.DataFrame, site_name : str) -> pd.DataFrame:
     """
     Function adds a column to the dataframe with the local time.
-    Args:
-        df (pd.DataFrame): Dataframe
-        site_name (str): site name 
+    
+    Parameters
+    ----------
+    df :pd.DataFrame
+        Dataframe
+    site_name : str
+        site name 
     """
     input_dir = configure.get('input', 'directory')
     site_info_path = input_dir + configure.get('input', 'site_info')
@@ -539,10 +628,16 @@ def elev_correction(site_name : str) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
-    Args: 
-        site_name (str): site's name
-    Returns: 
-        pd.DataFrame: new Pandas dataframe
+    
+    Parameters
+    ---------- 
+    site_name : str
+        site's name
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        new Pandas dataframe
     """
     input_dir = configure.get('input', 'directory')
     site_info_path = input_dir + configure.get('input', 'site_info')
@@ -577,13 +672,22 @@ def elev_correction(site_name : str) -> pd.DataFrame:
 def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward: dt.datetime, site_name: str) -> pd.DataFrame:
     """
     Function replaces all humidity readings for a given site after a given datetime. 
-    Args:
-        df (pd.DataFrame): Dataframe containing the raw sensor data.
-        od_conditions (pd.DataFrame): DataFrame containing outdoor confitions measured by field sensors.
-        date_forward (dt.datetime): Datetime containing the time after which all humidity readings should be replaced.
-        site_name (str): String containing the name of the site for which humidity values are to be replaced.
-    Returns:
-        pd.DataFrame: Modified DataFrame where the Humidity_ODRH column contains the field readings after the given datetime. 
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing the raw sensor data.
+    od_conditions : pd.DataFrame
+        DataFrame containing outdoor confitions measured by field sensors.
+    date_forward : dt.datetime
+        Datetime containing the time after which all humidity readings should be replaced.
+    site_name : str
+        String containing the name of the site for which humidity values are to be replaced.
+    
+    Returns
+    -------
+    pd.DataFrame: 
+        Modified DataFrame where the Humidity_ODRH column contains the field readings after the given datetime. 
     """
     if len(od_conditions):
         df.loc[df.index > date_forward, "Humidity_ODRH"] = np.nan
@@ -600,11 +704,18 @@ def replace_humidity(df: pd.DataFrame, od_conditions: pd.DataFrame, date_forward
 def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.Series) -> pd.DataFrame:
     """
     Create fan curves for each site.
-    Args:
-        cfm_info (pd.DataFrame): DataFrame of fan curve information.
-        site_info (pd.Series): Series containing the site information.
-    Returns:
-        pd.DataFrame: Dataframe containing the fan curves for each site.
+    
+    Parameters
+    ----------
+    cfm_info : pd.DataFrame
+        DataFrame of fan curve information.
+    site_info : pd.Series
+        Series containing the site information.
+    
+    Returns
+    -------
+    pd.DataFrame:
+        Dataframe containing the fan curves for each site.
     """
 
     # Convert furnace power from kW to W
@@ -627,10 +738,13 @@ def create_fan_curves(cfm_info: pd.DataFrame, site_info: pd.Series) -> pd.DataFr
     def estimate_coefficients(group):
         """
         Estimate coefficients for the fan curve.
-        Args:
-            group (pd.DataFrame): Dataframe containing the data for a given site.
-        Returns:
-            pd.Series: Series containing the coefficients for the fan curve.
+        Parameters
+        ----------
+        group (pd.DataFrame): Dataframe containing the data for a given site.
+        
+        Returns
+        -------
+        pd.Series: Series containing the coefficients for the fan curve.
         """
         X = group[['ID_blower_rms_watts']].values ** 0.3333 - 1
         y = group['ID_blower_cfm'].values
@@ -713,11 +827,15 @@ def get_site_info(site: str) -> pd.Series:
     """
     Returns a dataframe of the site information for the given site
     
-    Args:
-        site (str): The site name
+    Parameters
+    ----------
+    site : str
+        The site name
         
-    Returns:
-        df (pd.Series): The Series of the site information
+    Returns
+    -------
+    df : pd.Series
+        The Series of the site information
     """
     site_info_path = _input_directory + configure.get('input', 'site_info')
     df = pd.read_csv(site_info_path, skiprows=[1])
@@ -731,11 +849,15 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     Returns a dataframe of the site cfm information for the given site
     NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.
     
-    Args:
-        site (str): The site name
+    Parameters
+    ----------
+    site : str
+        The site name
         
-    Returns:
-        df (pd.DataFrame): The DataFrame of the site cfm information
+    Returns
+    -------
+    df : pd.DataFrame
+        The DataFrame of the site cfm information
     """
     site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
@@ -743,22 +865,26 @@ def get_site_cfm_info(site: str) -> pd.DataFrame:
     return df
 
 def merge_indexlike_rows(df: pd.DataFrame) -> pd.DataFrame:
-     """
-     Merges index-like rows together ensuring that all relevant information for a
-     certain timestamp is stored in one row - not in multiple rows. It also rounds the
-     timestamps to the nearest minute.
+    """
+    Merges index-like rows together ensuring that all relevant information for a
+    certain timestamp is stored in one row - not in multiple rows. It also rounds the
+    timestamps to the nearest minute.
 
-     Args:
-         file_path (str): The file path to the data.
+    Parameters
+    ----------
+    file_path : str
+        The file path to the data.
         
-     Returns:
-         df (pd.DataFrame): The DataFrame with all index-like rows merged. 
-     """
+    Returns
+    -------
+    df : pd.DataFrame
+        The DataFrame with all index-like rows merged. 
+    """
      
-     df = df.sort_index(ascending = True)
-     grouped_df = df.groupby(df.index).first()
+    df = df.sort_index(ascending = True)
+    grouped_df = df.groupby(df.index).first()
 
-     return grouped_df
+    return grouped_df
 
 
 

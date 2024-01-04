@@ -1,16 +1,17 @@
-.. Ecotope Datapipeline (Ecopipeline) documentation master file, created by
-   sphinx-quickstart on Tue May  9 10:59:26 2023.
+.. EcoPipeline documentation master file, created by
+   sphinx-quickstart on Thu Mar 30 12:19:19 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Ecotope Datapipeline (Ecopipeline)'s documentation!
-==============================================================
+EcoPipeline Documentation
+==========================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+.. automodule:: ecopipeline
+    :members:
 
 Indices and tables
 ==================

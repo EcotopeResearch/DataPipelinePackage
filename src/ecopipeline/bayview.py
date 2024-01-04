@@ -10,12 +10,14 @@ def _set_zone_vol(location: pd.Series, gals: int, total: int, zones: pd.Series) 
     """
     Function that initializes the dataframe that holds the volumes of each zone.
 
-    Args:
+    Parameters
+    ---------- 
         location (pd.Series)
         gals (int) 
         total (int) 
         zones (pd.Series)
-    Returns: 
+    Returns
+    --------  
         pd.DataFrame: Pandas dataframe
     """
     relative_loc = location
@@ -34,7 +36,8 @@ def _largest_less_than(df_row: pd.Series, target: int) -> str:
     Function takes a sensor row and a target temperature and determines
     the zone with the highest temperature < 120 degrees.
 
-    Args: 
+    Parameters
+    ----------  
         df_row (pd.DataFrame): A single row of a sensor Pandas Dataframe in a series 
         target (int): integer target
     Output: 
@@ -55,13 +58,16 @@ def _get_vol_equivalent_to_120(df_row: pd.Series, location: pd.Series, gals: int
     """
     Function takes a row of sensor data and finds the total volume of water > 120 degrees.
 
-    Args: 
+    Parameters
+    ----------  
         df_row (pd.Series) 
         location (pd.Series)
         gals (int)
         total (int)
         zones (pd.Series)
-    Returns: 
+    
+    Returns
+    -------  
         float: A float of the total volume of water > 120 degrees
     """
     try:
@@ -105,14 +111,19 @@ def _get_V120(df_row: pd.Series, location: pd.Series, gals: int, total: int, zon
     Function takes a row of sensor data and determines the volume of water > 120 degrees
     in the zone that has the highest sensor < 120 degrees.
 
-    Args: 
-        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
-        location (pd.Series)
-        gals (int)
-        total (int)
-        zones (pd.Series)
-    Returns: 
-        float: A float of the total volume of water > 120 degrees     
+    Parameters
+    ----------  
+    df_row : pd.Series
+        A single row of a sensor Pandas Dataframe in a series
+    location : pd.Series
+    gals : int
+    total : int
+    zones : pd.Series
+    
+    Returns
+    -------  
+    float: 
+        A float of the total volume of water > 120 degrees     
     """
     try:
         gals_per_zone = _set_zone_vol(location, gals, total, zones)
@@ -146,10 +157,15 @@ def _get_zone_Temp120(df_row: pd.Series) -> float:
     """
     Function takes a row of sensor data and determines average temperature of the temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
 
-    Args: 
-        df_row (pd.Series): A single row of a sensor Pandas Dataframe in a series
-    Returns: 
-        float: A float of the average temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
+    Parameters
+    ----------  
+    df_row : pd.Series
+        A single row of a sensor Pandas Dataframe in a series
+    
+    Returns
+    -------  
+    float: 
+        A float of the average temperature of the greater than 120 portion of the lowest zone that contains water at 120 degrees.
     """
     # if df_row["Temp_120"] != 120:
     #    return 0
@@ -177,14 +193,19 @@ def get_storage_gals120(df: pd.DataFrame, location: pd.Series, gals: int, total:
     """
     Function that creates and appends the Gals120 data onto the Dataframe
 
-    Args: 
-        df (pd.Series): A Pandas Dataframe
-        location (pd.Series)
-        gals (int)
-        total (int)
-        zones (pd.Series)
-    Returns: 
-        pd.DataFrame: a Pandas Dataframe
+    Parameters
+    ----------  
+    df : pd.Series 
+        A Pandas Dataframe
+    location (pd.Series)
+    gals : int
+    total : int
+    zones : pd.Series
+    
+    Returns
+    -------  
+    pd.DataFrame: 
+        a Pandas Dataframe
     """
     if (len(df) > 0):
         df['Vol120'] = df.apply(_get_V120, axis=1, args=(
@@ -200,11 +221,16 @@ def _calculate_average_zone_temp(df: pd.DataFrame, substring: str):
     """
     Function that calculates the average temperature of the inputted zone.
 
-    Args: 
-        df (pd.Series): A Pandas Dataframe
-        substring (str)
-    Returns: 
-        pd.DataFrame: a Pandas Dataframe
+    Parameters
+    ----------  
+    df : pd.Series
+        A Pandas Dataframe
+    substring : str
+    
+    Returns
+    -------  
+    pd.DataFrame: 
+        a Pandas Dataframe
     """
     try:
         df_subset = df[[x for x in df if substring in x]]
@@ -220,10 +246,15 @@ def get_temp_zones120(df: pd.DataFrame) -> pd.DataFrame:
     Function that keeps track of the average temperature of each zone.
     for this function to work, naming conventions for each parrallel tank must include 'Temp1' as the tempature at the top of the tank, 'Temp5' as that at the bottom of the tank, and 'Temp2'-'Temp4' as the tempatures in between.
 
-    Args: 
-        df (pd.Series): A Pandas Dataframe
-    Returns: 
-        pd.DataFrame: a Pandas Dataframe
+    Parameters
+    ----------  
+    df : pd.Series
+        A Pandas Dataframe
+    
+    Returns
+    -------  
+    pd.DataFrame: 
+        a Pandas Dataframe
     """
     df['Temp_top'] = _calculate_average_zone_temp(df, "Temp1")
     df['Temp_midtop'] = _calculate_average_zone_temp(df, "Temp2")
@@ -237,10 +268,15 @@ def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
     Energy is recorded cummulatively. Function takes the lagged differences in 
     order to get a per/minute value for each of the energy variables.
 
-    Args: 
-        df (pd.DataFrame): Pandas dataframe
-    Returns: 
-        pd.DataFrame: Pandas dataframe
+    Parameters
+    ----------  
+    df : pd.DataFrame
+        Pandas dataframe
+    
+    Returns
+    -------  
+    pd.DataFrame: 
+        Pandas dataframe
     """
     energy_vars = df.filter(regex=".*Energy.*")
     energy_vars = energy_vars.filter(regex=".*[^BTU]$")
@@ -256,10 +292,15 @@ def verify_power_energy(df: pd.DataFrame):
 
     Prereq: 
         Input dataframe MUST have had get_energy_by_min() called on it previously
-    Args: 
-        df (pd.DataFrame): Pandas dataframe
-    Returns:
-        None
+    
+    Parameters
+    ----------  
+    df : pd.DataFrame
+        Pandas dataframe
+    
+    Returns
+    ------- 
+    None
     """
 
     out_df = pd.DataFrame(columns=['time_pt', 'power_variable', 'energy_variable',
@@ -298,12 +339,17 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
     """
     Gets daily average of data for all relevant varibles. 
 
-    Args:
-        df (pd.DataFrame): Pandas DataFrame of minute by minute data
-        thermo_slice (str): indicates the time at which slicing begins. If none no slicing is performed. The format of the thermo_slice string is "HH:MM AM/PM".
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        Pandas DataFrame of minute by minute data
+    thermo_slice : str
+        indicates the time at which slicing begins. If none no slicing is performed. The format of the thermo_slice string is "HH:MM AM/PM".
 
-    Returns: 
-        pd.DataFrame: Pandas DataFrame which contains the aggregated hourly data.
+    Returns
+    -------  
+    pd.DataFrame: 
+        Pandas DataFrame which contains the aggregated hourly data.
     """
     
     avg_sd = df[['Flow_CityWater', 'Flow_CityWater_atSkid', 'Temp_PrimaryStorageOutTop']].resample('D').mean()
@@ -340,13 +386,19 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
     """
     Performs COP calculations using the daily aggregated data. 
 
-    Args: 
-        df (pd.DataFrame): Pandas DataFrame to add COP columns to
-        heatloss_fixed (float): fixed heatloss value 
-        thermo_slice (str): the time at which slicing begins if we would like to thermo slice. 
+    Parameters
+    ----------  
+    df : pd.DataFrame
+        Pandas DataFrame to add COP columns to
+    heatloss_fixed : float
+        fixed heatloss value 
+    thermo_slice : str
+        the time at which slicing begins if we would like to thermo slice. 
 
-    Returns: 
-        pd.DataFrame: Pandas DataFrame with the added COP columns. 
+    Returns
+    --------  
+    pd.DataFrame:
+        Pandas DataFrame with the added COP columns. 
     """
     cop_inter = pd.DataFrame()
     if (len(df) != 0):
