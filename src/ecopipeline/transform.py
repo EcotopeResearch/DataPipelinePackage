@@ -444,9 +444,11 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
     
     # Create new DataFrame with one column called 'PowerIn_Primary' that contains the sum of the specified columns
     sum_power_in_df = pd.DataFrame({'PowerIn_Primary': df[sum_primary_cols].sum(axis=1),
-                                    'PowerIn_TM': df[sum_tm_cols].sum(axis=1)})
+                                    'PowerIn_TM': df[sum_tm_cols].sum(axis=1)
+                                    })
 
     df['COP_DHWSys_2'] = (df[cop_primary_column_name] * (sum_power_in_df['PowerIn_Primary']/df['PowerIn_Total'])) + (cop_tm * (sum_power_in_df['PowerIn_TM']/df['PowerIn_Total']))
+
     return df
 
 def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadshift_matrix.csv") -> (pd.DataFrame, pd.DataFrame):
