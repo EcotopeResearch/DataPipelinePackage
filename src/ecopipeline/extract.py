@@ -256,7 +256,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
     df.index = df.index.floor('T')
     
     #group and sort index
-    df = df.groupby(df.index).mean()
+    df = df.groupby(df.index).mean(numeric_only=True)
     df.sort_index(inplace = True)
 
     return df

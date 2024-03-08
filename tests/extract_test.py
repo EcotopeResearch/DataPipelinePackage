@@ -67,33 +67,64 @@ def test_extract_new():
     assert extract_new(date, file_names, False) == ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz"]
     assert extract_new(date, file_names, False, "US/Pacific") == ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz"]
 
-def test_csv_to_df_mb():   
-    with patch('pandas.read_csv') as mock_read_csv:
-        mock_read_csv.side_effect = [
-            pd.DataFrame({
+@pytest.mark.parametrize(
+        "file_1_df, file_2_df, expected_df", 
+        [
+            (
+                pd.DataFrame({
                 'time(UTC)': ['2023-07-11 10:00:00', '2023-07-11 10:01:00'],
                 'sensor_1': [10,15],
                 'sensor_2': [20,25],
                 'sensor_3': [30,35]
-            }),
-            pd.DataFrame({
-                'time(UTC)': ['2023-07-11 10:01:00', '2023-07-11 10:05:00','2023-07-12 10:05:00'],
-                'sensor_1': [0.02,12.3, 8.715],
-                'sensor_2': [800,None, None],
-                'sensor_3': [45,45.327, None]
-            })
+                }),
+                pd.DataFrame({
+                    'time(UTC)': ['2023-07-11 10:01:00', '2023-07-11 10:05:00','2023-07-12 10:05:00'],
+                    'sensor_1': [0.02,12.3, 8.715],
+                    'sensor_2': [800,None, None],
+                    'sensor_3': [45,45.327, None]
+                }),
+                pd.DataFrame({
+                    'time(UTC)': ['2023-07-11 10:00:00', '2023-07-11 10:01:00','2023-07-11 10:05:00','2023-07-12 10:05:00'],
+                    'mb-001_sensor_1': [10,15,None,None],
+                    'mb-001_sensor_2': [20,25,None,None],
+                    'mb-001_sensor_3': [30,35,None,None],
+                    'mb-002_sensor_1': [None,0.02,12.3, 8.715],
+                    'mb-002_sensor_2': [None,800,None, None],
+                    'mb-002_sensor_3': [None,45,45.327, None]
+                })
+            ),
+            (
+                pd.DataFrame({
+                'time(UTC)': ['2023-07-11 10:00:01', '2023-07-11 10:01:59'],
+                'sensor_1': [10,15],
+                'sensor_2': [20,25],
+                'sensor_3': [30,35]
+                }),
+                pd.DataFrame({
+                    'time(UTC)': ['2023-07-11 10:01:01', '2023-07-11 10:01:02','2023-07-12 10:05:48'],
+                    'sensor_1': [0.02,0.04, 8.715],
+                    'sensor_2': [800,None, None],
+                    'sensor_3': [45,46, None]
+                }),
+                pd.DataFrame({
+                    'time(UTC)': ['2023-07-11 10:00:00', '2023-07-11 10:01:00','2023-07-12 10:05:00'],
+                    'mb-001_sensor_1': [10,15,None],
+                    'mb-001_sensor_2': [20,25,None],
+                    'mb-001_sensor_3': [30,35,None],
+                    'mb-002_sensor_1': [None,0.03, 8.715],
+                    'mb-002_sensor_2': [None,800, None],
+                    'mb-002_sensor_3': [None,45.5, None]
+                })
+            )
+
         ]
-        normal_df = pd.DataFrame(
-            {
-                'time(UTC)': ['2023-07-11 10:00:00', '2023-07-11 10:01:00','2023-07-11 10:05:00','2023-07-12 10:05:00'],
-                'mb-001_sensor_1': [10,15,None,None],
-                'mb-001_sensor_2': [20,25,None,None],
-                'mb-001_sensor_3': [30,35,None,None],
-                'mb-002_sensor_1': [None,0.02,12.3, 8.715],
-                'mb-002_sensor_2': [None,800,None, None],
-                'mb-002_sensor_3': [None,45,45.327, None]
-            }
-        )
+)
+def test_csv_to_df_mb(file_1_df, file_2_df, expected_df):   
+    with patch('pandas.read_csv') as mock_read_csv:
+        mock_read_csv.side_effect = [
+            file_1_df,
+            file_2_df
+        ]
 
         result_df = csv_to_df(["file/path/to/whatever/mb-001.652939A5_1.log.csv", "file/path/to/whatever/mb-002.65083340_1.log.csv"],True)
         # Get the list of call arguments
@@ -101,7 +132,6 @@ def test_csv_to_df_mb():
         assert calls[0] == (("file/path/to/whatever/mb-001.652939A5_1.log.csv",), {})
         assert calls[1] == (("file/path/to/whatever/mb-002.65083340_1.log.csv",), {})
 
-        normal_df['time(UTC)'] = pd.to_datetime(normal_df['time(UTC)'])
-        normal_df.set_index('time(UTC)', inplace=True)
-        # normal_df.columns.name = 'id'
-        assert_frame_equal(result_df, normal_df)
+        expected_df['time(UTC)'] = pd.to_datetime(expected_df['time(UTC)'])
+        expected_df.set_index('time(UTC)', inplace=True)
+        assert_frame_equal(result_df, expected_df)
