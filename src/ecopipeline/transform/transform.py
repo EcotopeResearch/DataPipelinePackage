@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import csv
 import os
-from ecopipeline.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu, power_flow_to_kW
+from ecopipeline.utils.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu, power_flow_to_kW
 from ecopipeline.config import _input_directory, _output_directory
 
 pd.set_option('display.max_columns', None)

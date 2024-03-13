@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import gzip
 import os
 import json
-from ecopipeline.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
+from ecopipeline.utils.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from ecopipeline.load import connect_db, get_login_info
 from ecopipeline.config import _config_directory, _data_directory
 import numpy as np

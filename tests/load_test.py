@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 import pandas as pd
 import datetime
-from ecopipeline import load_overwrite_database, create_new_table, check_table_exists, connect_db
+from ecopipeline.load import *
 from ecopipeline.config import _config_directory
 import numpy as np
 import math

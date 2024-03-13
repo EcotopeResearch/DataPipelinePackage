@@ -1,0 +1,334 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Extract Documentation &#8212; DataPipelinePackage 0.0.60 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="extract-documentation">
+<h1>Extract Documentation<a class="headerlink" href="#extract-documentation" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<span class="target" id="module-ecopipeline.extract"></span><dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.csv_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.csv_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>csv_filenames: List[str]</strong></dt><dd><p>List of filenames to be processed into a single dataframe</p>
+</dd>
+<dt><strong>mb_prefix: bool</strong></dt><dd><p>A boolean that signifys if the data is in modbus form- if set to true, will prepend modbus prefix to each raw varriable name</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
+(with prepended modbus prefix if mb_prefix = True)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.extract_files">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>extension</strong><span class="classifier">str</span></dt><dd><p>File extension as string</p>
+</dd>
+<dt><strong>subdir</strong><span class="classifier">str</span></dt><dd><p>subdirectory (defaults to no subdir)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>List[str]:</dt><dd><p>List of filenames</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.extract_new">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decihex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeZone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function filters the filenames to only those equal to or newer than the date specified startTime.
+If filenames are in deciheximal, The function can still handel it. Note that for some projects,
+files are dropped at irregular intervals so data cannot be filtered by exact date.</p>
+<p>Currently, this function expects file names to be in one of two formats:</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>normal (set decihex = False) format assumes file names are in format such that characters [-17,-3] in the file names string</dt><dd><p>are the files date in the form “%Y%m%d%H%M%S”</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>deciheximal (set decihex = True) format assumes file names are in format such there is a deciheximal value between a ‘.’ and ‘_’ character in each filename string</dt><dd><p>that has a deciheximal value equal to the number of seconds since January 1, 1970 to represent the timestamp of the data in the file.</p>
+</dd>
+</dl>
+</li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>startTime: datetime</strong></dt><dd><p>The point in time for which we want to start the data extraction from. This
+is local time from the data’s index.</p>
+</dd>
+<dt><strong>filenames: List[str]</strong></dt><dd><p>List of filenames to be filtered by those equal to or newer than startTime</p>
+</dd>
+<dt><strong>decihex: bool</strong></dt><dd><p>Defaults to False. Set to True if filenames contain date of data in deciheximal format</p>
+</dd>
+<dt><strong>timeZone: str</strong></dt><dd><p>The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a
+time stamp by the pandas tz_localize() function <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html">https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html</a>
+defaults to None</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>List[str]:</dt><dd><p>Filtered list of filenames</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.get_db_row_from_time">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_db_row_from_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_db_row_from_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>time</strong><span class="classifier">datetime</span></dt><dd><p>The time index to get the row from</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing the row or empty if no row exists for the timestamp</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.get_last_full_day_from_db">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_last_full_day_from_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">datetime</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_last_full_day_from_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function retrieves the last line from the database with the most recent datetime
+in local time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>None</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>datetime:</dt><dd><p>end of last full day populated in database or default past time if no data found</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.get_noaa_data">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_noaa_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">station_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_noaa_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>station_names</strong><span class="classifier">List[str]</span></dt><dd><p>List of Station Names</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>dict:</dt><dd><p>Dictionary with key as Station Name and Value as DF of Parsed Weather Data</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.get_sub_dirs">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_sub_dirs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.get_sub_dirs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory.
+This is used when multiple sites are being ran in same pipeline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dir</strong><span class="classifier">str</span></dt><dd><p>Directory as a string.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>List[str]:</dt><dd><p>List of paths to subfolders.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.json_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">json_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.json_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes a list of gz/json filenames and reads all files into a singular dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>json_filenames: List[str]</strong></dt><dd><p>List of filenames to be processed into a single dataframe</p>
+</dd>
+<dt><strong>time_zone: str</strong></dt><dd><p>The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a
+time stamp by the pandas tz_localize() function <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html">https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html</a>
+defaults to ‘US/Pacific’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from all files with column headers the same as the variable names in the files</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.msa_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">msa_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.msa_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>csv_filenames</strong><span class="classifier">List[str]</span></dt><dd><p>List of filenames</p>
+</dd>
+<dt><strong>mb_prefix</strong><span class="classifier">bool</span></dt><dd><p>signifys in modbus form- if set to true, will append modbus prefix to each raw varriable</p>
+</dd>
+<dt><strong>timezone</strong><span class="classifier">str</span></dt><dd><p>local timezone, default is pacific</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from all files</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="../search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Extract Documentation</a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.csv_to_df"><code class="docutils literal notranslate"><span class="pre">csv_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.extract_files"><code class="docutils literal notranslate"><span class="pre">extract_files()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.extract_new"><code class="docutils literal notranslate"><span class="pre">extract_new()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.get_db_row_from_time"><code class="docutils literal notranslate"><span class="pre">get_db_row_from_time()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.get_last_full_day_from_db"><code class="docutils literal notranslate"><span class="pre">get_last_full_day_from_db()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.get_noaa_data"><code class="docutils literal notranslate"><span class="pre">get_noaa_data()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.get_sub_dirs"><code class="docutils literal notranslate"><span class="pre">get_sub_dirs()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.json_to_df"><code class="docutils literal notranslate"><span class="pre">json_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.msa_to_df"><code class="docutils literal notranslate"><span class="pre">msa_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/extract/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2023, Ecotope Inc..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    </div>
+  </body>
+</html>
