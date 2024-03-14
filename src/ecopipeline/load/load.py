@@ -16,9 +16,9 @@ data_map = {'int64':'float',
                 'object':'varchar(25)',
                 'bool': 'boolean'}
 
-def get_login_info(table_headers: list, config_info : str) -> dict:
+def get_login_info(table_headers: list, config_file_path : str) -> dict:
     """
-    Reads the config.ini file stored in the config_info file path.   
+    Reads the config.ini file stored in the config_file_path file path.   
 
     Parameters
     ---------- 
@@ -28,7 +28,7 @@ def get_login_info(table_headers: list, config_info : str) -> dict:
         header for each table you wish to write into. The first header must correspond 
         to the login information of the database. The other are the tables which you wish
         to write to. 
-    config_info : str
+    config_file_path : str
         The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
         This file should contain login information for MySQL database where data is to be loaded. 
 
@@ -41,12 +41,12 @@ def get_login_info(table_headers: list, config_info : str) -> dict:
         tables. 
     """
 
-    if not os.path.exists(config_info):
-        print(f"File path '{config_info}' does not exist.")
+    if not os.path.exists(config_file_path):
+        print(f"File path '{config_file_path}' does not exist.")
         sys.exit()
 
     configure = configparser.ConfigParser()
-    configure.read(config_info)
+    configure.read(config_file_path)
 
     db_connection_info = {
         "database": {'user': configure.get('database', 'user'),
@@ -59,7 +59,7 @@ def get_login_info(table_headers: list, config_info : str) -> dict:
     
     db_connection_info.update(db_table_info)
 
-    print(f"Successfully fetched configuration information from file path {config_info}.")
+    print(f"Successfully fetched configuration information from file path {config_file_path}.")
     return db_connection_info
     
 

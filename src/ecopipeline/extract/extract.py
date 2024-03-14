@@ -14,14 +14,14 @@ from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 
 
-def get_last_full_day_from_db(config_info : str) -> datetime:
+def get_last_full_day_from_db(config_file_path : str) -> datetime:
     """
     Function retrieves the last line from the database with the most recent datetime 
     in local time.
     
     Parameters
     ---------- 
-    config_info : str
+    config_file_path : str
         The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
         This file should contain login information for MySQL database where data is to be loaded. 
     
@@ -30,7 +30,7 @@ def get_last_full_day_from_db(config_info : str) -> datetime:
     datetime:
         end of last full day populated in database or default past time if no data found
     """
-    config_dict = get_login_info(["minute"], config_info)
+    config_dict = get_login_info(["minute"], config_file_path)
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
     
@@ -57,7 +57,7 @@ def get_last_full_day_from_db(config_info : str) -> datetime:
     
     return return_time
 
-def get_db_row_from_time(time: datetime, config_info : str) -> pd.DataFrame:
+def get_db_row_from_time(time: datetime, config_file_path : str) -> pd.DataFrame:
     """
     Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists
 
@@ -65,7 +65,7 @@ def get_db_row_from_time(time: datetime, config_info : str) -> pd.DataFrame:
     ---------- 
     time : datetime
         The time index to get the row from
-    config_info : str
+    config_file_path : str
         The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
         This file should contain login information for MySQL database where data is to be loaded. 
     
@@ -74,7 +74,7 @@ def get_db_row_from_time(time: datetime, config_info : str) -> pd.DataFrame:
     pd.DataFrame: 
         Pandas Dataframe containing the row or empty if no row exists for the timestamp
     """
-    config_dict = get_login_info(["minute"], config_info)
+    config_dict = get_login_info(["minute"], config_file_path)
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     row_data = pd.DataFrame()
 
@@ -355,7 +355,7 @@ def get_noaa_data(station_names: List[str], weather_directory : str) -> dict:
     station_names : List[str]
         List of Station Names
     weather_directory : str 
-        the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
+        the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/pipeline/data/weather")
     
     Returns
     -------
@@ -449,7 +449,7 @@ def _get_noaa_dictionary(weather_directory : str) -> dict:
 
     Args: 
         weather_directory : str 
-            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
+            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/pipeline/data/weather")
 
     Returns: 
         dict: Dictionary of station id and corrosponding station name
@@ -495,7 +495,7 @@ def _download_noaa_data(stations: dict, weather_directory : str) -> List[str]:
         stations : dict)
             dictionary of station_ids who's data needs to be downloaded
         weather_directory : str 
-            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
+            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/pipeline/data/weather")
     Returns: 
         List[str]: List of filenames that were downloaded
     """
@@ -542,7 +542,7 @@ def _convert_to_df(stations: dict, noaa_filenames: List[str], weather_directory 
         noaa_filenames : List[str]
             List of downloaded filenames
         weather_directory : str 
-            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
+            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/pipeline/data/weather")
     Returns: 
         dict: Dictionary where key is filename and value is dataframe for the file
     """

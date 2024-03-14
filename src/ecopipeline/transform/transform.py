@@ -83,7 +83,7 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str, site: st
     -------  
     df: pd.DataFrame 
         Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
-        Varriable_Names.csv.
+        Variable_Names.csv.
     """
     try:
         variable_data = pd.read_csv(variable_names_path)
@@ -464,7 +464,7 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
 
     return df
 
-def aggregate_df(df: pd.DataFrame, ls_filename: str) -> (pd.DataFrame, pd.DataFrame):
+def aggregate_df(df: pd.DataFrame, ls_filename: str = "") -> (pd.DataFrame, pd.DataFrame):
     """
     Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
     dataframes, appends 'load_shift_day' column onto the daily_df and the 'system_state' column to
@@ -510,8 +510,7 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str) -> (pd.DataFrame, pd.DataFr
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
     # appending loadshift data
-    if os.path.exists(ls_filename):
-        
+    if ls_filename != "" and os.path.exists(ls_filename):
         ls_df = pd.read_csv(ls_filename)
         # Parse 'date' and 'startTime' columns to create 'startDateTime'
         ls_df['startDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['startTime'])
