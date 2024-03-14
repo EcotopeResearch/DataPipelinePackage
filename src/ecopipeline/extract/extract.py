@@ -8,28 +8,29 @@ import os
 import json
 from ecopipeline.utils.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from ecopipeline.load import connect_db, get_login_info
-from ecopipeline.config import _config_directory, _data_directory
 import numpy as np
 import sys
 from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 
 
-def get_last_full_day_from_db() -> datetime:
+def get_last_full_day_from_db(config_info : str) -> datetime:
     """
     Function retrieves the last line from the database with the most recent datetime 
     in local time.
     
     Parameters
     ---------- 
-    None
+    config_info : str
+        The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
+        This file should contain login information for MySQL database where data is to be loaded. 
     
     Returns
     ------- 
     datetime:
         end of last full day populated in database or default past time if no data found
     """
-    config_dict = get_login_info(["minute"])
+    config_dict = get_login_info(["minute"], config_info)
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
     
@@ -56,7 +57,7 @@ def get_last_full_day_from_db() -> datetime:
     
     return return_time
 
-def get_db_row_from_time(time: datetime) -> pd.DataFrame:
+def get_db_row_from_time(time: datetime, config_info : str) -> pd.DataFrame:
     """
     Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists
 
@@ -64,13 +65,16 @@ def get_db_row_from_time(time: datetime) -> pd.DataFrame:
     ---------- 
     time : datetime
         The time index to get the row from
+    config_info : str
+        The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
+        This file should contain login information for MySQL database where data is to be loaded. 
     
     Returns
     ------- 
     pd.DataFrame: 
         Pandas Dataframe containing the row or empty if no row exists for the timestamp
     """
-    config_dict = get_login_info(["minute"])
+    config_dict = get_login_info(["minute"], config_info)
     db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     row_data = pd.DataFrame()
 
@@ -139,16 +143,16 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
         return_list = list(filter(lambda filename: int(filename[-17:-3]) >= startTime_int and (endTime is None or int(filename[-17:-3]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
-def extract_files(extension: str, subdir: str = "") -> List[str]:
+def extract_files(extension: str, data_directory: str) -> List[str]:
     """
     Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
 
     Parameters
     ----------  
     extension : str
-        File extension as string
-    subdir : str
-        subdirectory (defaults to no subdir)
+        File extension of raw data files as string (e.g. ".csv", ".gz", ...)
+    data_directory : str
+        directory containing raw data files from the data site (e.g. "full/path/to/data/")
     
     Returns
     ------- 
@@ -157,9 +161,9 @@ def extract_files(extension: str, subdir: str = "") -> List[str]:
     """
     os.chdir(os.getcwd())
     filenames = []
-    for file in os.listdir(os.path.join(_data_directory, subdir)):
+    for file in os.listdir(data_directory):
         if file.endswith(extension):
-            full_filename = os.path.join(_data_directory, subdir, file)
+            full_filename = os.path.join(data_directory, file)
             filenames.append(full_filename)
 
     return filenames
@@ -342,7 +346,7 @@ def get_sub_dirs(dir: str) -> List[str]:
     return directories
 
 
-def get_noaa_data(station_names: List[str]) -> dict:
+def get_noaa_data(station_names: List[str], weather_directory : str) -> dict:
     """
     Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.
 
@@ -350,6 +354,8 @@ def get_noaa_data(station_names: List[str]) -> dict:
     ---------- 
     station_names : List[str]
         List of Station Names
+    weather_directory : str 
+        the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
     
     Returns
     -------
@@ -358,11 +364,11 @@ def get_noaa_data(station_names: List[str]) -> dict:
     """
     formatted_dfs = {}
     try:
-        noaa_dictionary = _get_noaa_dictionary()
+        noaa_dictionary = _get_noaa_dictionary(weather_directory)
         station_ids = {noaa_dictionary[station_name]
             : station_name for station_name in station_names if station_name in noaa_dictionary}
-        noaa_filenames = _download_noaa_data(station_ids)
-        noaa_dfs = _convert_to_df(station_ids, noaa_filenames)
+        noaa_filenames = _download_noaa_data(station_ids, weather_directory)
+        noaa_dfs = _convert_to_df(station_ids, noaa_filenames, weather_directory)
         formatted_dfs = _format_df(station_ids, noaa_dfs)
     except:
         # temporary solution for NOAA ftp not including 2024
@@ -437,18 +443,20 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
     return formatted_dfs
 
 
-def _get_noaa_dictionary() -> dict:
+def _get_noaa_dictionary(weather_directory : str) -> dict:
     """
     This function downloads a dictionary of equivalent station id for each station name
 
     Args: 
-        None
+        weather_directory : str 
+            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
+
     Returns: 
         dict: Dictionary of station id and corrosponding station name
     """
 
-    if not os.path.isdir(f"{_data_directory}weather"):
-        os.makedirs(f"{_data_directory}weather")
+    if not os.path.isdir(weather_directory):
+        os.makedirs(weather_directory)
 
     filename = "isd-history.csv"
     hostname = f"ftp.ncdc.noaa.gov"
@@ -458,16 +466,15 @@ def _get_noaa_dictionary() -> dict:
         ftp_server.login()
         ftp_server.cwd(wd)
         ftp_server.encoding = "utf-8"
-        with open(f"{_data_directory}weather/{filename}", "wb") as file:
+        with open(f"{weather_directory}/{filename}", "wb") as file:
             ftp_server.retrbinary(f"RETR {filename}", file.write)
         ftp_server.quit()
     except:
-        print("FTP ERROR")
+        print("FTP ERROR: Could not download weather dictionary")
 
-    isd_directory = f"{_data_directory}weather/isd-history.csv"
+    isd_directory = f"{weather_directory}/isd-history.csv"
     if not os.path.exists(isd_directory):
-        print(
-            f"File path '{isd_directory}' does not exist.")
+        print(f"File path '{isd_directory}' does not exist.")
         sys.exit()
 
     isd_history = pd.read_csv(isd_directory, dtype=str)
@@ -480,12 +487,15 @@ def _get_noaa_dictionary() -> dict:
     return noaa_dict
 
 
-def _download_noaa_data(stations: dict) -> List[str]:
+def _download_noaa_data(stations: dict, weather_directory : str) -> List[str]:
     """
     This function takes in a list of the stations and downloads the corrosponding NOAA weather data via FTP and returns it in a List of filenames
 
     Args: 
-        stations (dict): dictionary of station_ids who's data needs to be downloaded
+        stations : dict)
+            dictionary of station_ids who's data needs to be downloaded
+        weather_directory : str 
+            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
     Returns: 
         List[str]: List of filenames that were downloaded
     """
@@ -507,11 +517,11 @@ def _download_noaa_data(stations: dict) -> List[str]:
         ftp_server.cwd(wd)
         # Download all files and save as station_year.gz in /data/weather
         for station in stations.keys():
-            if not os.path.isdir(f"{_data_directory}weather/{stations[station]}"):
-                os.makedirs(f"{_data_directory}weather/{stations[station]}")
+            if not os.path.isdir(f"{weather_directory}/{stations[station]}"):
+                os.makedirs(f"{weather_directory}/{stations[station]}")
             filename = f"{station}-{year}.gz"
             noaa_filenames.append(filename)
-            file_path = f"{_data_directory}weather/{stations[station]}/{filename}"
+            file_path = f"{weather_directory}/{stations[station]}/{filename}"
             # Do not download if the file already exists
             if (os.path.exists(file_path) == False) or (year == year_end):
                 with open(file_path, "wb") as file:
@@ -522,13 +532,17 @@ def _download_noaa_data(stations: dict) -> List[str]:
     return noaa_filenames
 
 
-def _convert_to_df(stations: dict, noaa_filenames: List[str]) -> dict:
+def _convert_to_df(stations: dict, noaa_filenames: List[str], weather_directory : str) -> dict:
     """
     Gets the list of downloaded filenames and imports the files and converts it to a dictionary of DataFrames
 
     Args: 
-        stations (dict): Dict of stations 
-        noaa_filenames (List[str]): List of downloaded filenames
+        stations : dict 
+            Dict of stations 
+        noaa_filenames : List[str]
+            List of downloaded filenames
+        weather_directory : str 
+            the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/weather/data")
     Returns: 
         dict: Dictionary where key is filename and value is dataframe for the file
     """
@@ -536,7 +550,7 @@ def _convert_to_df(stations: dict, noaa_filenames: List[str]) -> dict:
     for station in stations.keys():
         for filename in noaa_filenames:
             table = _gz_to_df(
-                f"{_data_directory}weather/{stations[station]}/{filename}")
+                f"{weather_directory}/{stations[station]}/{filename}")
             table.columns = ['year', 'month', 'day', 'hour', 'airTemp', 'dewPoint', 'seaLevelPressure',
                              'windDirection', 'windSpeed', 'conditions', 'precip1Hour', 'precip6Hour']
             noaa_dfs.append(table)

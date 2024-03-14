@@ -3,10 +3,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import datetime
 from ecopipeline.load import *
-from ecopipeline.config import _config_directory
 import numpy as np
 import math
-import mysql.connector
 
 config_info = {
     'database' : {

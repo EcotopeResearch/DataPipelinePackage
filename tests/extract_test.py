@@ -3,14 +3,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import datetime
 from ecopipeline.extract import *
-from ecopipeline.config import _config_directory
 import numpy as np
 from datetime import datetime
-import math
-import mysql.connector
-import gzip
-import os
-import json
 from pandas.testing import assert_frame_equal
 
 def test_json_to_df():

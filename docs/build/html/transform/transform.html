@@ -13,7 +13,9 @@
     <script src="../_static/doctools.js"></script>
     <script src="../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Load Documentation" href="../load/load.html" />
+    <link rel="prev" title="Extract Documentation" href="../extract/extract.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -24,6 +26,12 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../load/load.html" title="Load Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../extract/extract.html" title="Extract Documentation"
+             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
@@ -40,7 +48,7 @@
 </div>
 <span class="target" id="module-ecopipeline.transform"></span><dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.add_local_time">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">add_local_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.add_local_time" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">add_local_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_info_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.add_local_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function adds a column to the dataframe with the local time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -49,6 +57,13 @@
 </dd>
 <dt><strong>site_name</strong><span class="classifier">str</span></dt><dd><p>site name</p>
 </dd>
+<dt><strong>site_info_path</strong><span class="classifier">str</span></dt><dd><p>Full path to site_info.csv (e.g. “full/path/to/pipeline/input/site_info.csv”)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -56,7 +71,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.aggregate_df">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aggregate_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_filename:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'input/loadshift_matrix.csv')</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.aggregate_df" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aggregate_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_filename:</span> <span class="pre">str)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.aggregate_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily
 dataframes, appends ‘load_shift_day’ column onto the daily_df and the ‘system_state’ column to
 hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
@@ -67,7 +82,7 @@ complete days are returned rather than agregated data from partial datasets.</p>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of minute-by-minute sensor data.</p>
 </dd>
-<dt><strong>ls_filename</strong><span class="classifier">str</span></dt><dd><p>Path to csv file containing load shift schedule (default value of loadshift_matrix.csv in configured input location),
+<dt><strong>ls_filename</strong><span class="classifier">str</span></dt><dd><p>Path to csv file containing load shift schedule (e.g. “full/path/to/pipeline/input/loadshift_matrix.csv”),
 There should be at least four columns in this csv: ‘date’, ‘startTime’, ‘endTime’, and ‘event’</p>
 </dd>
 </dl>
@@ -109,7 +124,7 @@ relevant to the data set.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.aqsuite_filter_new">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aqsuite_filter_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_opened</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/previous.pkl'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.transform.aqsuite_filter_new" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aqsuite_filter_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_opened</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.transform.aqsuite_filter_new" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function filters the filenames list to only those newer than the last date.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -120,7 +135,7 @@ relevant to the data set.</p>
 </dd>
 <dt><strong>site</strong><span class="classifier">str</span></dt><dd><p>site name</p>
 </dd>
-<dt><strong>prev_opened</strong><span class="classifier">str</span></dt><dd><p>pkl directory for previously opened files</p>
+<dt><strong>prev_opened</strong><span class="classifier">str</span></dt><dd><p>path to pkl file for previously opened files (e.g. “full/path/to/pipeline/input/previous.pkl”)</p>
 </dd>
 </dl>
 </dd>
@@ -373,13 +388,15 @@ Temperature Maintenance systems</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.elev_correction">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">elev_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.elev_correction" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">elev_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_info_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.elev_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function creates a dataframe for a given site that contains site name, elevation,
 and the corrected elevation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>site_name</strong><span class="classifier">str</span></dt><dd><p>site’s name</p>
+</dd>
+<dt><strong>site_info_path</strong><span class="classifier">str</span></dt><dd><p>Full path to site_info.csv (e.g. “full/path/to/pipeline/input/site_info.csv”)</p>
 </dd>
 </dl>
 </dd>
@@ -394,15 +411,23 @@ and the corrected elevation.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.ffill_missing">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">ffill_missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/Variable_Names.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_fill</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.ffill_missing" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">ffill_missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_fill</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.ffill_missing" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function will take a pandas dataframe and forward fill select variables with no entry.</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
+<dd class="field-odd"><dl>
 <dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe that needs to be forward filled</p>
 </dd>
-<dt><strong>variable_names_path: str</strong></dt><dd><p>Path to csv file containing variable names and cooresponding changepoint and ffill_length (default value of Variable_Names.csv in configured input location),
-There should be at least three columns in this csv: “variable_name”, “changepoint”, “ffill_length”</p>
+<dt><strong>vars_filename: str</strong></dt><dd><p>Path to csv file containing variable names and cooresponding changepoint and ffill_length (e.g. “full/path/to/pipeline/input/Variable_Names.csv”),
+There should be at least three columns in this csv: “variable_name”, “changepoint”, “ffill_length”.
+The variable_name column should contain the name of each variable in the dataframe that requires forward filling.
+The changepoint column should contain one of three values:</p>
+<blockquote>
+<div><p>“0” if the variable should be forward filled to a certain length (see ffill_length).
+“1” if the varrible should be forward filled completely until the next change point.
+null if the variable should not be forward filled.</p>
+</div></blockquote>
+<p>The ffill_length contains the number of rows which should be forward filled if the value in the changepoint is “0”</p>
 </dd>
 <dt><strong>previous_fill: pd.DataFrame (default None)</strong></dt><dd><p>A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
 into the destination database). The values of this will be used to forward fill into the new set of data if applicable.</p>
@@ -420,7 +445,7 @@ into the destination database). The values of this will be used to forward fill 
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.gas_valve_diff">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">gas_valve_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.gas_valve_diff" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">gas_valve_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_info_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.gas_valve_diff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in the site dataframe and the site name. If the site has gas
 heating, take the lagged difference to get per minute values.</p>
 <dl class="field-list simple">
@@ -429,6 +454,8 @@ heating, take the lagged difference to get per minute values.</p>
 <dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe for site</p>
 </dd>
 <dt><strong>site</strong><span class="classifier">str</span></dt><dd><p>site name as string</p>
+</dd>
+<dt><strong>site_info_path</strong><span class="classifier">str</span></dt><dd><p>Full path to site_info.csv (e.g. “full/path/to/pipeline/input/site_info.csv”)</p>
 </dd>
 </dl>
 </dd>
@@ -502,7 +529,7 @@ order to get a per/minute value for each of the energy variables.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.get_refrig_charge">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">get_refrig_charge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_info_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/site_info.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">four_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/410a_pt.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superheat_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/superheat.csv'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.get_refrig_charge" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">get_refrig_charge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_info_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">four_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superheat_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.get_refrig_charge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string,
 the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant
 charge per minute?</p>
@@ -513,11 +540,11 @@ charge per minute?</p>
 </dd>
 <dt><strong>site</strong><span class="classifier">str</span></dt><dd><p>site name as a string</p>
 </dd>
-<dt><strong>site_info_path</strong><span class="classifier">str</span></dt><dd><p>path to site_info.csv as a string</p>
+<dt><strong>site_info_path</strong><span class="classifier">str</span></dt><dd><p>path to site_info.csv as a string (e.g. “full/path/to/pipeline/input/site_info.csv”)</p>
 </dd>
-<dt><strong>four_path</strong><span class="classifier">str</span></dt><dd><p>path to 410a_pt.csv as a string</p>
+<dt><strong>four_path</strong><span class="classifier">str</span></dt><dd><p>path to 410a_pt.csv as a string (e.g. “full/path/to/pipeline/input/410a_pt.csv”)</p>
 </dd>
-<dt><strong>superheat_path</strong><span class="classifier">str</span></dt><dd><p>path to superheat.csv as a string</p>
+<dt><strong>superheat_path</strong><span class="classifier">str</span></dt><dd><p>path to superheat.csv as a string (e.g. “full/path/to/pipeline/input/superheat.csv”)</p>
 </dd>
 </dl>
 </dd>
@@ -532,13 +559,15 @@ charge per minute?</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.get_site_cfm_info">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">get_site_cfm_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.get_site_cfm_info" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">get_site_cfm_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_cfm_info_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.get_site_cfm_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dataframe of the site cfm information for the given site
 NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>site</strong><span class="classifier">str</span></dt><dd><p>The site name</p>
+</dd>
+<dt><strong>site_cfm_info_path</strong><span class="classifier">str</span></dt><dd><p>Full path to site_cfm_info.csv (e.g. “full/path/to/pipeline/input/site_cfm_info.csv”)</p>
 </dd>
 </dl>
 </dd>
@@ -553,12 +582,14 @@ NOTE: The parsing is necessary as the first row of data are comments that need t
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.get_site_info">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">get_site_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="headerlink" href="#ecopipeline.transform.get_site_info" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">get_site_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_info_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="headerlink" href="#ecopipeline.transform.get_site_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dataframe of the site information for the given site</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>site</strong><span class="classifier">str</span></dt><dd><p>The site name</p>
+</dd>
+<dt><strong>site_info_path</strong><span class="classifier">str</span></dt><dd><p>Full path to site_info.csv (e.g. “full/path/to/pipeline/input/site_info.csv”)</p>
 </dd>
 </dl>
 </dd>
@@ -741,15 +772,17 @@ timestamps to the nearest minute.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.nullify_erroneous">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">nullify_erroneous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/Variable_Names.csv'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.nullify_erroneous" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">nullify_erroneous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.nullify_erroneous" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function will take a pandas dataframe and make erroneous values NaN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe that needs to be forward filled</p>
+<dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe that needs to be filtered for error values</p>
 </dd>
-<dt><strong>variable_names_path: str</strong></dt><dd><p>Path to csv file containing variable names and cooresponding error values (default value of Variable_Names.csv in configured input location),
-There should be at least two columns in this csv: “variable_name” and “error_value”</p>
+<dt><strong>variable_names_path: str</strong></dt><dd><p>Path to csv file containing variable names and cooresponding error values (e.g. “full/path/to/pipeline/input/Variable_Names.csv”),
+There should be at least two columns in this csv: “variable_name” and “error_value”
+The variable_name should contain the names of all columns in the dataframe that need to have there erroneous values removed
+The error_value column should contain the error value of each variable_name, or null if there isn’t an error value for that variable</p>
 </dd>
 </dl>
 </dd>
@@ -764,7 +797,7 @@ There should be at least two columns in this csv: “variable_name” and “err
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.remove_outliers">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_names_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/Variable_Names.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.remove_outliers" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_names_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.remove_outliers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function will take a pandas dataframe and location of bounds information in a csv,
 store the bounds data in a dataframe, then remove outliers above or below bounds as
 designated by the csv. Function then returns the resulting dataframe.</p>
@@ -773,9 +806,12 @@ designated by the csv. Function then returns the resulting dataframe.</p>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe for which outliers need to be removed</p>
 </dd>
-<dt><strong>variable_names_path: str</strong></dt><dd><p>Path to csv file containing sensor names and cooresponding upper/lower boundaries (default value of Variable_Names.csv in configured input location)</p>
+<dt><strong>variable_names_path: str</strong></dt><dd><p>Path to csv file containing sensor names and cooresponding upper/lower boundaries (e.g. “full/path/to/pipeline/input/Variable_Names.csv”)
+The file must have at least three columns which must be titled “variable_name”, “lower_bound”, and “upper_bound” which should contain the
+name of each variable in the dataframe that requires the removal of outliers, the lower bound for acceptable data, and the upper bound for
+acceptable data respectively</p>
 </dd>
-<dt><strong>site: str</strong></dt><dd><p>string of site name if processing a particular site in a Variable_Names.csv file with multiple sites</p>
+<dt><strong>site: str</strong></dt><dd><p>string of site name if processing a particular site in a Variable_Names.csv file with multiple sites. Leave as an empty string if not aplicable.</p>
 </dd>
 </dl>
 </dd>
@@ -796,7 +832,7 @@ designated by the csv. Function then returns the resulting dataframe.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.rename_sensors">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">rename_sensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_names_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'input/Variable_Names.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.rename_sensors" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">rename_sensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_names_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.rename_sensors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function will take in a dataframe and a string representation of a file path and renames
 sensors from their alias to their true name. Also filters the dataframe by site and system if specified.</p>
 <dl class="field-list simple">
@@ -804,7 +840,7 @@ sensors from their alias to their true name. Also filters the dataframe by site 
 <dd class="field-odd"><dl class="simple">
 <dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>A dataframe that contains data labeled by the raw varriable names to be renamed.</p>
 </dd>
-<dt><strong>variable_names_path: str</strong></dt><dd><p>file location of file containing sensor aliases to their corresponding name (default value of {_input_directory from your config file}Variable_Names.csv)
+<dt><strong>variable_names_path: str</strong></dt><dd><p>file location of file containing sensor aliases to their corresponding name (e.g. “full/path/to/pipeline/input/Variable_Names.csv”)
 the csv this points to should have at least 2 columns called “variable_alias” (the raw name to be changed from) and “variable_name”
 (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.</p>
 </dd>
@@ -876,12 +912,14 @@ Varriable_Names.csv.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.sensor_adjustment">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">sensor_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.sensor_adjustment" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">sensor_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustments_csv_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.sensor_adjustment" title="Permalink to this definition">¶</a></dt>
 <dd><p>TO BE DEPRICATED – Reads in input/adjustments.csv and applies necessary adjustments to the dataframe</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame to be adjusted</p>
+</dd>
+<dt><strong>variable_names_path: str</strong></dt><dd><p>Full path to the adjustments csv (e.g. “full/path/to/pipeline/input/adjustments.csv)</p>
 </dd>
 </dl>
 </dd>
@@ -918,7 +956,7 @@ Varriable_Names.csv.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.verify_power_energy">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">verify_power_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.verify_power_energy" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">verify_power_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.verify_power_energy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Verifies that for each timestamp, corresponding power and energy variables are consistent
 with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
 rows with conflicting power and energy variables.</p>
@@ -930,6 +968,8 @@ rows with conflicting power and energy variables.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe</p>
+</dd>
+<dt><strong>output_directory</strong><span class="classifier">str</span></dt><dd><p>full path to output directory for pipeline, ending in “/” (e.g. “full/path/to/output/”)</p>
 </dd>
 </dl>
 </dd>
@@ -1003,6 +1043,16 @@ rows with conflicting power and energy variables.</p>
 </ul>
 
   </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../extract/extract.html"
+                          title="previous chapter">Extract Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../load/load.html"
+                          title="next chapter">Load Documentation</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1033,6 +1083,12 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../load/load.html" title="Load Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../extract/extract.html" title="Extract Documentation"
+             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>

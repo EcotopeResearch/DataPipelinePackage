@@ -13,7 +13,8 @@
     <script src="../_static/doctools.js"></script>
     <script src="../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Transform Documentation" href="../transform/transform.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -24,6 +25,9 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../transform/transform.html" title="Transform Documentation"
+             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
@@ -111,7 +115,7 @@ mySQL queries and the connection object can be used to save those changes.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.get_login_info">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">get_login_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.ini'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#ecopipeline.load.get_login_info" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">get_login_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#ecopipeline.load.get_login_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reads the config.ini file stored in the config_info file path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -122,7 +126,8 @@ header for each table you wish to write into. The first header must correspond
 to the login information of the database. The other are the tables which you wish
 to write to.</p>
 </dd>
-<dt><strong>config_info</strong><span class="classifier">str</span></dt><dd><p>A path to the config.ini file must also be passed.</p>
+<dt><strong>config_info</strong><span class="classifier">str</span></dt><dd><p>The path to the config.ini file for the pipeline (e.g. “full/path/to/config.ini”).
+This file should contain login information for MySQL database where data is to be loaded.</p>
 </dd>
 </dl>
 </dd>
@@ -188,6 +193,11 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
 </ul>
 
   </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../transform/transform.html"
+                          title="previous chapter">Transform Documentation</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -218,6 +228,9 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../transform/transform.html" title="Transform Documentation"
+             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>

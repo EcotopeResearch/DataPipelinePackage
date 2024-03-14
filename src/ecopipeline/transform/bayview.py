@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-import os 
-from ecopipeline.config import _input_directory, _output_directory
+import os
 from ecopipeline.utils.unit_convert import energy_btu_to_kwh, energy_kwh_to_kbtu, energy_to_power
 
 
@@ -284,7 +283,7 @@ def get_energy_by_min(df: pd.DataFrame) -> pd.DataFrame:
         df[var] = df[var] - df[var].shift(1)
     return df
 
-def verify_power_energy(df: pd.DataFrame):
+def verify_power_energy(df: pd.DataFrame, output_directory : str):
     """
     Verifies that for each timestamp, corresponding power and energy variables are consistent
     with one another. Power ~= energy * 60. Margin of error TBD. Outputs to a csv file any
@@ -297,6 +296,8 @@ def verify_power_energy(df: pd.DataFrame):
     ----------  
     df : pd.DataFrame
         Pandas dataframe
+    output_directory : str
+        full path to output directory for pipeline, ending in "/" (e.g. "full/path/to/output/")
     
     Returns
     ------- 
@@ -328,7 +329,7 @@ def verify_power_energy(df: pd.DataFrame):
                 if (row[pvar] != expected):
                     out_df.loc[len(df.index)] = [row['time_pt'], pvar, corres_energy,
                                                  row[corres_energy], row[pvar], expected, abs(expected - row[pvar])]
-                    path_to_output = f'{_output_directory}power_energy_conflicts.csv'
+                    path_to_output = f'{output_directory}power_energy_conflicts.csv'
                     if not os.path.isfile(path_to_output):
                         out_df.to_csv(path_to_output, index=False, header=out_df.columns)
                     else:
@@ -396,7 +397,7 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
         the time at which slicing begins if we would like to thermo slice. 
 
     Returns
-    --------  
+    -------  
     pd.DataFrame:
         Pandas DataFrame with the added COP columns. 
     """
