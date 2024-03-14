@@ -3,8 +3,7 @@ import numpy as np
 import datetime as dt
 import csv
 import os
-from ecopipeline.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu, power_flow_to_kW
-from ecopipeline.config import _input_directory, _output_directory
+from ecopipeline.utils.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu, power_flow_to_kW
 
 pd.set_option('display.max_columns', None)
 
@@ -58,7 +57,7 @@ def round_time(df: pd.DataFrame):
     return True
 
 
-def rename_sensors(original_df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = "", system: str = ""):
+def rename_sensors(original_df: pd.DataFrame, variable_names_path: str, site: str = "", system: str = ""):
     """
     Function will take in a dataframe and a string representation of a file path and renames
     sensors from their alias to their true name. Also filters the dataframe by site and system if specified.
@@ -68,7 +67,7 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str = f"{_inp
     original_df: pd.DataFrame
         A dataframe that contains data labeled by the raw varriable names to be renamed.
     variable_names_path: str 
-        file location of file containing sensor aliases to their corresponding name (default value of {_input_directory from your config file}Variable_Names.csv)
+        file location of file containing sensor aliases to their corresponding name (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
         the csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
         (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.
     site: str
@@ -84,7 +83,7 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str = f"{_inp
     -------  
     df: pd.DataFrame 
         Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
-        Varriable_Names.csv.
+        Variable_Names.csv.
     """
     try:
         variable_data = pd.read_csv(variable_names_path)
@@ -170,7 +169,7 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
         col.mask((col > c_upper) | (col < c_lower), other=np.NaN, inplace=True)
 
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
-def remove_outliers(original_df: pd.DataFrame, variable_names_path: str = f"{_input_directory}Variable_Names.csv", site: str = "") -> pd.DataFrame:
+def remove_outliers(original_df: pd.DataFrame, variable_names_path: str, site: str = "") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
@@ -181,9 +180,12 @@ def remove_outliers(original_df: pd.DataFrame, variable_names_path: str = f"{_in
     original_df: pd.DataFrame
         Pandas dataframe for which outliers need to be removed
     variable_names_path: str
-        Path to csv file containing sensor names and cooresponding upper/lower boundaries (default value of Variable_Names.csv in configured input location)
+        Path to csv file containing sensor names and cooresponding upper/lower boundaries (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
+        The file must have at least three columns which must be titled "variable_name", "lower_bound", and "upper_bound" which should contain the
+        name of each variable in the dataframe that requires the removal of outliers, the lower bound for acceptable data, and the upper bound for
+        acceptable data respectively
     site: str
-        string of site name if processing a particular site in a Variable_Names.csv file with multiple sites
+        string of site name if processing a particular site in a Variable_Names.csv file with multiple sites. Leave as an empty string if not aplicable.
 
     Returns
     ------- 
@@ -237,7 +239,7 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
             col.fillna(method='ffill', inplace=True, limit=length)
 
 
-def ffill_missing(original_df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv", previous_fill: pd.DataFrame = None) -> pd.DataFrame:
+def ffill_missing(original_df: pd.DataFrame, vars_filename: str, previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
     
@@ -245,9 +247,15 @@ def ffill_missing(original_df: pd.DataFrame, vars_filename: str = f"{_input_dire
     ----------
     original_df: pd.DataFrame
         Pandas dataframe that needs to be forward filled
-    variable_names_path: str
-        Path to csv file containing variable names and cooresponding changepoint and ffill_length (default value of Variable_Names.csv in configured input location),
-        There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length"
+    vars_filename: str
+        Path to csv file containing variable names and cooresponding changepoint and ffill_length (e.g. "full/path/to/pipeline/input/Variable_Names.csv"),
+        There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length".
+        The variable_name column should contain the name of each variable in the dataframe that requires forward filling.
+        The changepoint column should contain one of three values: 
+            "0" if the variable should be forward filled to a certain length (see ffill_length).
+            "1" if the varrible should be forward filled completely until the next change point.
+            null if the variable should not be forward filled.
+        The ffill_length contains the number of rows which should be forward filled if the value in the changepoint is "0"
     previous_fill: pd.DataFrame (default None)
         A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
         into the destination database). The values of this will be used to forward fill into the new set of data if applicable.
@@ -288,17 +296,20 @@ def ffill_missing(original_df: pd.DataFrame, vars_filename: str = f"{_input_dire
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
-def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str = f"{_input_directory}Variable_Names.csv") -> pd.DataFrame:
+# TODO test this
+def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and make erroneous values NaN. 
 
     Parameters
     ---------- 
     original_df: pd.DataFrame
-        Pandas dataframe that needs to be forward filled
+        Pandas dataframe that needs to be filtered for error values
     variable_names_path: str
-        Path to csv file containing variable names and cooresponding error values (default value of Variable_Names.csv in configured input location),
+        Path to csv file containing variable names and cooresponding error values (e.g. "full/path/to/pipeline/input/Variable_Names.csv"),
         There should be at least two columns in this csv: "variable_name" and "error_value"
+        The variable_name should contain the names of all columns in the dataframe that need to have there erroneous values removed
+        The error_value column should contain the error value of each variable_name, or null if there isn't an error value for that variable   
     
     Returns
     ------- 
@@ -322,12 +333,12 @@ def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str = f"{_input_
     for col in error_df.index:
         if col in df.columns:
             error_value = error_df.loc[col, 'error_value']
-            df.loc[df[col] <= error_value, col] = np.nan
+            df.loc[df[col] == error_value, col] = np.nan
 
     return df
 
 #TODO investigate if this can be removed
-def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
+def sensor_adjustment(df: pd.DataFrame, adjustments_csv_path : str) -> pd.DataFrame:
     """
     TO BE DEPRICATED -- Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
 
@@ -335,6 +346,8 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
     ---------- 
     df : pd.DataFrame
         DataFrame to be adjusted
+    variable_names_path: str
+        Full path to the adjustments csv (e.g. "full/path/to/pipeline/input/adjustments.csv)
     
     Returns
     ------- 
@@ -342,9 +355,9 @@ def sensor_adjustment(df: pd.DataFrame) -> pd.DataFrame:
         Adjusted Dataframe
     """
     try:
-        adjustments = pd.read_csv(f"{_input_directory}adjustments.csv")
+        adjustments = pd.read_csv(adjustments_csv_path)
     except FileNotFoundError:
-        print("File Not Found: ", f"{_input_directory}adjustments.csv")
+        print(f"File Not Found: {adjustments_csv_path}")
         return df
     if adjustments.empty:
         return df
@@ -451,7 +464,7 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
 
     return df
 
-def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadshift_matrix.csv") -> (pd.DataFrame, pd.DataFrame):
+def aggregate_df(df: pd.DataFrame, ls_filename: str = "") -> (pd.DataFrame, pd.DataFrame):
     """
     Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
     dataframes, appends 'load_shift_day' column onto the daily_df and the 'system_state' column to
@@ -464,7 +477,7 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadsh
     df : pd.DataFrame
         Single pandas dataframe of minute-by-minute sensor data.
     ls_filename : str
-        Path to csv file containing load shift schedule (default value of loadshift_matrix.csv in configured input location),
+        Path to csv file containing load shift schedule (e.g. "full/path/to/pipeline/input/loadshift_matrix.csv"),
         There should be at least four columns in this csv: 'date', 'startTime', 'endTime', and 'event'
     
     Returns
@@ -497,8 +510,7 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = f"{_input_directory}loadsh
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
     # appending loadshift data
-    if os.path.exists(ls_filename):
-        
+    if ls_filename != "" and os.path.exists(ls_filename):
         ls_df = pd.read_csv(ls_filename)
         # Parse 'date' and 'startTime' columns to create 'startDateTime'
         ls_df['startDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['startTime'])

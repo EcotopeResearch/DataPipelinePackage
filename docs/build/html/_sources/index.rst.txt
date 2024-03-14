@@ -9,9 +9,10 @@ EcoPipeline Documentation
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-.. automodule:: ecopipeline
-    :members:
+   
+   extract/extract
+   transform/transform
+   load/load
 
 Indices and tables
 ==================

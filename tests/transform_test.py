@@ -2,12 +2,9 @@ import pytest
 from unittest.mock import MagicMock, patch
 import pandas as pd
 from pandas.testing import assert_frame_equal
-import datetime
-from ecopipeline import rename_sensors, avg_duplicate_times, remove_outliers, ffill_missing, nullify_erroneous, sensor_adjustment, round_time, aggregate_df, join_to_hourly, concat_last_row, join_to_daily, cop_method_1, cop_method_2, create_summary_tables, remove_partial_days
-from ecopipeline.config import _config_directory
+from ecopipeline.transform import *
 import numpy as np
 import math
-import mysql.connector
 
 def test_concat_last_row():
     df = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), float('-inf'), math.nan],
@@ -216,7 +213,7 @@ def test_ffill_missing():
                         'serious_var_3': [None,None,3,None,None],
                         'serious_var_4': [None,2,3,3,4]})
         df_expected.index = timestamps
-        df_result = ffill_missing(df_input)
+        df_result = ffill_missing(df_input, "full/path/to/pipeline/input/Variable_Names.csv")
         assert_frame_equal(df_result, df_expected)
         # check that df_input was not changed in place
         assert_frame_equal(df_input, df_unchanged)
@@ -322,7 +319,7 @@ def test_aggregate_df():
 
             print(daily_df_expected.columns)
 
-            hourly_result, daily_result = aggregate_df(df_input)
+            hourly_result, daily_result = aggregate_df(df_input, "full/path/to/pipeline/input/loadshift_matrix.csv")
             assert len(hourly_result.index) == 72
             hourly_result = hourly_result.loc[hourly_result.index.isin(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-22 10:00:00','2022-04-23 15:00:00'])]
             assert_frame_equal(hourly_result, hourly_df_expected)
@@ -377,7 +374,7 @@ def test_remove_outliers():
                         'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
         df_expected.index = timestamps
 
-        assert_frame_equal(remove_outliers(df_input), df_expected)
+        assert_frame_equal(remove_outliers(df_input, "full/path/to/pipeline/input/Variable_Names.csv"), df_expected)
 
         timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
         df_expected = pd.DataFrame({
@@ -387,7 +384,7 @@ def test_remove_outliers():
                         'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
         df_expected.index = timestamps
 
-        assert_frame_equal(remove_outliers(df_input, site="site_1"), df_expected)
+        assert_frame_equal(remove_outliers(df_input, "full/path/to/pipeline/input/Variable_Names.csv", site="site_1"), df_expected)
 
 def test_nullify_erroneous():
     with patch('pandas.read_csv') as mock_csv:
@@ -397,16 +394,16 @@ def test_nullify_erroneous():
         timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
         df_input = pd.DataFrame({
                         'serious_var_1': [None, 1, 2, 3,4],
-                        'serious_var_2': [None,5,None,2,None],
+                        'serious_var_2': [None,5,1.4,2,None],
                         'serious_var_3': [None,None,3,None,None]})
         df_input.index = timestamps
         df_unchanged = df_input.copy()
         df_expected = pd.DataFrame({
                         'serious_var_1': [None, np.NaN, 2, 3,4],
-                        'serious_var_2': [None,5,None,np.NaN,None],
+                        'serious_var_2': [None,5,1.4,np.NaN,None],
                         'serious_var_3': [None,None,3,None,None]})
         df_expected.index = timestamps
-        df_result = nullify_erroneous(df_input)
+        df_result = nullify_erroneous(df_input, "full/path/to/pipeline/input/Variable_Names.csv")
         assert_frame_equal(df_result, df_expected)
         # check that df_input was not changed in place
         assert_frame_equal(df_input, df_unchanged)

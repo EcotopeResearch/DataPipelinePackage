@@ -2,15 +2,9 @@ import pytest
 from unittest.mock import MagicMock, patch
 import pandas as pd
 import datetime
-from ecopipeline import get_noaa_data, json_to_df, extract_files, get_last_full_day_from_db, get_db_row_from_time, extract_new, csv_to_df, get_sub_dirs
-from ecopipeline.config import _config_directory
+from ecopipeline.extract import *
 import numpy as np
 from datetime import datetime
-import math
-import mysql.connector
-import gzip
-import os
-import json
 from pandas.testing import assert_frame_equal
 
 def test_json_to_df():
