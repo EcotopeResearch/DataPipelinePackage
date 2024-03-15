@@ -119,9 +119,14 @@ class ConfigManager:
         """
 
         connection = None
-
+        print(self.db_connection_info)
         try:
-            connection = mysql.connector.connect(self.db_connection_info)
+            connection = mysql.connector.connect(
+                host=self.db_connection_info['host'],
+                user=self.db_connection_info['user'],
+                password=self.db_connection_info['password'],
+                database=self.db_connection_info['database']
+            )
         except mysql.connector.Error:
             print("Unable to connect to database with given credentials.")
             return None, None
