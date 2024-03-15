@@ -7,36 +7,37 @@ import gzip
 import os
 import json
 from ecopipeline.utils.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
-from ecopipeline.load import connect_db, get_login_info
+from ecopipeline import ConfigManager
 import numpy as np
 import sys
 from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 
 
-def get_last_full_day_from_db(config_file_path : str) -> datetime:
+def get_last_full_day_from_db(config : ConfigManager) -> datetime:
     """
     Function retrieves the last line from the database with the most recent datetime 
     in local time.
     
     Parameters
     ---------- 
-    config_file_path : str
-        The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
-        This file should contain login information for MySQL database where data is to be loaded. 
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
     
     Returns
     ------- 
     datetime:
         end of last full day populated in database or default past time if no data found
     """
-    config_dict = get_login_info(["minute"], config_file_path)
-    db_connection, db_cursor = connect_db(config_info=config_dict['database'])
+    # config_dict = get_login_info(["minute"], config)
+    table_config_dict = config.get_db_table_info(["minute"])
+    # db_connection, db_cursor = connect_db(config_info=config_dict['database'])
+    db_connection, db_cursor = config.connect_db()
     return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
     
     try:
         db_cursor.execute(
-            f"select * from {config_dict['minute']['table_name']} order by time_pt DESC LIMIT 1")
+            f"select * from {table_config_dict['minute']['table_name']} order by time_pt DESC LIMIT 1")
 
         last_row_data = pd.DataFrame(db_cursor.fetchall())
         if len(last_row_data.index) > 0:
@@ -57,7 +58,7 @@ def get_last_full_day_from_db(config_file_path : str) -> datetime:
     
     return return_time
 
-def get_db_row_from_time(time: datetime, config_file_path : str) -> pd.DataFrame:
+def get_db_row_from_time(time: datetime, config : ConfigManager) -> pd.DataFrame:
     """
     Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists
 
@@ -65,22 +66,23 @@ def get_db_row_from_time(time: datetime, config_file_path : str) -> pd.DataFrame
     ---------- 
     time : datetime
         The time index to get the row from
-    config_file_path : str
-        The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
-        This file should contain login information for MySQL database where data is to be loaded. 
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline 
     
     Returns
     ------- 
     pd.DataFrame: 
         Pandas Dataframe containing the row or empty if no row exists for the timestamp
     """
-    config_dict = get_login_info(["minute"], config_file_path)
-    db_connection, db_cursor = connect_db(config_info=config_dict['database'])
+    # config_dict = get_login_info(["minute"], config_file_path)
+    # db_connection, db_cursor = connect_db(config_info=config_dict['database'])
+    table_config_dict = config.get_db_table_info(["minute"])
+    db_connection, db_cursor = config.connect_db()
     row_data = pd.DataFrame()
 
     try:
         db_cursor.execute(
-            f"SELECT * FROM {config_dict['minute']['table_name']} WHERE time_pt = '{time}'")
+            f"SELECT * FROM {table_config_dict['minute']['table_name']} WHERE time_pt = '{time}'")
         row = db_cursor.fetchone()
         if row is not None:
             col_names = [desc[0] for desc in db_cursor.description]
@@ -143,7 +145,7 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
         return_list = list(filter(lambda filename: int(filename[-17:-3]) >= startTime_int and (endTime is None or int(filename[-17:-3]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
-def extract_files(extension: str, data_directory: str) -> List[str]:
+def extract_files(extension: str, config: ConfigManager) -> List[str]:
     """
     Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
 
@@ -151,8 +153,8 @@ def extract_files(extension: str, data_directory: str) -> List[str]:
     ----------  
     extension : str
         File extension of raw data files as string (e.g. ".csv", ".gz", ...)
-    data_directory : str
-        directory containing raw data files from the data site (e.g. "full/path/to/data/")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline 
     
     Returns
     ------- 
@@ -161,9 +163,9 @@ def extract_files(extension: str, data_directory: str) -> List[str]:
     """
     os.chdir(os.getcwd())
     filenames = []
-    for file in os.listdir(data_directory):
+    for file in os.listdir(config.data_directory):
         if file.endswith(extension):
-            full_filename = os.path.join(data_directory, file)
+            full_filename = os.path.join(config.data_directory, file)
             filenames.append(full_filename)
 
     return filenames
@@ -346,7 +348,7 @@ def get_sub_dirs(dir: str) -> List[str]:
     return directories
 
 
-def get_noaa_data(station_names: List[str], weather_directory : str) -> dict:
+def get_noaa_data(station_names: List[str], config : ConfigManager) -> dict:
     """
     Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.
 
@@ -354,8 +356,8 @@ def get_noaa_data(station_names: List[str], weather_directory : str) -> dict:
     ---------- 
     station_names : List[str]
         List of Station Names
-    weather_directory : str 
-        the directory that holds NOAA weather data files. Should not contain an ending "/" (e.g. "full/path/to/pipeline/data/weather")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
     
     Returns
     -------
@@ -363,6 +365,7 @@ def get_noaa_data(station_names: List[str], weather_directory : str) -> dict:
         Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
     formatted_dfs = {}
+    weather_directory = config.get_weather_dir_path()
     try:
         noaa_dictionary = _get_noaa_dictionary(weather_directory)
         station_ids = {noaa_dictionary[station_name]

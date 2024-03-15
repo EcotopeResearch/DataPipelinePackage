@@ -1,11 +1,13 @@
 import configparser
 import mysql.connector
+import mysql.connector.cursor
 import sys
 import pandas as pd
 import os
 import math
 pd.set_option('display.max_columns', None)
 import mysql.connector.errors as mysqlerrors
+from ecopipeline import ConfigManager
 import datetime
 import numpy as np
 
@@ -16,89 +18,88 @@ data_map = {'int64':'float',
                 'object':'varchar(25)',
                 'bool': 'boolean'}
 
-def get_login_info(table_headers: list, config_file_path : str) -> dict:
-    """
-    Reads the config.ini file stored in the config_file_path file path.   
+# def get_login_info(table_headers: list, config_file_path : str) -> dict:
+#     """
+#     Reads the config.ini file stored in the config_file_path file path.   
 
-    Parameters
-    ---------- 
-    table_headers : list
-        A list of table headers. These headers must correspond to the 
-        section headers in the config.ini file. Your list must contain the section
-        header for each table you wish to write into. The first header must correspond 
-        to the login information of the database. The other are the tables which you wish
-        to write to. 
-    config_file_path : str
-        The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini").
-        This file should contain login information for MySQL database where data is to be loaded. 
+#     Parameters
+#     ---------- 
+#     table_headers : list
+#         A list of table headers. These headers must correspond to the 
+#         section headers in the config.ini file. Your list must contain the section
+#         header for each table you wish to write into. The first header must correspond 
+#         to the login information of the database. The other are the tables which you wish
+#         to write to. 
+#     config : ecopipeline.ConfigManager
+#         The ConfigManager object that holds configuration data for the pipeline
 
-    Returns
-    ------- 
-    dict: 
-        A dictionary containing all relevant information is returned. This
-        includes information used to create a connection with a mySQL server and
-        information (table names and column names) used to load the data into 
-        tables. 
-    """
+#     Returns
+#     ------- 
+#     dict: 
+#         A dictionary containing all relevant information is returned. This
+#         includes information used to create a connection with a mySQL server and
+#         information (table names and column names) used to load the data into 
+#         tables. 
+#     """
 
-    if not os.path.exists(config_file_path):
-        print(f"File path '{config_file_path}' does not exist.")
-        sys.exit()
+#     if not os.path.exists(config_file_path):
+#         print(f"File path '{config_file_path}' does not exist.")
+#         sys.exit()
 
-    configure = configparser.ConfigParser()
-    configure.read(config_file_path)
+#     configure = configparser.ConfigParser()
+#     configure.read(config_file_path)
 
-    db_connection_info = {
-        "database": {'user': configure.get('database', 'user'),
-                     'password': configure.get('database', 'password'),
-                     'host': configure.get('database', 'host'),
-                     'database': configure.get('database', 'database')}
-    }
+#     db_connection_info = {
+#         "database": {'user': configure.get('database', 'user'),
+#                      'password': configure.get('database', 'password'),
+#                      'host': configure.get('database', 'host'),
+#                      'database': configure.get('database', 'database')}
+#     }
 
-    db_table_info = {header: {"table_name": configure.get(header, 'table_name')} for header in table_headers} 
+#     db_table_info = {header: {"table_name": configure.get(header, 'table_name')} for header in table_headers} 
     
-    db_connection_info.update(db_table_info)
+#     db_connection_info.update(db_table_info)
 
-    print(f"Successfully fetched configuration information from file path {config_file_path}.")
-    return db_connection_info
+#     print(f"Successfully fetched configuration information from file path {config_file_path}.")
+#     return db_connection_info
     
 
-def connect_db(config_info: dict):
-    """
-    Create a connection with the mySQL server. 
+# def connect_db(config_info: dict):
+#     """
+#     Create a connection with the mySQL server. 
 
-    Parameters
-    ----------  
-    config_info : dict 
-        The dictionary containing the credential information. This is
-        contained in the 'database' section of the dictionary. 
+#     Parameters
+#     ----------  
+#     config_info : dict 
+#         The dictionary containing the credential information. This is
+#         contained in the 'database' section of the dictionary. 
 
-    Returns
-    ------- 
-    mysql.connector.cursor.MySQLCursor: 
-        A connection and cursor object. THe cursor can be used to execute
-        mySQL queries and the connection object can be used to save those changes. 
-    """
+#     Returns
+#     ------- 
+#     mysql.connector.cursor.MySQLCursor: 
+#         A connection and cursor object. THe cursor can be used to execute
+#         mySQL queries and the connection object can be used to save those changes. 
+#     """
 
-    connection = None
+#     connection = None
 
-    try:
-        connection = mysql.connector.connect(**config_info)
-    except mysql.connector.Error:
-        print("Unable to connect to database with given credentials.")
-        return None, None
+#     try:
+#         connection = mysql.connector.connect(**config_info)
+#     except mysql.connector.Error:
+#         print("Unable to connect to database with given credentials.")
+#         return None, None
 
-    print(f"Successfully connected to database.")
-    return connection, connection.cursor()
+#     print(f"Successfully connected to database.")
+#     return connection, connection.cursor()
 
 
-def check_table_exists(cursor, table_name: str, dbname: str) -> int:
+def check_table_exists(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, dbname: str) -> int:
     """
     Check if the given table name already exists in database.
 
     Parameters
     ---------- 
-    cursor:
+    cursor : mysql.connector.cursor.MySQLCursor
         Database cursor object and the table name.
     table_name : str 
         Name of the table
@@ -120,13 +121,13 @@ def check_table_exists(cursor, table_name: str, dbname: str) -> int:
     return num_tables
 
 
-def create_new_table(cursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt") -> bool:
+def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt") -> bool:
     """
     Creates a new table in the mySQL database.
 
     Parameters
     ---------- 
-    cursor: 
+    cursor : mysql.connector.cursor.MySQLCursor
         A cursor object and the name of the table to be created.
     table_name : str
         Name of the table
@@ -154,7 +155,7 @@ def create_new_table(cursor, table_name: str, table_column_names: list, table_co
     return True
 
 
-def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, table_name: str):
+def find_missing_columns(cursor : mysql.connector.cursor.MySQLCursor, dataframe: pd.DataFrame, config_dict: dict, table_name: str):
     """
     Finds the column names which are not in the database table currently but are present
     in the pandas DataFrame to be written to the database. If communication with database
@@ -162,7 +163,7 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
 
     Parameters
     ---------- 
-    cursor: 
+    cursor : mysql.connector.cursor.MySQLCursor 
         A cursor object and the name of the table to be created.
     dataframe : pd.DataFrame
         the pandas DataFrame to be written into the mySQL server. 
@@ -180,7 +181,7 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
 
     try:
         cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '"
-                            f"{config_dict['database']['database']}' AND table_name = '"
+                            f"{config_dict['database']}' AND table_name = '"
                             f"{table_name}'")
     except mysqlerrors.DatabaseError:
         print("Check if the mysql table to be written to exists.")
@@ -198,14 +199,14 @@ def find_missing_columns(cursor, dataframe: pd.DataFrame, config_dict: dict, tab
     return cols_to_add, data_types
 
 
-def create_new_columns(cursor, table_name: str, new_columns: list, data_types: str):
+def create_new_columns(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, new_columns: list, data_types: str):
     """
     Create the new, necessary column in the database. Catches error if communication with mysql database
     is not possible.
 
     Parameters
     ----------  
-    cursor: 
+    cursor : mysql.connector.cursor.MySQLCursor
         A cursor object and the name of the table to be created.
     config_info : dict
         The dictionary containing the configuration information.
@@ -230,14 +231,14 @@ def create_new_columns(cursor, table_name: str, new_columns: list, data_types: s
 
     return True
 
-def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt", table_name: str = None):
+def load_overwrite_database(cursor : mysql.connector.cursor.MySQLCursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt", table_name: str = None):
     """
     Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
 
     Parameters
     ----------  
-    cursor: mysql.connector.cursor.MySQLCursor
+    cursor : mysql.connector.cursor.MySQLCursor
         A cursor object connected to the database where the data will land
     dataframe: pd.DataFrame
         The pandas DataFrame to be written into the mySQL server.
@@ -254,7 +255,7 @@ def load_overwrite_database(cursor, dataframe: pd.DataFrame, config_info: dict, 
     # Drop empty columns
     dataframe = dataframe.dropna(axis=1, how='all')
 
-    dbname = config_info['database']['database']
+    dbname = config_info['database']
     if table_name == None:
         table_name = config_info[data_type]["table_name"]   
     

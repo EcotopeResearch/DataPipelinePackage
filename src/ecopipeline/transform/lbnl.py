@@ -6,6 +6,7 @@ import re
 from typing import List
 import datetime as dt
 from sklearn.linear_model import LinearRegression
+from ecopipeline import ConfigManager
 import os
 
 def site_specific(df: pd.DataFrame, site: str) -> pd.DataFrame:
@@ -124,7 +125,7 @@ def condensate_calculations(df: pd.DataFrame, site: str, site_info: pd.Series) -
     return df
 
 
-def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path : str) -> pd.DataFrame:
+def gas_valve_diff(df: pd.DataFrame, site: str, config : ConfigManager) -> pd.DataFrame:
     """
     Function takes in the site dataframe and the site name. If the site has gas 
     heating, take the lagged difference to get per minute values. 
@@ -135,16 +136,15 @@ def gas_valve_diff(df: pd.DataFrame, site: str, site_info_path : str) -> pd.Data
         Dataframe for site
     site : str
         site name as string
-    site_info_path : str
-        Full path to site_info.csv (e.g. "full/path/to/pipeline/input/site_info.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
     
     Returns
     ------- 
     pd.DataFrame: 
         modified Pandas Dataframe 
     """
-    # input_dir = configure.get('input', 'directory')
-    # site_info_path = input_dir + configure.get('input', 'site_info')
+    site_info_path = f"{config.input_directory}site_info.csv"
 
     try:
         site_info = pd.read_csv(site_info_path)
@@ -262,7 +262,7 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     row.loc["Refrig_charge"] = r_charge[0]
     return row
 
-def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str, four_directory: str, superheat_directory: str) -> pd.DataFrame:
+def get_refrig_charge(df: pd.DataFrame, site: str, config : ConfigManager) -> pd.DataFrame:
     """
     Function takes in a site dataframe, its site name as a string, the path to site_info.csv as a string, 
     the path to superheat.csv as a string, and the path to 410a_pt.csv, and calculates the refrigerant 
@@ -274,12 +274,8 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str, fou
         Pandas Dataframe
     site : str
         site name as a string 
-    site_info_path : str
-        path to site_info.csv as a string (e.g. "full/path/to/pipeline/input/site_info.csv")
-    four_path : str
-        path to 410a_pt.csv as a string (e.g. "full/path/to/pipeline/input/410a_pt.csv")
-    superheat_path : str
-        path to superheat.csv as a string (e.g. "full/path/to/pipeline/input/superheat.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
     
     Returns
     ------- 
@@ -291,6 +287,9 @@ def get_refrig_charge(df: pd.DataFrame, site: str, site_info_directory: str, fou
         return df
     
     # check that appropriate input files exist
+    site_info_directory =  f"{config.input_directory}site_info.csv"
+    four_directory = f"{config.input_directory}410a_pt.csv"
+    superheat_directory = f"{config.input_directory}superheat.csv"
     if not os.path.exists(site_info_directory):
         raise Exception(f"File path '{site_info_directory}' does not exist.")
     if not os.path.exists(four_directory):
@@ -527,7 +526,7 @@ def aqsuite_prep_time(df : pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_opened: str) -> List[str]:
+def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, config : ConfigManager) -> List[str]:
     """
     Function filters the filenames list to only those newer than the last date.
     
@@ -539,14 +538,15 @@ def aqsuite_filter_new(last_date: str, filenames: List[str], site: str, prev_ope
         List of filenames to be filtered
     site : str
         site name
-    prev_opened : str
-        path to pkl file for previously opened files (e.g. "full/path/to/pipeline/input/previous.pkl")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
     
     Returns
     ------- 
     List[str]: 
         Filtered list of filenames
     """
+    prev_opened = f"{config.input_directory}previous.pkl"
     # Opens the df that contains the dictionary of what each file is
     if os.path.exists(prev_opened):
         # Columns are site, filename, start datetime, end datetime
@@ -604,8 +604,7 @@ def _add_date(df: pd.DataFrame, filename: str) -> pd.DataFrame:
     df['time'] = pd.to_datetime(df['time'])
     return df
 
-
-def add_local_time(df : pd.DataFrame, site_name : str, site_info_path : str) -> pd.DataFrame:
+def add_local_time(df : pd.DataFrame, site_name : str, config : ConfigManager) -> pd.DataFrame:
     """
     Function adds a column to the dataframe with the local time.
     
@@ -615,15 +614,14 @@ def add_local_time(df : pd.DataFrame, site_name : str, site_info_path : str) -> 
         Dataframe
     site_name : str
         site name 
-    site_info_path : str
-        Full path to site_info.csv (e.g. "full/path/to/pipeline/input/site_info.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
 
     Returns
     -------
     pd.DataFrame
     """
-    # input_dir = configure.get('input', 'directory')
-    # site_info_path = input_dir + configure.get('input', 'site_info')
+    site_info_path = f"{config.input_directory}site_info.csv"
 
     try:
         site_info_df = pd.read_csv(site_info_path)
@@ -638,7 +636,7 @@ def add_local_time(df : pd.DataFrame, site_name : str, site_info_path : str) -> 
 
     return df
 
-def elev_correction(site_name : str, site_info_path : str) -> pd.DataFrame:
+def elev_correction(site_name : str, config : ConfigManager) -> pd.DataFrame:
     """
     Function creates a dataframe for a given site that contains site name, elevation, 
     and the corrected elevation.
@@ -647,16 +645,15 @@ def elev_correction(site_name : str, site_info_path : str) -> pd.DataFrame:
     ---------- 
     site_name : str
         site's name
-    site_info_path : str
-        Full path to site_info.csv (e.g. "full/path/to/pipeline/input/site_info.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
     
     Returns
     ------- 
     pd.DataFrame: 
         new Pandas dataframe
     """
-    # input_dir = configure.get('input', 'directory')
-    # site_info_path = input_dir + configure.get('input', 'site_info')
+    site_info_path = f"{config.input_directory}site_info.csv"
 
     try:
         site_info_df = pd.read_csv(site_info_path)
@@ -839,7 +836,7 @@ def get_cop_values(df: pd.DataFrame, site_info: pd.DataFrame):
     return df
 
 
-def get_site_info(site: str, site_info_path : str) -> pd.Series:
+def get_site_info(site: str, config : ConfigManager) -> pd.Series:
     """
     Returns a dataframe of the site information for the given site
     
@@ -847,22 +844,22 @@ def get_site_info(site: str, site_info_path : str) -> pd.Series:
     ----------
     site : str
         The site name
-    site_info_path : str
-        Full path to site_info.csv (e.g. "full/path/to/pipeline/input/site_info.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
         
     Returns
     -------
     df : pd.Series
         The Series of the site information
     """
-    # site_info_path = _input_directory + configure.get('input', 'site_info')
+    site_info_path = f"{config.input_directory}site_info.csv"
     df = pd.read_csv(site_info_path, skiprows=[1])
     df.dropna(how='all', inplace=True)
     df = df[df['site'] == site]
     return df.squeeze()
 
 
-def get_site_cfm_info(site: str, site_cfm_info_path : str) -> pd.DataFrame:
+def get_site_cfm_info(site: str, config : ConfigManager) -> pd.DataFrame:
     """
     Returns a dataframe of the site cfm information for the given site
     NOTE: The parsing is necessary as the first row of data are comments that need to be dropped.
@@ -871,15 +868,15 @@ def get_site_cfm_info(site: str, site_cfm_info_path : str) -> pd.DataFrame:
     ----------
     site : str
         The site name
-    site_cfm_info_path : str
-        Full path to site_cfm_info.csv (e.g. "full/path/to/pipeline/input/site_cfm_info.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline
         
     Returns
     -------
     df : pd.DataFrame
         The DataFrame of the site cfm information
     """
-    # site_cfm_info_path = _input_directory + configure.get('input', 'site_cfm_info')
+    site_cfm_info_path = f"{config.input_directory}site_cfm_info.csv"
     df = pd.read_csv(site_cfm_info_path, skiprows=[1], encoding_errors='ignore')
     df = df.loc[df['site'] == site]
     return df

@@ -4,6 +4,7 @@ import datetime as dt
 import csv
 import os
 from ecopipeline.utils.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu, power_flow_to_kW
+from ecopipeline import ConfigManager
 
 pd.set_option('display.max_columns', None)
 
@@ -57,7 +58,7 @@ def round_time(df: pd.DataFrame):
     return True
 
 
-def rename_sensors(original_df: pd.DataFrame, variable_names_path: str, site: str = "", system: str = ""):
+def rename_sensors(original_df: pd.DataFrame, config : ConfigManager, site: str = "", system: str = ""):
     """
     Function will take in a dataframe and a string representation of a file path and renames
     sensors from their alias to their true name. Also filters the dataframe by site and system if specified.
@@ -66,9 +67,10 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str, site: st
     ---------- 
     original_df: pd.DataFrame
         A dataframe that contains data labeled by the raw varriable names to be renamed.
-    variable_names_path: str 
-        file location of file containing sensor aliases to their corresponding name (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
-        the csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
+        The csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
         (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.
     site: str
         If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
@@ -85,6 +87,7 @@ def rename_sensors(original_df: pd.DataFrame, variable_names_path: str, site: st
         Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
         Variable_Names.csv.
     """
+    variable_names_path = config.get_var_names_path()
     try:
         variable_data = pd.read_csv(variable_names_path)
     except FileNotFoundError:
@@ -169,7 +172,7 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
         col.mask((col > c_upper) | (col < c_lower), other=np.NaN, inplace=True)
 
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
-def remove_outliers(original_df: pd.DataFrame, variable_names_path: str, site: str = "") -> pd.DataFrame:
+def remove_outliers(original_df: pd.DataFrame, config : ConfigManager, site: str = "") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of bounds information in a csv,
     store the bounds data in a dataframe, then remove outliers above or below bounds as 
@@ -179,8 +182,9 @@ def remove_outliers(original_df: pd.DataFrame, variable_names_path: str, site: s
     ----------
     original_df: pd.DataFrame
         Pandas dataframe for which outliers need to be removed
-    variable_names_path: str
-        Path to csv file containing sensor names and cooresponding upper/lower boundaries (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least three columns which must be titled "variable_name", "lower_bound", and "upper_bound" which should contain the
         name of each variable in the dataframe that requires the removal of outliers, the lower bound for acceptable data, and the upper bound for
         acceptable data respectively
@@ -193,6 +197,7 @@ def remove_outliers(original_df: pd.DataFrame, variable_names_path: str, site: s
         Pandas dataframe with outliers removed and replaced with nans
     """
     df = original_df.copy()
+    variable_names_path = config.get_var_names_path()
     try:
         bounds_df = pd.read_csv(variable_names_path)
     except FileNotFoundError:
@@ -239,7 +244,7 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
             col.fillna(method='ffill', inplace=True, limit=length)
 
 
-def ffill_missing(original_df: pd.DataFrame, vars_filename: str, previous_fill: pd.DataFrame = None) -> pd.DataFrame:
+def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
     
@@ -247,8 +252,9 @@ def ffill_missing(original_df: pd.DataFrame, vars_filename: str, previous_fill: 
     ----------
     original_df: pd.DataFrame
         Pandas dataframe that needs to be forward filled
-    vars_filename: str
-        Path to csv file containing variable names and cooresponding changepoint and ffill_length (e.g. "full/path/to/pipeline/input/Variable_Names.csv"),
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length".
         The variable_name column should contain the name of each variable in the dataframe that requires forward filling.
         The changepoint column should contain one of three values: 
@@ -266,6 +272,7 @@ def ffill_missing(original_df: pd.DataFrame, vars_filename: str, previous_fill: 
         Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv
     """
     df = original_df.copy()
+    vars_filename = config.get_var_names_path()
     try:
         # ffill dataframe holds ffill length and changepoint bool
         ffill_df = pd.read_csv(vars_filename)
@@ -297,7 +304,7 @@ def ffill_missing(original_df: pd.DataFrame, vars_filename: str, previous_fill: 
     return df
 
 # TODO test this
-def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str) -> pd.DataFrame:
+def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and make erroneous values NaN. 
 
@@ -305,8 +312,9 @@ def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str) -> pd.DataF
     ---------- 
     original_df: pd.DataFrame
         Pandas dataframe that needs to be filtered for error values
-    variable_names_path: str
-        Path to csv file containing variable names and cooresponding error values (e.g. "full/path/to/pipeline/input/Variable_Names.csv"),
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         There should be at least two columns in this csv: "variable_name" and "error_value"
         The variable_name should contain the names of all columns in the dataframe that need to have there erroneous values removed
         The error_value column should contain the error value of each variable_name, or null if there isn't an error value for that variable   
@@ -317,6 +325,7 @@ def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str) -> pd.DataF
         Pandas dataframe with error values replaced with NaNs
     """
     df = original_df.copy()
+    vars_filename = config.get_var_names_path()
     try:
         # ffill dataframe holds ffill length and changepoint bool
         error_df = pd.read_csv(vars_filename)
@@ -338,7 +347,7 @@ def nullify_erroneous(original_df: pd.DataFrame, vars_filename: str) -> pd.DataF
     return df
 
 #TODO investigate if this can be removed
-def sensor_adjustment(df: pd.DataFrame, adjustments_csv_path : str) -> pd.DataFrame:
+def sensor_adjustment(df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
     """
     TO BE DEPRICATED -- Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
 
@@ -346,14 +355,16 @@ def sensor_adjustment(df: pd.DataFrame, adjustments_csv_path : str) -> pd.DataFr
     ---------- 
     df : pd.DataFrame
         DataFrame to be adjusted
-    variable_names_path: str
-        Full path to the adjustments csv (e.g. "full/path/to/pipeline/input/adjustments.csv)
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called adjustments.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/adjustments.csv")
     
     Returns
     ------- 
     pd.DataFrame: 
         Adjusted Dataframe
     """
+    adjustments_csv_path = f"{config.input_directory}adjustments.csv"
     try:
         adjustments = pd.read_csv(adjustments_csv_path)
     except FileNotFoundError:

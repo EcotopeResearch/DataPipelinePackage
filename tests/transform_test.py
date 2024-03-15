@@ -36,8 +36,9 @@ def test_concat_last_row():
     expected.index = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-04', '2022-01-05'])
     assert_frame_equal(concat_last_row(df, last_row), expected)
 
-
-def test_rename_sensors_no_site():
+@patch('ecopipeline.ConfigManager')
+def test_rename_sensors_no_site(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -65,13 +66,15 @@ def test_rename_sensors_no_site():
         df_expected.index = timestamps
 
         # Call the function that uses mysql.connector.connect()
-        df = rename_sensors(df, 'fake/path/whatever/')
+        df = rename_sensors(df, mock_config_manager)
 
         # Assert that mysql.connector.connect() was called
-        mock_csv._once_with('fake/path/whatever/')
+        mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
         assert_frame_equal(df, df_expected)
 
-def test_rename_sensors_with_site():
+@patch('ecopipeline.ConfigManager')
+def test_rename_sensors_with_site(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings'],
@@ -97,13 +100,15 @@ def test_rename_sensors_with_site():
         df_expected.index = timestamps
 
         # Call the function that uses mysql.connector.connect()
-        df = rename_sensors(df, 'fake/path/whatever/', "silly_site")
+        df = rename_sensors(df, mock_config_manager, "silly_site")
 
         # Assert that mysql.connector.connect() was called
-        mock_csv.assert_called_once_with('fake/path/whatever/')
+        mock_csv.assert_called_once_with('fake/path/whatever/Variable_Names.csv')
         assert_frame_equal(df, df_expected)
 
-def test_rename_sensors_error():
+@patch('ecopipeline.ConfigManager')
+def test_rename_sensors_error(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         # Set the desired response for mock_connect.return_value
         mock_csv.side_effect = FileNotFoundError
@@ -111,13 +116,15 @@ def test_rename_sensors_error():
         timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-05'])
         df = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), float('-inf'), math.nan]})
         df.index = timestamps
-        with pytest.raises(Exception, match="File Not Found: fake/path/whatever/"):
+        with pytest.raises(Exception, match="File Not Found: fake/path/whatever/Variable_Names.csv"):
             # Call the function that uses mysql.connector.connect()
-            df = rename_sensors(df, 'fake/path/whatever/', "silly_site")
+            df = rename_sensors(df, mock_config_manager, "silly_site")
         # Assert that mysql.connector.connect() was called
-        mock_csv.assert_called_once_with('fake/path/whatever/')
+        mock_csv.assert_called_once_with('fake/path/whatever/Variable_Names.csv')
 
-def test_rename_sensors_with_system():
+@patch('ecopipeline.ConfigManager')
+def test_rename_sensors_with_system(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings'],
@@ -145,10 +152,10 @@ def test_rename_sensors_with_system():
         df_expected.index = timestamps
 
         # Call the function that uses mysql.connector.connect()
-        df_silly_system = rename_sensors(df, 'fake/path/whatever/', system="silly_system")
+        df_silly_system = rename_sensors(df, mock_config_manager, system="silly_system")
 
         # Assert that mysql.connector.connect() was called
-        mock_csv.assert_called_once_with('fake/path/whatever/')
+        mock_csv.assert_called_once_with("fake/path/whatever/Variable_Names.csv")
         assert_frame_equal(df_silly_system, df_expected)
         assert_frame_equal(df, df_maintained) # ensure original dataframe left undisturbed
 
@@ -192,7 +199,9 @@ def test_avg_duplicate_times_with_tz():
     df = avg_duplicate_times(df, 'US/Pacific')
     assert_frame_equal(df, df_expected)
 
-def test_ffill_missing():
+@patch('ecopipeline.ConfigManager')
+def test_ffill_missing(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
@@ -213,7 +222,7 @@ def test_ffill_missing():
                         'serious_var_3': [None,None,3,None,None],
                         'serious_var_4': [None,2,3,3,4]})
         df_expected.index = timestamps
-        df_result = ffill_missing(df_input, "full/path/to/pipeline/input/Variable_Names.csv")
+        df_result = ffill_missing(df_input, mock_config_manager)
         assert_frame_equal(df_result, df_expected)
         # check that df_input was not changed in place
         assert_frame_equal(df_input, df_unchanged)
@@ -351,7 +360,11 @@ def test_round_time():
     round_time(df)
     assert_frame_equal(df, df_expected)
 
-def test_remove_outliers():
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers(mock_config_manager):
+
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -374,7 +387,7 @@ def test_remove_outliers():
                         'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
         df_expected.index = timestamps
 
-        assert_frame_equal(remove_outliers(df_input, "full/path/to/pipeline/input/Variable_Names.csv"), df_expected)
+        assert_frame_equal(remove_outliers(df_input, mock_config_manager), df_expected)
 
         timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
         df_expected = pd.DataFrame({
@@ -384,9 +397,11 @@ def test_remove_outliers():
                         'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
         df_expected.index = timestamps
 
-        assert_frame_equal(remove_outliers(df_input, "full/path/to/pipeline/input/Variable_Names.csv", site="site_1"), df_expected)
+        assert_frame_equal(remove_outliers(df_input, mock_config_manager, site="site_1"), df_expected)
 
-def test_nullify_erroneous():
+@patch('ecopipeline.ConfigManager')
+def test_nullify_erroneous(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
                         'error_value': [1, 2, None,None]})
@@ -403,7 +418,7 @@ def test_nullify_erroneous():
                         'serious_var_2': [None,5,1.4,np.NaN,None],
                         'serious_var_3': [None,None,3,None,None]})
         df_expected.index = timestamps
-        df_result = nullify_erroneous(df_input, "full/path/to/pipeline/input/Variable_Names.csv")
+        df_result = nullify_erroneous(df_input, mock_config_manager)
         assert_frame_equal(df_result, df_expected)
         # check that df_input was not changed in place
         assert_frame_equal(df_input, df_unchanged)
