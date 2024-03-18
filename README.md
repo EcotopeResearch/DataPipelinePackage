@@ -8,7 +8,7 @@
     $ pip install -e .
 
 ## Using the Package
-    See https://ecotoperesearch.github.io/DataPipelinePackage/build/html/index.html for documentation
+See https://ecotoperesearch.github.io/DataPipelinePackage/build/html/index.html for documentation
 
 ### config.ini
 - database
