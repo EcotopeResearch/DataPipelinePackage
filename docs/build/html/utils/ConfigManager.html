@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 0.2.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Extract Documentation" href="../extract/extract.html" />
+    <link rel="prev" title="EcoPipeline Documentation" href="../index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../extract/extract.html" title="Extract Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="EcoPipeline Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="pipeline-configuration-documentation">
+<h1>Pipeline Configuration Documentation<a class="headerlink" href="#pipeline-configuration-documentation" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<span class="target" id="module-utils.ConfigManager"></span><dl class="py class">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">utils.ConfigManager.</span></span><span class="sig-name descname"><span class="pre">ConfigManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.ini'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eco_file_structure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helpful object to manage configuration</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config_file_path</strong><span class="classifier">str</span></dt><dd><p>The path to the config.ini file for the pipeline (e.g. “full/path/to/config.ini”). Defaults to “config.ini”
+This file should contain login information for MySQL database where data is to be loaded.</p>
+</dd>
+<dt><strong>input_directory</strong><span class="classifier">str</span></dt><dd><p>The path to the input directory for the pipeline (e.g. “full/path/to/pipeline/input/”).
+Defaults to the input directory defined in the config.ini configuration file</p>
+</dd>
+<dt><strong>output_directory</strong><span class="classifier">str</span></dt><dd><p>The path to the output directory for the pipeline (e.g. “full/path/to/pipeline/output/”).
+Defaults to the output directory defined in the config.ini configuration file</p>
+</dd>
+<dt><strong>data_directory</strong><span class="classifier">str</span></dt><dd><p>The path to the data directory for the pipeline (e.g. “full/path/to/pipeline/data/”).
+Defaults to the data directory defined in the config.ini configuration file</p>
+</dd>
+<dt><strong>eco_file_structure</strong><span class="classifier">boolean</span></dt><dd><p>Set to True if this is a data pipeline running on Ecotope’s server for file path reconfiguration. Set False if not running at Ecotope.
+Defaults to False</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db" title="utils.ConfigManager.ConfigManager.connect_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_db</span></code></a>()</p></td>
+<td><p>Create a connection with the mySQL server.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="utils.ConfigManager.ConfigManager.get_db_table_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_table_info</span></code></a>(table_headers)</p></td>
+<td><p>Reads the config.ini file stored in the config_file_path file path.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="utils.ConfigManager.ConfigManager.get_var_names_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_names_path</span></code></a>()</p></td>
+<td><p>Returns path to the full path to the Variable_Names.csv file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weather_dir_path</span></code></a>()</p></td>
+<td><p>Returns path to the directory that holds NOAA weather data files.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.connect_db">
+<span class="sig-name descname"><span class="pre">connect_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a connection with the mySQL server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>None</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor:</dt><dd><p>A connection and cursor object. THe cursor can be used to execute
+mySQL queries and the connection object can be used to save those changes.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_db_table_info">
+<span class="sig-name descname"><span class="pre">get_db_table_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the config.ini file stored in the config_file_path file path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>table_headers</strong><span class="classifier">list</span></dt><dd><p>A list of table headers. These headers must correspond to the
+section headers in the config.ini file. Your list must contain the section
+header for each table you wish to write into. The first header must correspond
+to the login information of the database. The other are the tables which you wish
+to write to.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>dict:</dt><dd><p>A dictionary containing all relevant information is returned. This
+includes information used to create a connection with a mySQL server and
+information (table names and column names) used to load the data into
+tables.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_var_names_path">
+<span class="sig-name descname"><span class="pre">get_var_names_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns path to the full path to the Variable_Names.csv file.
+This file should be in the pipeline’s input directory “/” (i.e. “full/path/to/pipeline/input/Variable_Names.csv”)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_weather_dir_path">
+<span class="sig-name descname"><span class="pre">get_weather_dir_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns path to the directory that holds NOAA weather data files.
+This diectory should be in the pipeline’s data directory “/” (i.e. “full/path/to/pipeline/data/weather”)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Pipeline Configuration Documentation</a><ul>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager"><code class="docutils literal notranslate"><span class="pre">ConfigManager</span></code></a><ul>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db"><code class="docutils literal notranslate"><span class="pre">ConfigManager.connect_db()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_table_info()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_var_names_path()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_weather_dir_path()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../index.html"
+                          title="previous chapter">EcoPipeline Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../extract/extract.html"
+                          title="next chapter">Extract Documentation</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/utils/ConfigManager.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../extract/extract.html" title="Extract Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="EcoPipeline Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2023, Ecotope Inc..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    </div>
+  </body>
+</html>

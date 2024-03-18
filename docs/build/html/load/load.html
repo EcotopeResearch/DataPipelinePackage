@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Load Documentation &#8212; DataPipelinePackage 0.0.60 documentation</title>
+    <title>Load Documentation &#8212; DataPipelinePackage 0.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -28,7 +28,7 @@
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>  
@@ -44,12 +44,12 @@
 </div>
 <span class="target" id="module-ecopipeline.load"></span><dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.check_table_exists">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">check_table_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#ecopipeline.load.check_table_exists" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">check_table_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#ecopipeline.load.check_table_exists" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if the given table name already exists in database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>cursor:</strong></dt><dd><p>Database cursor object and the table name.</p>
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>Database cursor object and the table name.</p>
 </dd>
 <dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table</p>
 </dd>
@@ -68,35 +68,13 @@ This can directly be used as a boolean!</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="ecopipeline.load.connect_db">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">connect_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.connect_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a connection with the mySQL server.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>config_info</strong><span class="classifier">dict</span></dt><dd><p>The dictionary containing the credential information. This is
-contained in the ‘database’ section of the dictionary.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>mysql.connector.cursor.MySQLCursor:</dt><dd><p>A connection and cursor object. THe cursor can be used to execute
-mySQL queries and the connection object can be used to save those changes.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.create_new_table">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">create_new_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.create_new_table" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">create_new_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.create_new_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a new table in the mySQL database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>cursor:</strong></dt><dd><p>A cursor object and the name of the table to be created.</p>
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>A cursor object and the name of the table to be created.</p>
 </dd>
 <dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table</p>
 </dd>
@@ -114,44 +92,14 @@ mySQL queries and the connection object can be used to save those changes.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="ecopipeline.load.get_login_info">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">get_login_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#ecopipeline.load.get_login_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads the config.ini file stored in the config_info file path.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>table_headers</strong><span class="classifier">list</span></dt><dd><p>A list of table headers. These headers must correspond to the
-section headers in the config.ini file. Your list must contain the section
-header for each table you wish to write into. The first header must correspond
-to the login information of the database. The other are the tables which you wish
-to write to.</p>
-</dd>
-<dt><strong>config_info</strong><span class="classifier">str</span></dt><dd><p>The path to the config.ini file for the pipeline (e.g. “full/path/to/config.ini”).
-This file should contain login information for MySQL database where data is to be loaded.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict:</dt><dd><p>A dictionary containing all relevant information is returned. This
-includes information used to create a connection with a mySQL server and
-information (table names and column names) used to load the data into
-tables.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.load_overwrite_database">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_overwrite_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_overwrite_database" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_overwrite_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_overwrite_database" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
 Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>cursor: mysql.connector.cursor.MySQLCursor</strong></dt><dd><p>A cursor object connected to the database where the data will land</p>
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>A cursor object connected to the database where the data will land</p>
 </dd>
 <dt><strong>dataframe: pd.DataFrame</strong></dt><dd><p>The pandas DataFrame to be written into the mySQL server.</p>
 </dd>
@@ -184,9 +132,7 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
     <ul>
 <li><a class="reference internal" href="#">Load Documentation</a><ul>
 <li><a class="reference internal" href="#ecopipeline.load.check_table_exists"><code class="docutils literal notranslate"><span class="pre">check_table_exists()</span></code></a></li>
-<li><a class="reference internal" href="#ecopipeline.load.connect_db"><code class="docutils literal notranslate"><span class="pre">connect_db()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.create_new_table"><code class="docutils literal notranslate"><span class="pre">create_new_table()</span></code></a></li>
-<li><a class="reference internal" href="#ecopipeline.load.get_login_info"><code class="docutils literal notranslate"><span class="pre">get_login_info()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.load_overwrite_database"><code class="docutils literal notranslate"><span class="pre">load_overwrite_database()</span></code></a></li>
 </ul>
 </li>
@@ -231,7 +177,7 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>

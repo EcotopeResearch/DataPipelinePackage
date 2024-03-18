@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Extract Documentation &#8212; DataPipelinePackage 0.0.60 documentation</title>
+    <title>Extract Documentation &#8212; DataPipelinePackage 0.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>  
@@ -71,14 +71,14 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_files">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_files" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>extension</strong><span class="classifier">str</span></dt><dd><p>File extension of raw data files as string (e.g. “.csv”, “.gz”, …)</p>
 </dd>
-<dt><strong>data_directory</strong><span class="classifier">str</span></dt><dd><p>directory containing raw data files from the data site (e.g. “full/path/to/data/”)</p>
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
 </dd>
 </dl>
 </dd>
@@ -137,15 +137,14 @@ defaults to None</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.get_db_row_from_time">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_db_row_from_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_db_row_from_time" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_db_row_from_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_db_row_from_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>time</strong><span class="classifier">datetime</span></dt><dd><p>The time index to get the row from</p>
 </dd>
-<dt><strong>config_info</strong><span class="classifier">str</span></dt><dd><p>The path to the config.ini file for the pipeline (e.g. “full/path/to/config.ini”).
-This file should contain login information for MySQL database where data is to be loaded.</p>
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
 </dd>
 </dl>
 </dd>
@@ -160,14 +159,13 @@ This file should contain login information for MySQL database where data is to b
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.get_last_full_day_from_db">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_last_full_day_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">datetime</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_last_full_day_from_db" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_last_full_day_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">datetime</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_last_full_day_from_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function retrieves the last line from the database with the most recent datetime
 in local time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config_info</strong><span class="classifier">str</span></dt><dd><p>The path to the config.ini file for the pipeline (e.g. “full/path/to/config.ini”).
-This file should contain login information for MySQL database where data is to be loaded.</p>
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
 </dd>
 </dl>
 </dd>
@@ -182,14 +180,14 @@ This file should contain login information for MySQL database where data is to b
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.get_noaa_data">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_noaa_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">station_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weather_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_noaa_data" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_noaa_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">station_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_noaa_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>station_names</strong><span class="classifier">List[str]</span></dt><dd><p>List of Station Names</p>
 </dd>
-<dt><strong>weather_directory</strong><span class="classifier">str</span></dt><dd><p>the directory that holds NOAA weather data files. Should not contain an ending “/” (e.g. “full/path/to/weather/data”)</p>
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
 </dd>
 </dl>
 </dd>
@@ -344,7 +342,7 @@ defaults to ‘US/Pacific’</p>
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.0.60 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>

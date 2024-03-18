@@ -9,9 +9,21 @@ class ConfigManager:
 
     Attributes
     ----------
-    config_file_path : ecopipeline.ConfigManager
+    config_file_path : str
         The path to the config.ini file for the pipeline (e.g. "full/path/to/config.ini"). Defaults to "config.ini"
         This file should contain login information for MySQL database where data is to be loaded.
+    input_directory : str
+        The path to the input directory for the pipeline (e.g. "full/path/to/pipeline/input/"). 
+        Defaults to the input directory defined in the config.ini configuration file
+    output_directory : str
+        The path to the output directory for the pipeline (e.g. "full/path/to/pipeline/output/"). 
+        Defaults to the output directory defined in the config.ini configuration file
+    data_directory : str
+        The path to the data directory for the pipeline (e.g. "full/path/to/pipeline/data/"). 
+        Defaults to the data directory defined in the config.ini configuration file
+    eco_file_structure : boolean
+        Set to True if this is a data pipeline running on Ecotope's server for file path reconfiguration. Set False if not running at Ecotope.
+        Defaults to False
     """
     def __init__(self, config_file_path : str = "config.ini", input_directory : str = None, output_directory : str = None, data_directory : str = None, eco_file_structure : bool = False):
         os.chdir(os.getcwd())

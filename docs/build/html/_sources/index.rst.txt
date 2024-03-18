@@ -10,6 +10,7 @@ EcoPipeline Documentation
    :maxdepth: 2
    :caption: Contents:
    
+   utils/ConfigManager
    extract/extract
    transform/transform
    load/load
