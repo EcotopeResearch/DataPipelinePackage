@@ -619,17 +619,6 @@ def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float
             incomplete_days.append(day)
     daily_df = daily_df.drop(incomplete_days)
 
-        
-
-
-    # hourly_start = df.index[0].ceil("H") 
-    # hourly_end = df.index[-1].floor("H") - pd.DateOffset(hours=1)
-    # hourly_df = hourly_df[hourly_start: (hourly_end)]
-
-    # daily_start = df.index[0].ceil("D")
-    # daily_end = df.index[-1].floor("D") - pd.DateOffset(days=1)
-    # daily_df = daily_df[daily_start: (daily_end)]
-
     return hourly_df, daily_df
 
 
