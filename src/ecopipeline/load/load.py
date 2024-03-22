@@ -12,11 +12,12 @@ import datetime
 import numpy as np
 
 data_map = {'int64':'float',
-                'float64': 'float',
-                'M8[ns]':'datetime',
-                'datetime64[ns]':'datetime',
-                'object':'varchar(25)',
-                'bool': 'boolean'}
+            'int32':'float',
+            'float64': 'float',
+            'M8[ns]':'datetime',
+            'datetime64[ns]':'datetime',
+            'object':'varchar(25)',
+            'bool': 'boolean'}
 
 # def get_login_info(table_headers: list, config_file_path : str) -> dict:
 #     """
