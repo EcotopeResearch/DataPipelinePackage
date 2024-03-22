@@ -326,16 +326,72 @@ def test_aggregate_df():
             daily_df_expected['load_shift_day'] = True
             daily_df_expected.at[daily_df_expected.index[-1], 'load_shift_day'] = False
 
-            print(daily_df_expected.columns)
-
-            hourly_result, daily_result = aggregate_df(df_input, "full/path/to/pipeline/input/loadshift_matrix.csv")
-            assert len(hourly_result.index) == 72
+            hourly_result, daily_result = aggregate_df(df_input, "full/path/to/pipeline/input/loadshift_matrix.csv", remove_partial=False)
+            assert len(hourly_result.index) == 73
             hourly_result = hourly_result.loc[hourly_result.index.isin(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-22 10:00:00','2022-04-23 15:00:00'])]
             assert_frame_equal(hourly_result, hourly_df_expected)
-
+            daily_result = daily_result.loc[daily_result.index.isin(['2022-04-21 00:00:00', '2022-04-22 00:00:00','2022-04-23 00:00:00'])]
             assert_frame_equal(daily_df_expected, daily_result)
             # check that df_input was not changed in place
             assert_frame_equal(df_input, df_unchanged)
+
+def test_remove_partial_days():
+    # UTC
+    minute_times = []
+    hour_times = []
+    day_times = []
+    for day in range(1,18):
+        day_times.append(f"2022-06-{'{:02d}'.format(day)} 00:00:00")
+        for hour in range(24):
+            hour_times.append(f"2022-06-{'{:02d}'.format(day)} {'{:02d}'.format(hour)}:00:00")
+            for minute in range(60):
+                minute_times.append(f"2022-06-{'{:02d}'.format(day)} {'{:02d}'.format(hour)}:{'{:02d}'.format(minute)}:00")
+
+    minute_timestamps = pd.to_datetime(minute_times)
+    minute_df = pd.DataFrame({'HeatOut_Primary': [4]*len(minute_times)})
+    minute_df.index = minute_timestamps
+    hour_timestamps = pd.to_datetime(hour_times)
+    hour_df = pd.DataFrame({'HeatOut_Primary': [4]*len(hour_times)})
+    hour_df.index = hour_timestamps
+    day_timestamps = pd.to_datetime(day_times)
+    day_df = pd.DataFrame({'HeatOut_Primary': [4]*len(day_times)})
+    day_df.index = day_timestamps
+
+    hour_df, day_df = remove_partial_days(minute_df, hour_df, day_df)
+    
+    # full data set, nothing is removed.
+    assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
+    assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
+
+    # incomplete in begining
+    start_time = pd.Timestamp('2021-06-03 01:00:00')
+    end_time = pd.Timestamp('2022-06-02 02:05:00')
+    minute_df = minute_df.loc[(minute_df.index < start_time) | (minute_df.index > end_time)]
+    day_times = day_times[2:]
+    hour_times = hour_times[26:]
+    hour_df, day_df = remove_partial_days(minute_df, hour_df, day_df)
+    assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
+    assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
+
+    # incomplete in middle
+    start_time = pd.Timestamp('2022-06-05 01:00:00')
+    end_time = pd.Timestamp('2022-06-05 01:30:00')
+    minute_df = minute_df.loc[(minute_df.index < start_time) | (minute_df.index > end_time)]
+    day_times.remove('2022-06-05 00:00:00')
+    hour_times.remove('2022-06-05 01:00:00')
+    hour_df, day_df = remove_partial_days(minute_df, hour_df, day_df)
+    assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
+    assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
+
+    # incomplete in end
+    start_time = pd.Timestamp('2022-06-17 20:00:00')
+    end_time = pd.Timestamp('2023-06-05 01:30:00')
+    minute_df = minute_df.loc[(minute_df.index < start_time) | (minute_df.index > end_time)]
+    day_times = day_times[:-1]
+    hour_times = hour_times[:-4]
+    hour_df, day_df = remove_partial_days(minute_df, hour_df, day_df)
+    assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
+    assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
 
 def test_round_time():
     # UTC

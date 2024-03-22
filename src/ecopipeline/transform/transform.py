@@ -475,7 +475,7 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
 
     return df
 
-def aggregate_df(df: pd.DataFrame, ls_filename: str = "") -> (pd.DataFrame, pd.DataFrame):
+def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True) -> (pd.DataFrame, pd.DataFrame):
     """
     Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
     dataframes, appends 'load_shift_day' column onto the daily_df and the 'system_state' column to
@@ -542,7 +542,8 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "") -> (pd.DataFrame, pd.D
         print(f"The loadshift file '{ls_filename}' does not exist. Thus loadshifting will not be added to daily dataframe.")
     
     # if any day in hourly table is incomplete, we should delete that day from the daily table as the averaged data it contains will be from an incomplete day.
-    hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)
+    if remove_partial:
+        hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold, complete_day_threshold)
     return hourly_df, daily_df
 
 
@@ -570,18 +571,43 @@ def create_summary_tables(df: pd.DataFrame):
     hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)
     return hourly_df, daily_df
 
-def remove_partial_days(df, hourly_df, daily_df):
+def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0):
     '''
-    Helper function for removing daily values that are calculated from incomplete data.
+    Helper function for removing daily and hourly values that are calculated from incomplete data.
     '''
+    if complete_hour_threshold < 0.0 or complete_hour_threshold > 1.0:
+        raise Exception("complete_hour_threshold must be a float between 0 and 1 to represent a percent (e.g. 80% = 0.8)")
+    if complete_day_threshold < 0.0 or complete_day_threshold > 1.0:
+        raise Exception("complete_day_threshold must be a float between 0 and 1 to represent a percent (e.g. 80% = 0.8)")
+    
+    num_minutes_required = 60.0 * complete_hour_threshold
+    incomplete_hours = []
+    for hour in hourly_df.index:
+        next_hour = hour + pd.Timedelta(hours=1)
+        filtered_df = df.loc[(df.index >= hour) & (df.index < next_hour)]
+        if len(filtered_df.index) < num_minutes_required:
+            incomplete_hours.append(hour)
+    hourly_df = hourly_df.drop(incomplete_hours)
+    
+    num_complete_hours_required = 24.0 * complete_day_threshold
+    incomplete_days = []
+    for day in daily_df.index:
+        next_day = day + pd.Timedelta(days=1)
+        filtered_df = hourly_df.loc[(hourly_df.index >= day) & (hourly_df.index < next_day)]
+        if len(filtered_df.index) < num_complete_hours_required:
+            incomplete_days.append(day)
+    daily_df = daily_df.drop(incomplete_days)
 
-    hourly_start = df.index[0].ceil("H") 
-    hourly_end = df.index[-1].floor("H") - pd.DateOffset(hours=1)
-    hourly_df = hourly_df[hourly_start: (hourly_end)]
+        
 
-    daily_start = df.index[0].ceil("D")
-    daily_end = df.index[-1].floor("D") - pd.DateOffset(days=1)
-    daily_df = daily_df[daily_start: (daily_end)]
+
+    # hourly_start = df.index[0].ceil("H") 
+    # hourly_end = df.index[-1].floor("H") - pd.DateOffset(hours=1)
+    # hourly_df = hourly_df[hourly_start: (hourly_end)]
+
+    # daily_start = df.index[0].ceil("D")
+    # daily_end = df.index[-1].floor("D") - pd.DateOffset(days=1)
+    # daily_df = daily_df[daily_start: (daily_end)]
 
     return hourly_df, daily_df
 

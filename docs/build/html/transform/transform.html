@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.2.2 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.2.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -71,7 +71,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.aggregate_df">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aggregate_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_filename:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'')</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.aggregate_df" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aggregate_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_filename:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_hour_threshold:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_day_threshold:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_partial:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.aggregate_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily
 dataframes, appends ‘load_shift_day’ column onto the daily_df and the ‘system_state’ column to
 hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
@@ -825,8 +825,8 @@ acceptable data respectively</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.remove_partial_days">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_partial_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hourly_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.remove_partial_days" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper function for removing daily values that are calculated from incomplete data.</p>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_partial_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hourly_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_hour_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_day_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.remove_partial_days" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for removing daily and hourly values that are calculated from incomplete data.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1090,7 +1090,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>

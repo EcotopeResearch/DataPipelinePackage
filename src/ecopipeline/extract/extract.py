@@ -204,9 +204,15 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
 
         norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
         if len(norm_data) != 0:
+
             norm_data["time"] = pd.to_datetime(norm_data["time"])
+
             norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert(time_zone)
             norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
+            # Iterate over the index and round up if necessary (work around for json format from sensors)
+            for i in range(len(norm_data.index)):
+                if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
+                    norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
             temp_dfs.append(norm_data)
 
     df = pd.concat(temp_dfs, ignore_index=False)

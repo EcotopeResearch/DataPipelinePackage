@@ -31,14 +31,24 @@ def test_json_to_df():
                         {"id": "sensor_2", "data": 25},
                         {"id": "sensor_3", "data": 35}
                     ]
+                },
+                {
+                    "device": "device_1",
+                    "connection": "connection_1",
+                    "time": "2023-07-11 10:59:59",
+                    "sensors": [
+                        {"id": "sensor_1", "data": 16},
+                        {"id": "sensor_2", "data": 26},
+                        {"id": "sensor_3", "data": 36}
+                    ]
                 }
             ]
             normal_df = pd.DataFrame(
                 {
-                    'time': ['2023-07-11 10:00:00', '2023-07-11 10:01:00'],
-                    'sensor_1': [10,15],
-                    'sensor_2': [20,25],
-                    'sensor_3': [30,35]
+                    'time': ['2023-07-11 10:00:00', '2023-07-11 10:01:00','2023-07-11 11:00:00'],
+                    'sensor_1': [10,15,16],
+                    'sensor_2': [20,25,26],
+                    'sensor_3': [30,35,36]
                 }
             )
 
