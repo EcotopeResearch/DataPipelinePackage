@@ -85,6 +85,14 @@ complete days are returned rather than agregated data from partial datasets.</p>
 <dt><strong>ls_filename</strong><span class="classifier">str</span></dt><dd><p>Path to csv file containing load shift schedule (e.g. “full/path/to/pipeline/input/loadshift_matrix.csv”),
 There should be at least four columns in this csv: ‘date’, ‘startTime’, ‘endTime’, and ‘event’</p>
 </dd>
+<dt><strong>complete_hour_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)
+Only applicable if remove_partial set to True</p>
+</dd>
+<dt><strong>complete_day_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)
+Only applicable if remove_partial set to True</p>
+</dd>
+<dt><strong>remove_partial</strong><span class="classifier">bool</span></dt><dd><p>Default to True. Removes parial days and hours from aggregated dfs</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -827,6 +835,22 @@ acceptable data respectively</p>
 <dt class="sig sig-object py" id="ecopipeline.transform.remove_partial_days">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_partial_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hourly_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_hour_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_day_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.remove_partial_days" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for removing daily and hourly values that are calculated from incomplete data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of minute-by-minute sensor data.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>agregated daily dataframe that contains all daily information.</p>
+</dd>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>agregated hourly dataframe that contains all hourly information.</p>
+</dd>
+<dt><strong>complete_hour_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)</p>
+</dd>
+<dt><strong>complete_day_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">

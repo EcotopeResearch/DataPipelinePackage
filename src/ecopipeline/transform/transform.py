@@ -490,6 +490,14 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     ls_filename : str
         Path to csv file containing load shift schedule (e.g. "full/path/to/pipeline/input/loadshift_matrix.csv"),
         There should be at least four columns in this csv: 'date', 'startTime', 'endTime', and 'event'
+    complete_hour_threshold : float
+        Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8) 
+        Only applicable if remove_partial set to True
+    complete_day_threshold : float
+        Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8) 
+        Only applicable if remove_partial set to True
+    remove_partial : bool
+        Default to True. Removes parial days and hours from aggregated dfs 
     
     Returns
     -------
@@ -574,6 +582,19 @@ def create_summary_tables(df: pd.DataFrame):
 def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0):
     '''
     Helper function for removing daily and hourly values that are calculated from incomplete data.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of minute-by-minute sensor data.
+    daily_df : pd.DataFrame
+        agregated daily dataframe that contains all daily information.
+    hourly_df : pd.DataFrame
+        agregated hourly dataframe that contains all hourly information.
+    complete_hour_threshold : float
+        Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)
+    complete_day_threshold : float
+        Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)
     '''
     if complete_hour_threshold < 0.0 or complete_hour_threshold > 1.0:
         raise Exception("complete_hour_threshold must be a float between 0 and 1 to represent a percent (e.g. 80% = 0.8)")
