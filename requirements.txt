@@ -3,8 +3,6 @@ scikit-learn
 statsmodels
 numpy==1.24.1
 mysql-connector-python==8.0.32
-spyder-kernels==2.4.1
-spyder==5.4.1
 pytest
 pytest-mock
 -e .

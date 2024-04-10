@@ -219,7 +219,7 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     return df
 
 
-def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFrame:
+def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True) -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
 
@@ -229,7 +229,11 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
         List of filenames to be processed into a single dataframe 
     mb_prefix: bool
         A boolean that signifys if the data is in modbus form- if set to true, will prepend modbus prefix to each raw varriable name
-    
+    round_time_index: bool
+        A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
+        Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
+        Defaults to True.
+        
     Returns
     ------- 
     pd.DataFrame: 
@@ -264,12 +268,13 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False) -> pd.DataFram
 
     df = pd.concat(temp_dfs, ignore_index=False) 
     
-    #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
-    df.index = df.index.floor('T')
-    
-    #group and sort index
-    df = df.groupby(df.index).mean(numeric_only=True)
-    df.sort_index(inplace = True)
+    if round_time_index:
+        #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
+        df.index = df.index.floor('T')
+        
+        #group and sort index
+        df = df.groupby(df.index).mean(numeric_only=True)
+        df.sort_index(inplace = True)
 
     return df
 
@@ -373,11 +378,15 @@ def get_noaa_data(station_names: List[str], config : ConfigManager) -> dict:
     formatted_dfs = {}
     weather_directory = config.get_weather_dir_path()
     try:
+        print("here 3")
         noaa_dictionary = _get_noaa_dictionary(weather_directory)
+        print("here 4")
         station_ids = {noaa_dictionary[station_name]
             : station_name for station_name in station_names if station_name in noaa_dictionary}
         noaa_filenames = _download_noaa_data(station_ids, weather_directory)
+        print("here 5")
         noaa_dfs = _convert_to_df(station_ids, noaa_filenames, weather_directory)
+        print("here 6")
         formatted_dfs = _format_df(station_ids, noaa_dfs)
     except:
         # temporary solution for NOAA ftp not including 2024
