@@ -2,6 +2,7 @@ import configparser
 import os
 import mysql.connector
 import mysql.connector.cursor
+import requests
 
 class ConfigManager:
     """
@@ -39,13 +40,33 @@ class ConfigManager:
         # Directories are saved in config.ini with a relative directory to working directory
         self.input_directory = input_directory
         if self.input_directory is None:
-            self.input_directory = configure.get('input', 'directory')
+            if 'input' in configure and 'directory' in configure['input']:
+                self.input_directory = configure.get('input', 'directory')
+            else:
+                raise Exception('input section missing or incomplete in configuration file.')
         self.output_directory = output_directory
         if self.output_directory is None:
-            self.output_directory = configure.get('output', 'directory')
+            if 'input' in configure and 'directory' in configure['output']:
+                self.output_directory = configure.get('output', 'directory')
+            else:
+                raise Exception('output section missing or incomplete in configuration file.')
         self.data_directory = data_directory
+        self.api_usr = None
+        self.api_pw = None
+        self.api_device_id = None
         if self.data_directory is None:
-            self.data_directory = configure.get('data', 'directory')
+            configured_data_method = False
+            if 'data' in configure:
+                if 'directory' in configure['data']:
+                    self.data_directory = configure.get('data', 'directory')
+                    configured_data_method = True
+                if 'fieldManager_api_usr' in configure['data'] and 'fieldManager_api_pw' in configure['data'] and 'fieldManager_device_id' in configure['data']:
+                    self.api_usr = configure.get('data', 'fieldManager_api_usr')
+                    self.api_pw = configure.get('data', 'fieldManager_api_pw')
+                    self.api_device_id = configure.get('data','fieldManager_device_id')
+                    configured_data_method = True
+            if not configured_data_method:
+                raise Exception('data configuration section missing or incomplete in configuration file.')
 
         # If working on compute3, change directory (Ecotope specific)
         if eco_file_structure and os.name == 'posix':
@@ -145,3 +166,26 @@ class ConfigManager:
 
         print(f"Successfully connected to database.")
         return connection, connection.cursor()
+    
+    def get_fm_token(self) -> str:
+        if self.api_usr is None or self.api_pw is None:
+            raise Exception("Cannot retrieve Field Manager API token. Credentials were not provided in configuration file.")
+        url = f"https://www.fieldpop.io/rest/login?username={self.api_usr}&password={self.api_pw}"
+        try:
+            response = requests.get(url)
+            # Check if the request was successful (status code 200)
+            if response.status_code == 200:
+                print("Field Manager API token retrieved!")
+                response = response.json()  # Return the response data as JSON
+                return response['data']['token']
+            else:
+                print(f"Failed to make GET request. Status code: {response.status_code}")
+                return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        
+    def get_fm_device_id(self) -> str:
+        if self.api_device_id is None:
+            raise Exception("Field Manager device ID has not been configured.")
+        return self.api_device_id

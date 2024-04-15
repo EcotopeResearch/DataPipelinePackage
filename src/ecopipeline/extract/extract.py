@@ -12,6 +12,7 @@ import numpy as np
 import sys
 from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
+import requests
 
 
 def get_last_full_day_from_db(config : ConfigManager) -> datetime:
@@ -332,6 +333,58 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
 
      return df
 
+def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
+    """
+    Function connects to the field manager api to pull data and returns a dataframe.
+
+    Parameters
+    ----------  
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
+    """
+    api_token = config.get_fm_token()
+    device_id = config.get_fm_device_id()
+    url = f"https://www.fieldpop.io/rest/method/fieldpop-api/deviceDataLog?happn_token={api_token}&deviceID={device_id}"
+    if not startTime is None:
+        url = f"{url}&startUTCsec={startTime.timestamp()}"
+    if not endTime is None:
+        url = f"{url}&endUTCsec={endTime.timestamp()}"
+
+    try:
+        response = requests.get(url)
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            print("Field Manager API reponse retrieved!")
+            df = pd.DataFrame()
+            response = response.json()['data']
+            for key, value in response.items():
+                for sensor, data in value.items():
+                    sensor_object = []
+                    # sensor_string = f'{key}_{sensor}'
+                    sensor_string = f'{sensor}'
+                    for entry in data:
+                        sensor_object.append({
+                            'time_pt' : entry['time'],
+                            sensor_string : entry['value']
+                        })
+                    df = pd.concat([df, pd.DataFrame(sensor_object)])
+
+            # Convert 'time_pt' to datetime and set as index
+            df['time_pt'] = pd.to_datetime(df['time_pt'], unit='s')
+            df.set_index('time_pt', inplace=True)
+            df = df.sort_index()
+            df = df.groupby(df.index).mean()
+            return df
+        else:
+            print(f"Failed to make GET request. Status code: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
 def get_sub_dirs(dir: str) -> List[str]:
     """
     Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory. 
@@ -378,15 +431,11 @@ def get_noaa_data(station_names: List[str], config : ConfigManager) -> dict:
     formatted_dfs = {}
     weather_directory = config.get_weather_dir_path()
     try:
-        print("here 3")
         noaa_dictionary = _get_noaa_dictionary(weather_directory)
-        print("here 4")
         station_ids = {noaa_dictionary[station_name]
             : station_name for station_name in station_names if station_name in noaa_dictionary}
         noaa_filenames = _download_noaa_data(station_ids, weather_directory)
-        print("here 5")
         noaa_dfs = _convert_to_df(station_ids, noaa_filenames, weather_directory)
-        print("here 6")
         formatted_dfs = _format_df(station_ids, noaa_dfs)
     except:
         # temporary solution for NOAA ftp not including 2024
