@@ -31,6 +31,9 @@ See https://ecotoperesearch.github.io/DataPipelinePackage/build/html/index.html 
     - directory: diretory of the folder where any pipeline output should be written to
 - data
     - directory: diretory of the folder from which extract loads the raw sensor data
+    - fieldManager_api_usr: Username for Field Manager API if extracting data through that medium
+    - fieldManager_api_pw: Password for Field Manager API if extracting data through that medium
+    - fieldManager_device_id: Device ID for Field Manager API if extracting data through that medium
 ## Unit Testing
 To run Unit tests, run the following command in the terminal in the corresponding directory:
 ```bash
