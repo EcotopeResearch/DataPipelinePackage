@@ -175,7 +175,6 @@ class ConfigManager:
             response = requests.get(url)
             # Check if the request was successful (status code 200)
             if response.status_code == 200:
-                print("Field Manager API token retrieved!")
                 response = response.json()  # Return the response data as JSON
                 return response['data']['token']
             else:

@@ -339,25 +339,37 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
 
     Parameters
     ----------  
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. The config manager
+        must contain information to connect to the api, i.e. the api user name and password as well as
+        the device id for the device the data is being pulled from.
+    startTime: datetime
+        The point in time for which we want to start the data extraction from. This 
+        is local time from the data's index. 
+    endTime: datetime
+        The point in time for which we want to end the data extraction. This 
+        is local time from the data's index. 
     
     Returns
     ------- 
     pd.DataFrame: 
-        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
+        Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
     """
     api_token = config.get_fm_token()
     device_id = config.get_fm_device_id()
     url = f"https://www.fieldpop.io/rest/method/fieldpop-api/deviceDataLog?happn_token={api_token}&deviceID={device_id}"
     if not startTime is None:
         url = f"{url}&startUTCsec={startTime.timestamp()}"
+    else:
+        startTime = datetime(2000, 1, 1, 0, 0, 0)  # Jan 1, 2000
     if not endTime is None:
         url = f"{url}&endUTCsec={endTime.timestamp()}"
+    else:
+        endTime = datetime.now()
 
     try:
         response = requests.get(url)
-        # Check if the request was successful (status code 200)
         if response.status_code == 200:
-            print("Field Manager API reponse retrieved!")
             df = pd.DataFrame()
             response = response.json()['data']
             for key, value in response.items():
@@ -373,14 +385,29 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
                     df = pd.concat([df, pd.DataFrame(sensor_object)])
 
             # Convert 'time_pt' to datetime and set as index
-            df['time_pt'] = pd.to_datetime(df['time_pt'], unit='s')
-            df.set_index('time_pt', inplace=True)
-            df = df.sort_index()
-            df = df.groupby(df.index).mean()
+            if not df.empty:
+                df['time_pt'] = pd.to_datetime(df['time_pt'], unit='s')
+                df.set_index('time_pt', inplace=True)
+                df = df.sort_index()
+                df = df.groupby(df.index).mean()
             return df
-        else:
-            print(f"Failed to make GET request. Status code: {response.status_code}")
-            return None
+        elif response.status_code == 500:
+            json_message = response.json()
+            string_to_match = 'The log size is too large - please try again with a smaller date range.'
+            if 'error' in json_message and 'message' in json_message['error'] and json_message['error']['message'] == string_to_match:
+                # Calculate the midpoint between the two datetimes
+                time_diff = endTime - startTime
+                midpointTime = startTime + time_diff / 2
+                # recursively construct the df
+                df_1 = fm_api_to_df(config, startTime, midpointTime)
+                df_2 = fm_api_to_df(config, midpointTime, endTime)
+                df = pd.concat([df_1, df_2])
+                df = df.sort_index()
+                df = df.groupby(df.index).mean()
+                return df
+            
+        print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+        return None
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
