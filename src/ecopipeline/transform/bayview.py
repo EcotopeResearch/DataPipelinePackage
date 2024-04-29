@@ -377,10 +377,10 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
 
     cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
                                                        avg_sd_6['Temp_CityWater'])
+    # in case of negative heat out or negligable temperature delta, set to zero
     cop_inter['HeatOut_PrimaryPlant_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater_atSkid'],
                                                                  avg_sd['Temp_PrimaryStorageOutTop'] -
-                                                                 avg_sd_6['Temp_CityWater_atSkid'])
-    # in case of negative heat out, set to zero
+                                                                 avg_sd_6['Temp_CityWater_atSkid'] if avg_sd['Temp_PrimaryStorageOutTop'] - avg_sd_6['Temp_CityWater_atSkid'] > 2.0 else 0.0)
     cop_inter['HeatOut_PrimaryPlant_dyavg'] = cop_inter['HeatOut_PrimaryPlant_dyavg'].apply(lambda x: max(x, 0))
 
     return cop_inter
