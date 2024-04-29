@@ -152,7 +152,6 @@ class ConfigManager:
         """
 
         connection = None
-        print(self.db_connection_info)
         try:
             connection = mysql.connector.connect(
                 host=self.db_connection_info['host'],
