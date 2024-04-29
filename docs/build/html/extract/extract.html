@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Extract Documentation &#8212; DataPipelinePackage 0.2.5 documentation</title>
+    <title>Extract Documentation &#8212; DataPipelinePackage 0.2.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.8 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>  
@@ -301,6 +301,41 @@ defaults to ‘US/Pacific’</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.small_planet_control_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">small_planet_control_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.small_planet_control_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
+This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
+afterwards.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+called Varriable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”)
+The csv this points to should have at least 2 columns called “variable_alias” (the raw name to be changed from) and “variable_name”
+(the name to be changed to). All columns without a cooresponding variable_name will be dropped from the dataframe.</p>
+</dd>
+<dt><strong>csv_filenames</strong><span class="classifier">List[str]</span></dt><dd><p>List of filenames</p>
+</dd>
+<dt><strong>site: str</strong></dt><dd><p>If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that
+need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe.
+Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called “site”.</p>
+</dd>
+<dt><strong>system: str</strong></dt><dd><p>If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that
+need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe.
+Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called “system”</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from all files</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -324,6 +359,7 @@ defaults to ‘US/Pacific’</p>
 <li><a class="reference internal" href="#ecopipeline.extract.get_sub_dirs"><code class="docutils literal notranslate"><span class="pre">get_sub_dirs()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.json_to_df"><code class="docutils literal notranslate"><span class="pre">json_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.msa_to_df"><code class="docutils literal notranslate"><span class="pre">msa_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.small_planet_control_to_df"><code class="docutils literal notranslate"><span class="pre">small_planet_control_to_df()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -375,7 +411,7 @@ defaults to ‘US/Pacific’</p>
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.8 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>
