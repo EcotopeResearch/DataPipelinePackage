@@ -381,7 +381,7 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
                                                                  avg_sd['Temp_PrimaryStorageOutTop'] -
                                                                  avg_sd_6['Temp_CityWater_atSkid'])
     # in case of negative heat out, set to zero
-    cop_inter.loc['HeatOut_PrimaryPlant_dyavg'] = cop_inter.loc['HeatOut_PrimaryPlant_dyavg'].apply(lambda x: max(x, 0))
+    cop_inter['HeatOut_PrimaryPlant_dyavg'] = cop_inter['HeatOut_PrimaryPlant_dyavg'].apply(lambda x: max(x, 0))
 
     return cop_inter
 
