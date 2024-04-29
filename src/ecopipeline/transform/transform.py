@@ -71,7 +71,7 @@ def rename_sensors(original_df: pd.DataFrame, config : ConfigManager, site: str 
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
         called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
         The csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
-        (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the datframe.
+        (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the dataframe.
     site: str
         If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
         need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe. 

@@ -139,3 +139,50 @@ def test_csv_to_df_mb(file_1_df, file_2_df, expected_df):
         expected_df['time(UTC)'] = pd.to_datetime(expected_df['time(UTC)'])
         expected_df.set_index('time(UTC)', inplace=True)
         assert_frame_equal(result_df, expected_df)
+
+
+@patch('ecopipeline.ConfigManager')
+def test_small_planet_control_to_df(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+
+        # Set the desired response for mock_connect.return_value
+        var_names_df = pd.DataFrame({'variable_alias': ['MOD_reference_0X53G', 'MOD_reference_silly_name', 'MOD_reference_silly_name_changed', 'silly_strings'],
+                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_2', 'serious_var_4'],
+                        'other_column_1': [None, None, None,None],
+                        'other_column_2': [1,2,3,4]})
+        # mock_csv.return_value = var_names_df
+
+        mock_csv.side_effect = [
+            var_names_df,
+            pd.DataFrame({
+                'DateEpoch(secs)': ['1713078048', '1713078108'],
+                'silly_name': [10,15],
+                }),
+            pd.DataFrame({
+                    'DateEpoch(secs)': ['1713078168', '1713078228'],
+                    'silly_name_changed': [20,25],
+                }),
+            pd.DataFrame({
+                    'DateEpoch(secs)': ['1713078048', '1713078108','1713078168', '1713078228'],
+                    '0X53G': [1.1,1.1,1.2,1.2],
+                }),
+        ]
+        filenames = ["file/path/to/whatever/MOD_reference_.silly_name.1713078048.csv", "file/path/to/whatever/MOD_reference_.silly_name_changed.1713078168.csv",
+                     "file/path/to/whatever/MOD_reference_.0X53G.1713078048.csv"]
+        result_df = small_planet_control_to_df(mock_config_manager,filenames)
+        # Get the list of call arguments
+        calls = mock_csv.call_args_list
+        assert calls[0] == (("fake/path/whatever/Variable_Names.csv",), {})
+        assert calls[1] == ((filenames[0],), {})
+        assert calls[2] == ((filenames[1],), {})
+
+        expected_df = pd.DataFrame({
+                    'time_pt': ['2024-04-14 00:00:00', '2024-04-14 00:01:00', '2024-04-14 00:02:00', '2024-04-14 00:03:00'],
+                    'serious_var_2': [10.0,15,20,25],
+                    'serious_var_1': [1.1,1.1,1.2,1.2],
+                })
+
+        expected_df['time_pt'] = pd.to_datetime(expected_df['time_pt'])
+        expected_df.set_index('time_pt', inplace=True)
+        assert_frame_equal(result_df, expected_df)

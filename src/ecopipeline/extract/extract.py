@@ -333,6 +333,97 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
 
      return df
 
+def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], site: str = "", system: str = "") -> pd.DataFrame:
+    """
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
+    This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
+    afterwards.
+
+    Parameters
+    ---------- 
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
+        The csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
+        (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the dataframe.
+    csv_filenames : List[str]
+        List of filenames 
+    site: str
+        If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
+        need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe. 
+        Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called "site".
+    system: str
+        If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that 
+        need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe. 
+        Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called "system"
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files
+    """
+    variable_names_path = config.get_var_names_path()
+    try:
+        variable_data = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        raise Exception("Variable names file Not Found: "+ variable_names_path)
+    
+    if (site != ""):
+        variable_data = variable_data.loc[variable_data['site'] == site]
+    if (system != ""):
+        variable_data = variable_data.loc[variable_data['system'].str.contains(system, na=False)]
+
+    variable_data = variable_data.loc[:, ['variable_alias', 'variable_name']]
+    variable_data.dropna(axis=0, inplace=True)
+    variable_alias = list(variable_data["variable_alias"])
+    variable_true = list(variable_data["variable_name"])
+    variable_alias_true_dict = dict(zip(variable_alias, variable_true))
+    
+    temp_dfs = []
+    for file in csv_filenames:
+        # each file contains a single variable in this format
+        try:
+            data = pd.read_csv(file)
+        except FileNotFoundError:
+            print("File Not Found: ", file)
+            return
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            continue
+        
+        if len(data) != 0:
+            #prepend modbus prefix MOD_RTU_Nesbit_BTU_17_.Building_DHW_Energy_Total.1713078000
+            prefix = file.split('.')[0].split("/")[-1]
+
+            data['time_pt'] = pd.to_datetime(data['DateEpoch(secs)'], unit='s',  utc=True)
+            data['time_pt'] = data['time_pt'].dt.tz_convert('US/Pacific').dt.tz_localize(None)
+            data.set_index('time_pt', inplace = True)
+            data.drop(columns = 'DateEpoch(secs)', inplace = True)
+            data = data.rename(columns={col: f"{prefix}{col}".replace(" ","_").replace("*", "_") for col in data.columns})
+            data.rename(columns=variable_alias_true_dict, inplace=True)
+            # Because there was a name change of varriables in the middle of the data, we rename our sensors here before joining them
+            # =======================================================================================================================
+            # drop columns that do not have a corresponding true name
+            data.drop(columns=[col for col in data if col in variable_alias], inplace=True)
+            # drop columns that are not documented in variable names csv file at all
+            data.drop(columns=[col for col in data if col not in variable_true], inplace=True)
+            #drop null columns
+            data = data.dropna(how='all')
+            # =======================================================================================================================
+            temp_dfs.append(data)
+
+    df = pd.concat(temp_dfs, ignore_index=False)
+    
+    #note sure if we should be rounding down but best I can do atm
+    df.index = df.index.floor('T')
+
+    #group and sort index
+    df = df.groupby(df.index).mean()
+    
+    df.sort_index(inplace = True)
+
+    return df
+
 def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
     """
     Function connects to the field manager api to pull data and returns a dataframe.
