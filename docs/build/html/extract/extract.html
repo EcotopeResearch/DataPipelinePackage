@@ -48,7 +48,7 @@
 </div>
 <span class="target" id="module-ecopipeline.extract"></span><dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.csv_to_df">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.csv_to_df" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_time_pt_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.csv_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -56,6 +56,34 @@
 <dt><strong>csv_filenames: List[str]</strong></dt><dd><p>List of filenames to be processed into a single dataframe</p>
 </dd>
 <dt><strong>mb_prefix: bool</strong></dt><dd><p>A boolean that signifys if the data is in modbus form- if set to true, will prepend modbus prefix to each raw varriable name</p>
+</dd>
+<dt><strong>round_time_index: bool</strong></dt><dd><p>A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
+Should be set to False if there is no column in the data frame called ‘time(UTC)’ to index on.
+Defaults to True.</p>
+</dd>
+<dt><strong>create_time_pt_idx: bool</strong></dt><dd><p>set to true if there is a ‘DateTime’ column in the csv that you wish to convert to a ‘time_pt’ index. False otherwise
+defaults to false.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
+(with prepended modbus prefix if mb_prefix = True)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.dent_csv_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">dent_csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.dent_csv_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>csv_filenames: List[str]</strong></dt><dd><p>List of filenames to be processed into a single dataframe</p>
 </dd>
 <dt><strong>round_time_index: bool</strong></dt><dd><p>A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
 Should be set to False if there is no column in the data frame called ‘time(UTC)’ to index on.
@@ -75,7 +103,7 @@ Defaults to True.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_files">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_files" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -83,6 +111,9 @@ Defaults to True.</p>
 <dt><strong>extension</strong><span class="classifier">str</span></dt><dd><p>File extension of raw data files as string (e.g. “.csv”, “.gz”, …)</p>
 </dd>
 <dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str</span></dt><dd><p>defaults to an empty string. If the files being accessed are in a sub directory of the configured data directory, use this parameter to point there.
+e.g. if the data files you want to extract are in “path/to/data/DENT/” and your configured data directory is “path/to/data/”, put “DENT/” as the data_sub_dir</p>
 </dd>
 </dl>
 </dd>
@@ -133,6 +164,31 @@ defaults to None</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>List[str]:</dt><dd><p>Filtered list of filenames</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.flow_csv_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">flow_csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.flow_csv_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>csv_filenames: List[str]</strong></dt><dd><p>List of filenames to be processed into a single dataframe</p>
+</dd>
+<dt><strong>round_time_index: bool</strong></dt><dd><p>A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
+Should be set to False if there is no column in the data frame called ‘time(UTC)’ to index on.
+Defaults to True.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
+(with prepended modbus prefix if mb_prefix = True)</p>
 </dd>
 </dl>
 </dd>
@@ -350,8 +406,10 @@ Appropriate varriables in your Variable_Names.csv must have a matching string to
     <ul>
 <li><a class="reference internal" href="#">Extract Documentation</a><ul>
 <li><a class="reference internal" href="#ecopipeline.extract.csv_to_df"><code class="docutils literal notranslate"><span class="pre">csv_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.dent_csv_to_df"><code class="docutils literal notranslate"><span class="pre">dent_csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.extract_files"><code class="docutils literal notranslate"><span class="pre">extract_files()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.extract_new"><code class="docutils literal notranslate"><span class="pre">extract_new()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.flow_csv_to_df"><code class="docutils literal notranslate"><span class="pre">flow_csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.fm_api_to_df"><code class="docutils literal notranslate"><span class="pre">fm_api_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.get_db_row_from_time"><code class="docutils literal notranslate"><span class="pre">get_db_row_from_time()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.get_last_full_day_from_db"><code class="docutils literal notranslate"><span class="pre">get_last_full_day_from_db()</span></code></a></li>
