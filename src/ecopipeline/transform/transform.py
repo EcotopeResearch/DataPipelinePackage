@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import csv
 import os
-from ecopipeline.utils.unit_convert import energy_to_power, energy_btu_to_kwh, energy_kwh_to_kbtu, power_flow_to_kW
+from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g
 from ecopipeline import ConfigManager
 
 pd.set_option('display.max_columns', None)
@@ -103,14 +103,13 @@ def rename_sensors(original_df: pd.DataFrame, config : ConfigManager, site: str 
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
-
     # Create a copy of the original DataFrame
     df = original_df.copy()
 
     df.rename(columns=variable_alias_true_dict, inplace=True)
 
     # drop columns that do not have a corresponding true name
-    df.drop(columns=[col for col in df if col in variable_alias], inplace=True)
+    df.drop(columns=[col for col in df if col in variable_alias and col not in variable_true], inplace=True)
 
     # drop columns that are not documented in variable names csv file at all
     df.drop(columns=[col for col in df if col not in variable_true], inplace=True)
@@ -475,6 +474,59 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
 
     return df
 
+def convert_c_to_f(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
+    """
+    Function takes in a pandas dataframe of data and a list of column names to convert from degrees Celsius to Farenhiet.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data.
+    column_names : list of stings
+        list of columns with data currently in Celsius that need to be converted to Farenhiet
+
+    Returns
+    -------
+    pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.
+    """
+    for col in column_names:
+        if col in df.columns.to_list():
+            try:
+                pd.to_numeric(df[col])
+                df[col] = df[col].apply(temp_c_to_f_non_noaa)
+            except ValueError:
+                print(f"{col} is not a numeric value column and could not be converted.")
+        else:
+            print(f"{col} is not included in this data set.")
+    return df
+
+def convert_l_to_g(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
+    """
+    Function takes in a pandas dataframe of data and a list of column names to convert from Liters to Gallons.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data.
+    column_names : list of stings
+        list of columns with data currently in Liters that need to be converted to Gallons
+
+    Returns
+    -------
+    pd.DataFrame: Dataframe with specified columns converted from Liters to Gallons.
+    """
+    for col in column_names:
+        if col in df.columns.to_list():
+            try:
+                pd.to_numeric(df[col])
+                df[col] = df[col].apply(volume_l_to_g)
+            except ValueError:
+                print(f"{col} is not a numeric value column and could not be converted.")
+        else:
+            print(f"{col} is not included in this data set.")
+    return df
+
+
 def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True) -> (pd.DataFrame, pd.DataFrame):
     """
     Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
@@ -519,10 +571,10 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
 
     # Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     hourly_sum = sum_df.resample('H').sum()
-    hourly_mean = mean_df.resample('H').mean()
+    hourly_mean = mean_df.resample('H').mean(numeric_only=True)
     # Same thing as for hours, but for a whole day
     daily_sum = sum_df.resample("D").sum()
-    daily_mean = mean_df.resample('D').mean()
+    daily_mean = mean_df.resample('D').mean(numeric_only=True)
 
     # combine sum_df and mean_df into one hourly_df, then try and print that and see if it breaks
     hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)

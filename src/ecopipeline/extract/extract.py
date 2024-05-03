@@ -146,7 +146,7 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
         return_list = list(filter(lambda filename: int(filename[-17:-3]) >= startTime_int and (endTime is None or int(filename[-17:-3]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
-def extract_files(extension: str, config: ConfigManager) -> List[str]:
+def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = "") -> List[str]:
     """
     Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
 
@@ -156,6 +156,9 @@ def extract_files(extension: str, config: ConfigManager) -> List[str]:
         File extension of raw data files as string (e.g. ".csv", ".gz", ...)
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline 
+    data_sub_dir : str
+        defaults to an empty string. If the files being accessed are in a sub directory of the configured data directory, use this parameter to point there.
+        e.g. if the data files you want to extract are in "path/to/data/DENT/" and your configured data directory is "path/to/data/", put "DENT/" as the data_sub_dir
     
     Returns
     ------- 
@@ -164,9 +167,10 @@ def extract_files(extension: str, config: ConfigManager) -> List[str]:
     """
     os.chdir(os.getcwd())
     filenames = []
-    for file in os.listdir(config.data_directory):
+    full_data_path = f"{config.data_directory}{data_sub_dir}"
+    for file in os.listdir(full_data_path):
         if file.endswith(extension):
-            full_filename = os.path.join(config.data_directory, file)
+            full_filename = os.path.join(full_data_path, file)
             filenames.append(full_filename)
 
     return filenames
@@ -217,10 +221,9 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
             temp_dfs.append(norm_data)
 
     df = pd.concat(temp_dfs, ignore_index=False)
-    return df
+    return df  
 
-
-def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True) -> pd.DataFrame:
+def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True, create_time_pt_idx : bool = False) -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
 
@@ -234,6 +237,9 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
         A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
         Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
         Defaults to True.
+    create_time_pt_idx: bool
+        set to true if there is a 'DateTime' column in the csv that you wish to convert to a 'time_pt' index. False otherwise
+        defaults to false.
         
     Returns
     ------- 
@@ -266,8 +272,122 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
                     continue
                 
             temp_dfs.append(data)
+    df = pd.concat(temp_dfs, ignore_index=False)
 
-    df = pd.concat(temp_dfs, ignore_index=False) 
+    if create_time_pt_idx:
+        df['time_pt'] = pd.to_datetime(df['DateTime'], format='%Y/%m/%d %H:%M:%S')
+        df.set_index('time_pt', inplace=True)
+        
+    if round_time_index:
+        #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
+        df.index = df.index.floor('T')
+        
+        #group and sort index
+        df = df.groupby(df.index).mean(numeric_only=True)
+        df.sort_index(inplace = True)
+
+    return df
+
+def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> pd.DataFrame:
+    """
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
+
+    Parameters
+    ----------  
+    csv_filenames: List[str]
+        List of filenames to be processed into a single dataframe 
+    round_time_index: bool
+        A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
+        Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
+        Defaults to True.
+        
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
+        (with prepended modbus prefix if mb_prefix = True)
+    """
+    temp_dfs = []
+    for file in csv_filenames:
+        try:
+            # data headers are on row 13
+            data = pd.read_csv(file, skiprows=12)
+        except FileNotFoundError:
+            print("File Not Found: ", file)
+            return
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            #raise e  # Raise the caught exception again
+            continue
+
+        if len(data) != 0:
+            if len(data.columns) >= 3:
+                # in dent file format, the first column can be removed and the second and third columns are date and time respectively
+                data.columns = ['temp', 'date', 'time'] + data.columns.tolist()[3:]
+                data = data.drop(columns=['temp'])
+                data['time_pt'] = pd.to_datetime(data['date'] + ' ' + data['time'])
+                data = data.set_index("time_pt")
+            else:
+                print(f"Error reading {file}: No time columns found.")
+                continue
+                
+            temp_dfs.append(data)
+    df = pd.concat(temp_dfs, ignore_index=False)
+    
+    if round_time_index:
+        #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
+        df.index = df.index.floor('T')
+        
+        #group and sort index
+        df = df.groupby(df.index).mean(numeric_only=True)
+        df.sort_index(inplace = True)
+
+    return df
+
+def flow_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> pd.DataFrame:
+    """
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
+
+    Parameters
+    ----------  
+    csv_filenames: List[str]
+        List of filenames to be processed into a single dataframe 
+    round_time_index: bool
+        A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
+        Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
+        Defaults to True.
+        
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
+        (with prepended modbus prefix if mb_prefix = True)
+    """
+    temp_dfs = []
+    for file in csv_filenames:
+        try:
+            # data headers are on row 6
+            data = pd.read_csv(file, skiprows=6)
+        except FileNotFoundError:
+            print("File Not Found: ", file)
+            return
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            #raise e  # Raise the caught exception again
+            continue
+
+        if len(data) != 0:
+            if all(x in data.columns.to_list() for x in ['Month','Day','Year','Hour','Minute','Second']):
+                # Convert the datetime string to datetime
+                date_str = data['Year'].astype(str) + '-' + data['Month'].astype(str).str.zfill(2) + '-' + data['Day'].astype(str).str.zfill(2) + ' ' + data['Hour'].astype(str).str.zfill(2) + ':' + data['Minute'].astype(str).str.zfill(2) + ':' + data['Second'].astype(str).str.zfill(2)
+                data['time_pt'] = pd.to_datetime(date_str, format='%Y-%m-%d %H:%M:%S')
+                data = data.set_index("time_pt")
+            else:
+                print(f"Error reading {file}: No time columns found.")
+                continue
+                
+            temp_dfs.append(data)
+    df = pd.concat(temp_dfs, ignore_index=False)
     
     if round_time_index:
         #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
@@ -378,7 +498,7 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
     variable_alias = list(variable_data["variable_alias"])
     variable_true = list(variable_data["variable_name"])
     variable_alias_true_dict = dict(zip(variable_alias, variable_true))
-    
+
     temp_dfs = []
     for file in csv_filenames:
         # each file contains a single variable in this format
