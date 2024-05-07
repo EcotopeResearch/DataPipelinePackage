@@ -393,6 +393,53 @@ def test_remove_partial_days():
     assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
     assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
 
+def test_remove_partial_days_one_column():
+    # UTC
+    minute_times = []
+    hour_times = []
+    day_times = []
+    for day in range(1,18):
+        day_times.append(f"2022-06-{'{:02d}'.format(day)} 00:00:00")
+        for hour in range(24):
+            hour_times.append(f"2022-06-{'{:02d}'.format(day)} {'{:02d}'.format(hour)}:00:00")
+            for minute in range(60):
+                minute_times.append(f"2022-06-{'{:02d}'.format(day)} {'{:02d}'.format(hour)}:{'{:02d}'.format(minute)}:00")
+
+    minute_timestamps = pd.to_datetime(minute_times)
+    minute_df = pd.DataFrame({'HeatOut_Primary': [4]*len(minute_times),
+                              'HeatOut_Swing': [4]*len(minute_times)})
+    minute_df.index = minute_timestamps
+    hour_timestamps = pd.to_datetime(hour_times)
+    hour_df = pd.DataFrame({'HeatOut_Primary': [4]*len(hour_times),
+                            'HeatOut_Swing': [4]*len(hour_times)})
+    hour_df.index = hour_timestamps
+    day_timestamps = pd.to_datetime(day_times)
+    day_df = pd.DataFrame({'HeatOut_Primary': [4]*len(day_times),
+                           'HeatOut_Swing': [4]*len(day_times)})
+    day_df.index = day_timestamps
+
+    hour_df, day_df = remove_partial_days(minute_df, hour_df, day_df)
+    
+    # full data set, nothing is removed.
+    assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
+    assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
+
+    # incomplete in middle
+    start_time = pd.Timestamp('2022-06-05 01:00:00')
+    end_time = pd.Timestamp('2022-06-05 10:30:00')
+    minute_df.loc[(minute_df.index > start_time) & (minute_df.index < end_time), 'HeatOut_Primary'] = np.nan
+    hour_df, day_df = remove_partial_days(minute_df, hour_df, day_df)
+    assert day_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == day_times
+    assert hour_df.index.strftime('%Y-%m-%d %H:%M:%S').tolist() == hour_times
+    assert np.isnan(day_df.loc[pd.Timestamp('2022-06-05 00:00:00'), "HeatOut_Primary"])
+    assert day_df.loc[pd.Timestamp('2022-06-05 00:00:00'), "HeatOut_Swing"] == 4
+    assert day_df.loc[pd.Timestamp('2022-06-06 00:00:00'), "HeatOut_Primary"] == 4
+    assert np.isnan(hour_df.loc[pd.Timestamp('2022-06-05 02:00:00'), "HeatOut_Primary"])
+    assert np.isnan(hour_df.loc[pd.Timestamp('2022-06-05 06:00:00'), "HeatOut_Primary"])
+    assert hour_df.loc[pd.Timestamp('2022-06-05 02:00:00'), "HeatOut_Swing"] == 4
+    assert hour_df.loc[pd.Timestamp('2022-06-05 06:00:00'), "HeatOut_Swing"] == 4
+    assert hour_df.loc[pd.Timestamp('2022-06-06 11:00:00'), "HeatOut_Primary"] == 4
+
 def test_round_time():
     # UTC
     timestamps = pd.to_datetime(['2022-01-01 08:00:25', '2023-11-05 08:01:59', '2023-11-05 09:01:01'])

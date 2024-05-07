@@ -580,6 +580,8 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     hourly_df = pd.concat([hourly_sum, hourly_mean], axis=1)
     daily_df = pd.concat([daily_sum, daily_mean], axis=1)
 
+    partial_day_removal_exclusion = []
+
     # appending loadshift data
     if ls_filename != "" and os.path.exists(ls_filename):
         ls_df = pd.read_csv(ls_filename)
@@ -589,6 +591,7 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
         ls_df['endDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['endTime'])
         daily_df["load_shift_day"] = False
         hourly_df["system_state"] = 'normal'
+        partial_day_removal_exclusion = ["load_shift_day","system_state"]
         for index, row in ls_df.iterrows():
             startDateTime = row['startDateTime']
             endDateTime = row['endDateTime']
@@ -603,7 +606,7 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     
     # if any day in hourly table is incomplete, we should delete that day from the daily table as the averaged data it contains will be from an incomplete day.
     if remove_partial:
-        hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold, complete_day_threshold)
+        hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold, complete_day_threshold, partial_day_removal_exclusion = partial_day_removal_exclusion)
     return hourly_df, daily_df
 
 
@@ -631,7 +634,7 @@ def create_summary_tables(df: pd.DataFrame):
     hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)
     return hourly_df, daily_df
 
-def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0):
+def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, partial_day_removal_exclusion : list = []):
     '''
     Helper function for removing daily and hourly values that are calculated from incomplete data.
 
@@ -647,6 +650,8 @@ def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float
         Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)
     complete_day_threshold : float
         Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)
+    partial_day_removal_exclusion : list[str]
+        List of column names to ignore when searching through columns to remove sections without enough data
     '''
     if complete_hour_threshold < 0.0 or complete_hour_threshold > 1.0:
         raise Exception("complete_hour_threshold must be a float between 0 and 1 to represent a percent (e.g. 80% = 0.8)")
@@ -660,6 +665,13 @@ def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float
         filtered_df = df.loc[(df.index >= hour) & (df.index < next_hour)]
         if len(filtered_df.index) < num_minutes_required:
             incomplete_hours.append(hour)
+        else:
+            for column in hourly_df.columns.to_list():
+                if column not in partial_day_removal_exclusion:
+                    not_null_count = filtered_df[column].notna().sum()
+                    if not_null_count < num_minutes_required:
+                        hourly_df.loc[hour, column] = np.nan
+
     hourly_df = hourly_df.drop(incomplete_hours)
     
     num_complete_hours_required = 24.0 * complete_day_threshold
@@ -669,6 +681,12 @@ def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float
         filtered_df = hourly_df.loc[(hourly_df.index >= day) & (hourly_df.index < next_day)]
         if len(filtered_df.index) < num_complete_hours_required:
             incomplete_days.append(day)
+        else:
+            for column in daily_df.columns.to_list():
+                if column not in partial_day_removal_exclusion:
+                    not_null_count = filtered_df[column].notna().sum()
+                    if not_null_count < num_complete_hours_required:
+                        daily_df.loc[day, column] = np.nan
     daily_df = daily_df.drop(incomplete_days)
 
     return hourly_df, daily_df

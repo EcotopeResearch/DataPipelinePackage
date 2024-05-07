@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Extract Documentation &#8212; DataPipelinePackage 0.2.13 documentation</title>
+    <title>Extract Documentation &#8212; DataPipelinePackage 0.2.14 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.14 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>  
@@ -48,7 +48,7 @@
 </div>
 <span class="target" id="module-ecopipeline.extract"></span><dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.csv_to_df">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_time_pt_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.csv_to_df" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_time_pt_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_time_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'DateTime'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.csv_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -61,8 +61,10 @@
 Should be set to False if there is no column in the data frame called ‘time(UTC)’ to index on.
 Defaults to True.</p>
 </dd>
-<dt><strong>create_time_pt_idx: bool</strong></dt><dd><p>set to true if there is a ‘DateTime’ column in the csv that you wish to convert to a ‘time_pt’ index. False otherwise
+<dt><strong>create_time_pt_idx: bool</strong></dt><dd><p>set to true if there is a time column in the csv that you wish to convert to a ‘time_pt’ index. False otherwise
 defaults to false.</p>
+</dd>
+<dt><strong>original_time_columns</strong><span class="classifier">str</span></dt><dd><p>The name of the time column in the raw datafiles. defaults to ‘DateTime’. Only used if create_time_pt_idx is True</p>
 </dd>
 </dl>
 </dd>
@@ -469,7 +471,7 @@ Appropriate varriables in your Variable_Names.csv must have a matching string to
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.14 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>

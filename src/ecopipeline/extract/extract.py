@@ -223,7 +223,7 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     df = pd.concat(temp_dfs, ignore_index=False)
     return df  
 
-def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True, create_time_pt_idx : bool = False) -> pd.DataFrame:
+def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True, create_time_pt_idx : bool = False, original_time_columns : str = 'DateTime') -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
 
@@ -238,8 +238,10 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
         Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
         Defaults to True.
     create_time_pt_idx: bool
-        set to true if there is a 'DateTime' column in the csv that you wish to convert to a 'time_pt' index. False otherwise
+        set to true if there is a time column in the csv that you wish to convert to a 'time_pt' index. False otherwise
         defaults to false.
+    original_time_columns : str
+        The name of the time column in the raw datafiles. defaults to 'DateTime'. Only used if create_time_pt_idx is True
         
     Returns
     ------- 
@@ -275,9 +277,9 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
     df = pd.concat(temp_dfs, ignore_index=False)
 
     if create_time_pt_idx:
-        df['time_pt'] = pd.to_datetime(df['DateTime'], format='%Y/%m/%d %H:%M:%S')
+        df['time_pt'] = pd.to_datetime(df[original_time_columns], format='%Y/%m/%d %H:%M:%S')
         df.set_index('time_pt', inplace=True)
-        
+
     if round_time_index:
         #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
         df.index = df.index.floor('T')
