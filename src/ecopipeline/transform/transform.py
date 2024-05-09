@@ -474,6 +474,31 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
 
     return df
 
+def convert_on_off_col_to_bool(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
+    """
+    Function takes in a pandas dataframe of data and a list of column names to convert from the strings 
+    "ON" and "OFF" to boolean values True and False resperctively.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data.
+    column_names : list of stings
+        list of columns with data currently in strings "ON" and "OFF" that need to be converted to boolean values
+
+    Returns
+    -------
+    pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.
+    """
+    
+    mapping = {'ON': True, 'OFF': False}
+    
+    for column_name in column_names: 
+        df[column_name] = df[column_name].map(mapping)
+        df[column_name] = df[column_name].astype(bool)
+    
+    return df
+
 def convert_c_to_f(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
     Function takes in a pandas dataframe of data and a list of column names to convert from degrees Celsius to Farenhiet.

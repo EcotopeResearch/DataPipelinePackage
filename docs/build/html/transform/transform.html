@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.2.14 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.2.15 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.14 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.15 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -338,6 +338,28 @@ such that the new data can later be forward filled from the info the last row</p
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame: Dataframe with specified columns converted from Liters to Gallons.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.convert_on_off_col_to_bool">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_on_off_col_to_bool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_on_off_col_to_bool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function takes in a pandas dataframe of data and a list of column names to convert from the strings
+“ON” and “OFF” to boolean values True and False resperctively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+</dd>
+<dt><strong>column_names</strong><span class="classifier">list of stings</span></dt><dd><p>list of columns with data currently in strings “ON” and “OFF” that need to be converted to boolean values</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.</dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -1075,6 +1097,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.condensate_calculations"><code class="docutils literal notranslate"><span class="pre">condensate_calculations()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.convert_c_to_f"><code class="docutils literal notranslate"><span class="pre">convert_c_to_f()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.convert_l_to_g"><code class="docutils literal notranslate"><span class="pre">convert_l_to_g()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.convert_on_off_col_to_bool"><code class="docutils literal notranslate"><span class="pre">convert_on_off_col_to_bool()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_1"><code class="docutils literal notranslate"><span class="pre">cop_method_1()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_2"><code class="docutils literal notranslate"><span class="pre">cop_method_2()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.create_fan_curves"><code class="docutils literal notranslate"><span class="pre">create_fan_curves()</span></code></a></li>
@@ -1160,7 +1183,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.14 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.2.15 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>

@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../src/ecopipeline'))
 project = 'DataPipelinePackage'
 copyright = '2023, Ecotope Inc.'
 author = 'Ecotope Inc'
-release = '0.2.14'
+release = '0.2.15'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
