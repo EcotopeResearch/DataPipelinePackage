@@ -494,8 +494,7 @@ def convert_on_off_col_to_bool(df: pd.DataFrame, column_names: list) -> pd.DataF
     mapping = {'ON': True, 'OFF': False}
     
     for column_name in column_names: 
-        df[column_name] = df[column_name].map(mapping)
-        df[column_name] = df[column_name].astype(bool)
+        df[column_name] = df[column_name].map(mapping).where(df[column_name].notna(), df[column_name])
     
     return df
 

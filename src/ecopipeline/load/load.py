@@ -151,8 +151,8 @@ def create_new_columns(cursor : mysql.connector.cursor.MySQLCursor, table_name: 
     for sql_statement in alter_table_statements:
         try:
             cursor.execute(sql_statement)
-        except mysqlerrors.DatabaseError:
-            print("Error communicating with the mysql database.")
+        except mysqlerrors.DatabaseError as e:
+            print(f"Error communicating with the mysql database: {e}")
             return False
 
     return True

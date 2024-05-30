@@ -223,7 +223,7 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     df = pd.concat(temp_dfs, ignore_index=False)
     return df  
 
-def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True, create_time_pt_idx : bool = False, original_time_columns : str = 'DateTime') -> pd.DataFrame:
+def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True, create_time_pt_idx : bool = False, original_time_columns : str = 'DateTime', time_format : str ='%Y/%m/%d %H:%M:%S') -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
 
@@ -277,7 +277,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
     df = pd.concat(temp_dfs, ignore_index=False)
 
     if create_time_pt_idx:
-        df['time_pt'] = pd.to_datetime(df[original_time_columns], format='%Y/%m/%d %H:%M:%S')
+        df['time_pt'] = pd.to_datetime(df[original_time_columns], format=time_format)
         df.set_index('time_pt', inplace=True)
 
     if round_time_index:
