@@ -146,7 +146,7 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
         return_list = list(filter(lambda filename: int(filename[-17:-3]) >= startTime_int and (endTime is None or int(filename[-17:-3]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
-def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = "") -> List[str]:
+def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = "", file_prefix : str = "") -> List[str]:
     """
     Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
 
@@ -159,6 +159,8 @@ def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = ""
     data_sub_dir : str
         defaults to an empty string. If the files being accessed are in a sub directory of the configured data directory, use this parameter to point there.
         e.g. if the data files you want to extract are in "path/to/data/DENT/" and your configured data directory is "path/to/data/", put "DENT/" as the data_sub_dir
+    file_prefix : str
+        File name prefix of raw data file if only file names with a certain prefix should be processed.
     
     Returns
     ------- 
@@ -169,7 +171,7 @@ def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = ""
     filenames = []
     full_data_path = f"{config.data_directory}{data_sub_dir}"
     for file in os.listdir(full_data_path):
-        if file.endswith(extension):
+        if file.endswith(extension) and file.startswith(file_prefix):
             full_filename = os.path.join(full_data_path, file)
             filenames.append(full_filename)
 

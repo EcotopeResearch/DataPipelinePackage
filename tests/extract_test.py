@@ -71,6 +71,42 @@ def test_extract_new():
     assert extract_new(date, file_names, False) == ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz"]
     assert extract_new(date, file_names, False, "US/Pacific") == ["E45F012D4C0D_20240103220000.gz", "E45F012D4C0D_20240104220000.gz"]
 
+@patch('ecopipeline.ConfigManager')
+@patch('os.getcwd')
+@patch('os.listdir')
+@patch('os.chdir')
+def test_extract_files(mock_chdir, mock_listdir, mock_getcwd, mock_config_manager):
+    # Define the behavior of the mocked functions
+    mock_config_manager.data_directory = "/path/to/data/"
+    mock_getcwd.return_value = None
+    mock_chdir.return_value = None
+    mock_listdir.return_value = ['file1.csv', 'file2.csv', 'file3.txt', 'prefix_file4.csv']
+    result = extract_files('.csv', mock_config_manager, data_sub_dir='subdir/', file_prefix='prefix_')
+    expected = [
+        '/path/to/data/subdir/prefix_file4.csv'
+    ]
+    assert result == expected
+    mock_listdir.assert_called_once_with('/path/to/data/subdir/')
+
+@patch('ecopipeline.ConfigManager')
+@patch('os.getcwd')
+@patch('os.listdir')
+@patch('os.chdir')
+def test_extract_files_nosub_or_prefix(mock_chdir, mock_listdir, mock_getcwd, mock_config_manager):
+    # Define the behavior of the mocked functions
+    mock_config_manager.data_directory = "/path/to/data/"
+    mock_getcwd.return_value = None
+    mock_chdir.return_value = None
+    mock_listdir.return_value = ['file1.csv', 'file2.csv', 'file3.txt', 'prefix_file4.csv']
+    result = extract_files('.csv', mock_config_manager)
+    expected = [
+        '/path/to/data/file1.csv',
+        '/path/to/data/file2.csv',
+        '/path/to/data/prefix_file4.csv'
+    ]
+    assert result == expected
+    mock_listdir.assert_called_once_with('/path/to/data/')
+
 @pytest.mark.parametrize(
         "file_1_df, file_2_df, expected_df", 
         [
