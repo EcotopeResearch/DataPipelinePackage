@@ -558,6 +558,7 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
     The function will only trim the returned dataframes such that only averages from complete hours and
     complete days are returned rather than agregated data from partial datasets.
+    Note: in the averaging, all columns that start with "PowerIn_" except "PowerIn_Total" will count null values as 0 in their averaging.
 
     Parameters
     ----------
@@ -592,6 +593,11 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     sum_df = (df.filter(regex=".*Energy.*")).filter(regex="^(?!.*EnergyRate).*(?<!BTU)$")
     # NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
     mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$")
+
+    # Filter columns with the prefix "PowerIn_" and exclude "PowerIn_Total"
+    powerin_columns = [col for col in mean_df.columns if col.startswith('PowerIn_') and 'PowerIn_Total' not in col and mean_df[col].dtype == "float64"]
+    for power_col in powerin_columns:
+        mean_df[power_col] = mean_df[power_col].fillna(0)
 
     # Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     hourly_sum = sum_df.resample('H').sum()
