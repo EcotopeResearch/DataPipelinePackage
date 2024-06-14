@@ -595,9 +595,9 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$")
 
     # Filter columns with the prefix "PowerIn_" and exclude "PowerIn_Total"
-    powerin_columns = [col for col in mean_df.columns if col.startswith('PowerIn_') and 'PowerIn_Total' not in col and mean_df[col].dtype == "float64"]
-    for power_col in powerin_columns:
-        mean_df[power_col] = mean_df[power_col].fillna(0)
+    # powerin_columns = [col for col in mean_df.columns if col.startswith('PowerIn_') and 'PowerIn_Total' not in col and mean_df[col].dtype == "float64"]
+    # for power_col in powerin_columns:
+    #     mean_df[power_col] = mean_df[power_col].fillna(0)
 
     # Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     hourly_sum = sum_df.resample('H').sum()
