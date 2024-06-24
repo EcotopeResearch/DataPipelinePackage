@@ -136,6 +136,22 @@ class ConfigManager:
         print(f"Successfully fetched configuration information from file path {self.config_directory}.")
         return db_table_info
     
+    def get_db_name(self):
+        """
+        returns name of database that data will be uploaded to
+        """
+        return self.db_connection_info['database']
+    
+    def get_site_name(self):
+        """
+        returns name of site
+        """
+        # TODO needs an update
+        configure = configparser.ConfigParser()
+        configure.read(self.config_directory)
+
+        return configure.get("minute", 'table_name')
+    
     def connect_db(self) -> (mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor):
         """
         Create a connection with the mySQL server. 

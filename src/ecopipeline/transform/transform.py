@@ -550,6 +550,50 @@ def convert_l_to_g(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
             print(f"{col} is not included in this data set.")
     return df
 
+def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column : str, supply_temp : int = 110, consecutive_minutes : int = 15) -> pd.DataFrame:
+    """
+     Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data on minute intervals.
+    daily_df : pd.DataFrame
+        Single pandas dataframe of sensor data on daily intervals.
+    dhw_outlet_column : str
+        Name of the column in df and daily_df that contains temperature of DHW supplied to building occupants
+    supply_temp : int
+        the minimum DHW temperature acceptable to supply to building occupants
+    consecutive_minutes : int
+        the number of minutes in a row that DHW is not delivered to tenants to qualify as a DHW Outage
+
+    Returns
+    -------
+    event_df : pd.DataFrame
+        Dataframe with 'HW_OUTAGE' events on the days in which there was a DHW Outage.
+    """
+    # TODO edge case for outage that spans over a day
+    events = {
+        'time_pt' : [],
+        'event_type' : [],
+        'event_detail' : [],
+    }
+    mask = df[dhw_outlet_column] < supply_temp
+    for day in daily_df.index:
+        print(day)
+        next_day = day + pd.Timedelta(days=1)
+        filtered_df = mask.loc[(mask.index >= day) & (mask.index < next_day)]
+
+        consecutive_condition = filtered_df.rolling(window=consecutive_minutes).min() == 1
+        if consecutive_condition.any():
+            # first_true_index = consecutive_condition['supply_temp'].idxmax()
+            first_true_index = consecutive_condition.idxmax()
+            adjusted_time = first_true_index - pd.Timedelta(minutes=consecutive_minutes-1)
+            events['time_pt'].append(day)
+            events['event_type'].append("HW_OUTAGE")
+            events['event_detail'].append(f"Hot Water Outage Occured (first one starting at {adjusted_time.strftime('%H:%M')})")
+    event_df = pd.DataFrame(events)
+    event_df.set_index('time_pt', inplace=True)
+    return event_df
+
 
 def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True) -> (pd.DataFrame, pd.DataFrame):
     """
@@ -593,11 +637,6 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     sum_df = (df.filter(regex=".*Energy.*")).filter(regex="^(?!.*EnergyRate).*(?<!BTU)$")
     # NEEDS TO INCLUDE: EnergyOut_PrimaryPlant_BTU
     mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$")
-
-    # Filter columns with the prefix "PowerIn_" and exclude "PowerIn_Total"
-    # powerin_columns = [col for col in mean_df.columns if col.startswith('PowerIn_') and 'PowerIn_Total' not in col and mean_df[col].dtype == "float64"]
-    # for power_col in powerin_columns:
-    #     mean_df[power_col] = mean_df[power_col].fillna(0)
 
     # Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
     hourly_sum = sum_df.resample('H').sum()

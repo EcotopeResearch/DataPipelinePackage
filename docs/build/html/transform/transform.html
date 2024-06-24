@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.3.2 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.3.4 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.4 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -511,6 +511,33 @@ into the destination database). The values of this will be used to forward fill 
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame:</dt><dd><p>Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.flag_dhw_outage">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">flag_dhw_outage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dhw_outlet_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supply_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">110</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consecutive_minutes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.flag_dhw_outage" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data on minute intervals.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data on daily intervals.</p>
+</dd>
+<dt><strong>dhw_outlet_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column in df and daily_df that contains temperature of DHW supplied to building occupants</p>
+</dd>
+<dt><strong>supply_temp</strong><span class="classifier">int</span></dt><dd><p>the minimum DHW temperature acceptable to supply to building occupants</p>
+</dd>
+<dt><strong>consecutive_minutes</strong><span class="classifier">int</span></dt><dd><p>the number of minutes in a row that DHW is not delivered to tenants to qualify as a DHW Outage</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>event_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with ‘HW_OUTAGE’ events on the days in which there was a DHW Outage.</p>
 </dd>
 </dl>
 </dd>
@@ -1105,6 +1132,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.create_summary_tables"><code class="docutils literal notranslate"><span class="pre">create_summary_tables()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.elev_correction"><code class="docutils literal notranslate"><span class="pre">elev_correction()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.ffill_missing"><code class="docutils literal notranslate"><span class="pre">ffill_missing()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.flag_dhw_outage"><code class="docutils literal notranslate"><span class="pre">flag_dhw_outage()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.gas_valve_diff"><code class="docutils literal notranslate"><span class="pre">gas_valve_diff()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.gather_outdoor_conditions"><code class="docutils literal notranslate"><span class="pre">gather_outdoor_conditions()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.get_cfm_values"><code class="docutils literal notranslate"><span class="pre">get_cfm_values()</span></code></a></li>
@@ -1184,7 +1212,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.4 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>
