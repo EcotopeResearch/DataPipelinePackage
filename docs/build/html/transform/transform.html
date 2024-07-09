@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.3.4 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.3.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -76,8 +76,7 @@
 dataframes, appends ‘load_shift_day’ column onto the daily_df and the ‘system_state’ column to
 hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
 The function will only trim the returned dataframes such that only averages from complete hours and
-complete days are returned rather than agregated data from partial datasets.
-Note: in the averaging, all columns that start with “<a href="#id1"><span class="problematic" id="id2">PowerIn_</span></a>” except “PowerIn_Total” will count null values as 0 in their averaging.</p>
+complete days are returned rather than agregated data from partial datasets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -368,7 +367,7 @@ such that the new data can later be forward filled from the info the last row</p
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.cop_method_1">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">cop_method_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recircLosses</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.cop_method_1" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">cop_method_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recircLosses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatout_primary_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'HeatOut_Primary'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_input_power_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PowerIn_Total'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.cop_method_1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs COP calculation method 1 (original AWS method).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -379,6 +378,10 @@ The dataframe needs to already have two columns, ‘HeatOut_Primary’ and ‘Po
 <dt><strong>recircLosses: float or pd.Series</strong></dt><dd><p>If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
 If reciculation losses measurements are in datastream, this should be a column of df.
 Units should be in kW.</p>
+</dd>
+<dt><strong>heatout_primary_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column that contains the output power of the primary system in kW. Defaults to ‘HeatOut_Primary’</p>
+</dd>
+<dt><strong>total_input_power_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column that contains the total input power of the system in kW. Defaults to ‘PowerIn_Total’</p>
 </dd>
 </dl>
 </dd>
@@ -1212,7 +1215,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.3.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>
