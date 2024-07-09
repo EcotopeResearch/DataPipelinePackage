@@ -14,6 +14,10 @@ def temp_c_to_f_non_noaa(temp_c : float):
     temp_f = 32 + (temp_c * 1.8)
     return temp_f
 
+def power_btuhr_to_kw(power_btuhr : float):
+    power_kw = power_btuhr / 3412.0
+    return power_kw
+
 def volume_l_to_g(liters : float):
     gallons = 0.2641729 * liters
     return gallons

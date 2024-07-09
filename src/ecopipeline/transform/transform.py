@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import csv
 import os
-from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g
+from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g, power_btuhr_to_kw
 from ecopipeline import ConfigManager
 
 pd.set_option('display.max_columns', None)
@@ -394,7 +394,7 @@ def sensor_adjustment(df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
 
     return df
 
-def cop_method_1(df: pd.DataFrame, recircLosses) -> pd.DataFrame:
+def cop_method_1(df: pd.DataFrame, recircLosses, heatout_primary_column : str = 'HeatOut_Primary', total_input_power_column : str = 'PowerIn_Total') -> pd.DataFrame:
     """
     Performs COP calculation method 1 (original AWS method).
 
@@ -407,12 +407,16 @@ def cop_method_1(df: pd.DataFrame, recircLosses) -> pd.DataFrame:
         If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
         If reciculation losses measurements are in datastream, this should be a column of df.
         Units should be in kW.
+    heatout_primary_column : str
+        Name of the column that contains the output power of the primary system in kW. Defaults to 'HeatOut_Primary'
+    total_input_power_column : str
+        Name of the column that contains the total input power of the system in kW. Defaults to 'PowerIn_Total'
 
     Returns
     -------
     pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_1
     """
-    columns_to_check = ['HeatOut_Primary', 'PowerIn_Total']
+    columns_to_check = [heatout_primary_column, total_input_power_column]
 
     missing_columns = [col for col in columns_to_check if col not in df.columns]
 
@@ -420,7 +424,7 @@ def cop_method_1(df: pd.DataFrame, recircLosses) -> pd.DataFrame:
         print('Cannot calculate COP as the following columns are missing from the DataFrame:', missing_columns)
         return df
     
-    df['COP_DHWSys_1'] = (df['HeatOut_Primary'] + recircLosses) / df['PowerIn_Total']
+    df['COP_DHWSys_1'] = (df[heatout_primary_column] + recircLosses) / df[total_input_power_column]
     
     return df
 
@@ -524,6 +528,32 @@ def convert_c_to_f(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
             print(f"{col} is not included in this data set.")
     return df
 
+def convert_btuhr_to_kw(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
+    """
+    Function takes in a pandas dataframe of data and a list of column names to convert from BTU HR to kW.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data.
+    column_names : list of stings
+        list of columns with data currently in BTU HR that need to be converted to kW
+
+    Returns
+    -------
+    pd.DataFrame: Dataframe with specified columns converted from BTU HR to kW.
+    """
+    for col in column_names:
+        if col in df.columns.to_list():
+            try:
+                pd.to_numeric(df[col])
+                df[col] = df[col].apply(power_btuhr_to_kw)
+            except ValueError:
+                print(f"{col} is not a numeric value column and could not be converted.")
+        else:
+            print(f"{col} is not included in this data set.")
+    return df
+
 def convert_l_to_g(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
     Function takes in a pandas dataframe of data and a list of column names to convert from Liters to Gallons.
@@ -602,7 +632,6 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
     The function will only trim the returned dataframes such that only averages from complete hours and
     complete days are returned rather than agregated data from partial datasets.
-    Note: in the averaging, all columns that start with "PowerIn_" except "PowerIn_Total" will count null values as 0 in their averaging.
 
     Parameters
     ----------

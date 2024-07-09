@@ -654,7 +654,7 @@ def get_sub_dirs(dir: str) -> List[str]:
     return directories
 
 
-def get_noaa_data(station_names: List[str], config : ConfigManager) -> dict:
+def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids : dict = {}) -> dict:
     """
     Function will take in a list of station names and will return a dictionary where the key is the station name and the value is a dataframe with the parsed weather data.
 
@@ -674,8 +674,9 @@ def get_noaa_data(station_names: List[str], config : ConfigManager) -> dict:
     weather_directory = config.get_weather_dir_path()
     try:
         noaa_dictionary = _get_noaa_dictionary(weather_directory)
-        station_ids = {noaa_dictionary[station_name]
-            : station_name for station_name in station_names if station_name in noaa_dictionary}
+        if len(station_ids.keys()) == 0:
+            station_ids = {noaa_dictionary[station_name]
+                : station_name for station_name in station_names if station_name in noaa_dictionary}
         noaa_filenames = _download_noaa_data(station_ids, weather_directory)
         noaa_dfs = _convert_to_df(station_ids, noaa_filenames, weather_directory)
         formatted_dfs = _format_df(station_ids, noaa_dfs)
