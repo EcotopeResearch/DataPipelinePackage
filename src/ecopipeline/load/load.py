@@ -109,9 +109,9 @@ def find_missing_columns(cursor : mysql.connector.cursor.MySQLCursor, dataframe:
         cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '"
                             f"{config_dict['database']}' AND table_name = '"
                             f"{table_name}'")
-    except mysqlerrors.DatabaseError:
-        print("Check if the mysql table to be written to exists.")
-        return []
+    except mysqlerrors.DatabaseError as e:
+        print("Check if the mysql table to be written to exists.", e)
+        return [], []
     
     current_table_names = list(cursor.fetchall())
     current_table_names = [name[0] for name in current_table_names]

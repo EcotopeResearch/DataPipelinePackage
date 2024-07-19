@@ -13,6 +13,7 @@ import sys
 from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 import requests
+import subprocess
 
 
 def get_last_full_day_from_db(config : ConfigManager) -> datetime:
@@ -97,7 +98,7 @@ def get_db_row_from_time(time: datetime, config : ConfigManager) -> pd.DataFrame
 
     return row_data
 
-def extract_new(startTime: datetime, filenames: List[str], decihex = False, timeZone: str = None, endTime: datetime = None) -> List[str]:
+def extract_new(startTime: datetime, filenames: List[str], decihex = False, timeZone: str = None, endTime: datetime = None, dateStringStartIdx : int = -17) -> List[str]:
     """
     Function filters the filenames to only those equal to or newer than the date specified startTime.
     If filenames are in deciheximal, The function can still handel it. Note that for some projects,
@@ -123,6 +124,8 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
         The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
         time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
         defaults to None
+    dateStringStartIdx: int
+        The character index in each file where the date in format "%Y%m%d%H%M%S" starts. Default is -17 (meaning 17 characters from the end of the filename string)
     
     Returns
     -------
@@ -143,7 +146,7 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
 
     else: 
         startTime_int = int(startTime.strftime("%Y%m%d%H%M%S"))
-        return_list = list(filter(lambda filename: int(filename[-17:-3]) >= startTime_int and (endTime is None or int(filename[-17:-3]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
+        return_list = list(filter(lambda filename: int(filename[dateStringStartIdx:dateStringStartIdx+14]) >= startTime_int and (endTime is None or int(filename[dateStringStartIdx:dateStringStartIdx+14]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
 def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = "", file_prefix : str = "") -> List[str]:
@@ -548,6 +551,64 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
 
     return df
 
+def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
+    """
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
+    This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
+    afterwards.
+
+    Parameters
+    ---------- 
+    csv_filenames : List[str]
+        List of filenames
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from all files
+    """
+
+    temp_dfs = []
+    for file in csv_filenames:
+        # each file contains a single variable in this format
+        try:
+            data = pd.read_csv(file)
+        except FileNotFoundError:
+            print("File Not Found: ", file)
+            return
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+            continue
+        
+        if len(data) != 0:
+            #prepend modbus prefix MOD_RTU_Nesbit_BTU_17_.Building_DHW_Energy_Total.1713078000
+            prefix = file.split('.')[0].split("/")[-1]
+
+            data['time_pt'] = pd.to_datetime(data['Date & Time'], unit='s',  utc=True)
+            data['time_pt'] = data['time_pt'].dt.tz_convert('US/Pacific').dt.tz_localize(None)
+            data.set_index('time_pt', inplace = True)
+            data.drop(columns = 'Date & Time', inplace = True)
+            data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_").replace("*", "_") for col in data.columns})
+            #drop null columns
+            data = data.dropna(how='all')
+            # =======================================================================================================================
+            temp_dfs.append(data)
+
+    df = pd.concat(temp_dfs, ignore_index=False)
+    
+    #note sure if we should be rounding down but best I can do atm
+    df.index = df.index.floor('T')
+
+    #group and sort index
+    df = df.groupby(df.index).mean()
+    
+    df.sort_index(inplace = True)
+    df_diff = df - df.shift(1)
+    df_diff[df.shift(1).isna()] = np.nan
+    df_diff.iloc[0] = np.nan
+
+    return df_diff
+
 def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
     """
     Function connects to the field manager api to pull data and returns a dataframe.
@@ -626,7 +687,23 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+    
+def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, eGauge_pw : str, num_days : int = 1):
+    original_directory = os.getcwd()
 
+    os.chdir(config.data_directory)
+    try:
+        for eGauge_id in eGauge_ids:
+            filename = f"{eGauge_id}.{datetime.today().date().strftime('%Y%m%d%H%M%S')}.csv"
+            cmd = f"wget --no-check-certificate -O {filename} \"https://egauge{eGauge_id}.egaug.es/cgi-bin/egauge-show?c&m&s=0&n=1499\" --user={eGauge_usr} --password={eGauge_pw}"
+
+            # Running the shell command
+            subprocess.run(cmd, shell=True)
+    except Exception as e:
+        print(f"Could not download new data from eGauge device: {e}")
+
+    os.chdir(original_directory)
+    
 def get_sub_dirs(dir: str) -> List[str]:
     """
     Function takes in a directory and returns a list of the paths to all immediate subfolders in that directory. 
