@@ -307,21 +307,26 @@ def remove_char_sequence_from_csv_header(csv_filenames: List[str], header_sequen
         List of special character sequences to remove from column headers
     """
     for file_path in csv_filenames:
-        with open(file_path, 'r', encoding='ISO-8859-1') as file:
-            lines = file.readlines()
+        try:
+            with open(file_path, 'r', encoding='ISO-8859-1') as file:
+                lines = file.readlines()
 
-        # Process the header line
-        header = lines[0]
-        replaced = False
-        for sequence in header_sequences_to_remove:
-            if sequence in header:
-                replaced = True
-                header = header.replace(sequence, "")
+            # Process the header line
+            header = lines[0]
+            replaced = False
+            for sequence in header_sequences_to_remove:
+                if sequence in header:
+                    replaced = True
+                    header = header.replace(sequence, "")
 
-        if replaced:
-            with open(file_path, 'w', encoding='utf-8') as file:
-                file.write(header)
-                file.writelines(lines[1:])
+            if replaced:
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(header)
+                    file.writelines(lines[1:])
+        except Exception as e:
+            print(f"Could not remove special characters from file {file}: {e}")
+            #raise e  # Raise the caught exception again
+            continue
 
 def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> pd.DataFrame:
     """
