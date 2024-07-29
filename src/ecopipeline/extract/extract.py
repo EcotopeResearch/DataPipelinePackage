@@ -295,6 +295,34 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
 
     return df
 
+def remove_char_sequence_from_csv_header(csv_filenames: List[str], header_sequences_to_remove : List[str] = []):
+    """
+    Function to remove special characters that can't be processed by pandas pd.read_csv function from csv headers 
+
+    Parameters
+    ----------  
+    csv_filenames: List[str]
+        List of filenames to be processed into a single dataframe 
+    header_sequences_to_remove: List[str]
+        List of special character sequences to remove from column headers
+    """
+    for file_path in csv_filenames:
+        with open(file_path, 'r', encoding='ISO-8859-1') as file:
+            lines = file.readlines()
+
+        # Process the header line
+        header = lines[0]
+        replaced = False
+        for sequence in header_sequences_to_remove:
+            if sequence in header:
+                replaced = True
+                header = header.replace(sequence, "")
+
+        if replaced:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(header)
+                file.writelines(lines[1:])
+
 def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
