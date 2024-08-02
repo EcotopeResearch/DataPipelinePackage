@@ -47,7 +47,7 @@ def check_table_exists(cursor : mysql.connector.cursor.MySQLCursor, table_name: 
     return num_tables
 
 
-def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt") -> bool:
+def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt", has_primary_key : bool = True) -> bool:
     """
     Creates a new table in the mySQL database.
 
@@ -59,6 +59,10 @@ def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: st
         Name of the table
     table_column_names : list
         list of columns names in the table must be passed.
+    primary_key: str
+        The name of the primary index of the table. Should be a datetime. If has_primary_key is set to False, this will just be a column not a key.
+    has_primary_key : bool
+        Set to False if the table should not establish a primary key. Defaults to True
 
     Returns
     ------- 
@@ -72,8 +76,8 @@ def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: st
 
     for i in range(len(table_column_names)):
         create_table_statement += f"{table_column_names[i]} {table_column_types[i]} DEFAULT NULL,\n"
-
-    create_table_statement += f"PRIMARY KEY ({primary_key})\n"
+    if has_primary_key:
+        create_table_statement += f"PRIMARY KEY ({primary_key})\n"
 
     create_table_statement += ");"
     cursor.execute(create_table_statement)
@@ -249,7 +253,7 @@ def load_overwrite_database(cursor : mysql.connector.cursor.MySQLCursor, datafra
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
 
-def load_event_table(config : ConfigManager, event_df: pd.DataFrame, primary_key: str = "time_pt"):
+def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
     """
     Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
@@ -259,9 +263,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, primary_key
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
     event_df: pd.DataFrame
-        The pandas DataFrame to be written into the mySQL server. Must have columns event_type and event_detail
-    primary_key: str
-        The header name corresponding to the table's primary key - default is 'time_pt'.  
+        The pandas DataFrame to be written into the mySQL server. Must have columns event_type and event_detail 
 
     Returns
     ------- 
@@ -282,65 +284,88 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, primary_key
     
     # Get string of all column names for sql insert
     site_name = config.get_site_name()
-    column_names = f"{primary_key},site_name"
-    column_types = ["datetime","varchar(25)","ENUM('HW_OUTAGE', 'PIPELINE_STATUS', 'MISC_EVENT')","varchar(100)"]
-    column_list = ['event_type', 'event_detail']
+    column_names = f"start_time_pt,site_name"
+    column_types = ["datetime","varchar(25)","datetime","ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'PIPELINE_ERR', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE')","varchar(100)"]
+    column_list = ['end_time_pt','event_type', 'event_detail']
     if not set(column_list).issubset(event_df.columns):
-        raise Exception(f"event_df should contain a dataframe with columns {primary_key} (idx), event_type, and event_detail. Instead, found dataframe with columns {event_df.columns}")
+        raise Exception(f"event_df should contain a dataframe with columns start_time_pt (idx), end_time_pt, event_type, and event_detail. Instead, found dataframe with columns {event_df.columns}")
 
     for column in column_list:
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ") VALUES (%s,%s,%s,%s)"
-    
-    # last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
-    existing_rows_list = []
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ") VALUES (%s,%s,%s,%s,%s)"
+
+    existing_rows = pd.DataFrame({
+        'start_time_pt' : [],
+        'end_time_pt' : [],
+        'event_type' : []
+    })
 
     connection, cursor = config.connect_db() 
 
     # create db table if it does not exist, otherwise add missing columns to existing table
     if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, column_names.split(",")[1:], column_types[1:], primary_key=primary_key): #split on colums and remove first column aka time_pt
+        if not create_new_table(cursor, table_name, column_names.split(",")[1:], column_types[1:], primary_key='start_time_pt', has_primary_key=False): #split on colums and remove first column aka time_pt
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
     else:
         try:
             # find existing times in database for upsert statement
             cursor.execute(
-                f"SELECT {primary_key} FROM {table_name} WHERE {primary_key} >= '{event_df.index.min()}'")
+                f"SELECT start_time_pt, end_time_pt, event_type FROM {table_name} WHERE start_time_pt >= '{event_df.index.min()}' AND site_name = '{site_name}'")
             # Fetch the results into a DataFrame
-            existing_rows = pd.DataFrame(cursor.fetchall(), columns=[primary_key])
+            existing_rows = pd.DataFrame(cursor.fetchall(), columns=['start_time_pt', 'end_time_pt', 'event_type'])
+            existing_rows['start_time_pt'] = pd.to_datetime(existing_rows['start_time_pt'])
+            existing_rows['end_time_pt'] = pd.to_datetime(existing_rows['end_time_pt'])
 
-            # Convert the primary_key column to a list
-            existing_rows_list = existing_rows[primary_key].tolist()
-
-        except mysqlerrors.Error:
-            print(f"Table {table_name} has no data.")
+        except mysqlerrors.Error as e:
+            print(f"Retrieving data from {table_name} caused exception: {e}")
     
     updatedRows = 0
     try:
         for index, row in event_df.iterrows():
-            time_data = row.values.tolist()
+            time_data = [index,site_name,row['end_time_pt'],row['event_type'],row['event_detail']]
             #remove nans and infinites
             time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
             time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
 
-            if index in existing_rows_list:
-                statement, values = _generate_mysql_update(row, index, table_name, primary_key)
+            if existing_rows[
+                (existing_rows['start_time_pt'] == index) &
+                (existing_rows['end_time_pt'] == row['end_time_pt']) &
+                (existing_rows['event_type'] == row['event_type'])
+            ].shape[0] > 0:
+                statement, values = _generate_mysql_update_event_table(row, site_name, index ,row['end_time_pt'],row['event_type'])
                 if statement != "":
                     cursor.execute(statement, values)
                     updatedRows += 1
             else:
-                cursor.execute(insert_str, (index, site_name, *time_data))
+                cursor.execute(insert_str, time_data)
         connection.commit()
+        print(f"Successfully wrote {len(event_df.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     except Exception as e:
         # Print the exception message
         print(f"Caught an exception when uploading to site_events table: {e}")
     connection.close()
     cursor.close()
-    print(f"Successfully wrote {len(event_df.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
+
+def _generate_mysql_update_event_table(row, site_name, start_time_pt, end_time_pt, event_type):
+    statement = f"UPDATE site_events SET "
+    statment_elems = []
+    values = []
+    for column, value in row.items():
+        if not value is None and not pd.isna(value) and not (value == float('inf') or value == float('-inf')):
+            statment_elems.append(f"{column} = %s")
+            values.append(value)
+
+    if values:
+        statement += ", ".join(statment_elems)
+        statement += f" WHERE start_time_pt = '{start_time_pt}' AND end_time_pt = '{end_time_pt}' AND event_type = '{event_type}' AND site_name = '{site_name}';"
+    else:
+        statement = ""
+
+    return statement, values
 
 def _generate_mysql_update(row, index, table_name, primary_key):
     statement = f"UPDATE {table_name} SET "
