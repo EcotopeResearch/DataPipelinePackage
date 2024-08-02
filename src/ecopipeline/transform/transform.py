@@ -626,6 +626,34 @@ def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column
     event_df.set_index('start_time_pt', inplace=True)
     return event_df
 
+def generate_event_log_df(config : ConfigManager):
+    """
+    Creates an event log df based on user submitted events in an event log csv
+    Parameters
+    ----------
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+
+    Returns
+    -------
+    event_df : pd.DataFrame
+        Dataframe formatted from events in Event_log.csv for pipeline.
+    """
+    event_filename = config.get_event_log_path()
+    try:
+        event_df = pd.read_csv(event_filename)
+        event_df['start_time_pt'] = pd.to_datetime(event_df['start_time_pt'])
+        event_df['end_time_pt'] = pd.to_datetime(event_df['end_time_pt'])
+        event_df.set_index('start_time_pt', inplace=True)
+        return event_df
+    except Exception as e:
+        print(f"Error processing file {event_filename}: {e}")
+        return pd.DataFrame({
+            'start_time_pt' : [],
+            'end_time_pt' : [],
+            'event_type' : [],
+            'event_detail' : [],
+        })
 
 def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True) -> (pd.DataFrame, pd.DataFrame):
     """

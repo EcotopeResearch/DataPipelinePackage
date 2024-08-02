@@ -98,6 +98,13 @@ class ConfigManager:
         """
         return f"{self.input_directory}Variable_Names.csv"
 
+    def get_event_log_path(self) -> str:
+        """
+        Returns path to the full path to the Event_Log.csv file.
+        This file should be in the pipeline's input directory "/" (i.e. "full/path/to/pipeline/input/Event_Log.csv")
+        """
+        return f"{self.input_directory}Event_Log.csv"
+
     def get_weather_dir_path(self) -> str:
         """
         Returns path to the directory that holds NOAA weather data files.
