@@ -285,7 +285,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
     # Get string of all column names for sql insert
     site_name = config.get_site_name()
     column_names = f"start_time_pt,site_name"
-    column_types = ["datetime","varchar(25)","datetime","ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'PIPELINE_ERR', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE')","varchar(100)"]
+    column_types = ["datetime","varchar(25)","datetime","ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'PIPELINE_ERR', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE', 'EQUIPMENT_MALFUNCTION')","varchar(100)"]
     column_list = ['end_time_pt','event_type', 'event_detail']
     if not set(column_list).issubset(event_df.columns):
         raise Exception(f"event_df should contain a dataframe with columns start_time_pt (idx), end_time_pt, event_type, and event_detail. Instead, found dataframe with columns {event_df.columns}")
