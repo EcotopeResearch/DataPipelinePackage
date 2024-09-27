@@ -431,6 +431,7 @@ def calculate_cop_values(df: pd.DataFrame, heatLoss_fixed: int, thermo_slice: st
             (cop_inter['EnergyIn_HPWH'] + cop_inter['EnergyIn_SecLoopPump'])
 
         if thermo_slice is not None:
+            cop_inter['HeatOut_PrimaryPlant_dyavg'] = np.where(cop_inter['EnergyIn_HPWH'] <= 0.01, 0, cop_inter['HeatOut_PrimaryPlant_dyavg']) # filter out days where we get no power into HP
             cop_values['COP_PrimaryPlant_dyavg'] = (energy_btu_to_kwh(cop_inter['HeatOut_PrimaryPlant_dyavg'])) / \
                 (cop_inter['EnergyIn_HPWH'] +
                  cop_inter['EnergyIn_SecLoopPump'])
