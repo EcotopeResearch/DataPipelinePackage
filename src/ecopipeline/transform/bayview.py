@@ -366,15 +366,18 @@ def aggregate_values(df: pd.DataFrame, thermo_slice: str) -> pd.DataFrame:
     #cop_inter = pd.DataFrame(index=avg_sd.index)
     df['Temp_RecircSupply_avg'] = ( df['Temp_RecircSupply_MXV1'] + df['Temp_RecircSupply_MXV2']) / 2
     df['HeatOut_PrimaryPlant'] = energy_kwh_to_kbtu(df['Flow_CityWater_atSkid'], df['Temp_PrimaryStorageOutTop'] - df['Temp_CityWater_atSkid'])
-    df['HeatOut_SecLoop'] = energy_kwh_to_kbtu(df['Flow_SecLoop'], df['Temp_SecLoopHexOutlet'] - df['Temp_SecLoopHexInlet'])
+    if 'Flow_SecLoop' in df.columns:
+        df['HeatOut_SecLoop'] = energy_kwh_to_kbtu(df['Flow_SecLoop'], df['Temp_SecLoopHexOutlet'] - df['Temp_SecLoopHexInlet'])
     df['HeatOut_HW'] = energy_kwh_to_kbtu(df['Flow_CityWater'], df['Temp_RecircSupply_avg'] -  df['Temp_CityWater'])
     df['HeatLoss_TempMaint_MXV1'] = energy_kwh_to_kbtu(df['Flow_RecircReturn_MXV1'], df['Temp_RecircSupply_MXV1'] - df['Temp_RecircReturn_MXV1'])
     df['HeatLoss_TempMaint_MXV2'] = energy_kwh_to_kbtu(df['Flow_RecircReturn_MXV2'], df['Temp_RecircSupply_MXV2'] - df['Temp_RecircReturn_MXV2'])
     df['EnergyIn_SecLoopPump'] = df['PowerIn_SecLoopPump'] * (1/60)
     df['EnergyIn_HPWH'] = df['EnergyIn_HPWH']
 
-    cop_inter = df [['Temp_RecircSupply_avg', 'HeatOut_PrimaryPlant', 'HeatOut_SecLoop', 'HeatOut_HW', 'HeatLoss_TempMaint_MXV1', 'HeatLoss_TempMaint_MXV2', 'EnergyIn_SecLoopPump', 'EnergyIn_HPWH']].resample('D').mean()
-
+    if 'HeatOut_SecLoop' in df.columns:
+        cop_inter = df [['Temp_RecircSupply_avg', 'HeatOut_PrimaryPlant', 'HeatOut_SecLoop', 'HeatOut_HW', 'HeatLoss_TempMaint_MXV1', 'HeatLoss_TempMaint_MXV2', 'EnergyIn_SecLoopPump', 'EnergyIn_HPWH']].resample('D').mean()
+    else:
+        cop_inter = df [['Temp_RecircSupply_avg', 'HeatOut_PrimaryPlant', 'HeatOut_HW', 'HeatLoss_TempMaint_MXV1', 'HeatLoss_TempMaint_MXV2', 'EnergyIn_SecLoopPump', 'EnergyIn_HPWH']].resample('D').mean()
     cop_inter['HeatOut_HW_dyavg'] = energy_kwh_to_kbtu(avg_sd['Flow_CityWater'], cop_inter['Temp_RecircSupply_avg'] -
                                                        avg_sd_6['Temp_CityWater'])
     # in case of negative heat out or negligable temperature delta, set to zero
