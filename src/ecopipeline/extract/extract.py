@@ -270,7 +270,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
             if mb_prefix:
                 if "time(UTC)" in data.columns:
                     #prepend modbus prefix
-                    prefix = file.split('.')[0].split("/")[-1]
+                    prefix = file.split("/")[-1].split('.')[0]
                     data["time(UTC)"] = pd.to_datetime(data["time(UTC)"])
                     data = data.set_index("time(UTC)")
                     data = data.rename(columns={col: f"{prefix}_{col}".replace(" ","_") for col in data.columns})
