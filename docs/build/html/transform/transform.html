@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.4.0 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.4.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -366,6 +366,30 @@ such that the new data can later be forward filled from the info the last row</p
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.convert_time_zone">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_time_zone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'UTC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_time_zone" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts a dataframe’s indexed timezone from tz_convert_from to tz_convert_to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+</dd>
+<dt><strong>tz_convert_from</strong><span class="classifier">str</span></dt><dd><p>String value of timezone data is currently in</p>
+</dd>
+<dt><strong>tz_convert_to</strong><span class="classifier">str</span></dt><dd><p>String value of timezone data should be converted to</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>The dataframe with it’s index converted to the appropriate timezone.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.cop_method_1">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">cop_method_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recircLosses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatout_primary_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'HeatOut_Primary'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_input_power_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PowerIn_Total'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.cop_method_1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs COP calculation method 1 (original AWS method).</p>
@@ -589,6 +613,22 @@ that contains time_utc, &lt;site&gt;_ODT, and &lt;site&gt;_ODRH for the site.</p
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame:</dt><dd><p>new Pandas Dataframe</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.generate_event_log_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">generate_event_log_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.generate_event_log_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an event log df based on user submitted events in an event log csv
+:param config: The ConfigManager object that holds configuration data for the pipeline.
+:type config: ecopipeline.ConfigManager</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>event_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe formatted from events in Event_log.csv for pipeline.</p>
 </dd>
 </dl>
 </dd>
@@ -1129,6 +1169,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.convert_c_to_f"><code class="docutils literal notranslate"><span class="pre">convert_c_to_f()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.convert_l_to_g"><code class="docutils literal notranslate"><span class="pre">convert_l_to_g()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.convert_on_off_col_to_bool"><code class="docutils literal notranslate"><span class="pre">convert_on_off_col_to_bool()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.convert_time_zone"><code class="docutils literal notranslate"><span class="pre">convert_time_zone()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_1"><code class="docutils literal notranslate"><span class="pre">cop_method_1()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_2"><code class="docutils literal notranslate"><span class="pre">cop_method_2()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.create_fan_curves"><code class="docutils literal notranslate"><span class="pre">create_fan_curves()</span></code></a></li>
@@ -1138,6 +1179,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.flag_dhw_outage"><code class="docutils literal notranslate"><span class="pre">flag_dhw_outage()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.gas_valve_diff"><code class="docutils literal notranslate"><span class="pre">gas_valve_diff()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.gather_outdoor_conditions"><code class="docutils literal notranslate"><span class="pre">gather_outdoor_conditions()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.generate_event_log_df"><code class="docutils literal notranslate"><span class="pre">generate_event_log_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.get_cfm_values"><code class="docutils literal notranslate"><span class="pre">get_cfm_values()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.get_cop_values"><code class="docutils literal notranslate"><span class="pre">get_cop_values()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.get_energy_by_min"><code class="docutils literal notranslate"><span class="pre">get_energy_by_min()</span></code></a></li>
@@ -1215,7 +1257,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>

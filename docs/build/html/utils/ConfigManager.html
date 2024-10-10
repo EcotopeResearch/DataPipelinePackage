@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 0.4.0 documentation</title>
+    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 0.4.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>  
@@ -83,13 +83,16 @@ Defaults to False</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="utils.ConfigManager.ConfigManager.get_db_table_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_table_info</span></code></a>(table_headers)</p></td>
 <td><p>Reads the config.ini file stored in the config_file_path file path.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="utils.ConfigManager.ConfigManager.get_event_log_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_event_log_path</span></code></a>()</p></td>
+<td><p>Returns path to the full path to the Event_Log.csv file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>()</p></td>
 <td><p>returns name of site</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="utils.ConfigManager.ConfigManager.get_var_names_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_names_path</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="utils.ConfigManager.ConfigManager.get_var_names_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_names_path</span></code></a>()</p></td>
 <td><p>Returns path to the full path to the Variable_Names.csv file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weather_dir_path</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weather_dir_path</span></code></a>()</p></td>
 <td><p>Returns path to the directory that holds NOAA weather data files.</p></td>
 </tr>
 </tbody>
@@ -158,6 +161,13 @@ tables.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_event_log_path">
+<span class="sig-name descname"><span class="pre">get_event_log_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns path to the full path to the Event_Log.csv file.
+This file should be in the pipeline’s input directory “/” (i.e. “full/path/to/pipeline/input/Event_Log.csv”)</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_site_name">
 <span class="sig-name descname"><span class="pre">get_site_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_site_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns name of site</p>
@@ -196,6 +206,7 @@ This diectory should be in the pipeline’s data directory “/” (i.e. “full
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db"><code class="docutils literal notranslate"><span class="pre">ConfigManager.connect_db()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_name()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_table_info()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_event_log_path()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_site_name()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_var_names_path()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_weather_dir_path()</span></code></a></li>
@@ -252,7 +263,7 @@ This diectory should be in the pipeline’s data directory “/” (i.e. “full
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>
