@@ -737,6 +737,29 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
         hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold, complete_day_threshold, partial_day_removal_exclusion = partial_day_removal_exclusion)
     return hourly_df, daily_df
 
+def convert_time_zone(df: pd.DataFrame, tz_convert_from: str = 'UTC', tz_convert_to: str = 'America/Los_Angeles') -> pd.DataFrame:
+    """
+    converts a dataframe's indexed timezone from tz_convert_from to tz_convert_to.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data.
+    tz_convert_from : str
+        String value of timezone data is currently in
+    tz_convert_to : str
+        String value of timezone data should be converted to
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        The dataframe with it's index converted to the appropriate timezone. 
+    """
+    time_UTC = df.index.tz_localize('UTC')
+    time_PST = time_UTC.tz_convert('America/Los_Angeles')
+    df['time_pt'] = time_PST.tz_localize(None)
+    df.set_index('time_pt', inplace=True)
+    return df
 
 def create_summary_tables(df: pd.DataFrame):
     """
