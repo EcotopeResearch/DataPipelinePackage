@@ -285,37 +285,49 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
     # Get string of all column names for sql insert
     site_name = config.get_site_name()
     column_names = f"start_time_pt,site_name"
-    column_types = ["datetime","varchar(25)","datetime","ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'PIPELINE_ERR', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE', 'EQUIPMENT_MALFUNCTION')","varchar(100)"]
+    column_types = ["datetime","varchar(25)","datetime",
+                    "ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'PIPELINE_ERR', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE', 'EQUIPMENT_MALFUNCTION')",
+                    "varchar(200)"]
     column_list = ['end_time_pt','event_type', 'event_detail']
     if not set(column_list).issubset(event_df.columns):
-        raise Exception(f"event_df should contain a dataframe with columns start_time_pt (idx), end_time_pt, event_type, and event_detail. Instead, found dataframe with columns {event_df.columns}")
+        raise Exception(f"event_df should contain a dataframe with columns start_time_pt, end_time_pt, event_type, and event_detail. Instead, found dataframe with columns {event_df.columns}")
 
     for column in column_list:
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ") VALUES (%s,%s,%s,%s,%s)"
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+",automatic_upload)"
+
+    # add aditional columns for db creation
+    full_column_names = column_names.split(",")[1:]
+    full_column_names.append('last_modified_date')
+    full_column_names.append('last_modified_by')
+    full_column_types = column_types[1:]
+    full_column_types.append('datetime')
+    full_column_types.append('varchar(60)')
+
 
     existing_rows = pd.DataFrame({
         'start_time_pt' : [],
         'end_time_pt' : [],
-        'event_type' : []
+        'event_type' : [],
+        'last_modified_by' : []
     })
 
     connection, cursor = config.connect_db() 
 
     # create db table if it does not exist, otherwise add missing columns to existing table
     if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, column_names.split(",")[1:], column_types[1:], primary_key='start_time_pt', has_primary_key=False): #split on colums and remove first column aka time_pt
+        if not create_new_table(cursor, table_name, full_column_names, full_column_types, primary_key='start_time_pt', has_primary_key=False): #split on colums and remove first column aka time_pt
             print(f"Could not create new table {table_name} in database {dbname}")
             return False
     else:
         try:
             # find existing times in database for upsert statement
             cursor.execute(
-                f"SELECT start_time_pt, end_time_pt, event_type FROM {table_name} WHERE start_time_pt >= '{event_df.index.min()}' AND site_name = '{site_name}'")
+                f"SELECT id, start_time_pt, end_time_pt, event_type, last_modified_by FROM {table_name} WHERE start_time_pt >= '{event_df.index.min()}' AND site_name = '{site_name}'")
             # Fetch the results into a DataFrame
-            existing_rows = pd.DataFrame(cursor.fetchall(), columns=['start_time_pt', 'end_time_pt', 'event_type'])
+            existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id','start_time_pt', 'end_time_pt', 'event_type', 'last_modified_by'])
             existing_rows['start_time_pt'] = pd.to_datetime(existing_rows['start_time_pt'])
             existing_rows['end_time_pt'] = pd.to_datetime(existing_rows['end_time_pt'])
 
@@ -323,26 +335,31 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
             print(f"Retrieving data from {table_name} caused exception: {e}")
     
     updatedRows = 0
+    ignoredRows = 0
     try:
         for index, row in event_df.iterrows():
             time_data = [index,site_name,row['end_time_pt'],row['event_type'],row['event_detail']]
             #remove nans and infinites
             time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
             time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
-
-            if existing_rows[
+            filtered_existing_rows = existing_rows[
                 (existing_rows['start_time_pt'] == index) &
-                (existing_rows['end_time_pt'] == row['end_time_pt']) &
-                (existing_rows['event_type'] == row['event_type'])
-            ].shape[0] > 0:
-                statement, values = _generate_mysql_update_event_table(row, site_name, index ,row['end_time_pt'],row['event_type'])
-                if statement != "":
+                # (existing_rows['end_time_pt'] == row['end_time_pt']) &
+                (existing_rows['event_type'] == row['event_type']) &
+                (existing_rows['last_modified_by'] == 'automatic_upload')
+            ]
+            if not filtered_existing_rows.empty:
+                first_matching_row = filtered_existing_rows.iloc[0]  # Retrieves the first row
+                statement, values = _generate_mysql_update_event_table(row, first_matching_row['id'])
+                if statement != "" and first_matching_row['last_modified_by'] == 'automatic_upload':
                     cursor.execute(statement, values)
                     updatedRows += 1
+                else:
+                    ignoredRows += 1
             else:
                 cursor.execute(insert_str, time_data)
         connection.commit()
-        print(f"Successfully wrote {len(event_df.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
+        print(f"Successfully wrote {len(event_df.index) - ignoredRows} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     except Exception as e:
         # Print the exception message
         print(f"Caught an exception when uploading to site_events table: {e}")
@@ -350,7 +367,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
     cursor.close()
     return True
 
-def _generate_mysql_update_event_table(row, site_name, start_time_pt, end_time_pt, event_type):
+def _generate_mysql_update_event_table(row, id):
     statement = f"UPDATE site_events SET "
     statment_elems = []
     values = []
@@ -361,7 +378,9 @@ def _generate_mysql_update_event_table(row, site_name, start_time_pt, end_time_p
 
     if values:
         statement += ", ".join(statment_elems)
-        statement += f" WHERE start_time_pt = '{start_time_pt}' AND end_time_pt = '{end_time_pt}' AND event_type = '{event_type}' AND site_name = '{site_name}';"
+        statement += f", last_modified_by = 'automatic_upload', last_modified_date = '{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}'"
+        statement += f" WHERE id = {id};"
+        # statement += f" WHERE start_time_pt = '{start_time_pt}' AND end_time_pt = '{end_time_pt}' AND event_type = '{event_type}' AND site_name = '{site_name}';"
     else:
         statement = ""
 
