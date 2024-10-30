@@ -296,7 +296,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+",automatic_upload)"
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,"+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')+",automatic_upload)"
 
     # add aditional columns for db creation
     full_column_names = column_names.split(",")[1:]
@@ -378,7 +378,7 @@ def _generate_mysql_update_event_table(row, id):
 
     if values:
         statement += ", ".join(statment_elems)
-        statement += f", last_modified_by = 'automatic_upload', last_modified_date = '{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}'"
+        statement += f", last_modified_by = 'automatic_upload', last_modified_date = '{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}'"
         statement += f" WHERE id = {id};"
         # statement += f" WHERE start_time_pt = '{start_time_pt}' AND end_time_pt = '{end_time_pt}' AND event_type = '{event_type}' AND site_name = '{site_name}';"
     else:
