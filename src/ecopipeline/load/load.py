@@ -296,7 +296,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,"+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')+",automatic_upload)"
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,'"+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
 
     # add aditional columns for db creation
     full_column_names = column_names.split(",")[1:]
@@ -344,9 +344,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
             time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
             filtered_existing_rows = existing_rows[
                 (existing_rows['start_time_pt'] == index) &
-                # (existing_rows['end_time_pt'] == row['end_time_pt']) &
-                (existing_rows['event_type'] == row['event_type']) &
-                (existing_rows['last_modified_by'] == 'automatic_upload')
+                (existing_rows['event_type'] == row['event_type'])
             ]
             if not filtered_existing_rows.empty:
                 first_matching_row = filtered_existing_rows.iloc[0]  # Retrieves the first row
