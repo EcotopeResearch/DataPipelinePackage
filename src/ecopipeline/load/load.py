@@ -253,7 +253,7 @@ def load_overwrite_database(cursor : mysql.connector.cursor.MySQLCursor, datafra
     print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
     return True
 
-def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
+def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name : str = None):
     """
     Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
@@ -264,6 +264,8 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
         The ConfigManager object that holds configuration data for the pipeline.
     event_df: pd.DataFrame
         The pandas DataFrame to be written into the mySQL server. Must have columns event_type and event_detail 
+    site_name : str
+        the name of the site to correspond the events with. If left blank will default to minute table name
 
     Returns
     ------- 
@@ -283,7 +285,8 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
     print(f"Attempting to write data for {event_df.index[0]} to {event_df.index[-1]} into {table_name}")
     
     # Get string of all column names for sql insert
-    site_name = config.get_site_name()
+    if site_name is None:
+        site_name = config.get_site_name()
     column_names = f"start_time_pt,site_name"
     column_types = ["datetime","varchar(25)","datetime",
                     "ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'DATA_LOSS', 'DATA_LOSS_COP', 'SITE_VISIT', 'COMMISIONING', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE', 'EQUIPMENT_MALFUNCTION')",
