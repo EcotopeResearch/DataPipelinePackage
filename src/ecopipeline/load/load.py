@@ -286,7 +286,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame):
     site_name = config.get_site_name()
     column_names = f"start_time_pt,site_name"
     column_types = ["datetime","varchar(25)","datetime",
-                    "ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'PIPELINE_ERR', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE', 'EQUIPMENT_MALFUNCTION')",
+                    "ENUM('HW_OUTAGE', 'HW_LOSS','PIPELINE_STATUS', 'MISC_EVENT', 'PIPELINE_UPLOAD', 'DATA_LOSS', 'DATA_LOSS_COP', 'SITE_VISIT', 'COMMISIONING', 'SYSTEM_MAINTENENCE', 'POWER_OUTAGE', 'EQUIPMENT_MALFUNCTION')",
                     "varchar(200)"]
     column_list = ['end_time_pt','event_type', 'event_detail']
     if not set(column_list).issubset(event_df.columns):
