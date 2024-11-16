@@ -761,6 +761,32 @@ def convert_time_zone(df: pd.DataFrame, tz_convert_from: str = 'UTC', tz_convert
     df.set_index('time_pt', inplace=True)
     return df
 
+def shift_accumulative_columns(df : pd.DataFrame, column_names : list = []):
+    """
+    converts a dataframe's accumulative columns to non accumulative difference values.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Single pandas dataframe of sensor data.
+    column_names : list
+        The names of columns that need to be changed from accumulative sum data to non-accumulative data. Will do this to all columns if set to an empty list
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        The dataframe with aappropriate columns changed from accumulative sum data to non-accumulative data. 
+    """
+    df.sort_index(inplace = True)
+    df_diff = df - df.shift(1)
+    df_diff[df.shift(1).isna()] = np.nan
+    df_diff.iloc[0] = np.nan
+    if len(column_names) == 0:
+        return df_diff
+    for column_name in column_names:
+        df[column_name] = df_diff[column_name]
+    return df
+
 def create_summary_tables(df: pd.DataFrame):
     """
     Revamped version of "aggregate_data" function. Creates hourly and daily summary tables.
