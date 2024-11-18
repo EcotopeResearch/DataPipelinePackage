@@ -271,6 +271,7 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
         Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv
     """
     df = original_df.copy()
+    df = df.sort_index()
     vars_filename = config.get_var_names_path()
     try:
         # ffill dataframe holds ffill length and changepoint bool

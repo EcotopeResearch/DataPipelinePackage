@@ -269,6 +269,60 @@ def test_ffill_missing(mock_config_manager):
         # check that df_input was not changed in place
         assert_frame_equal(df_input, df_unchanged)
 
+@patch('ecopipeline.ConfigManager')
+def test_ffill_missing_out_of_order(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
+                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
+                        'ffill_length': [1, 2, None,None],
+                        'site': [1,2,"silly_site","silly_site"]})
+        mock_csv.return_value = csv_df
+        df_input = pd.DataFrame({
+                        'serious_var_1': [None, None, None,None, 1],
+                        'serious_var_2': [None,None,None,None, 5],
+                        'serious_var_3': [None,3,None,None,None],
+                        'serious_var_4': [None,3,None,4,2]})
+        df_input.index = pd.to_datetime(['2022-01-01 00:03:00', '2022-01-01 00:02:00', '2022-01-01 00:00:00','2022-01-01 00:04:00', '2022-01-01 00:01:00'])
+        df_unchanged = df_input.copy()
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [None, 1, 1, 1, 1],
+                        'serious_var_2': [None,5,5,5,None],
+                        'serious_var_3': [None,None,3,None,None],
+                        'serious_var_4': [None,2,3,3,4]})
+        df_expected.index = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
+        df_result = ffill_missing(df_input, mock_config_manager)
+        assert_frame_equal(df_result, df_expected)
+        # check that df_input was not changed in place
+        assert_frame_equal(df_input, df_unchanged)
+
+@patch('ecopipeline.ConfigManager')
+def test_ffill_missing_out_of_order_timeswitch(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
+                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
+                        'ffill_length': [1, 2, None,None],
+                        'site': [1,2,"silly_site","silly_site"]})
+        mock_csv.return_value = csv_df
+        df_input = pd.DataFrame({
+                        'serious_var_1': [None, None, None,None, 1],
+                        'serious_var_2': [None,None,None,None, 5],
+                        'serious_var_3': [None,3,None,None,None],
+                        'serious_var_4': [None,3,None,4,2]})
+        df_input.index = pd.to_datetime(['2024-11-03 01:59:00-07:00', '2024-11-03 01:58:00-07:00', '2024-11-03 01:00:00-07:00','2024-11-03 01:00:00-08:00', '2024-11-03 01:57:00-07:00'])
+        df_unchanged = df_input.copy()
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [None, 1, 1, 1, 1],
+                        'serious_var_2': [None,5,5,5,None],
+                        'serious_var_3': [None,None,3,None,None],
+                        'serious_var_4': [None,2,3,3,4]})
+        df_expected.index = pd.to_datetime(['2024-11-03 01:00:00-07:00', '2024-11-03 01:57:00-07:00', '2024-11-03 01:58:00-07:00', '2024-11-03 01:59:00-07:00','2024-11-03 01:00:00-08:00'])
+        df_result = ffill_missing(df_input, mock_config_manager)
+        assert_frame_equal(df_result, df_expected)
+        # check that df_input was not changed in place
+        assert_frame_equal(df_input, df_unchanged)
+
 
 def test_cop_method_1():
     timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
