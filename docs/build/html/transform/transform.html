@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.4.11 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.4.14 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.14 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -788,6 +788,36 @@ for this function to work, naming conventions for each parrallel tank must inclu
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.heat_output_calc">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">heat_output_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow_var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hot_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cold_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat_out_col_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_as_kw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.heat_output_calc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function will take a flow varriable and two temperature inputs to calculate heat output</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe with minute-to-minute data</p>
+</dd>
+<dt><strong>flow_var</strong><span class="classifier">str</span></dt><dd><p>The column name of the flow varriable for the calculation. Units of the column should be gal/min</p>
+</dd>
+<dt><strong>hot_temp</strong><span class="classifier">str</span></dt><dd><p>The column name of the hot temperature varriable for the calculation. Units of the column should be degrees F</p>
+</dd>
+<dt><strong>cold_temp</strong><span class="classifier">str</span></dt><dd><p>The column name of the cold temperature varriable for the calculation. Units of the column should be degrees F</p>
+</dd>
+<dt><strong>heat_out_col_name</strong><span class="classifier">str</span></dt><dd><p>The new column name for the heat output calculated from the varriables</p>
+</dd>
+<dt><strong>return_as_kw</strong><span class="classifier">bool</span></dt><dd><p>Set to true for new heat out column to have kW units. Set to false to return column as BTU/hr</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with new heat output column of specified name.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.join_to_daily">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">join_to_daily</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cop_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.join_to_daily" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function left-joins the the daily data and COP data.</p>
@@ -1095,6 +1125,28 @@ called adjustments.csv in the input folder of the pipeline (e.g. “full/path/to
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.shift_accumulative_columns">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">shift_accumulative_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.shift_accumulative_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts a dataframe’s accumulative columns to non accumulative difference values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+</dd>
+<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>The names of columns that need to be changed from accumulative sum data to non-accumulative data. Will do this to all columns if set to an empty list</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>The dataframe with aappropriate columns changed from accumulative sum data to non-accumulative data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.site_specific">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">site_specific</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.site_specific" title="Permalink to this definition">¶</a></dt>
 <dd><p>Does Site Specific Calculations for LBNL. The site name is searched using RegEx</p>
@@ -1189,6 +1241,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.get_site_info"><code class="docutils literal notranslate"><span class="pre">get_site_info()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.get_storage_gals120"><code class="docutils literal notranslate"><span class="pre">get_storage_gals120()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.get_temp_zones120"><code class="docutils literal notranslate"><span class="pre">get_temp_zones120()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.heat_output_calc"><code class="docutils literal notranslate"><span class="pre">heat_output_calc()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.join_to_daily"><code class="docutils literal notranslate"><span class="pre">join_to_daily()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.join_to_hourly"><code class="docutils literal notranslate"><span class="pre">join_to_hourly()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.lbnl_pressure_conversions"><code class="docutils literal notranslate"><span class="pre">lbnl_pressure_conversions()</span></code></a></li>
@@ -1204,6 +1257,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.replace_humidity"><code class="docutils literal notranslate"><span class="pre">replace_humidity()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.round_time"><code class="docutils literal notranslate"><span class="pre">round_time()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.sensor_adjustment"><code class="docutils literal notranslate"><span class="pre">sensor_adjustment()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.shift_accumulative_columns"><code class="docutils literal notranslate"><span class="pre">shift_accumulative_columns()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.site_specific"><code class="docutils literal notranslate"><span class="pre">site_specific()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.verify_power_energy"><code class="docutils literal notranslate"><span class="pre">verify_power_energy()</span></code></a></li>
 </ul>
@@ -1257,7 +1311,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.14 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>

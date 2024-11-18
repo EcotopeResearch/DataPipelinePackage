@@ -346,6 +346,36 @@ def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.D
 
     return df
 
+def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp : str, heat_out_col_name : str, return_as_kw : bool = True):
+    """
+    Function will take a flow varriable and two temperature inputs to calculate heat output 
+
+    Parameters
+    ---------- 
+    df: pd.DataFrame
+        Pandas dataframe with minute-to-minute data
+    flow_var : str
+        The column name of the flow varriable for the calculation. Units of the column should be gal/min
+    hot_temp : str
+        The column name of the hot temperature varriable for the calculation. Units of the column should be degrees F
+    cold_temp : str
+        The column name of the cold temperature varriable for the calculation. Units of the column should be degrees F
+    heat_out_col_name : str
+        The new column name for the heat output calculated from the varriables
+    return_as_kw : bool
+        Set to true for new heat out column to have kW units. Set to false to return column as BTU/hr
+        
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas dataframe with new heat output column of specified name.
+    """
+    df[heat_out_col_name] = 500 * df[flow_var] * (df[hot_temp] - df[cold_temp]) #BTU/hr
+    df[heat_out_col_name] = np.where(df[heat_out_col_name] > 0, df[heat_out_col_name], 0)
+    if return_as_kw:
+        df[heat_out_col_name] = df[heat_out_col_name]/3412 # convert to kW
+    return df
+
 #TODO investigate if this can be removed
 def sensor_adjustment(df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
     """
