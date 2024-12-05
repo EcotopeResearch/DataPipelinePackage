@@ -346,7 +346,7 @@ def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.D
 
     return df
 
-def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp : str, heat_out_col_name : str, return_as_kw : bool = True):
+def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp : str, heat_out_col_name : str, return_as_kw : bool = True) -> pd.DataFrame:
     """
     Function will take a flow varriable and two temperature inputs to calculate heat output 
 
