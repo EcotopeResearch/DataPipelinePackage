@@ -16,7 +16,7 @@ import requests
 import subprocess
 
 
-def get_last_full_day_from_db(config : ConfigManager) -> datetime:
+def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
     """
     Function retrieves the last line from the database with the most recent datetime 
     in local time.
@@ -25,6 +25,8 @@ def get_last_full_day_from_db(config : ConfigManager) -> datetime:
     ---------- 
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline
+    table_identifier : str
+        Table identifier in config.ini with minute data. Default: "minute"
     
     Returns
     ------- 
@@ -32,14 +34,14 @@ def get_last_full_day_from_db(config : ConfigManager) -> datetime:
         end of last full day populated in database or default past time if no data found
     """
     # config_dict = get_login_info(["minute"], config)
-    table_config_dict = config.get_db_table_info(["minute"])
+    table_config_dict = config.get_db_table_info([table_identifier])
     # db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     db_connection, db_cursor = config.connect_db()
     return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
     
     try:
         db_cursor.execute(
-            f"select * from {table_config_dict['minute']['table_name']} order by time_pt DESC LIMIT 1")
+            f"select * from {table_config_dict[table_identifier]['table_name']} order by time_pt DESC LIMIT 1")
 
         last_row_data = pd.DataFrame(db_cursor.fetchall())
         if len(last_row_data.index) > 0:
@@ -98,18 +100,20 @@ def get_db_row_from_time(time: datetime, config : ConfigManager) -> pd.DataFrame
 
     return row_data
 
-def extract_new(startTime: datetime, filenames: List[str], decihex = False, timeZone: str = None, endTime: datetime = None, dateStringStartIdx : int = -17) -> List[str]:
+def extract_new(startTime: datetime, filenames: List[str], decihex = False, timeZone: str = None, endTime: datetime = None, dateStringStartIdx : int = -17,
+                dateStringEndIdx : int = -3, dateFormat : str = "%Y%m%d%H%M%S", epochFormat : bool = False) -> List[str]:
     """
     Function filters the filenames to only those equal to or newer than the date specified startTime.
     If filenames are in deciheximal, The function can still handel it. Note that for some projects,
     files are dropped at irregular intervals so data cannot be filtered by exact date.
 
-    Currently, this function expects file names to be in one of two formats:
+    Currently, this function expects file names to be in one of three formats:
 
-    1. normal (set decihex = False) format assumes file names are in format such that characters [-17,-3] in the file names string
-        are the files date in the form "%Y%m%d%H%M%S"
+    1. default (set decihex = False) format assumes file names are in format such that characters [-17,-3] in the file names string
+        are the files date in the form "%Y%m%d%H%M%S" 
     2. deciheximal (set decihex = True) format assumes file names are in format such there is a deciheximal value between a '.' and '_' character in each filename string
         that has a deciheximal value equal to the number of seconds since January 1, 1970 to represent the timestamp of the data in the file.
+    3. custom format is the same as default format but uses a custom date format with the dateFormat parameter and expects the date to be characters [dateStringStartIdx,dateStringEndIdx]
 
     Parameters
     ----------  
@@ -125,7 +129,9 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
         time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
         defaults to None
     dateStringStartIdx: int
-        The character index in each file where the date in format "%Y%m%d%H%M%S" starts. Default is -17 (meaning 17 characters from the end of the filename string)
+        The character index in each file where the date in format starts. Default is -17 (meaning 17 characters from the end of the filename string)
+    dateStringEndIdx: int
+        The character index in each file where the date in format ends. Default is -3 (meaning 3 characters from the end of the filename string)
     
     Returns
     -------
@@ -145,8 +151,11 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
 
 
     else: 
-        startTime_int = int(startTime.strftime("%Y%m%d%H%M%S"))
-        return_list = list(filter(lambda filename: int(filename[dateStringStartIdx:dateStringStartIdx+14]) >= startTime_int and (endTime is None or int(filename[dateStringStartIdx:dateStringStartIdx+14]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
+        if epochFormat:
+            startTime_int = int(startTime.timestamp())
+        else:
+            startTime_int = int(startTime.strftime(dateFormat))
+        return_list = list(filter(lambda filename: int(filename[dateStringStartIdx:dateStringEndIdx]) >= startTime_int and (endTime is None or int(filename[dateStringStartIdx:dateStringStartIdx+14]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
     return return_list
 
 def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = "", file_prefix : str = "") -> List[str]:
