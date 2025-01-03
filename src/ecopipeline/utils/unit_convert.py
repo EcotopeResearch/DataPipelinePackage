@@ -14,6 +14,10 @@ def temp_c_to_f_non_noaa(temp_c : float):
     temp_f = 32 + (temp_c * 1.8)
     return temp_f
 
+def temp_f_to_c(temp_f : float):
+    temp_c = (temp_f - 32) * 5.0 / 9.0
+    return temp_c
+
 def power_btuhr_to_kw(power_btuhr : float):
     power_kw = power_btuhr / 3412.0
     return power_kw

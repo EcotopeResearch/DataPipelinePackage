@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import csv
 import os
-from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g, power_btuhr_to_kw
+from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g, power_btuhr_to_kw, temp_f_to_c
 from ecopipeline import ConfigManager
 
 pd.set_option('display.max_columns', None)
@@ -422,6 +422,55 @@ def sensor_adjustment(df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
                 df_post[[adjustment["sensor_1"], adjustment["sensor_2"]]] = df_post[[
                     adjustment["sensor_2"], adjustment["sensor_1"]]]
         df = pd.concat([df_pre, df_post], ignore_index=True)
+
+    return df
+
+def add_relative_humidity(df : pd.DataFrame, temp_col : str ='airTemp_F', dew_point_col : str ='dewPoint_F', degree_f : bool = True):
+    """
+    Add a column for relative humidity to the DataFrame.
+
+    Parameters
+    ---------- 
+    df : pd.DataFrame 
+        DataFrame containing air temperature and dew point temperature.
+    temp_col : str 
+        Column name for air temperature.
+    dew_point_col : str
+        Column name for dew point temperature.
+    degree_f : bool
+        True if temperature columns are in °F, false if in °C 
+
+    Returns
+    -------
+    pd.DataFrame: 
+        DataFrame with an added column for relative humidity.
+    """
+    # Define constants
+    A = 6.11
+    B = 7.5
+    C = 237.3
+
+    if degree_f:
+        df[f"{temp_col}_C"] = df[temp_col].apply(temp_f_to_c)
+        df[f"{dew_point_col}_C"] = df[dew_point_col].apply(temp_f_to_c)
+        temp_col_c = f"{temp_col}_C"
+        dew_point_col_c = f"{dew_point_col}_C"
+    else:
+        temp_col_c = temp_col
+        dew_point_col_c = dew_point_col
+
+    # Calculate saturation vapor pressure (e_s) and actual vapor pressure (e)
+    e_s = A * 10 ** ((B * df[temp_col_c]) / (df[temp_col_c] + C))
+    e = A * 10 ** ((B * df[dew_point_col_c]) / (df[dew_point_col_c] + C))
+
+    # Calculate relative humidity
+    df['relative_humidity'] = (e / e_s) * 100.0
+
+    # Handle cases where relative humidity exceeds 100% due to rounding
+    df['relative_humidity'] = np.clip(df['relative_humidity'], 0.0, 100.0)
+
+    if degree_f:
+        df.drop(columns=[temp_col_c, dew_point_col_c])
 
     return df
 

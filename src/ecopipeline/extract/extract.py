@@ -800,8 +800,8 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
         noaa_dfs = _convert_to_df(station_ids, noaa_filenames, weather_directory)
         formatted_dfs = _format_df(station_ids, noaa_dfs)
     except:
-        # temporary solution for NOAA ftp not including 2024
-        noaa_df = pd.DataFrame(index=pd.date_range(start='2024-01-01', periods=10, freq='H'))
+        # temporary solution for NOAA ftp not including 2025
+        noaa_df = pd.DataFrame(index=pd.date_range(start='2025-01-01', periods=10, freq='H'))
         noaa_df['conditions'] = None
         noaa_df['airTemp_F'] = None
         noaa_df['dewPoint_F'] = None
@@ -940,7 +940,7 @@ def _download_noaa_data(stations: dict, weather_directory : str) -> List[str]:
         print("FTP ERROR")
         return
     # Download files for each station from 2010 till present year
-    for year in range(2010, year_end + 1):
+    for year in range(2010, year_end):
         # Set FTP credentials and connect
         wd = f"/pub/data/noaa/isd-lite/{year}/"
         ftp_server.cwd(wd)
