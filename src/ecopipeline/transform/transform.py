@@ -449,28 +449,32 @@ def add_relative_humidity(df : pd.DataFrame, temp_col : str ='airTemp_F', dew_po
     A = 6.11
     B = 7.5
     C = 237.3
+    try:
+        if degree_f:
+            df[f"{temp_col}_C"] = df[temp_col].apply(temp_f_to_c)
+            df[f"{dew_point_col}_C"] = df[dew_point_col].apply(temp_f_to_c)
+            temp_col_c = f"{temp_col}_C"
+            dew_point_col_c = f"{dew_point_col}_C"
+        else:
+            temp_col_c = temp_col
+            dew_point_col_c = dew_point_col
 
-    if degree_f:
-        df[f"{temp_col}_C"] = df[temp_col].apply(temp_f_to_c)
-        df[f"{dew_point_col}_C"] = df[dew_point_col].apply(temp_f_to_c)
-        temp_col_c = f"{temp_col}_C"
-        dew_point_col_c = f"{dew_point_col}_C"
-    else:
-        temp_col_c = temp_col
-        dew_point_col_c = dew_point_col
+        # Calculate saturation vapor pressure (e_s) and actual vapor pressure (e)
+        e_s = A * 10 ** ((B * df[temp_col_c]) / (df[temp_col_c] + C))
+        e = A * 10 ** ((B * df[dew_point_col_c]) / (df[dew_point_col_c] + C))
 
-    # Calculate saturation vapor pressure (e_s) and actual vapor pressure (e)
-    e_s = A * 10 ** ((B * df[temp_col_c]) / (df[temp_col_c] + C))
-    e = A * 10 ** ((B * df[dew_point_col_c]) / (df[dew_point_col_c] + C))
+        # Calculate relative humidity
+        df['relative_humidity'] = (e / e_s) * 100.0
 
-    # Calculate relative humidity
-    df['relative_humidity'] = (e / e_s) * 100.0
+        # Handle cases where relative humidity exceeds 100% due to rounding
+        df['relative_humidity'] = np.clip(df['relative_humidity'], 0.0, 100.0)
 
-    # Handle cases where relative humidity exceeds 100% due to rounding
-    df['relative_humidity'] = np.clip(df['relative_humidity'], 0.0, 100.0)
-
-    if degree_f:
-        df.drop(columns=[temp_col_c, dew_point_col_c])
+        if degree_f:
+            df.drop(columns=[temp_col_c, dew_point_col_c])
+    except:
+       
+        df['relative_humidity'] = None
+        print("Unable to calculate relative humidity data for timeframe")
 
     return df
 
