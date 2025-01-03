@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Extract Documentation &#8212; DataPipelinePackage 0.4.14 documentation</title>
+    <title>Extract Documentation &#8212; DataPipelinePackage 0.5.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.14 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.5.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>  
@@ -154,14 +154,14 @@ e.g. if the data files you want to extract are in “path/to/data/DENT/” and y
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_new">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decihex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeZone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateStringStartIdx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_new" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decihex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeZone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateStringStartIdx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateStringEndIdx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateFormat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochFormat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_new" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function filters the filenames to only those equal to or newer than the date specified startTime.
 If filenames are in deciheximal, The function can still handel it. Note that for some projects,
 files are dropped at irregular intervals so data cannot be filtered by exact date.</p>
-<p>Currently, this function expects file names to be in one of two formats:</p>
+<p>Currently, this function expects file names to be in one of three formats:</p>
 <ol class="arabic simple">
 <li><dl class="simple">
-<dt>normal (set decihex = False) format assumes file names are in format such that characters [-17,-3] in the file names string</dt><dd><p>are the files date in the form “%Y%m%d%H%M%S”</p>
+<dt>default (set decihex = False) format assumes file names are in format such that characters [-17,-3] in the file names string</dt><dd><p>are the files date in the form “%Y%m%d%H%M%S”</p>
 </dd>
 </dl>
 </li>
@@ -170,6 +170,7 @@ files are dropped at irregular intervals so data cannot be filtered by exact dat
 </dd>
 </dl>
 </li>
+<li><p>custom format is the same as default format but uses a custom date format with the dateFormat parameter and expects the date to be characters [dateStringStartIdx,dateStringEndIdx]</p></li>
 </ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -185,7 +186,9 @@ is local time from the data’s index.</p>
 time stamp by the pandas tz_localize() function <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html">https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html</a>
 defaults to None</p>
 </dd>
-<dt><strong>dateStringStartIdx: int</strong></dt><dd><p>The character index in each file where the date in format “%Y%m%d%H%M%S” starts. Default is -17 (meaning 17 characters from the end of the filename string)</p>
+<dt><strong>dateStringStartIdx: int</strong></dt><dd><p>The character index in each file where the date in format starts. Default is -17 (meaning 17 characters from the end of the filename string)</p>
+</dd>
+<dt><strong>dateStringEndIdx: int</strong></dt><dd><p>The character index in each file where the date in format ends. Default is -3 (meaning 3 characters from the end of the filename string)</p>
 </dd>
 </dl>
 </dd>
@@ -275,13 +278,15 @@ is local time from the data’s index.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.get_last_full_day_from_db">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_last_full_day_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">datetime</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_last_full_day_from_db" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_last_full_day_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_identifier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minute'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">datetime</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_last_full_day_from_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function retrieves the last line from the database with the most recent datetime
 in local time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
+</dd>
+<dt><strong>table_identifier</strong><span class="classifier">str</span></dt><dd><p>Table identifier in config.ini with minute data. Default: “minute”</p>
 </dd>
 </dl>
 </dd>
@@ -521,7 +526,7 @@ Appropriate varriables in your Variable_Names.csv must have a matching string to
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.14 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.5.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>

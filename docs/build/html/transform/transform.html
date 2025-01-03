@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.4.14 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.5.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.14 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.5.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -64,6 +64,32 @@
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.add_relative_humidity">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">add_relative_humidity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'airTemp_F'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dew_point_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'dewPoint_F'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree_f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.add_relative_humidity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a column for relative humidity to the DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame containing air temperature and dew point temperature.</p>
+</dd>
+<dt><strong>temp_col</strong><span class="classifier">str</span></dt><dd><p>Column name for air temperature.</p>
+</dd>
+<dt><strong>dew_point_col</strong><span class="classifier">str</span></dt><dd><p>Column name for dew point temperature.</p>
+</dd>
+<dt><strong>degree_f</strong><span class="classifier">bool</span></dt><dd><p>True if temperature columns are in °F, false if in °C</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>DataFrame with an added column for relative humidity.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -789,7 +815,7 @@ for this function to work, naming conventions for each parrallel tank must inclu
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.heat_output_calc">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">heat_output_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow_var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hot_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cold_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat_out_col_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_as_kw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.heat_output_calc" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">heat_output_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow_var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hot_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cold_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat_out_col_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_as_kw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.heat_output_calc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function will take a flow varriable and two temperature inputs to calculate heat output</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1209,6 +1235,7 @@ rows with conflicting power and energy variables.</p>
     <ul>
 <li><a class="reference internal" href="#">Transform Documentation</a><ul>
 <li><a class="reference internal" href="#ecopipeline.transform.add_local_time"><code class="docutils literal notranslate"><span class="pre">add_local_time()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.add_relative_humidity"><code class="docutils literal notranslate"><span class="pre">add_relative_humidity()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aggregate_df"><code class="docutils literal notranslate"><span class="pre">aggregate_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aggregate_values"><code class="docutils literal notranslate"><span class="pre">aggregate_values()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aqsuite_filter_new"><code class="docutils literal notranslate"><span class="pre">aqsuite_filter_new()</span></code></a></li>
@@ -1311,7 +1338,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.4.14 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.5.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>
