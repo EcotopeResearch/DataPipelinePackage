@@ -940,7 +940,7 @@ def _download_noaa_data(stations: dict, weather_directory : str) -> List[str]:
         print("FTP ERROR")
         return
     # Download files for each station from 2010 till present year
-    for year in range(2010, year_end):
+    for year in range(2010, year_end + 1):
         # Set FTP credentials and connect
         wd = f"/pub/data/noaa/isd-lite/{year}/"
         ftp_server.cwd(wd)
