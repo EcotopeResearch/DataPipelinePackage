@@ -368,6 +368,69 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     cursor.close()
     return True
 
+def report_data_loss(config : ConfigManager, site_name : str = None):
+    """
+    Logs data loss event in event database (assumes one exists)
+
+    Parameters
+    ----------  
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+    site_name : str
+        the name of the site to correspond the events with. If left blank will default to minute table name
+
+    Returns
+    ------- 
+    bool: 
+        A boolean value indicating if the data was successfully written to the database. 
+    """
+    # Drop empty columns
+
+    dbname = config.get_db_name()
+    table_name = "site_events"
+    if site_name is None:
+        site_name = config.get_site_name()
+    error_string = "Error proccessing data. Please check logs to resolve."
+
+    print(f"logging DATA_LOSS into {table_name}")
+
+    # create SQL statement
+    insert_str = "INSERT INTO " + table_name + " (start_time_pt, site_name, event_detail, event_type, last_modified_date, last_modified_by) VALUES "
+    insert_str += f"('{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS','{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
+
+    existing_rows = pd.DataFrame({
+        'id' : []
+    })
+
+    connection, cursor = config.connect_db() 
+
+    # create db table if it does not exist, otherwise add missing columns to existing table
+    if not check_table_exists(cursor, table_name, dbname):
+        print(f"Cannot log data loss. {table_name} does not exist in database {dbname}")
+        return False
+    else:
+        try:
+            # find existing times in database for upsert statement
+            cursor.execute(
+                f"SELECT id FROM {table_name} WHERE end_time_pt IS NULL AND site_name = '{site_name}' AND event_type = 'DATA_LOSS' and event_detail = '{error_string}'")
+            # Fetch the results into a DataFrame
+            existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id'])
+
+        except mysqlerrors.Error as e:
+            print(f"Retrieving data from {table_name} caused exception: {e}")
+    try:
+        
+        if existing_rows.empty:
+            cursor.execute(insert_str)
+        connection.commit()
+        print("Successfully logged data loss.")
+    except Exception as e:
+        # Print the exception message
+        print(f"Caught an exception when uploading to site_events table: {e}")
+    connection.close()
+    cursor.close()
+    return True
+
 def _generate_mysql_update_event_table(row, id):
     statement = f"UPDATE site_events SET "
     statment_elems = []
