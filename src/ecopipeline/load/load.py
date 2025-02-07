@@ -8,7 +8,7 @@ import math
 pd.set_option('display.max_columns', None)
 import mysql.connector.errors as mysqlerrors
 from ecopipeline import ConfigManager
-import datetime
+from datetime import datetime, timedelta
 import numpy as np
 
 data_map = {'int64':'float',
@@ -161,97 +161,123 @@ def create_new_columns(cursor : mysql.connector.cursor.MySQLCursor, table_name: 
 
     return True
 
-def load_overwrite_database(cursor : mysql.connector.cursor.MySQLCursor, dataframe: pd.DataFrame, config_info: dict, data_type: str, primary_key: str = "time_pt", table_name: str = None):
+def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, config_info: dict, data_type: str, 
+                            primary_key: str = "time_pt", table_name: str = None, auto_log_data_loss : bool = False):
     """
     Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
 
     Parameters
     ----------  
-    cursor : mysql.connector.cursor.MySQLCursor
-        A cursor object connected to the database where the data will land
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
     dataframe: pd.DataFrame
         The pandas DataFrame to be written into the mySQL server.
     config_info: dict
         The dictionary containing the configuration information in the data upload. This can be aquired through the get_login_info() function in this package
     data_type: str
-        The header name corresponding to the table you wish to write data to.  
+        The header name corresponding to the table you wish to write data to. 
+    primary_key : str
+        The name of the primary key in the database to upload to. Default as 'time_pt'
+    table_name : str
+        overwrites table name from config_info if needed
+    auto_log_data_loss : bool
+        if set to True, a data loss event will be reported if no data exits in the dataframe 
+        for the last two days from the current date OR if an error occurs
 
     Returns
     ------- 
     bool: 
         A boolean value indicating if the data was successfully written to the database. 
     """
-    # Drop empty columns
-    dataframe = dataframe.dropna(axis=1, how='all')
+    # Database Connection
+    db_connection, cursor = config.connect_db()
+    try:
 
-    dbname = config_info['database']
-    if table_name == None:
-        table_name = config_info[data_type]["table_name"]   
-    
-    if(len(dataframe.index) <= 0):
-        print(f"Attempted to write to {table_name} but dataframe was empty.")
-        return True
+        # Drop empty columns
+        dataframe = dataframe.dropna(axis=1, how='all')
 
-    print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
-    
-    # Get string of all column names for sql insert
-    sensor_names = primary_key
-    sensor_types = ["datetime"]
-    for column in dataframe.columns:
-        sensor_names += "," + column    
-        sensor_types.append(data_map[dataframe[column].dtype.name])
-
-    # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
-    for column in dataframe.columns:
-        insert_str += "%s, "
-    insert_str += "%s)"
-    
-    # last_time = datetime.datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
-    existing_rows_list = []
-
-    # create db table if it does not exist, otherwise add missing columns to existing table
-    if not check_table_exists(cursor, table_name, dbname):
-        if not create_new_table(cursor, table_name, sensor_names.split(",")[1:], sensor_types[1:], primary_key=primary_key): #split on colums and remove first column aka time_pt
-            print(f"Could not create new table {table_name} in database {dbname}")
-            return False
-    else:
-        try:
-            # find existing times in database for upsert statement
-            cursor.execute(
-                f"SELECT {primary_key} FROM {table_name} WHERE {primary_key} >= '{dataframe.index.min()}'")
-            # Fetch the results into a DataFrame
-            existing_rows = pd.DataFrame(cursor.fetchall(), columns=[primary_key])
-
-            # Convert the primary_key column to a list
-            existing_rows_list = existing_rows[primary_key].tolist()
-
-        except mysqlerrors.Error:
-            print(f"Table {table_name} has no data.")
-
-        missing_cols, missing_types = find_missing_columns(cursor, dataframe, config_info, table_name)
-        if len(missing_cols):
-            if not create_new_columns(cursor, table_name, missing_cols, missing_types):
-                print("Unable to add new columns due to database error.")
-    
-    updatedRows = 0
-    for index, row in dataframe.iterrows():
-        time_data = row.values.tolist()
-        #remove nans and infinites
-        time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
-        time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
-
-        if index in existing_rows_list:
-            statement, values = _generate_mysql_update(row, index, table_name, primary_key)
-            if statement != "":
-                cursor.execute(statement, values)
-                updatedRows += 1
+        dbname = config_info['database']
+        if table_name == None:
+            table_name = config_info[data_type]["table_name"]   
+        
+        if(len(dataframe.index) <= 0):
+            print(f"Attempted to write to {table_name} but dataframe was empty.")
+            ret_value = True
         else:
-            cursor.execute(insert_str, (index, *time_data))
 
-    print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
-    return True
+            print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
+            if auto_log_data_loss and dataframe.index[-1] < datetime.now() - timedelta(days=2):
+                report_data_loss(config)
+            
+            # Get string of all column names for sql insert
+            sensor_names = primary_key
+            sensor_types = ["datetime"]
+            for column in dataframe.columns:
+                sensor_names += "," + column    
+                sensor_types.append(data_map[dataframe[column].dtype.name])
+
+            # create SQL statement
+            insert_str = "INSERT INTO " + table_name + " (" + sensor_names + ") VALUES ("
+            for column in dataframe.columns:
+                insert_str += "%s, "
+            insert_str += "%s)"
+            
+            # last_time = datetime.strptime('20/01/1990', "%d/%m/%Y") # arbitrary past date
+            existing_rows_list = []
+
+            # create db table if it does not exist, otherwise add missing columns to existing table
+            if not check_table_exists(cursor, table_name, dbname):
+                if not create_new_table(cursor, table_name, sensor_names.split(",")[1:], sensor_types[1:], primary_key=primary_key): #split on colums and remove first column aka time_pt
+                    ret_value = False
+                    raise Exception(f"Could not create new table {table_name} in database {dbname}")
+            else:
+                try:
+                    # find existing times in database for upsert statement
+                    cursor.execute(
+                        f"SELECT {primary_key} FROM {table_name} WHERE {primary_key} >= '{dataframe.index.min()}'")
+                    # Fetch the results into a DataFrame
+                    existing_rows = pd.DataFrame(cursor.fetchall(), columns=[primary_key])
+
+                    # Convert the primary_key column to a list
+                    existing_rows_list = existing_rows[primary_key].tolist()
+
+                except mysqlerrors.Error:
+                    print(f"Table {table_name} has no data.")
+
+                missing_cols, missing_types = find_missing_columns(cursor, dataframe, config_info, table_name)
+                if len(missing_cols):
+                    if not create_new_columns(cursor, table_name, missing_cols, missing_types):
+                        print("Unable to add new columns due to database error.")
+            
+            updatedRows = 0
+            for index, row in dataframe.iterrows():
+                time_data = row.values.tolist()
+                #remove nans and infinites
+                time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
+                time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
+
+                if index in existing_rows_list:
+                    statement, values = _generate_mysql_update(row, index, table_name, primary_key)
+                    if statement != "":
+                        cursor.execute(statement, values)
+                        updatedRows += 1
+                else:
+                    cursor.execute(insert_str, (index, *time_data))
+
+            db_connection.commit()
+            print(f"Successfully wrote {len(dataframe.index)} rows to table {table_name} in database {dbname}. {updatedRows} existing rows were overwritten.")
+            ret_value = True
+    except Exception as e:
+        print(f"Unable to load data into database. Exception: {e}")
+        if auto_log_data_loss:
+            report_data_loss(config)
+        ret_value = False
+
+    db_connection.close()
+    cursor.close()
+    return ret_value
+
 
 def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name : str = None):
     """
@@ -299,7 +325,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,'"+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,'"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
 
     # add aditional columns for db creation
     full_column_names = column_names.split(",")[1:]
@@ -396,7 +422,7 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
 
     # create SQL statement
     insert_str = "INSERT INTO " + table_name + " (start_time_pt, site_name, event_detail, event_type, last_modified_date, last_modified_by) VALUES "
-    insert_str += f"('{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS','{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
+    insert_str += f"('{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS','{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
 
     existing_rows = pd.DataFrame({
         'id' : []
@@ -412,7 +438,7 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
         try:
             # find existing times in database for upsert statement
             cursor.execute(
-                f"SELECT id FROM {table_name} WHERE end_time_pt IS NULL AND site_name = '{site_name}' AND event_type = 'DATA_LOSS' and event_detail = '{error_string}'")
+                f"SELECT id FROM {table_name} WHERE end_time_pt IS NULL AND site_name = '{site_name}' AND event_type = 'DATA_LOSS'")
             # Fetch the results into a DataFrame
             existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id'])
 
@@ -422,8 +448,10 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
         
         if existing_rows.empty:
             cursor.execute(insert_str)
-        connection.commit()
-        print("Successfully logged data loss.")
+            connection.commit()
+            print("Successfully logged data loss.")
+        else:
+            print("Data loss already logged.")
     except Exception as e:
         # Print the exception message
         print(f"Caught an exception when uploading to site_events table: {e}")
@@ -442,7 +470,7 @@ def _generate_mysql_update_event_table(row, id):
 
     if values:
         statement += ", ".join(statment_elems)
-        statement += f", last_modified_by = 'automatic_upload', last_modified_date = '{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}'"
+        statement += f", last_modified_by = 'automatic_upload', last_modified_date = '{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}'"
         statement += f" WHERE id = {id};"
         # statement += f" WHERE start_time_pt = '{start_time_pt}' AND end_time_pt = '{end_time_pt}' AND event_type = '{event_type}' AND site_name = '{site_name}';"
     else:

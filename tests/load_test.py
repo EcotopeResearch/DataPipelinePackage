@@ -21,11 +21,15 @@ def test_load_overwrite_database(mocker):
                     'PowerIn_HPWH2': [None, 75.2, 35]})
     df.index = timestamps
 
-    # Create a mock for the cursor
+    # Create a mock for the db connect
+    configMock = MagicMock()
     cursor_mock = MagicMock()
+    con_mock = MagicMock()
 
     # Patch the cursor.execute method with the mock
     mocker.patch.object(cursor_mock, 'execute')
+    mocker.patch.object(con_mock, 'close')
+    mocker.patch.object(con_mock, 'commit')
 
     # Set the desired response for cursor.execute
     cursor_mock.fetchall.side_effect = [
@@ -33,9 +37,10 @@ def test_load_overwrite_database(mocker):
         [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('05/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',), ('PowerIn_HPWH2',)]
     ]
+    configMock.connect_db.side_effect = [(con_mock,cursor_mock)]
 
     # Call the function under test with the mock cursor
-    load_overwrite_database(cursor_mock, df, config_info, 'minute')
+    load_overwrite_database(configMock, df, config_info, 'minute')
 
     expected_queries = [
         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'test_db') AND (TABLE_NAME = 'minute_table')",
@@ -62,17 +67,25 @@ def test_load_overwrite_database_add_columns(mocker):
                     'date_column': [None, datetime.datetime.strptime('03/01/2022', "%d/%m/%Y"), datetime.datetime.strptime('03/01/2022', "%d/%m/%Y")]})
     df.index = timestamps
 
-    # Create a mock for the cursor
+    # Create a mock for the db connect
+    configMock = MagicMock()
     cursor_mock = MagicMock()
+    con_mock = MagicMock()
+
+    # Patch the cursor.execute method with the mock
     mocker.patch.object(cursor_mock, 'execute')
+    mocker.patch.object(con_mock, 'close')
+    mocker.patch.object(con_mock, 'commit')
+
     cursor_mock.fetchall.side_effect = [
         [(1,)],
         [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('02/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',)]
     ]
+    configMock.connect_db.side_effect = [(con_mock,cursor_mock)]
 
     # Call the function under test with the mock cursor
-    load_overwrite_database(cursor_mock, df, config_info, 'minute')
+    load_overwrite_database(configMock, df, config_info, 'minute')
 
     #  Verify the behavior and result
     expected_queries = [
@@ -100,17 +113,24 @@ def test_load_overwrite_database_all_fail_update(mocker):
                     'None_column': [None, None, None]})
     df.index = timestamps
 
-    # Create a mock for the cursor
+    # Create a mock for the db connect
+    configMock = MagicMock()
     cursor_mock = MagicMock()
+    con_mock = MagicMock()
+
+    # Patch the cursor.execute method with the mock
     mocker.patch.object(cursor_mock, 'execute')
+    mocker.patch.object(con_mock, 'close')
+    mocker.patch.object(con_mock, 'commit')
+
     cursor_mock.fetchall.side_effect = [
         [(1,)],
         [(datetime.datetime.strptime('01/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('02/01/2022', "%d/%m/%Y"),),(datetime.datetime.strptime('05/01/2022', "%d/%m/%Y"),)],
         [('PowerIn_HPWH1',)]
     ]
-
-    # Call the function under test with the mock cursor
-    load_overwrite_database(cursor_mock, df, config_info, 'minute')
+    configMock.connect_db.side_effect = [(con_mock,cursor_mock)]
+    # Call the function under test with the mock configMock
+    load_overwrite_database(configMock, df, config_info, 'minute')
 
     #  Verify the behavior and result
     expected_queries = [
@@ -134,15 +154,22 @@ def test_create_new_table_and_populate(mocker):
                     'None_column': [None, None, None]})
     df.index = timestamps
 
-    # Create a mock for the cursor
+    # Create a mock for the db connect
+    configMock = MagicMock()
     cursor_mock = MagicMock()
+    con_mock = MagicMock()
+
+    # Patch the cursor.execute method with the mock
     mocker.patch.object(cursor_mock, 'execute')
+    mocker.patch.object(con_mock, 'close')
+    mocker.patch.object(con_mock, 'commit')
+
     cursor_mock.fetchall.side_effect = [
         [(0,)]
     ]
-
+    configMock.connect_db.side_effect = [(con_mock,cursor_mock)]
     # Call the function under test with the mock cursor
-    load_overwrite_database(cursor_mock, df, config_info, 'minute')
+    load_overwrite_database(configMock, df, config_info, 'minute')
 
     #  Verify the behavior and result
     expected_queries = [
@@ -175,15 +202,22 @@ def test_create_new_table_and_populate_different_primary(mocker):
                     'None_column': [None, None, None]})
     df.index = indexes
 
-    # Create a mock for the cursor
+    # Create a mock for the db connect
+    configMock = MagicMock()
     cursor_mock = MagicMock()
+    con_mock = MagicMock()
+
+    # Patch the cursor.execute method with the mock
     mocker.patch.object(cursor_mock, 'execute')
+    mocker.patch.object(con_mock, 'close')
+    mocker.patch.object(con_mock, 'commit')
+
     cursor_mock.fetchall.side_effect = [
         [(0,)]
     ]
-
+    configMock.connect_db.side_effect = [(con_mock,cursor_mock)]
     # Call the function under test with the mock cursor
-    load_overwrite_database(cursor_mock, df, config_info, 'minute', primary_key='primary_key')
+    load_overwrite_database(configMock, df, config_info, 'minute', primary_key='primary_key')
 
     #  Verify the behavior and result
     expected_queries = [
