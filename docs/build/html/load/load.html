@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Load Documentation &#8212; DataPipelinePackage 0.5.0 documentation</title>
+    <title>Load Documentation &#8212; DataPipelinePackage 0.6.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -28,7 +28,7 @@
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.5.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>  
@@ -122,19 +122,48 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.load_overwrite_database">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_overwrite_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_overwrite_database" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_overwrite_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_log_data_loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_overwrite_database" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
 Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>A cursor object connected to the database where the data will land</p>
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
 </dd>
 <dt><strong>dataframe: pd.DataFrame</strong></dt><dd><p>The pandas DataFrame to be written into the mySQL server.</p>
 </dd>
 <dt><strong>config_info: dict</strong></dt><dd><p>The dictionary containing the configuration information in the data upload. This can be aquired through the get_login_info() function in this package</p>
 </dd>
 <dt><strong>data_type: str</strong></dt><dd><p>The header name corresponding to the table you wish to write data to.</p>
+</dd>
+<dt><strong>primary_key</strong><span class="classifier">str</span></dt><dd><p>The name of the primary key in the database to upload to. Default as ‘time_pt’</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>overwrites table name from config_info if needed</p>
+</dd>
+<dt><strong>auto_log_data_loss</strong><span class="classifier">bool</span></dt><dd><p>if set to True, a data loss event will be reported if no data exits in the dataframe
+for the last two days from the current date OR if an error occurs</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.load.report_data_loss">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">report_data_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.report_data_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs data loss event in event database (assumes one exists)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>site_name</strong><span class="classifier">str</span></dt><dd><p>the name of the site to correspond the events with. If left blank will default to minute table name</p>
 </dd>
 </dl>
 </dd>
@@ -164,6 +193,7 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
 <li><a class="reference internal" href="#ecopipeline.load.create_new_table"><code class="docutils literal notranslate"><span class="pre">create_new_table()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.load_event_table"><code class="docutils literal notranslate"><span class="pre">load_event_table()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.load_overwrite_database"><code class="docutils literal notranslate"><span class="pre">load_overwrite_database()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.report_data_loss"><code class="docutils literal notranslate"><span class="pre">report_data_loss()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -207,7 +237,7 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.5.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>
