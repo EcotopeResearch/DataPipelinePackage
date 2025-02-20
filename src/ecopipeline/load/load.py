@@ -207,7 +207,7 @@ def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, con
         else:
 
             print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
-            if auto_log_data_loss and dataframe.index[-1] < datetime.now() - timedelta(days=2):
+            if auto_log_data_loss and dataframe.index[-1] < datetime.now() - timedelta(days=3):
                 report_data_loss(config)
             
             # Get string of all column names for sql insert
@@ -416,7 +416,7 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
     table_name = "site_events"
     if site_name is None:
         site_name = config.get_site_name()
-    error_string = "Error proccessing data. Please check logs to resolve."
+    error_string = "Error processing data. Please check logs to resolve."
 
     print(f"logging DATA_LOSS into {table_name}")
 
