@@ -839,8 +839,8 @@ def convert_time_zone(df: pd.DataFrame, tz_convert_from: str = 'UTC', tz_convert
     pd.DataFrame: 
         The dataframe with it's index converted to the appropriate timezone. 
     """
-    time_UTC = df.index.tz_localize('UTC')
-    time_PST = time_UTC.tz_convert('America/Los_Angeles')
+    time_UTC = df.index.tz_localize(tz_convert_from)
+    time_PST = time_UTC.tz_convert(tz_convert_to)
     df['time_pt'] = time_PST.tz_localize(None)
     df.set_index('time_pt', inplace=True)
     return df

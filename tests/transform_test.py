@@ -220,6 +220,27 @@ def test_convert_timezone():
     df = convert_time_zone(df)
     assert_frame_equal(df, df_expected)
 
+def test_convert_timezone_mountain_time():
+    timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 01:00:00', '2022-01-01 01:01:00'])
+    df = pd.DataFrame({'PowerIn_HPWH1': [30, 50, math.nan],
+                    'PowerIn_HPWH2': [50, 70, None],
+                    'None_column': [None, None, None],
+                    'string_column': ['imma','goffygoober','yeah'],
+                    'silly_varriable': [None, None, 15]
+                    })
+    df.index = timestamps
+    df_expected = pd.DataFrame({
+                    'time_pt' :  pd.to_datetime(['2021-12-31 17:00:00', '2021-12-31 18:00:00', '2021-12-31 18:01:00']),
+                    'PowerIn_HPWH1': [30, 50, math.nan],
+                    'PowerIn_HPWH2': [50, 70, None],
+                    'None_column': [None, None, None],
+                    'string_column': ['imma','goffygoober','yeah'],
+                    'silly_varriable': [None, None, 15]
+                    })
+    df_expected.set_index('time_pt', inplace=True)
+    df = convert_time_zone(df, tz_convert_to="America/Denver")
+    assert_frame_equal(df, df_expected)
+
 def test_convert_timezone_daylight_savings():
     timestamps = pd.to_datetime(['2023-11-05 08:00:00', '2023-11-05 08:30:00', '2023-11-05 09:00:00'])
     df = pd.DataFrame({'PowerIn_HPWH1': [30, 50, math.nan],
