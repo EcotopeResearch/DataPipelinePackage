@@ -557,9 +557,12 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
     sum_power_in_df = pd.DataFrame({'PowerIn_Primary': df[sum_primary_cols].sum(axis=1),
                                     'PowerIn_TM': df[sum_tm_cols].sum(axis=1)
                                     })
-
     df['COP_DHWSys_2'] = (df[cop_primary_column_name] * (sum_power_in_df['PowerIn_Primary']/df['PowerIn_Total'])) + (cop_tm * (sum_power_in_df['PowerIn_TM']/df['PowerIn_Total']))
-
+    # NULLify incomplete calculations
+    sum_power_in_df.loc[df[sum_primary_cols].isna().any(axis=1), "PowerIn_Primary"] = np.nan
+    sum_power_in_df.loc[df[sum_tm_cols].isna().any(axis=1), "PowerIn_TM"] = np.nan
+    df.loc[df[sum_primary_cols+sum_tm_cols].isna().any(axis=1), "COP_DHWSys_2"] = np.nan
+    
     return df
 
 def convert_on_off_col_to_bool(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
