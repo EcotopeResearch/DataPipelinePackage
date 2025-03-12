@@ -396,7 +396,8 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
 
 def report_data_loss(config : ConfigManager, site_name : str = None):
     """
-    Logs data loss event in event database (assumes one exists)
+    Logs data loss event in event database (assumes one exists) as a DATA_LOSS_COP event to 
+    note that COP calculations have been effected
 
     Parameters
     ----------  
@@ -418,11 +419,11 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
         site_name = config.get_site_name()
     error_string = "Error processing data. Please check logs to resolve."
 
-    print(f"logging DATA_LOSS into {table_name}")
+    print(f"logging DATA_LOSS_COP into {table_name}")
 
     # create SQL statement
     insert_str = "INSERT INTO " + table_name + " (start_time_pt, site_name, event_detail, event_type, last_modified_date, last_modified_by) VALUES "
-    insert_str += f"('{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS','{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
+    insert_str += f"('{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS_COP','{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
 
     existing_rows = pd.DataFrame({
         'id' : []
@@ -438,7 +439,7 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
         try:
             # find existing times in database for upsert statement
             cursor.execute(
-                f"SELECT id FROM {table_name} WHERE end_time_pt IS NULL AND site_name = '{site_name}' AND event_type = 'DATA_LOSS'")
+                f"SELECT id FROM {table_name} WHERE end_time_pt IS NULL AND site_name = '{site_name}' AND event_type = 'DATA_LOSS_COP'")
             # Fetch the results into a DataFrame
             existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id'])
 
