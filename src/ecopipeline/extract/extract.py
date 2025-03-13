@@ -141,7 +141,7 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
     
     if decihex: 
         base_date = datetime(1970, 1, 1)
-        file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
+        file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename.split("/")[-1]).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
         if timeZone == None:
             file_dates_local = [file_date.tz_localize('UTC').tz_localize(None) for file_date in file_dates] #convert utc 
         else:
