@@ -642,3 +642,14 @@ def test_nullify_erroneous(mock_config_manager):
         assert_frame_equal(df_result, df_expected)
         # check that df_input was not changed in place
         assert_frame_equal(df_input, df_unchanged)
+
+def test_apply_equipment_cop_derate():
+    timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
+    df_input = pd.DataFrame({
+                        'cop_var': [None, 1, 2, 3,4]})
+    df_input.index = timestamps
+    df_expected = pd.DataFrame({
+                        'cop_var': [None, .88, 2*.88, 3*.88,4*.88]})
+    df_expected.index = timestamps
+    df_result = apply_equipment_cop_derate(df_input, 'cop_var', 15)
+    assert_frame_equal(df_result, df_expected)

@@ -994,3 +994,47 @@ def join_to_daily(daily_data: pd.DataFrame, cop_data: pd.DataFrame) -> pd.DataFr
     """
     out_df = daily_data.join(cop_data)
     return out_df
+
+def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int = 16):
+    """
+    Function derates equipment COP based on R value
+    R12 - R16 : 12 %
+    R16 - R20 : 10%
+    R20 - R24 : 8%
+    R24 - R28 : 6%
+    R28 - R32 : 4%
+    > R32 : 2%
+
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        dataframe
+    equip_cop_col : str
+        name of COP column to derate
+    r_val : int
+        R value, defaults to 16
+
+    Returns
+    -------
+    pd.DataFrame
+        df with equip_cop_col derated
+    """
+    derate = 1 # R12-R16
+    if r_val >= 12:
+        if r_val < 16:
+            derate = 0.88
+        elif r_val < 20:
+            derate = 0.9
+        elif r_val < 24:
+            derate = .92
+        elif r_val < 28:
+            derate = .94
+        elif r_val < 32:
+            derate = .96
+        else:
+            derate = .98
+    else:
+        raise Exception("R value for Equipment COP derate must be at least 12")
+    
+    df[equip_cop_col] =  df[equip_cop_col] * derate
+    return df
