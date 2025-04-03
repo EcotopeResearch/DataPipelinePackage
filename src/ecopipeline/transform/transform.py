@@ -138,6 +138,9 @@ def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
         Pandas dataframe with all duplicate timestamps compressed into one, averegaing data values 
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
+    # get rid of time stamp 0 values
+    if df.index.min() < pd.Timestamp('2000-01-01'):
+        df = df[df.index > pd.Timestamp('2000-01-01')]
 
     # Get columns with non-numeric values
     non_numeric_cols = df.select_dtypes(exclude='number').columns

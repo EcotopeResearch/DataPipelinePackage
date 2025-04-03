@@ -160,12 +160,12 @@ def test_rename_sensors_with_system(mock_config_manager):
         assert_frame_equal(df, df_maintained) # ensure original dataframe left undisturbed
 
 def test_avg_duplicate_times():
-    timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
-    df = pd.DataFrame({'PowerIn_HPWH1': [30, 50, math.nan],
-                    'PowerIn_HPWH2': [50, 70, None],
-                    'None_column': [None, None, None],
-                    'string_column': ['imma','goffygoober','yeah'],
-                    'silly_varriable': [None, None, 15]
+    timestamps = pd.to_datetime(['1979-01-01 00:00:00','2022-01-01 00:00:00', '2022-01-01 00:00:00', '2022-01-01 00:01:00'])
+    df = pd.DataFrame({'PowerIn_HPWH1': [4,30, 50, math.nan],
+                    'PowerIn_HPWH2': [8,50, 70, None],
+                    'None_column': [None, None, None, None],
+                    'string_column': ['what?','imma','goffygoober','yeah'],
+                    'silly_varriable': [420,None, None, 15]
                     })
     df.index = timestamps
     df_expected = pd.DataFrame({
