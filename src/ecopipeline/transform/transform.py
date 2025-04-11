@@ -306,6 +306,35 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
+def delete_erroneous_from_time_pt(df: pd.DataFrame, time_point : pd.Timestamp, column_names : list, new_value = None) -> pd.DataFrame:
+    """
+    Function will take a pandas dataframe and delete specified erroneous values at a specified time point. 
+
+    Parameters
+    ---------- 
+    df: pd.DataFrame
+        Timestamp indexed Pandas dataframe that needs to have an erroneous value removed
+    time_point : pd.Timestamp
+        The timepoint index the erroneous value takes place in  
+    column_names : list
+        list of column names as strings that contain erroneous values at this time stamp
+    new_value : any
+        new value to populate the erroneous columns at this timestamp with. If set to None, will replace value with NaN
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas dataframe with error values replaced with new value
+    """
+    if new_value is None:
+        new_value = float('NaN')  # Replace with NaN if new_value is not provided
+    
+    if time_point in df.index:
+        for col in column_names:
+            df.loc[time_point, col] = new_value
+
+    return df
+
 # TODO test this
 def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
     """
