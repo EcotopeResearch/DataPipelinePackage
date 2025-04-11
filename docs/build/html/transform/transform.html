@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.6.0 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.6.10 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.10 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -150,6 +150,36 @@ relevant to the data set.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame:</dt><dd><p>Pandas DataFrame which contains the aggregated hourly data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.apply_equipment_cop_derate">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">apply_equipment_cop_derate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equip_cop_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.apply_equipment_cop_derate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function derates equipment COP based on R value
+R12 - R16 : 12 %
+R16 - R20 : 10%
+R20 - R24 : 8%
+R24 - R28 : 6%
+R28 - R32 : 4%
+&gt; R32 : 2%</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>dataframe</p>
+</dd>
+<dt><strong>equip_cop_col</strong><span class="classifier">str</span></dt><dd><p>name of COP column to derate</p>
+</dd>
+<dt><strong>r_val</strong><span class="classifier">int</span></dt><dd><p>R value, defaults to 16</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>df with equip_cop_col derated</p>
 </dd>
 </dl>
 </dd>
@@ -506,6 +536,32 @@ Temperature Maintenance systems</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame:</dt><dd><p>Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.delete_erroneous_from_time_pt">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">delete_erroneous_from_time_pt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.delete_erroneous_from_time_pt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function will take a pandas dataframe and delete specified erroneous values at a specified time point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Timestamp indexed Pandas dataframe that needs to have an erroneous value removed</p>
+</dd>
+<dt><strong>time_point</strong><span class="classifier">pd.Timestamp</span></dt><dd><p>The timepoint index the erroneous value takes place in</p>
+</dd>
+<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>list of column names as strings that contain erroneous values at this time stamp</p>
+</dd>
+<dt><strong>new_value</strong><span class="classifier">any</span></dt><dd><p>new value to populate the erroneous columns at this timestamp with. If set to None, will replace value with NaN</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with error values replaced with new value</p>
 </dd>
 </dl>
 </dd>
@@ -1238,6 +1294,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.add_relative_humidity"><code class="docutils literal notranslate"><span class="pre">add_relative_humidity()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aggregate_df"><code class="docutils literal notranslate"><span class="pre">aggregate_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aggregate_values"><code class="docutils literal notranslate"><span class="pre">aggregate_values()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.apply_equipment_cop_derate"><code class="docutils literal notranslate"><span class="pre">apply_equipment_cop_derate()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aqsuite_filter_new"><code class="docutils literal notranslate"><span class="pre">aqsuite_filter_new()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.aqsuite_prep_time"><code class="docutils literal notranslate"><span class="pre">aqsuite_prep_time()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.avg_duplicate_times"><code class="docutils literal notranslate"><span class="pre">avg_duplicate_times()</span></code></a></li>
@@ -1253,6 +1310,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_2"><code class="docutils literal notranslate"><span class="pre">cop_method_2()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.create_fan_curves"><code class="docutils literal notranslate"><span class="pre">create_fan_curves()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.create_summary_tables"><code class="docutils literal notranslate"><span class="pre">create_summary_tables()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.delete_erroneous_from_time_pt"><code class="docutils literal notranslate"><span class="pre">delete_erroneous_from_time_pt()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.elev_correction"><code class="docutils literal notranslate"><span class="pre">elev_correction()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.ffill_missing"><code class="docutils literal notranslate"><span class="pre">ffill_missing()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.flag_dhw_outage"><code class="docutils literal notranslate"><span class="pre">flag_dhw_outage()</span></code></a></li>
@@ -1338,7 +1396,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.10 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>
