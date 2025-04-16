@@ -1027,7 +1027,7 @@ def join_to_daily(daily_data: pd.DataFrame, cop_data: pd.DataFrame) -> pd.DataFr
     out_df = daily_data.join(cop_data)
     return out_df
 
-def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int = 16):
+def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int = 16) -> pd.DataFrame:
     """
     Function derates equipment COP based on R value
     R12 - R16 : 12 %
@@ -1070,3 +1070,70 @@ def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int
     
     df[equip_cop_col] =  df[equip_cop_col] * derate
     return df
+
+def create_data_statistics_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function must be called on the raw minute data df after the rename_varriables() and before the ffill_missing() function has been called.
+    The function returns a dataframe indexed by day. Each column will expanded to 3 columns, appended with '_missing_mins', '_avg_gap', and
+    '_max_gap' respectively. the columns will carry the following statisctics:
+    _missing_mins -> the number of minutes in the day that have no reported data value for the column
+    _avg_gap -> the average gap (in minutes) between collected data values that day
+    _max_gap -> the maximum gap (in minutes) between collected data values that day
+
+    Parameters
+    ---------- 
+    df : pd.DataFrame
+        minute data df after the rename_varriables() and before the ffill_missing() function has been called
+
+    Returns
+    -------
+    daily_data_stats : pd.DataFrame
+        new dataframe with the columns descriped in the function's description
+    """
+    min_time = df.index.min()
+    start_day = min_time.floor('D')
+
+    # If min_time is not exactly at the start of the day, move to the next day
+    if min_time != start_day:
+        start_day = start_day + pd.tseries.offsets.Day(1)
+
+    # Build a complete minutely timestamp index over the full date range
+    full_index = pd.date_range(start=start_day,
+                               end=df.index.max().floor('D') - pd.Timedelta(minutes=1),
+                               freq='T')
+    
+    # Reindex to include any completely missing minutes
+    df_full = df.reindex(full_index)
+
+    # Resample daily to count missing values per column
+    total_missing = df_full.isna().resample('D').sum().astype(int)
+
+    # Function to calculate max consecutive missing values
+    def max_consecutive_nans(x):
+        is_na = x.isna()
+        groups = (is_na != is_na.shift()).cumsum()
+        return is_na.groupby(groups).sum().max() or 0
+
+    # Function to calculate average consecutive missing values
+    def avg_consecutive_nans(x):
+        is_na = x.isna()
+        groups = (is_na != is_na.shift()).cumsum()
+        gap_lengths = is_na.groupby(groups).sum()
+        gap_lengths = gap_lengths[gap_lengths > 0]
+        if len(gap_lengths) == 0:
+            return 0
+        return gap_lengths.mean()
+
+    # Apply daily, per column
+    max_consec_missing = df_full.resample('D').apply(lambda day: day.apply(max_consecutive_nans))
+    avg_consec_missing = df_full.resample('D').apply(lambda day: day.apply(avg_consecutive_nans))
+
+    # Rename columns to include a suffix
+    total_missing = total_missing.add_suffix('_missing_mins')
+    max_consec_missing = max_consec_missing.add_suffix('_max_gap')
+    avg_consec_missing = avg_consec_missing.add_suffix('_avg_gap')
+
+    # Concatenate along columns (axis=1)
+    combined_df = pd.concat([total_missing, max_consec_missing, avg_consec_missing], axis=1)
+
+    return combined_df

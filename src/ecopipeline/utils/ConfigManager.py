@@ -134,14 +134,21 @@ class ConfigManager:
             tables. 
         """
 
-        configure = configparser.ConfigParser()
-        configure.read(self.config_directory)
-
-        db_table_info = {header: {"table_name": configure.get(header, 'table_name')} for header in table_headers}
+        db_table_info = {}
+        if len(table_headers) > 0:
+            configure = configparser.ConfigParser()
+            configure.read(self.config_directory)
+            db_table_info = {header: {"table_name": configure.get(header, 'table_name')} for header in table_headers}
         db_table_info["database"] = self.db_connection_info["database"]
 
         print(f"Successfully fetched configuration information from file path {self.config_directory}.")
         return db_table_info
+    
+    def get_table_name(self, header):
+        configure = configparser.ConfigParser()
+        configure.read(self.config_directory)
+
+        return configure.get(header, 'table_name')
     
     def get_db_name(self):
         """
