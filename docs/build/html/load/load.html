@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Load Documentation &#8212; DataPipelinePackage 0.6.10 documentation</title>
+    <title>Load Documentation &#8212; DataPipelinePackage 0.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -28,7 +28,7 @@
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>  
@@ -89,6 +89,30 @@ This can directly be used as a boolean!</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>bool:</dt><dd><p>A boolean value indicating if a table was sucessfully created.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.load.load_data_statistics">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_data_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_stats_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_daily_indicator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'day'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_data_statistics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs data statistics for the site in a table with name “{daily table name}_stats”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>daily_stats_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>dataframe created by the create_data_statistics_df() function in ecopipeline.transform</p>
+</dd>
+<dt><strong>config_daily_indicator</strong><span class="classifier">str</span></dt><dd><p>the indicator of the daily_table name in the config.ini file of the data pipeline</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
 </dd>
 </dl>
 </dd>
@@ -192,6 +216,7 @@ note that COP calculations have been effected</p>
 <li><a class="reference internal" href="#">Load Documentation</a><ul>
 <li><a class="reference internal" href="#ecopipeline.load.check_table_exists"><code class="docutils literal notranslate"><span class="pre">check_table_exists()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.create_new_table"><code class="docutils literal notranslate"><span class="pre">create_new_table()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.load_data_statistics"><code class="docutils literal notranslate"><span class="pre">load_data_statistics()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.load_event_table"><code class="docutils literal notranslate"><span class="pre">load_event_table()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.load_overwrite_database"><code class="docutils literal notranslate"><span class="pre">load_overwrite_database()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.report_data_loss"><code class="docutils literal notranslate"><span class="pre">report_data_loss()</span></code></a></li>
@@ -238,7 +263,7 @@ note that COP calculations have been effected</p>
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>

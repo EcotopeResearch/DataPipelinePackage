@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 0.6.10 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 0.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -158,7 +158,7 @@ relevant to the data set.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.apply_equipment_cop_derate">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">apply_equipment_cop_derate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equip_cop_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.apply_equipment_cop_derate" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">apply_equipment_cop_derate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equip_cop_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.apply_equipment_cop_derate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function derates equipment COP based on R value
 R12 - R16 : 12 %
 R16 - R20 : 10%
@@ -495,6 +495,31 @@ Temperature Maintenance systems</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_2</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.create_data_statistics_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">create_data_statistics_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.create_data_statistics_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function must be called on the raw minute data df after the rename_varriables() and before the ffill_missing() function has been called.
+The function returns a dataframe indexed by day. Each column will expanded to 3 columns, appended with ‘_missing_mins’, ‘_avg_gap’, and
+‘_max_gap’ respectively. the columns will carry the following statisctics:
+_missing_mins -&gt; the number of minutes in the day that have no reported data value for the column
+_avg_gap -&gt; the average gap (in minutes) between collected data values that day
+_max_gap -&gt; the maximum gap (in minutes) between collected data values that day</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>minute data df after the rename_varriables() and before the ffill_missing() function has been called</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>daily_data_stats</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>new dataframe with the columns descriped in the function’s description</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -1308,6 +1333,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.convert_time_zone"><code class="docutils literal notranslate"><span class="pre">convert_time_zone()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_1"><code class="docutils literal notranslate"><span class="pre">cop_method_1()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.cop_method_2"><code class="docutils literal notranslate"><span class="pre">cop_method_2()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.create_data_statistics_df"><code class="docutils literal notranslate"><span class="pre">create_data_statistics_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.create_fan_curves"><code class="docutils literal notranslate"><span class="pre">create_fan_curves()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.create_summary_tables"><code class="docutils literal notranslate"><span class="pre">create_summary_tables()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.delete_erroneous_from_time_pt"><code class="docutils literal notranslate"><span class="pre">delete_erroneous_from_time_pt()</span></code></a></li>
@@ -1396,7 +1422,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.6.10 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.7.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>
