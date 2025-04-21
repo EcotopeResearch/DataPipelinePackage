@@ -717,7 +717,7 @@ def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column
     Returns
     -------
     event_df : pd.DataFrame
-        Dataframe with 'HW_OUTAGE' events on the days in which there was a DHW Outage.
+        Dataframe with 'ALARM' events on the days in which there was a DHW Outage.
     """
     # TODO edge case for outage that spans over a day
     events = {
@@ -739,7 +739,7 @@ def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column
             adjusted_time = first_true_index - pd.Timedelta(minutes=consecutive_minutes-1)
             events['start_time_pt'].append(day)
             events['end_time_pt'].append(next_day - pd.Timedelta(minutes=1))
-            events['event_type'].append("HW_OUTAGE")
+            events['event_type'].append("ALARM")
             events['event_detail'].append(f"Hot Water Outage Occured (first one starting at {adjusted_time.strftime('%H:%M')})")
     event_df = pd.DataFrame(events)
     event_df.set_index('start_time_pt', inplace=True)
