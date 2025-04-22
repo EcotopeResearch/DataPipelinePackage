@@ -460,7 +460,7 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
     cursor.close()
     return True
 
-def load_data_statistics(config : ConfigManager, daily_stats_df : pd.DataFrame, config_daily_indicator : str = "day"):
+def load_data_statistics(config : ConfigManager, daily_stats_df : pd.DataFrame, config_daily_indicator : str = "day", custom_table_name : str = None):
     """
     Logs data statistics for the site in a table with name "{daily table name}_stats"
 
@@ -472,13 +472,18 @@ def load_data_statistics(config : ConfigManager, daily_stats_df : pd.DataFrame, 
         dataframe created by the create_data_statistics_df() function in ecopipeline.transform
     config_daily_indicator : str
         the indicator of the daily_table name in the config.ini file of the data pipeline
+    custom_table_name : str
+        custom table name for data statistics. Overwrites the name "{daily table name}_stats" to your custom name. 
+        In this sense config_daily_indicator's pointer is no longer used. 
 
     Returns
     ------- 
     bool: 
         A boolean value indicating if the data was successfully written to the database. 
     """
-    table_name = f"{config.get_table_name(config_daily_indicator)}_stats"
+    table_name = custom_table_name
+    if table_name is None:
+        table_name = f"{config.get_table_name(config_daily_indicator)}_stats"
     return load_overwrite_database(config, daily_stats_df, config.get_db_table_info([]), config_daily_indicator, table_name=table_name)
 
 def _generate_mysql_update_event_table(row, id):
