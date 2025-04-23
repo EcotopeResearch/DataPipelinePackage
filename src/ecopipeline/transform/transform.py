@@ -1029,7 +1029,7 @@ def join_to_daily(daily_data: pd.DataFrame, cop_data: pd.DataFrame) -> pd.DataFr
 
 def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int = 16) -> pd.DataFrame:
     """
-    Function derates equipment COP based on R value
+    Function derates equipment method system COP based on R value
     R12 - R16 : 12 %
     R16 - R20 : 10%
     R20 - R24 : 8%
