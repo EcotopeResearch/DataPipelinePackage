@@ -162,7 +162,8 @@ def create_new_columns(cursor : mysql.connector.cursor.MySQLCursor, table_name: 
     return True
 
 def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, config_info: dict, data_type: str, 
-                            primary_key: str = "time_pt", table_name: str = None, auto_log_data_loss : bool = False):
+                            primary_key: str = "time_pt", table_name: str = None, auto_log_data_loss : bool = False,
+                            config_key : str = "minute"):
     """
     Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
     Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
@@ -184,6 +185,9 @@ def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, con
     auto_log_data_loss : bool
         if set to True, a data loss event will be reported if no data exits in the dataframe 
         for the last two days from the current date OR if an error occurs
+    config_key : str 
+        The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.
+        
 
     Returns
     ------- 
@@ -208,7 +212,7 @@ def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, con
 
             print(f"Attempting to write data for {dataframe.index[0]} to {dataframe.index[-1]} into {table_name}")
             if auto_log_data_loss and dataframe.index[-1] < datetime.now() - timedelta(days=3):
-                report_data_loss(config)
+                report_data_loss(config, config.get_site_name(config_key))
             
             # Get string of all column names for sql insert
             sensor_names = primary_key
@@ -271,7 +275,7 @@ def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, con
     except Exception as e:
         print(f"Unable to load data into database. Exception: {e}")
         if auto_log_data_loss:
-            report_data_loss(config)
+            report_data_loss(config, config.get_site_name(config_key))
         ret_value = False
 
     db_connection.close()

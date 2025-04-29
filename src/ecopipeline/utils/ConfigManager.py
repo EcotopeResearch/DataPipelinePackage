@@ -156,15 +156,20 @@ class ConfigManager:
         """
         return self.db_connection_info['database']
     
-    def get_site_name(self):
+    def get_site_name(self, config_key : str = "minute"):
         """
         returns name of site
+
+        Parameters
+        ---------- 
+        config_key : str 
+            The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.
         """
         # TODO needs an update
         configure = configparser.ConfigParser()
         configure.read(self.config_directory)
 
-        return configure.get("minute", 'table_name')
+        return configure.get(config_key, 'table_name')
     
     def connect_db(self) -> (mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor):
         """
