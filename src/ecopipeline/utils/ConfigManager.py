@@ -28,7 +28,7 @@ class ConfigManager:
         Defaults to False
     """
     def __init__(self, config_file_path : str = "config.ini", input_directory : str = None, output_directory : str = None, data_directory : str = None, eco_file_structure : bool = False):
-        print(f"<<<========== CONFIGMANAGER INITIALIZED AT {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ==========>>>")
+        print(f"<<<==================== CONFIGMANAGER INITIALIZED AT {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====================>>>")
         
         os.chdir(os.getcwd())
         
