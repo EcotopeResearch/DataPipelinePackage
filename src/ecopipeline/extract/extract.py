@@ -151,11 +151,17 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
 
 
     else: 
+        endTime_int = endTime
         if epochFormat:
             startTime_int = int(startTime.timestamp())
+            if not endTime is None:
+                endTime_int = int(endTime.timestamp())
         else:
             startTime_int = int(startTime.strftime(dateFormat))
-        return_list = list(filter(lambda filename: int(filename[dateStringStartIdx:dateStringEndIdx]) >= startTime_int and (endTime is None or int(filename[dateStringStartIdx:dateStringStartIdx+14]) < int(endTime.strftime("%Y%m%d%H%M%S"))), filenames))
+            if not endTime is None:
+                endTime_int = int(endTime.strftime(dateFormat)
+                                  )
+        return_list = list(filter(lambda filename: int(filename[dateStringStartIdx:dateStringEndIdx]) >= startTime_int and (endTime_int is None or int(filename[dateStringStartIdx:dateStringEndIdx]) < endTime_int), filenames))
     return return_list
 
 def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = "", file_prefix : str = "") -> List[str]:
