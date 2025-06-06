@@ -64,9 +64,15 @@ class ConfigManager:
                     self.data_directory = configure.get('data', 'directory')
                     configured_data_method = True
                 if 'fieldManager_api_usr' in configure['data'] and 'fieldManager_api_pw' in configure['data'] and 'fieldManager_device_id' in configure['data']:
+                    # LEGACY, Remove when you can
                     self.api_usr = configure.get('data', 'fieldManager_api_usr')
                     self.api_pw = configure.get('data', 'fieldManager_api_pw')
                     self.api_device_id = configure.get('data','fieldManager_device_id')
+                    configured_data_method = True
+                elif 'api_usr' in configure['data'] and 'api_pw' in configure['data'] and 'device_id' in configure['data']:
+                    self.api_usr = configure.get('data', 'api_usr')
+                    self.api_pw = configure.get('data', 'api_pw')
+                    self.api_device_id = configure.get('data','device_id')
                     configured_data_method = True
             if not configured_data_method:
                 raise Exception('data configuration section missing or incomplete in configuration file.')
@@ -205,6 +211,7 @@ class ConfigManager:
         return connection, connection.cursor()
     
     def get_fm_token(self) -> str:
+        # for getting feild manager api token
         if self.api_usr is None or self.api_pw is None:
             raise Exception("Cannot retrieve Field Manager API token. Credentials were not provided in configuration file.")
         url = f"https://www.fieldpop.io/rest/login?username={self.api_usr}&password={self.api_pw}"
@@ -214,6 +221,36 @@ class ConfigManager:
             if response.status_code == 200:
                 response = response.json()  # Return the response data as JSON
                 return response['data']['token']
+            else:
+                print(f"Failed to make GET request. Status code: {response.status_code}")
+                return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        
+    def get_thingsboard_token(self) -> str:
+        # for getting ThingsBoard api token
+        if self.api_usr is None or self.api_pw is None:
+            raise Exception("Cannot retrieve ThingsBoard API token. Credentials were not provided in configuration file.")
+        url = 'https://thingsboard.cloud/api/auth/login'
+
+        # Request payload (data to send in the POST)
+        payload = {
+            'username': self.api_usr,
+            'password': self.api_pw
+        }
+
+        # Headers
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        try:
+            response = requests.post(url, json=payload, headers=headers)
+            # Check if the request was successful (status code 200)
+            if response.status_code == 200:
+                response = response.json()  # Return the response data as JSON
+                return response['token']
             else:
                 print(f"Failed to make GET request. Status code: {response.status_code}")
                 return None

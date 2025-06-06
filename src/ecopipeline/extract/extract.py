@@ -14,6 +14,7 @@ from pytz import timezone, utc
 import mysql.connector.errors as mysqlerrors
 import requests
 import subprocess
+import traceback
 
 
 def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
@@ -751,6 +752,90 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
         print(f"Could not download new data from eGauge device: {e}")
 
     os.chdir(original_directory)
+
+def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None):
+    if endTime is None:
+        endTime = datetime.now()
+    if startTime is None:
+        # 28 hours to ensure encapsulation of last day
+        startTime = endTime - timedelta(hours=28)
+
+    if endTime - timedelta(hours=4) > startTime:
+        time_diff = endTime - startTime
+        midpointTime = startTime + time_diff / 2
+        # recursively construct the df
+        df_1 = tb_api_to_df(config, startTime, midpointTime)
+        df_2 = tb_api_to_df(config, midpointTime, endTime)
+        df = pd.concat([df_1, df_2])
+        df = df.sort_index()
+        df = df.groupby(df.index).mean()
+        return df
+
+    url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/values/timeseries'
+    token = config.get_thingsboard_token()
+    keys = _get_tb_keys(config, token)
+    if len(keys) <= 0:
+        raise Exception(f"No sensors available at ThingsBoard site with id {config.api_device_id}")
+    key_string = ','.join(keys)
+    params = {
+        'keys': key_string,
+        'startTs': f'{int(startTime.timestamp())*1000}',
+        'endTs': f'{int(endTime.timestamp())*1000}',
+        'orderBy': 'ASC',
+        'useStrictDataTypes': 'false'
+    }
+
+    # Headers
+    headers = {
+        'accept': 'application/json',
+        'X-Authorization': f'Bearer {token}'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            response_json = response.json()
+            data = {}
+            for key, records in response_json.items():
+                try:
+                    series = pd.Series(
+                        data={record['ts']: float(record['value']) for record in records}
+                    )
+                    data[key] = series
+                except:
+                    print_statement = f"Could not convert {key} values to floats."
+                    # print(print_statement)
+            df = pd.DataFrame(data)
+            df.index = pd.to_datetime(df.index, unit='ms')
+            df = df.sort_index()
+            return df
+            
+        print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+        return pd.DataFrame()
+    except Exception as e:
+        traceback.print_exc()
+        print(f"An error occurred: {e}")
+        return pd.DataFrame()
+    
+def _get_tb_keys(config: ConfigManager, token : str) -> List[str]:
+    url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/keys/timeseries'
+
+    # Headers
+    headers = {
+        'accept': 'application/json',
+        'X-Authorization': f'Bearer {token}'
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+            
+        print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+        return []
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []
     
 def get_sub_dirs(dir: str) -> List[str]:
     """
