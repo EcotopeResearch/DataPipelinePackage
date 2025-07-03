@@ -319,8 +319,8 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
         site_name = config.get_site_name()
     column_names = f"start_time_pt,site_name"
     column_types = ["datetime","varchar(25)","datetime",
-                    "ENUM('MISC_EVENT','DATA_LOSS','DATA_LOSS_COP','SITE_VISIT','SYSTEM_MAINTENANCE','EQUIPMENT_MALFUNCTION','PARTIAL_OCCUPANCY','INSTALLATION_ERROR','ALARM','MV_COMMISSIONED','PLANT_COMMISSIONED','INSTALLATION_ERROR_COP','SOO_PERIOD','SOO_PERIOD_COP','SYSTEM_TESTING')",
-                    "varchar(200)"]
+                    "ENUM('MISC_EVENT','DATA_LOSS','DATA_LOSS_COP','SITE_VISIT','SYSTEM_MAINTENANCE','EQUIPMENT_MALFUNCTION','PARTIAL_OCCUPANCY','INSTALLATION_ERROR','ALARM','SILENT_ALARM','MV_COMMISSIONED','PLANT_COMMISSIONED','INSTALLATION_ERROR_COP','SOO_PERIOD','SOO_PERIOD_COP','SYSTEM_TESTING')",
+                    "varchar(800)"]
     column_list = ['end_time_pt','event_type', 'event_detail']
     if not set(column_list).issubset(event_df.columns):
         raise Exception(f"event_df should contain a dataframe with columns start_time_pt, end_time_pt, event_type, and event_detail. Instead, found dataframe with columns {event_df.columns}")
@@ -329,21 +329,26 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,'"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", variable_name, last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,%s,'"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
 
+    if not 'variable_name' in event_df.columns:
+        event_df['variable_name'] = None
     # add aditional columns for db creation
     full_column_names = column_names.split(",")[1:]
     full_column_names.append('last_modified_date')
     full_column_names.append('last_modified_by')
+    full_column_names.append('variable_name')
     full_column_types = column_types[1:]
     full_column_types.append('datetime')
     full_column_types.append('varchar(60)')
+    full_column_types.append('varchar(70)')
 
 
     existing_rows = pd.DataFrame({
         'start_time_pt' : [],
         'end_time_pt' : [],
         'event_type' : [],
+        'variable_name' : [],
         'last_modified_by' : []
     })
 
@@ -358,9 +363,9 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
         try:
             # find existing times in database for upsert statement
             cursor.execute(
-                f"SELECT id, start_time_pt, end_time_pt, event_type, last_modified_by FROM {table_name} WHERE start_time_pt >= '{event_df.index.min()}' AND site_name = '{site_name}'")
+                f"SELECT id, start_time_pt, end_time_pt, event_detail, event_type, variable_name, last_modified_by FROM {table_name} WHERE start_time_pt >= '{event_df.index.min()}' AND site_name = '{site_name}'")
             # Fetch the results into a DataFrame
-            existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id','start_time_pt', 'end_time_pt', 'event_type', 'last_modified_by'])
+            existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id','start_time_pt', 'end_time_pt', 'event_detail', 'event_type', 'variable_name', 'last_modified_by'])
             existing_rows['start_time_pt'] = pd.to_datetime(existing_rows['start_time_pt'])
             existing_rows['end_time_pt'] = pd.to_datetime(existing_rows['end_time_pt'])
 
@@ -371,7 +376,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     ignoredRows = 0
     try:
         for index, row in event_df.iterrows():
-            time_data = [index,site_name,row['end_time_pt'],row['event_type'],row['event_detail']]
+            time_data = [index,site_name,row['end_time_pt'],row['event_type'],row['event_detail'],row['variable_name']]
             #remove nans and infinites
             time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
             time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
@@ -379,6 +384,10 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
                 (existing_rows['start_time_pt'] == index) &
                 (existing_rows['event_type'] == row['event_type'])
             ]
+            if not time_data[-1] is None and not filtered_existing_rows.empty:
+                filtered_existing_rows = filtered_existing_rows[(filtered_existing_rows['variable_name'] == row['variable_name']) &
+                                                                (filtered_existing_rows['event_detail'] == row['event_detail'])]
+
             if not filtered_existing_rows.empty:
                 first_matching_row = filtered_existing_rows.iloc[0]  # Retrieves the first row
                 statement, values = _generate_mysql_update_event_table(row, first_matching_row['id'])

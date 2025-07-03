@@ -14,6 +14,7 @@ EcoPipeline Documentation
    extract/extract
    transform/transform
    load/load
+   event_tracking/event_tracking
 
 Indices and tables
 ==================

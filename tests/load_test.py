@@ -319,4 +319,56 @@ def test_check_table_exists(mocker):
 #         # Assert that mysql.connector.connect() was called
 #         mock_connect.assert_called_once_with(user='usr', password='pw',
 #                                              host='host', database='test_db')
+
+def test_load_event_table(mocker):
+    
+    event_time_pts = pd.to_datetime(['2022-01-01', '2022-01-01', '2022-01-02'])
+    df = pd.DataFrame({
+                    'start_time_pt': event_time_pts,
+                    'end_time_pt': event_time_pts,
+                    'event_type': ['SILENT_ALARM'] * 3,
+                    'event_detail': ["Upper bound alarm for serious_var_1 (first one at 01:01).",
+                                        "Upper bound alarm for serious_var_2 (first one at 01:03).",
+                                        "Upper bound alarm for serious_var_2 (first one at 01:01)."],
+                    'variable_name' : ['serious_var_1','serious_var_2','serious_var_2']})
+    df.set_index('start_time_pt', inplace=True)
+
+    # Create a mock for the db connect
+    configMock = MagicMock()
+    cursor_mock = MagicMock()
+    con_mock = MagicMock()
+
+    # Patch the cursor.execute method with the mock
+    mocker.patch.object(cursor_mock, 'execute')
+    mocker.patch.object(con_mock, 'close')
+    mocker.patch.object(con_mock, 'commit')
+
+    # Set the desired response for cursor.execute
+    cursor_mock.fetchall.side_effect = [
+        [(1,)],
+        [
+            (1, datetime.datetime(2022, 1, 1, 0, 0), datetime.datetime(2022, 1, 1, 0, 0), "Upper bound alarm for serious_var_2 (first one at 01:03).", 'SILENT_ALARM', 'serious_var_2', 'automatic_upload'),
+            (2, datetime.datetime(2022, 1, 2, 0, 0), datetime.datetime(2022, 1, 2, 0, 0), 'its-a me! Mario!', 'MISC_EVENT', None, 'user_b'),
+            (3, datetime.datetime(2022, 1, 1, 0, 0), datetime.datetime(2022, 1, 1, 0, 0), "Upper bound alarm for serious_var_5 (first one at 01:03).", 'SILENT_ALARM', 'serious_var_5', 'automatic_upload'),
+        ]
+    ]
+    configMock.connect_db.side_effect = [(con_mock,cursor_mock)]
+    configMock.get_db_name.return_value = "db_name"
+
+    # Call the function under test with the mock cursor
+    load_event_table(configMock, df, 'silly_site')
+
+    expected_queries = [
+        "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'db_name') AND (TABLE_NAME = 'site_events')",
+        "SELECT id, start_time_pt, end_time_pt, event_detail, event_type, variable_name, last_modified_by FROM site_events WHERE start_time_pt >= '2022-01-01 00:00:00' AND site_name = 'silly_site'",
+        "INSERT INTO site_events (start_time_pt,site_name,end_time_pt,event_type,event_detail, variable_name, last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,%s",
+        "UPDATE site_events SET end_time_pt = %s, event_type = %s, event_detail = %s, variable_name = %s, last_modified_by = 'automatic_upload', last_modified_date = ",
+        "INSERT INTO site_events (start_time_pt,site_name,end_time_pt,event_type,event_detail, variable_name, last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,%s",
+    ]
+
+    #  Verify the behavior and result
+    assert cursor_mock.fetchall.call_count == 2
+    assert cursor_mock.execute.call_count == len(expected_queries)
+    for i in range (len(expected_queries)):
+        assert cursor_mock.execute.call_args_list[i][0][0][:len(expected_queries[i])] == expected_queries[i]
         
