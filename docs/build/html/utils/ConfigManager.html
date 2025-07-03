@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 0.7.1 documentation</title>
+    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 0.8.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.8.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>  
@@ -86,7 +86,7 @@ Defaults to False</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="utils.ConfigManager.ConfigManager.get_event_log_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_event_log_path</span></code></a>()</p></td>
 <td><p>Returns path to the full path to the Event_Log.csv file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>([config_key])</p></td>
 <td><p>returns name of site</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="utils.ConfigManager.ConfigManager.get_var_names_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_names_path</span></code></a>()</p></td>
@@ -106,6 +106,9 @@ Defaults to False</p>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p><strong>get_table_name</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get_thingsboard_token</strong></p></td>
 <td></td>
 </tr>
 </tbody>
@@ -172,8 +175,16 @@ This file should be in the pipeline’s input directory “/” (i.e. “full/pa
 
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_site_name">
-<span class="sig-name descname"><span class="pre">get_site_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_site_name" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_site_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minute'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_site_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns name of site</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config_key</strong><span class="classifier">str</span></dt><dd><p>The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -266,7 +277,7 @@ This diectory should be in the pipeline’s data directory “/” (i.e. “full
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.8.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>
