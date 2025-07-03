@@ -85,7 +85,7 @@ def flag_boundary_alarms(df: pd.DataFrame, daily_df : pd.DataFrame, config : Con
                 if up_consecutive_condition.any():
                     first_true_index = up_consecutive_condition.idxmax()
                     adjusted_time = first_true_index - pd.Timedelta(minutes=bounds["fault_time"]-1)
-                    alarm_string = f"Upper bound alarm for {bound_var} (first one at {adjusted_time.strftime('%H:%M')})."
+                    alarm_string = f"Upper bound alarm for {bounds['pretty_name']} (first one at {adjusted_time.strftime('%H:%M')})."
                     if day in alarms:
                         alarms[day].append([bound_var, alarm_string])
                     else:
