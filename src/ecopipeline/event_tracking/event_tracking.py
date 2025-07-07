@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 from ecopipeline import ConfigManager
 
-def flag_boundary_alarms(df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, site: str = "") -> pd.DataFrame:
+def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, site: str = "") -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of alarm information in a csv,
     and create an dataframe with applicable alarm events
@@ -11,9 +11,8 @@ def flag_boundary_alarms(df: pd.DataFrame, daily_df : pd.DataFrame, config : Con
     Parameters
     ----------
     df: pd.DataFrame
-        post-transformed dataframe for minute data
-    daily_df: pd.DataFrame
-        post-transformed dataframe for daily data
+        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
         called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
@@ -51,6 +50,10 @@ def flag_boundary_alarms(df: pd.DataFrame, daily_df : pd.DataFrame, config : Con
         bounds_df['pretty_name'] = bounds_df['variable_name']
     if not 'fault_time' in bounds_df.columns:
         bounds_df['fault_time'] = default_fault_time
+
+    idx = df.index
+    unique_days = pd.to_datetime(pd.Series(idx).dt.normalize().unique())
+    
     bounds_df = bounds_df.loc[:, ["variable_name", "high_alarm", "low_alarm", "fault_time", "pretty_name"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
     bounds_df.set_index(['variable_name'], inplace=True)
@@ -66,7 +69,7 @@ def flag_boundary_alarms(df: pd.DataFrame, daily_df : pd.DataFrame, config : Con
             upper_mask = df[bound_var] > bounds["high_alarm"]
             if pd.isna(bounds['fault_time']):
                 bounds['fault_time'] = default_fault_time
-            for day in daily_df.index:
+            for day in unique_days:
                 next_day = day + pd.Timedelta(days=1)
                 # low alert
                 low_filtered_df = lower_mask.loc[(lower_mask.index >= day) & (lower_mask.index < next_day)]
