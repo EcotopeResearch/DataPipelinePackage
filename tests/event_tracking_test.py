@@ -24,13 +24,6 @@ def test_flag_boundary_alarms(mock_config_manager):
                         'serious_var_3': [4, 2, 2, 2, 4, 4, 4],
                         'serious_var_4': [4, 2, 2, 2, 4, 4, 4]})
         df.index = timestamps
-
-        daily_timestamps = pd.to_datetime(['2022-01-01','2022-01-02'])
-        daily_df = pd.DataFrame({'serious_var_1': [float('inf'), float('inf')],
-                        'serious_var_2': [2, 2],
-                        'serious_var_3': [4, 2],
-                        'serious_var_4': [4, 2]})
-        daily_df.index = daily_timestamps
         
         event_time_pts = pd.to_datetime(['2022-01-01', '2022-01-01'])
         df_expected = pd.DataFrame({
@@ -42,7 +35,7 @@ def test_flag_boundary_alarms(mock_config_manager):
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
-        event_df = flag_boundary_alarms(df, daily_df, mock_config_manager, default_fault_time=3)
+        event_df = flag_boundary_alarms(df, mock_config_manager, default_fault_time=3)
 
         # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
@@ -67,13 +60,6 @@ def test_flag_boundary_alarms_with_fault_times(mock_config_manager):
                         'serious_var_3': [4, 2, 2, 2, 4, 4, 4],
                         'serious_var_4': [4, 2, 2, 2, 4, 4, 4]})
         df.index = timestamps
-
-        daily_timestamps = pd.to_datetime(['2022-01-01','2022-01-02'])
-        daily_df = pd.DataFrame({'serious_var_1': [float('inf'), float('inf')],
-                        'serious_var_2': [2, 2],
-                        'serious_var_3': [4, 2],
-                        'serious_var_4': [4, 2]})
-        daily_df.index = daily_timestamps
         
         event_time_pts = pd.to_datetime(['2022-01-01', '2022-01-01', '2022-01-02'])
         df_expected = pd.DataFrame({
@@ -87,7 +73,7 @@ def test_flag_boundary_alarms_with_fault_times(mock_config_manager):
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
-        event_df = flag_boundary_alarms(df, daily_df, mock_config_manager, default_fault_time=3)
+        event_df = flag_boundary_alarms(df, mock_config_manager, default_fault_time=3)
 
         # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
