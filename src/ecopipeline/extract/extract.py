@@ -760,7 +760,7 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         # 28 hours to ensure encapsulation of last day
         startTime = endTime - timedelta(hours=28)
 
-    if endTime - timedelta(hours=4) > startTime:
+    if endTime - timedelta(hours=12) > startTime:
         time_diff = endTime - startTime
         midpointTime = startTime + time_diff / 2
         # recursively construct the df

@@ -385,8 +385,9 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
                 (existing_rows['event_type'] == row['event_type'])
             ]
             if not time_data[-1] is None and not filtered_existing_rows.empty:
+                # silent alarm only
                 filtered_existing_rows = filtered_existing_rows[(filtered_existing_rows['variable_name'] == row['variable_name']) &
-                                                                (filtered_existing_rows['event_detail'] == row['event_detail'])]
+                                                                (filtered_existing_rows['event_detail'][:20] == row['event_detail'][:20])] # the [:20] part is a bug fix for partial days for silent alarms 
 
             if not filtered_existing_rows.empty:
                 first_matching_row = filtered_existing_rows.iloc[0]  # Retrieves the first row
