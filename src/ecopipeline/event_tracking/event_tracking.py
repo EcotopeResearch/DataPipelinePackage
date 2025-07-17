@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 from ecopipeline import ConfigManager
 
-def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, site: str = "") -> pd.DataFrame:
+def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, site: str = "", full_days : list = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of alarm information in a csv,
     and create an dataframe with applicable alarm events
@@ -24,6 +24,8 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
         the fault_time column in Varriable_Names.csv
     site: str
         string of site name if processing a particular site in a Variable_Names.csv file with multiple sites. Leave as an empty string if not aplicable.
+    full_days : list
+        list of pd.Datetimes that should be considered full days here. If set to none, will take any day at all present in df
 
     Returns
     ------- 
@@ -52,7 +54,8 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
         bounds_df['fault_time'] = default_fault_time
 
     idx = df.index
-    unique_days = pd.to_datetime(pd.Series(idx).dt.normalize().unique())
+    if full_days is None:
+        full_days = pd.to_datetime(pd.Series(idx).dt.normalize().unique())
     
     bounds_df = bounds_df.loc[:, ["variable_name", "high_alarm", "low_alarm", "fault_time", "pretty_name"]]
     bounds_df.dropna(axis=0, thresh=2, inplace=True)
@@ -69,30 +72,11 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
             upper_mask = df[bound_var] > bounds["high_alarm"]
             if pd.isna(bounds['fault_time']):
                 bounds['fault_time'] = default_fault_time
-            for day in unique_days:
-                next_day = day + pd.Timedelta(days=1)
-                # low alert
-                low_filtered_df = lower_mask.loc[(lower_mask.index >= day) & (lower_mask.index < next_day)]
-                low_consecutive_condition = low_filtered_df.rolling(window=bounds["fault_time"]).min() == 1
-                if low_consecutive_condition.any():
-                    first_true_index = low_consecutive_condition.idxmax()
-                    adjusted_time = first_true_index - pd.Timedelta(minutes=bounds["fault_time"]-1)
-                    alarm_string = f"Lower bound alarm for {bounds['pretty_name']} (first one at {adjusted_time.strftime('%H:%M')})."
-                    if day in alarms:
-                        alarms[day].append([bound_var, alarm_string])
-                    else:
-                        alarms[day] = [[bound_var, alarm_string]]
-                # high alert
-                up_filtered_df = upper_mask.loc[(upper_mask.index >= day) & (upper_mask.index < next_day)]
-                up_consecutive_condition = up_filtered_df.rolling(window=bounds["fault_time"]).min() == 1
-                if up_consecutive_condition.any():
-                    first_true_index = up_consecutive_condition.idxmax()
-                    adjusted_time = first_true_index - pd.Timedelta(minutes=bounds["fault_time"]-1)
-                    alarm_string = f"Upper bound alarm for {bounds['pretty_name']} (first one at {adjusted_time.strftime('%H:%M')})."
-                    if day in alarms:
-                        alarms[day].append([bound_var, alarm_string])
-                    else:
-                        alarms[day] = [[bound_var, alarm_string]]
+            for day in full_days:
+                if bounds['fault_time'] < 1 :
+                    print(f"Could not process alarm for {bound_var}. Fault time must be greater than or equal to 1 minute.")
+                _check_and_add_alarm(df, lower_mask, alarms, day, bounds["fault_time"], bound_var, bounds['pretty_name'], 'Lower')
+                _check_and_add_alarm(df, upper_mask, alarms, day, bounds["fault_time"], bound_var, bounds['pretty_name'], 'Upper')
     events = {
         'start_time_pt' : [],
         'end_time_pt' : [],
@@ -111,6 +95,34 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
     event_df = pd.DataFrame(events)
     event_df.set_index('start_time_pt', inplace=True)
     return event_df
+
+def _check_and_add_alarm(df : pd.DataFrame, mask : pd.Series, alarms_dict, day, fault_time : int, var_name : str, pretty_name : str, alarm_type : str = 'Lower'):
+    # KNOWN BUG : Avg value during fault time excludes the first (fault_time-1) minutes of each fault window
+    next_day = day + pd.Timedelta(days=1)
+    filtered_df = mask.loc[(mask.index >= day) & (mask.index < next_day)]
+    consecutive_condition = filtered_df.rolling(window=fault_time).min() == 1
+    if consecutive_condition.any():
+        group = (consecutive_condition != consecutive_condition.shift()).cumsum()
+        streaks = consecutive_condition.groupby(group).agg(['sum', 'size', 'idxmin'])
+        true_streaks = streaks[consecutive_condition.groupby(group).first()]
+        longest_streak_length = true_streaks['size'].max()
+        avg_streak_length = true_streaks['size'].mean() + fault_time-1
+        longest_group = true_streaks['size'].idxmax()
+        streak_indices = consecutive_condition[group == longest_group].index
+        starting_index = streak_indices[0]
+        
+        day_df = df.loc[(df.index >= day) & (df.index < next_day)]
+        average_value = day_df.loc[consecutive_condition, var_name].mean()
+
+        # first_true_index = consecutive_condition.idxmax()
+        # because first (fault_time-1) minutes don't count in window
+        adjusted_time = starting_index - pd.Timedelta(minutes=fault_time-1) 
+        adjusted_longest_streak_length = longest_streak_length + fault_time-1
+        alarm_string = f"{alarm_type} bound alarm for {pretty_name} (longest at {adjusted_time.strftime('%H:%M')} for {adjusted_longest_streak_length} minutes). Avg fault time : {avg_streak_length} minutes, Avg value during fault: {average_value}"
+        if day in alarms_dict:
+            alarms_dict[day].append([var_name, alarm_string])
+        else:
+            alarms_dict[day] = [[var_name, alarm_string]]
 
 # def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column : str, supply_temp : int = 110, consecutive_minutes : int = 15) -> pd.DataFrame:
 #     """
