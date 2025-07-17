@@ -118,7 +118,7 @@ def _check_and_add_alarm(df : pd.DataFrame, mask : pd.Series, alarms_dict, day, 
         # because first (fault_time-1) minutes don't count in window
         adjusted_time = starting_index - pd.Timedelta(minutes=fault_time-1) 
         adjusted_longest_streak_length = longest_streak_length + fault_time-1
-        alarm_string = f"{alarm_type} bound alarm for {pretty_name} (longest at {adjusted_time.strftime('%H:%M')} for {adjusted_longest_streak_length} minutes). Avg fault time : {avg_streak_length} minutes, Avg value during fault: {average_value}"
+        alarm_string = f"{alarm_type} bound alarm for {pretty_name} (longest at {adjusted_time.strftime('%H:%M')} for {adjusted_longest_streak_length} minutes). Avg fault time : {round(avg_streak_length,1)} minutes, Avg value during fault: {round(average_value,2)}"
         if day in alarms_dict:
             alarms_dict[day].append([var_name, alarm_string])
         else:
