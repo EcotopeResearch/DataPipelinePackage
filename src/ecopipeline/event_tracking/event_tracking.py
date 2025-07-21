@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 from ecopipeline import ConfigManager
 
-def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, site: str = "", full_days : list = None) -> pd.DataFrame:
+def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, system: str = "", full_days : list = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of alarm information in a csv,
     and create an dataframe with applicable alarm events
@@ -22,8 +22,8 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
     default_fault_time : int
         Number of consecutive minutes that a sensor must be out of bounds for to trigger an alarm. Can be customized for each variable with 
         the fault_time column in Varriable_Names.csv
-    site: str
-        string of site name if processing a particular site in a Variable_Names.csv file with multiple sites. Leave as an empty string if not aplicable.
+    system: str
+        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
     full_days : list
         list of pd.Datetimes that should be considered full days here. If set to none, will take any day at all present in df
 
@@ -39,10 +39,10 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
         print("File Not Found: ", variable_names_path)
         return pd.DataFrame()
 
-    if (site != ""):
-        if not 'site' in bounds_df.columns:
-            raise Exception("site parameter is non null, however, site is not present in Variable_Names.csv")
-        bounds_df = bounds_df.loc[bounds_df['site'] == site]
+    if (system != ""):
+        if not 'system' in bounds_df.columns:
+            raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
+        bounds_df = bounds_df.loc[bounds_df['system'] == system]
 
     required_columns = ["variable_name", "high_alarm", "low_alarm"]
     for required_column in required_columns:
