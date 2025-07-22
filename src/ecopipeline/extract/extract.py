@@ -753,7 +753,7 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 
     os.chdir(original_directory)
 
-def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None):
+def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv = True):
     if endTime is None:
         endTime = datetime.now()
     if startTime is None:
@@ -770,7 +770,6 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         df = df.sort_index()
         df = df.groupby(df.index).mean()
         return df
-
     url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/values/timeseries'
     token = config.get_thingsboard_token()
     keys = _get_tb_keys(config, token)
@@ -808,8 +807,14 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
             df = pd.DataFrame(data)
             df.index = pd.to_datetime(df.index, unit='ms')
             df = df.sort_index()
+            # save to file
+            if create_csv:
+                filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+                original_directory = os.getcwd()
+                os.chdir(config.data_directory)
+                df.to_csv(filename, index_label='time_pt')
+                os.chdir(original_directory)
             return df
-            
         print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
         return pd.DataFrame()
     except Exception as e:
