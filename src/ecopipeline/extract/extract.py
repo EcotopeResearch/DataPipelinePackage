@@ -804,8 +804,8 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         time_diff = endTime - startTime
         midpointTime = startTime + time_diff / 2
         # recursively construct the df
-        df_1 = tb_api_to_df(config, startTime, midpointTime, create_csv=False)
-        df_2 = tb_api_to_df(config, midpointTime, endTime, create_csv=False)
+        df_1 = tb_api_to_df(config, startTime, midpointTime, create_csv=False,query_hours=query_hours)
+        df_2 = tb_api_to_df(config, midpointTime, endTime, create_csv=False,query_hours=query_hours)
         df = pd.concat([df_1, df_2])
         df = df.sort_index()
         df = df.groupby(df.index).mean()
