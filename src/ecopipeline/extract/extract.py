@@ -732,11 +732,17 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
                 time_diff = endTime - startTime
                 midpointTime = startTime + time_diff / 2
                 # recursively construct the df
-                df_1 = fm_api_to_df(config, startTime, midpointTime)
-                df_2 = fm_api_to_df(config, midpointTime, endTime)
+                df_1 = fm_api_to_df(config, startTime, midpointTime, create_csv=False)
+                df_2 = fm_api_to_df(config, midpointTime, endTime, create_csv=False)
                 df = pd.concat([df_1, df_2])
                 df = df.sort_index()
                 df = df.groupby(df.index).mean()
+                if create_csv:
+                    filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+                    original_directory = os.getcwd()
+                    os.chdir(config.data_directory)
+                    df.to_csv(filename, index_label='time_pt')
+                    os.chdir(original_directory)
                 return df
             
         print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
@@ -761,7 +767,7 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 
     os.chdir(original_directory)
 
-def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True):
+def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : int = 12):
     """
     Function connects to the things board manager api to pull data and returns a dataframe.
 
@@ -779,11 +785,14 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         is local time from the data's index. 
     create_csv : bool
         create csv files as you process such that API need not be relied upon for reprocessing
+    query_hours : int
+        number of hours to query at a time from ThingsBoard API
     
     Returns
     ------- 
     pd.DataFrame: 
-        Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
+        Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull.
+        Will return with index in UTC so needs to be converted after to appropriate timezone
     """
     if endTime is None:
         endTime = datetime.now()
@@ -791,15 +800,22 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         # 28 hours to ensure encapsulation of last day
         startTime = endTime - timedelta(hours=28)
 
-    if endTime - timedelta(hours=12) > startTime:
+    if endTime - timedelta(hours=query_hours) > startTime:
         time_diff = endTime - startTime
         midpointTime = startTime + time_diff / 2
         # recursively construct the df
-        df_1 = tb_api_to_df(config, startTime, midpointTime)
-        df_2 = tb_api_to_df(config, midpointTime, endTime)
+        df_1 = tb_api_to_df(config, startTime, midpointTime, create_csv=False)
+        df_2 = tb_api_to_df(config, midpointTime, endTime, create_csv=False)
         df = pd.concat([df_1, df_2])
         df = df.sort_index()
         df = df.groupby(df.index).mean()
+        if create_csv:
+                filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+                original_directory = os.getcwd()
+                os.chdir(config.data_directory)
+                df.to_csv(filename, index_label='time_pt')
+                os.chdir(original_directory)
+
         return df
     url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/values/timeseries'
     token = config.get_thingsboard_token()

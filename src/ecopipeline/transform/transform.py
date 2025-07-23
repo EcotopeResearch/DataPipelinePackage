@@ -1110,13 +1110,9 @@ def create_data_statistics_df(df: pd.DataFrame) -> pd.DataFrame:
     total_missing = df_full.isna().resample('D').sum().astype(int)
     # Function to calculate max consecutive missing values
     def max_consecutive_nans(x):
-        try:
-            # print(f"here is x :{x}")
-            is_na = pd.Series(x).isna().reset_index(drop=True)
-            groups = (is_na != is_na.shift()).cumsum()
-            return is_na.groupby(groups).sum().max() or 0
-        except:
-            raise Exception(f"{x} is the problem!")
+        is_na = pd.Series(x).isna().reset_index(drop=True)
+        groups = (is_na != is_na.shift()).cumsum()
+        return is_na.groupby(groups).sum().max() or 0
 
     # Function to calculate average consecutive missing values
     def avg_consecutive_nans(x):
