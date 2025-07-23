@@ -1104,19 +1104,23 @@ def create_data_statistics_df(df: pd.DataFrame) -> pd.DataFrame:
     
     # Reindex to include any completely missing minutes
     df_full = df.reindex(full_index)
-
+    # df_full = df_full.select_dtypes(include='number')
+    # print("1",df_full)
     # Resample daily to count missing values per column
     total_missing = df_full.isna().resample('D').sum().astype(int)
-
     # Function to calculate max consecutive missing values
     def max_consecutive_nans(x):
-        is_na = x.isna()
-        groups = (is_na != is_na.shift()).cumsum()
-        return is_na.groupby(groups).sum().max() or 0
+        try:
+            # print(f"here is x :{x}")
+            is_na = pd.Series(x).isna().reset_index(drop=True)
+            groups = (is_na != is_na.shift()).cumsum()
+            return is_na.groupby(groups).sum().max() or 0
+        except:
+            raise Exception(f"{x} is the problem!")
 
     # Function to calculate average consecutive missing values
     def avg_consecutive_nans(x):
-        is_na = x.isna()
+        is_na = pd.Series(x).isna().reset_index(drop=True)
         groups = (is_na != is_na.shift()).cumsum()
         gap_lengths = is_na.groupby(groups).sum()
         gap_lengths = gap_lengths[gap_lengths > 0]
@@ -1125,8 +1129,9 @@ def create_data_statistics_df(df: pd.DataFrame) -> pd.DataFrame:
         return gap_lengths.mean()
 
     # Apply daily, per column
-    max_consec_missing = df_full.resample('D').apply(lambda day: day.apply(max_consecutive_nans))
-    avg_consec_missing = df_full.resample('D').apply(lambda day: day.apply(avg_consecutive_nans))
+    # print("hello?",type(df_full.index))
+    max_consec_missing = df_full.resample('D').agg(max_consecutive_nans)
+    avg_consec_missing = df_full.resample('D').agg(avg_consecutive_nans)
 
     # Rename columns to include a suffix
     total_missing = total_missing.add_suffix('_missing_mins')

@@ -658,7 +658,7 @@ def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
 
     return df_diff
 
-def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
+def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True) -> pd.DataFrame:
     """
     Function connects to the field manager api to pull data and returns a dataframe.
 
@@ -674,6 +674,8 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     endTime: datetime
         The point in time for which we want to end the data extraction. This 
         is local time from the data's index. 
+    create_csv : bool
+        create csv files as you process such that API need not be relied upon for reprocessing
     
     Returns
     ------- 
@@ -715,6 +717,12 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
                 df.set_index('time_pt', inplace=True)
                 df = df.sort_index()
                 df = df.groupby(df.index).mean()
+            if create_csv:
+                filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+                original_directory = os.getcwd()
+                os.chdir(config.data_directory)
+                df.to_csv(filename, index_label='time_pt')
+                os.chdir(original_directory)
             return df
         elif response.status_code == 500:
             json_message = response.json()
@@ -753,7 +761,30 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 
     os.chdir(original_directory)
 
-def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv = True):
+def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True):
+    """
+    Function connects to the things board manager api to pull data and returns a dataframe.
+
+    Parameters
+    ----------  
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. The config manager
+        must contain information to connect to the api, i.e. the api user name and password as well as
+        the device id for the device the data is being pulled from.
+    startTime: datetime
+        The point in time for which we want to start the data extraction from. This 
+        is local time from the data's index. 
+    endTime: datetime
+        The point in time for which we want to end the data extraction. This 
+        is local time from the data's index. 
+    create_csv : bool
+        create csv files as you process such that API need not be relied upon for reprocessing
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
+    """
     if endTime is None:
         endTime = datetime.now()
     if startTime is None:
