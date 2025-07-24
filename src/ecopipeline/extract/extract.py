@@ -767,7 +767,7 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 
     os.chdir(original_directory)
 
-def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : int = 12):
+def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : int = 1):
     """
     Function connects to the things board manager api to pull data and returns a dataframe.
 
@@ -804,8 +804,8 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         time_diff = endTime - startTime
         midpointTime = startTime + time_diff / 2
         # recursively construct the df
-        df_1 = tb_api_to_df(config, startTime, midpointTime, create_csv=False,query_hours=query_hours)
-        df_2 = tb_api_to_df(config, midpointTime, endTime, create_csv=False,query_hours=query_hours)
+        df_1 = tb_api_to_df(config, startTime, midpointTime, create_csv=False, query_hours=query_hours)
+        df_2 = tb_api_to_df(config, midpointTime, endTime, create_csv=False, query_hours=query_hours)
         df = pd.concat([df_1, df_2])
         df = df.sort_index()
         df = df.groupby(df.index).mean()
