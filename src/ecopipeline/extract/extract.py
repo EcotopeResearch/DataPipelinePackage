@@ -767,7 +767,8 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 
     os.chdir(original_directory)
 
-def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : int = 1):
+def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : float = 1,
+                 sensor_keys : list = [], seperate_keys : bool = False):
     """
     Function connects to the things board manager api to pull data and returns a dataframe.
 
@@ -785,7 +786,7 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         is local time from the data's index. 
     create_csv : bool
         create csv files as you process such that API need not be relied upon for reprocessing
-    query_hours : int
+    query_hours : float
         number of hours to query at a time from ThingsBoard API
     
     Returns
@@ -794,80 +795,102 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull.
         Will return with index in UTC so needs to be converted after to appropriate timezone
     """
-    if endTime is None:
-        endTime = datetime.now()
-    if startTime is None:
-        # 28 hours to ensure encapsulation of last day
-        startTime = endTime - timedelta(hours=28)
+    df = pd.DataFrame()
+    if len(sensor_keys) <= 0:
+        token = config.get_thingsboard_token()
+        key_list = _get_tb_keys(config, token)
+        if len(key_list) <= 0:
+            raise Exception(f"No sensors available at ThingsBoard site with id {config.api_device_id}")
+        return tb_api_to_df(config, startTime, endTime, create_csv, query_hours, key_list, seperate_keys)
+    if seperate_keys:
+        df_list = []
+        for sensor_key in sensor_keys:
+            df_list.append(tb_api_to_df(config, startTime, endTime, False, query_hours, [sensor_key], False))
+        df = pd.concat(df_list)
+    else:    
+    # not seperate_keys:
+        if endTime is None:
+            endTime = datetime.now()
+        if startTime is None:
+            # 28 hours to ensure encapsulation of last day
+            startTime = endTime - timedelta(hours=28)
 
-    if endTime - timedelta(hours=query_hours) > startTime:
-        time_diff = endTime - startTime
-        midpointTime = startTime + time_diff / 2
-        # recursively construct the df
-        df_1 = tb_api_to_df(config, startTime, midpointTime, create_csv=False, query_hours=query_hours)
-        df_2 = tb_api_to_df(config, midpointTime, endTime, create_csv=False, query_hours=query_hours)
-        df = pd.concat([df_1, df_2])
-        df = df.sort_index()
-        df = df.groupby(df.index).mean()
-        if create_csv:
-                filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
-                original_directory = os.getcwd()
-                os.chdir(config.data_directory)
-                df.to_csv(filename, index_label='time_pt')
-                os.chdir(original_directory)
-
-        return df
-    url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/values/timeseries'
-    token = config.get_thingsboard_token()
-    keys = _get_tb_keys(config, token)
-    if len(keys) <= 0:
-        raise Exception(f"No sensors available at ThingsBoard site with id {config.api_device_id}")
-    key_string = ','.join(keys)
-    params = {
-        'keys': key_string,
-        'startTs': f'{int(startTime.timestamp())*1000}',
-        'endTs': f'{int(endTime.timestamp())*1000}',
-        'orderBy': 'ASC',
-        'useStrictDataTypes': 'false'
-    }
-
-    # Headers
-    headers = {
-        'accept': 'application/json',
-        'X-Authorization': f'Bearer {token}'
-    }
-
-    try:
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code == 200:
-            response_json = response.json()
-            data = {}
-            for key, records in response_json.items():
-                try:
-                    series = pd.Series(
-                        data={record['ts']: float(record['value']) for record in records}
-                    )
-                    data[key] = series
-                except:
-                    print_statement = f"Could not convert {key} values to floats."
-                    # print(print_statement)
-            df = pd.DataFrame(data)
-            df.index = pd.to_datetime(df.index, unit='ms')
+        if endTime - timedelta(hours=query_hours) > startTime:
+            time_diff = endTime - startTime
+            midpointTime = startTime + time_diff / 2
+            df_1 = tb_api_to_df(config, startTime, midpointTime, query_hours=query_hours, sensor_keys=sensor_keys, create_csv=False)#True if startTime >= datetime(2025,7,13,9) and startTime <= datetime(2025,7,13,10) else csv_pass_down)
+            df_2 = tb_api_to_df(config, midpointTime, endTime, query_hours=query_hours, sensor_keys=sensor_keys,create_csv=False)#True if endTime >= datetime(2025,7,13,9) and endTime <= datetime(2025,7,13,10) else csv_pass_down)
+            df = pd.concat([df_1, df_2])
             df = df.sort_index()
-            # save to file
-            if create_csv:
-                filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
-                original_directory = os.getcwd()
-                os.chdir(config.data_directory)
-                df.to_csv(filename, index_label='time_pt')
-                os.chdir(original_directory)
-            return df
-        print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
-        return pd.DataFrame()
-    except Exception as e:
-        traceback.print_exc()
-        print(f"An error occurred: {e}")
-        return pd.DataFrame()
+            df = df.groupby(df.index).mean()
+        else:
+            url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/values/timeseries'
+            token = config.get_thingsboard_token()
+            key_string = ','.join(sensor_keys)
+            params = {
+                'keys': key_string,
+                'startTs': f'{int(startTime.timestamp())*1000}',
+                'endTs': f'{int(endTime.timestamp())*1000}',
+                'orderBy': 'ASC',
+                'useStrictDataTypes': 'false',
+                'interval' : '0',
+                'agg' : 'NONE'
+            }
+
+            # Headers
+            headers = {
+                'accept': 'application/json',
+                'X-Authorization': f'Bearer {token}'
+            }
+
+            try:
+                response = requests.get(url, headers=headers, params=params)
+                if response.status_code == 200:
+                    response_json = response.json()
+                    # if create_csv:
+                    #     json_filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.json"
+                    #     print(f"filename: {json_filename}, url: {url}, params: {params}")
+                    #     original_directory = os.getcwd()
+                    #     os.chdir(config.data_directory)
+                    #     with open(json_filename, 'w') as f:
+                    #         json.dump(response_json, f, indent=4)  # indent=4 makes it human-readable
+                    #     os.chdir(original_directory)
+                        
+                    data = {}
+                    for key, records in response_json.items():
+                        try:
+                            series = pd.Series(
+                                data={record['ts']: _get_float_value(record['value'])  for record in records}
+                            )
+                            data[key] = series
+                        except:
+                            print_statement = f"Could not convert {key} values to floats."
+                            print(print_statement)
+                    df = pd.DataFrame(data)
+                    df.index = pd.to_datetime(df.index, unit='ms')
+                    df = df.sort_index()
+                else:
+                    print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+                    df = pd.DataFrame()
+            except Exception as e:
+                traceback.print_exc()
+                print(f"An error occurred: {e}")
+                df = pd.DataFrame()
+    # save to file
+    if create_csv:
+        filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+        original_directory = os.getcwd()
+        os.chdir(config.data_directory)
+        df.to_csv(filename, index_label='time_pt')
+        os.chdir(original_directory)
+    return df
+    
+def _get_float_value(value):
+    try:
+        ret_val = float(value)
+        return ret_val
+    except (ValueError, TypeError):
+        return None
     
 def _get_tb_keys(config: ConfigManager, token : str) -> List[str]:
     url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/keys/timeseries'
