@@ -378,6 +378,31 @@ def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.D
 
     return df
 
+def column_name_change(df : pd.DataFrame, dt : pd.Timestamp, new_column : str, old_column : str, remove_old_column : bool = True) -> pd.DataFrame:
+    """
+    Overwrites values in `new_column` with values from `old_column` 
+    for all rows before `dt`, if `dt` is within the index range.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Pandas dataframe with minute-to-minute data
+    dt: pd.Timestamp
+        timestamp of the varriable name change
+    new_column: str
+        column to be overwritten
+    old_column: str
+        column to copy from
+    remove_old_column : bool
+        remove old column when done
+    """
+    if df.index.min() < dt:
+        mask = df.index < dt
+        df.loc[mask, new_column] = df.loc[mask, old_column]
+    if remove_old_column:
+        df = df.drop(columns=[old_column])
+    return df
+
 def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp : str, heat_out_col_name : str, return_as_kw : bool = True) -> pd.DataFrame:
     """
     Function will take a flow varriable and two temperature inputs to calculate heat output 
@@ -903,7 +928,8 @@ def shift_accumulative_columns(df : pd.DataFrame, column_names : list = []):
     if len(column_names) == 0:
         return df_diff
     for column_name in column_names:
-        df[column_name] = df_diff[column_name]
+        if column_name in df.columns:
+            df[column_name] = df_diff[column_name]
     return df
 
 def create_summary_tables(df: pd.DataFrame):

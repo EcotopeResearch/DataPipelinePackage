@@ -77,6 +77,10 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
                     print(f"Could not process alarm for {bound_var}. Fault time must be greater than or equal to 1 minute.")
                 _check_and_add_alarm(df, lower_mask, alarms, day, bounds["fault_time"], bound_var, bounds['pretty_name'], 'Lower')
                 _check_and_add_alarm(df, upper_mask, alarms, day, bounds["fault_time"], bound_var, bounds['pretty_name'], 'Upper')
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def _convert_silent_alarm_dict_to_df(alarm_dict : dict) -> pd.DataFrame:
     events = {
         'start_time_pt' : [],
         'end_time_pt' : [],
@@ -84,7 +88,7 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
         'event_detail' : [],
         'variable_name' : []
     }
-    for key, value_list in alarms.items():
+    for key, value_list in alarm_dict.items():
         for value in value_list:
             events['start_time_pt'].append(key)
             events['end_time_pt'].append(key)
@@ -123,6 +127,68 @@ def _check_and_add_alarm(df : pd.DataFrame, mask : pd.Series, alarms_dict, day, 
             alarms_dict[day].append([var_name, alarm_string])
         else:
             alarms_dict[day] = [[var_name, alarm_string]]
+
+def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: str = "") -> pd.DataFrame:
+    daily_df_copy = daily_df.copy()
+    variable_names_path = config.get_var_names_path()
+    try:
+        ratios_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+    if (system != ""):
+        if not 'system' in ratios_df.columns:
+            raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
+        ratios_df = ratios_df.loc[ratios_df['system'] == system]
+    required_columns = ["variable_name", "alarm_codes"]
+    for required_column in required_columns:
+        if not required_column in ratios_df.columns:
+            raise Exception(f"{required_column} is not present in Variable_Names.csv")
+    if not 'pretty_name' in ratios_df.columns:
+        ratios_df['pretty_name'] = ratios_df['variable_name']
+    ratios_df = ratios_df.loc[:, ["variable_name", "alarm_codes", "pretty_name"]]
+    ratios_df = ratios_df[ratios_df['alarm_codes'].str.contains('PR', na=False)]
+    ratios_df.dropna(axis=0, thresh=2, inplace=True)
+    ratios_df.set_index(['variable_name'], inplace=True)
+
+    ratio_dict = {}
+    for ratios_var, ratios in ratios_df.iterrows():
+        if not ratios_var in daily_df_copy.columns:
+                daily_df_copy[ratios_var] = 0
+        alarm_codes = str(ratios['alarm_codes']).split(";")
+        for alarm_code in alarm_codes:
+            if alarm_code[:2] == "PR":
+                split_out_alarm = alarm_code.split(":")
+                low_high = split_out_alarm[1].split("-")
+                pr_id = split_out_alarm[0].split("_")[1]
+                if len(low_high) != 2:
+                    raise Exception(f"Error processing alarm code {alarm_code}")
+                if pr_id in ratio_dict:
+                    ratio_dict[pr_id][0].append(ratios_var)
+                    ratio_dict[pr_id][1].append(float(low_high[0]))
+                    ratio_dict[pr_id][2].append(float(low_high[1]))
+                    ratio_dict[pr_id][3].append(ratios['pretty_name'])
+                else:
+                    ratio_dict[pr_id] = [[ratios_var],[float(low_high[0])],[float(low_high[1])],[ratios['pretty_name']]]
+
+    alarms = {}
+    for key, value_list in ratio_dict.items():
+        daily_df_copy[key] = daily_df_copy[value_list[0]].sum(axis=1)
+        for i in range(len(value_list[0])):
+            column_name = value_list[0][i]
+            daily_df_copy[f'{column_name}_{key}'] = (daily_df_copy[column_name]/daily_df_copy[key]) * 100
+            _check_and_add_ratio_alarm(daily_df_copy, key, column_name, value_list[3][i], alarms, value_list[2][i], value_list[1][i])
+    return _convert_silent_alarm_dict_to_df(alarms)      
+
+def _check_and_add_ratio_alarm(daily_df: pd.DataFrame, alarm_key : str, column_name : str, pretty_name : str, alarms_dict : dict, high_bound : float, low_bound : float):
+    alarm_daily_df = daily_df.loc[(daily_df[f"{column_name}_{alarm_key}"] < low_bound) | (daily_df[f"{column_name}_{alarm_key}"] > high_bound)]
+    if not alarm_daily_df.empty:
+        for day, values in alarm_daily_df.iterrows():
+            alarm_str = f"Power ratio alarm: {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use."
+            if day in alarms_dict:
+                alarms_dict[day].append([column_name, alarm_str])
+            else:
+                alarms_dict[day] = [[column_name, alarm_str]]
 
 # def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column : str, supply_temp : int = 110, consecutive_minutes : int = 15) -> pd.DataFrame:
 #     """

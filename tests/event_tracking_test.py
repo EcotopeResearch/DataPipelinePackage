@@ -126,3 +126,44 @@ def test_flag_boundary_alarms_with_days(mock_config_manager):
         # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
         assert_frame_equal(event_df, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_ratio_alarms(mock_config_manager):
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+
+        # Set the desired response for mock_connect.return_value
+        csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
+                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5'],
+                        'alarm_codes': ['PR_HPWH:60-80', None, "PR_HPWH:20-40;PR_Other:0-100",None,"PR_Other:20-50"]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
+        df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
+                        'serious_var_2': [2, 2, 90],
+                        'serious_var_3': [100, 40, 7],
+                        'serious_var_4': [4, 2, 2]})
+        df.index = timestamps
+        
+        event_time_pts = pd.to_datetime(['2022-01-03','2022-01-03','2022-01-03','2022-01-01','2022-01-01','2022-01-02'])
+        df_expected = pd.DataFrame({
+                        'start_time_pt': event_time_pts,
+                        'end_time_pt': event_time_pts,
+                        'event_type': ['SILENT_ALARM']*6,
+                        'event_detail': [
+                                        "Power ratio alarm: serious_var_1 accounted for 94.49% of HPWH energy use.",
+                                        "Power ratio alarm: serious_var_3 accounted for 5.51% of HPWH energy use.",
+                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use.",
+                                        "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use.",
+                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use.",
+                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use."
+                                        ],
+                        'variable_name' : ['serious_var_1','serious_var_3','serious_var_5','serious_var_3','serious_var_5','serious_var_5']})
+        df_expected.set_index('start_time_pt', inplace=True)
+
+        # Call the function that uses mysql.connector.connect()
+        event_df = power_ratio_alarm(df, mock_config_manager)
+
+        # Assert that mysql.connector.connect() was called
+        mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
+        assert_frame_equal(event_df, df_expected)
