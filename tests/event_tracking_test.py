@@ -151,12 +151,12 @@ def test_flag_ratio_alarms(mock_config_manager):
                         'end_time_pt': event_time_pts,
                         'event_type': ['SILENT_ALARM']*6,
                         'event_detail': [
-                                        "Power ratio alarm: serious_var_1 accounted for 94.49% of HPWH energy use.",
-                                        "Power ratio alarm: serious_var_3 accounted for 5.51% of HPWH energy use.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use.",
-                                        "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use."
+                                        "Power ratio alarm: serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
+                                        "Power ratio alarm: serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
                                         ],
                         'variable_name' : ['serious_var_1','serious_var_3','serious_var_5','serious_var_3','serious_var_5','serious_var_5']})
         df_expected.set_index('start_time_pt', inplace=True)

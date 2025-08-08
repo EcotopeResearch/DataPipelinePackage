@@ -184,7 +184,7 @@ def _check_and_add_ratio_alarm(daily_df: pd.DataFrame, alarm_key : str, column_n
     alarm_daily_df = daily_df.loc[(daily_df[f"{column_name}_{alarm_key}"] < low_bound) | (daily_df[f"{column_name}_{alarm_key}"] > high_bound)]
     if not alarm_daily_df.empty:
         for day, values in alarm_daily_df.iterrows():
-            alarm_str = f"Power ratio alarm: {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use."
+            alarm_str = f"Power ratio alarm: {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use. {round(low_bound, 2)}-{round(high_bound, 2)}% of {alarm_key} energy use expected."
             if day in alarms_dict:
                 alarms_dict[day].append([column_name, alarm_str])
             else:
