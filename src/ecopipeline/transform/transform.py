@@ -396,11 +396,12 @@ def column_name_change(df : pd.DataFrame, dt : pd.Timestamp, new_column : str, o
     remove_old_column : bool
         remove old column when done
     """
-    if df.index.min() < dt:
-        mask = df.index < dt
-        df.loc[mask, new_column] = df.loc[mask, old_column]
-    if remove_old_column:
-        df = df.drop(columns=[old_column])
+    if old_column in df.columns:
+        if df.index.min() < dt:
+            mask = df.index < dt
+            df.loc[mask, new_column] = df.loc[mask, old_column]
+        if remove_old_column:
+            df = df.drop(columns=[old_column])
     return df
 
 def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp : str, heat_out_col_name : str, return_as_kw : bool = True) -> pd.DataFrame:
