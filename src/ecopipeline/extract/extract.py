@@ -728,6 +728,10 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
             json_message = response.json()
             string_to_match = 'The log size is too large - please try again with a smaller date range.'
             if 'error' in json_message and 'message' in json_message['error'] and json_message['error']['message'] == string_to_match:
+                if endTime - timedelta(minutes=30) < startTime:
+                    # if we can't retrieve less then 30 minutes of data, the dataframe is bust...
+                    print(f"Unable to retrieve data for {startTime} - {endTime}")
+                    return pd.DataFrame() 
                 # Calculate the midpoint between the two datetimes
                 time_diff = endTime - startTime
                 midpointTime = startTime + time_diff / 2
