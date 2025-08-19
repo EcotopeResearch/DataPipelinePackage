@@ -50,6 +50,8 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
             raise Exception(f"{required_column} is not present in Variable_Names.csv")
     if not 'pretty_name' in bounds_df.columns:
         bounds_df['pretty_name'] = bounds_df['variable_name']
+    else:
+        bounds_df['pretty_name'] = bounds_df['pretty_name'].fillna(bounds_df['variable_name'])
     if not 'fault_time' in bounds_df.columns:
         bounds_df['fault_time'] = default_fault_time
 

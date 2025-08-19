@@ -76,7 +76,6 @@ def test_flag_boundary_alarms_with_fault_times(mock_config_manager):
         # Call the function that uses mysql.connector.connect()
         event_df = flag_boundary_alarms(df, mock_config_manager, default_fault_time=3)
 
-        # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
         assert_frame_equal(event_df, df_expected)
 
@@ -88,7 +87,7 @@ def test_flag_boundary_alarms_with_days(mock_config_manager):
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5'],
-                        'pretty_name': ['serious_var_1', 'my sweet dude', 'serious_var_3', 'serious_var_4','serious_var_5'],
+                        'pretty_name': [None, 'my sweet dude', 'serious_var_3', 'serious_var_4','serious_var_5'],
                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5],
                         'high_alarm': [1,2,None,None,76]})
         mock_csv.return_value = csv_df

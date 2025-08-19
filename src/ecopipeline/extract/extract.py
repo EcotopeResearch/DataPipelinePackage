@@ -686,15 +686,16 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     device_id = config.get_fm_device_id()
     url = f"https://www.fieldpop.io/rest/method/fieldpop-api/deviceDataLog?happn_token={api_token}&deviceID={device_id}"
     if not startTime is None:
-        url = f"{url}&startUTCsec={startTime.timestamp()}"
+        url = f"{url}&startUTCsec={int(startTime.timestamp())}"
     else:
         startTime = datetime(2000, 1, 1, 0, 0, 0)  # Jan 1, 2000
     if not endTime is None:
-        url = f"{url}&endUTCsec={endTime.timestamp()}"
+        url = f"{url}&endUTCsec={int(endTime.timestamp())}"
     else:
         endTime = datetime.now()
 
     try:
+        print(url)
         response = requests.get(url)
         if response.status_code == 200:
             df = pd.DataFrame()
