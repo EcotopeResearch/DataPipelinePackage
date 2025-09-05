@@ -2,6 +2,107 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 from ecopipeline import ConfigManager
+import re
+import mysql.connector.errors as mysqlerrors
+
+def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "", 
+                             default_cop_high_bound : float = 4.5, default_cop_low_bound : float = 0,
+                             default_boundary_fault_time : int = 15, site_name : str = None) -> pd.DataFrame:
+    day_list = daily_data.index.to_list()
+    print('Checking for alarms...')
+    alarm_df = _convert_silent_alarm_dict_to_df({})
+    boundary_alarm_df = flag_boundary_alarms(df, config, full_days=day_list, system=system, default_fault_time= default_boundary_fault_time)
+    pwr_alarm_df = power_ratio_alarm(daily_data, config, system=system)
+    abnormal_COP_df = flag_abnormal_COP(daily_data, config, system = system, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
+
+    if len(boundary_alarm_df) > 0:
+        print("Boundary alarms detected. Adding them to event df...")
+        alarm_df = boundary_alarm_df
+    else:
+        print("No boundary alarms detected.")
+
+    if len(pwr_alarm_df) > 0:
+        print("Power alarms detected. Adding them to event df...")
+        alarm_df = pd.concat([alarm_df, pwr_alarm_df])
+    else:
+        print("No power alarms detected.")
+    
+    if _check_if_during_ongoing_cop_alarm(daily_data, config, site_name):
+        print("Ongoing DATA_LOSS_COP detected. No further DATA_LOSS_COP events will be uploaded")
+    elif len(abnormal_COP_df) > 0:
+        print("Abnormal COPs detected. Adding them to event df...")
+        alarm_df = pd.concat([alarm_df, abnormal_COP_df])
+    else:
+        print("No abnormal COPs.")
+
+    return alarm_df
+
+def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: str = "", default_high_bound : float = 4.5, default_low_bound : float = 0) -> pd.DataFrame:
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    if (system != ""):
+        if not 'system' in bounds_df.columns:
+            raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
+        bounds_df = bounds_df.loc[bounds_df['system'] == system]
+    if not "variable_name" in bounds_df.columns:
+        raise Exception(f"variable_name is not present in Variable_Names.csv")
+    if not 'pretty_name' in bounds_df.columns:
+        bounds_df['pretty_name'] = bounds_df['variable_name']
+    else:
+        bounds_df['pretty_name'] = bounds_df['pretty_name'].fillna(bounds_df['variable_name'])
+    if not 'high_alarm' in bounds_df.columns:
+        bounds_df['high_alarm'] = default_high_bound
+    else:
+        bounds_df['high_alarm'] = bounds_df['high_alarm'].fillna(default_high_bound)
+    if not 'low_alarm' in bounds_df.columns:
+        bounds_df['low_alarm'] = default_low_bound
+    else:
+        bounds_df['low_alarm'] = bounds_df['low_alarm'].fillna(default_low_bound)
+
+    bounds_df = bounds_df.loc[:, ["variable_name", "high_alarm", "low_alarm", "pretty_name"]]
+    bounds_df.dropna(axis=0, thresh=2, inplace=True)
+    bounds_df.set_index(['variable_name'], inplace=True)
+
+    cop_pattern = re.compile(r'^(COP\w*|SystemCOP\w*)$')
+    cop_columns = [col for col in daily_data.columns if re.match(cop_pattern, col)]
+
+    alarms_dict = {}
+    if not daily_data.empty and len(cop_columns) > 0:
+        for bound_var, bounds in bounds_df.iterrows():
+            if bound_var in cop_columns:
+                for day, day_values in daily_data.iterrows():
+                    if day_values[bound_var] > bounds['high_alarm'] or day_values[bound_var] < bounds['low_alarm']:
+                        alarm_str = f"{bounds['pretty_name']} = {round(day_values[bound_var],2)}"
+                        if day in alarms_dict:
+                            alarms_dict[day] = alarms_dict[day] + f", {alarm_str}"
+                        else:
+                            alarms_dict[day] = f"Unexpected COP Value(s) detected: {alarm_str}"
+    return _convert_event_type_dict_to_df(alarms_dict)
+
+def _check_if_during_ongoing_cop_alarm(daily_df : pd.DataFrame, config : ConfigManager, site_name : str = None) -> bool:
+    if site_name is None:
+        site_name = config.get_site_name()
+    connection, cursor = config.connect_db()
+    on_going_cop = False
+    try:
+        # find existing times in database for upsert statement
+        cursor.execute(
+            f"SELECT id FROM site_events WHERE start_time_pt <= '{daily_df.index.min()}' AND (end_time_pt IS NULL OR end_time_pt >= '{daily_df.index.max()}') AND site_name = '{site_name}' AND event_type = 'DATA_LOSS_COP'")
+        # Fetch the results into a DataFrame
+        existing_rows = pd.DataFrame(cursor.fetchall(), columns=['id'])
+        if not existing_rows.empty:
+            on_going_cop = True
+
+    except mysqlerrors.Error as e:
+        print(f"Retrieving data from site_events caused exception: {e}")
+    connection.close()
+    cursor.close()
+    return on_going_cop
 
 def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, system: str = "", full_days : list = None) -> pd.DataFrame:
     """
@@ -102,6 +203,25 @@ def _convert_silent_alarm_dict_to_df(alarm_dict : dict) -> pd.DataFrame:
     event_df.set_index('start_time_pt', inplace=True)
     return event_df
 
+def _convert_event_type_dict_to_df(alarm_dict : dict, event_type = 'DATA_LOSS_COP') -> pd.DataFrame:
+    events = {
+        'start_time_pt' : [],
+        'end_time_pt' : [],
+        'event_type' : [],
+        'event_detail' : [],
+        'variable_name' : []
+    }
+    for key, value in alarm_dict.items():
+        events['start_time_pt'].append(key)
+        events['end_time_pt'].append(key)
+        events['event_type'].append(event_type)
+        events['event_detail'].append(value)
+        events['variable_name'].append(None)
+
+    event_df = pd.DataFrame(events)
+    event_df.set_index('start_time_pt', inplace=True)
+    return event_df
+
 def _check_and_add_alarm(df : pd.DataFrame, mask : pd.Series, alarms_dict, day, fault_time : int, var_name : str, pretty_name : str, alarm_type : str = 'Lower'):
     # KNOWN BUG : Avg value during fault time excludes the first (fault_time-1) minutes of each fault window
     next_day = day + pd.Timedelta(days=1)
@@ -130,7 +250,7 @@ def _check_and_add_alarm(df : pd.DataFrame, mask : pd.Series, alarms_dict, day, 
         else:
             alarms_dict[day] = [[var_name, alarm_string]]
 
-def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: str = "") -> pd.DataFrame:
+def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: str = "", verbose : bool = False) -> pd.DataFrame:
     daily_df_copy = daily_df.copy()
     variable_names_path = config.get_var_names_path()
     try:
@@ -148,6 +268,8 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: st
             raise Exception(f"{required_column} is not present in Variable_Names.csv")
     if not 'pretty_name' in ratios_df.columns:
         ratios_df['pretty_name'] = ratios_df['variable_name']
+    else:
+        ratios_df['pretty_name'] = ratios_df['pretty_name'].fillna(ratios_df['variable_name'])
     ratios_df = ratios_df.loc[:, ["variable_name", "alarm_codes", "pretty_name"]]
     ratios_df = ratios_df[ratios_df['alarm_codes'].str.contains('PR', na=False)]
     ratios_df.dropna(axis=0, thresh=2, inplace=True)
@@ -172,13 +294,16 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: st
                     ratio_dict[pr_id][3].append(ratios['pretty_name'])
                 else:
                     ratio_dict[pr_id] = [[ratios_var],[float(low_high[0])],[float(low_high[1])],[ratios['pretty_name']]]
-
+    if verbose:
+        print("ratio_dict keys:", ratio_dict.keys())
     alarms = {}
     for key, value_list in ratio_dict.items():
         daily_df_copy[key] = daily_df_copy[value_list[0]].sum(axis=1)
         for i in range(len(value_list[0])):
             column_name = value_list[0][i]
             daily_df_copy[f'{column_name}_{key}'] = (daily_df_copy[column_name]/daily_df_copy[key]) * 100
+            if verbose:
+                print(f"Ratios for {column_name}_{key}",daily_df_copy[f'{column_name}_{key}'])
             _check_and_add_ratio_alarm(daily_df_copy, key, column_name, value_list[3][i], alarms, value_list[2][i], value_list[1][i])
     return _convert_silent_alarm_dict_to_df(alarms)      
 
