@@ -361,9 +361,9 @@ def test_load_event_table(mocker):
     expected_queries = [
         "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = 'db_name') AND (TABLE_NAME = 'site_events')",
         "SELECT id, start_time_pt, end_time_pt, event_detail, event_type, variable_name, last_modified_by FROM site_events WHERE start_time_pt >= '2022-01-01 00:00:00' AND site_name = 'silly_site'",
-        "INSERT INTO site_events (start_time_pt,site_name,end_time_pt,event_type,event_detail, variable_name, last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,%s",
+        "INSERT INTO site_events (start_time_pt,site_name,end_time_pt,event_type,event_detail, variable_name, summary_filtered, optim_filtered, last_modified_date, last_modified_by) VALUES (%s, %s, %s,%s,%s,",
         "UPDATE site_events SET end_time_pt = %s, event_type = %s, event_detail = %s, variable_name = %s, last_modified_by = 'automatic_upload', last_modified_date = ",
-        "INSERT INTO site_events (start_time_pt,site_name,end_time_pt,event_type,event_detail, variable_name, last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,%s",
+        "INSERT INTO site_events (start_time_pt,site_name,end_time_pt,event_type,event_detail, variable_name, summary_filtered, optim_filtered, last_modified_date, last_modified_by) VALUES (%s, %s, %s,%s,%s,",
     ]
 
     #  Verify the behavior and result

@@ -302,6 +302,11 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     bool: 
         A boolean value indicating if the data was successfully written to the database. 
     """
+    # define constants
+    proj_cop_filters = ['MV_COMMISSIONED','PLANT_COMMISSIONED','DATA_LOSS_COP','SYSTEM_MAINTENANCE','SYSTEM_TESTING']
+    optim_cop_filters = ['MV_COMMISSIONED','PLANT_COMMISSIONED','DATA_LOSS_COP','INSTALLATION_ERROR_COP',
+                            'PARTIAL_OCCUPANCY','SOO_PERIOD_COP','SYSTEM_TESTING','EQUIPMENT_MALFUNCTION',
+                            'SYSTEM_MAINTENANCE']
     # Drop empty columns
     event_df = event_df.dropna(axis=1, how='all')
 
@@ -329,7 +334,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
         column_names += "," + column
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", variable_name, last_modified_date, last_modified_by) VALUES (%s,%s,%s,%s,%s,%s,'"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
+    insert_str = "INSERT INTO " + table_name + " (" + column_names + ", variable_name, summary_filtered, optim_filtered, last_modified_date, last_modified_by) VALUES (%s, %s, %s,%s,%s,%s,%s,%s,'"+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"','automatic_upload')"
 
     if not 'variable_name' in event_df.columns:
         event_df['variable_name'] = None
@@ -338,11 +343,15 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     full_column_names.append('last_modified_date')
     full_column_names.append('last_modified_by')
     full_column_names.append('variable_name')
+    full_column_names.append('summary_filtered')
+    full_column_names.append('optim_filtered')
+
     full_column_types = column_types[1:]
     full_column_types.append('datetime')
     full_column_types.append('varchar(60)')
     full_column_types.append('varchar(70)')
-
+    full_column_types.append('tinyint(1)')
+    full_column_types.append('tinyint(1)')
 
     existing_rows = pd.DataFrame({
         'start_time_pt' : [],
@@ -376,7 +385,7 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     ignoredRows = 0
     try:
         for index, row in event_df.iterrows():
-            time_data = [index,site_name,row['end_time_pt'],row['event_type'],row['event_detail'],row['variable_name']]
+            time_data = [index,site_name,row['end_time_pt'],row['event_type'],row['event_detail'],row['variable_name'], row['event_type'] in proj_cop_filters, row['event_type'] in optim_cop_filters]
             #remove nans and infinites
             time_data = [None if (x is None or pd.isna(x)) else x for x in time_data]
             time_data = [None if (x == float('inf') or x == float('-inf')) else x for x in time_data]
@@ -436,8 +445,8 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
     print(f"logging DATA_LOSS_COP into {table_name}")
 
     # create SQL statement
-    insert_str = "INSERT INTO " + table_name + " (start_time_pt, site_name, event_detail, event_type, last_modified_date, last_modified_by) VALUES "
-    insert_str += f"('{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS_COP','{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
+    insert_str = "INSERT INTO " + table_name + " (start_time_pt, site_name, event_detail, event_type, summary_filtered, optim_filtered, last_modified_date, last_modified_by) VALUES "
+    insert_str += f"('{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','{site_name}','{error_string}','DATA_LOSS_COP', true, true, '{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}','automatic_upload')"
 
     existing_rows = pd.DataFrame({
         'id' : []
