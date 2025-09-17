@@ -223,16 +223,23 @@ def test_flag_abnormal_COP(mock_config_manager):
                         'COP_Boundary': [4.8, 2, -1]})
         df.index = timestamps
         
-        event_time_pts = pd.to_datetime(['2022-01-03', '2022-01-01'])
+        event_time_pts = pd.to_datetime(['2022-01-03', '2022-01-03', '2022-01-01', '2022-01-01'])
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': event_time_pts,
-                        'event_type': ['DATA_LOSS_COP']*2,
+                        'event_type': ['SILENT_ALARM']*4,
                         'event_detail': [
-                                        "Unexpected COP Value(s) detected: COP_Boundary = -1.0, COP_Equipment = 120.0",
-                                        "Unexpected COP Value(s) detected: COP_Equipment = inf, SystemCOP = 4.0"
+                                        "Unexpected COP Value detected: COP_Boundary = -1.0",
+                                        "Unexpected COP Value detected: COP_Equipment = 120.0",
+                                        "Unexpected COP Value detected: COP_Equipment = inf",
+                                        "Unexpected COP Value detected: SystemCOP = 4.0"
                                         ],
-                        'variable_name' : [None,None]})
+                        'variable_name' : [
+                            'COP_Boundary',
+                            'COP_Equipment',
+                            'COP_Equipment',
+                            'SystemCOP'
+                            ]})
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
@@ -298,7 +305,7 @@ def test_central_alarm_function(mock_config_manager, mocker):
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': event_time_pts,
-                        'event_type': ['SILENT_ALARM']*11 + ['DATA_LOSS_COP']*2,
+                        'event_type': ['SILENT_ALARM']*13,
                         'event_detail': [
                                         "Upper bound alarm for serious_var_1 (longest at 01:01 for 5 minutes). Avg fault time : 5.0 minutes, Avg value during fault: inf",
                                         "Upper bound alarm for my sweet dude (longest at 01:02 for 4 minutes). Avg fault time : 4.0 minutes, Avg value during fault: 85.0",
@@ -311,12 +318,12 @@ def test_central_alarm_function(mock_config_manager, mocker):
                                         "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
                                         "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
                                         "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Unexpected COP Value(s) detected: System COP (Boundary Method) = 4.6",
-                                        "Unexpected COP Value(s) detected: System COP (Boundary Method) = -1.0"
+                                        "Unexpected COP Value detected: System COP (Boundary Method) = 4.6",
+                                        "Unexpected COP Value detected: System COP (Boundary Method) = -1.0"
                                         ],
                         'variable_name' : ['serious_var_1','serious_var_2','serious_var_1','serious_var_2','serious_var_2',
                                            'serious_var_1','serious_var_3','serious_var_5','serious_var_3','serious_var_5','serious_var_5',
-                                           None,None]})
+                                           "COP_Boundary","COP_Boundary"]})
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()

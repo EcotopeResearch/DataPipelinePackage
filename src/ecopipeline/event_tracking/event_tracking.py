@@ -77,12 +77,12 @@ def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: 
             if bound_var in cop_columns:
                 for day, day_values in daily_data.iterrows():
                     if day_values[bound_var] > bounds['high_alarm'] or day_values[bound_var] < bounds['low_alarm']:
-                        alarm_str = f"{bounds['pretty_name']} = {round(day_values[bound_var],2)}"
+                        alarm_str = f"Unexpected COP Value detected: {bounds['pretty_name']} = {round(day_values[bound_var],2)}"
                         if day in alarms_dict:
-                            alarms_dict[day] = alarms_dict[day] + f", {alarm_str}"
+                            alarms_dict[day].append([bound_var, alarm_str])
                         else:
-                            alarms_dict[day] = f"Unexpected COP Value(s) detected: {alarm_str}"
-    return _convert_event_type_dict_to_df(alarms_dict)
+                            alarms_dict[day] = [[bound_var, alarm_str]]
+    return _convert_event_type_dict_to_df(alarms_dict, event_type="SILENT_ALARM")
 
 def _check_if_during_ongoing_cop_alarm(daily_df : pd.DataFrame, config : ConfigManager, site_name : str = None) -> bool:
     if site_name is None:
@@ -212,11 +212,12 @@ def _convert_event_type_dict_to_df(alarm_dict : dict, event_type = 'DATA_LOSS_CO
         'variable_name' : []
     }
     for key, value in alarm_dict.items():
-        events['start_time_pt'].append(key)
-        events['end_time_pt'].append(key)
-        events['event_type'].append(event_type)
-        events['event_detail'].append(value)
-        events['variable_name'].append(None)
+        for i in range(len(value)):
+            events['start_time_pt'].append(key)
+            events['end_time_pt'].append(key)
+            events['event_type'].append(event_type)
+            events['event_detail'].append(value[i][1])
+            events['variable_name'].append(value[i][0])
 
     event_df = pd.DataFrame(events)
     event_df.set_index('start_time_pt', inplace=True)
