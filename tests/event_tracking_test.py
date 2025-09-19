@@ -150,18 +150,18 @@ def test_flag_ratio_alarms(mock_config_manager):
                         'end_time_pt': event_time_pts,
                         'event_type': ['SILENT_ALARM']*6,
                         'event_detail': [
-                                        "Power ratio alarm: serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-02): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
                                         ],
                         'variable_name' : ['serious_var_1','serious_var_3','serious_var_5','serious_var_3','serious_var_5','serious_var_5']})
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
-        event_df = power_ratio_alarm(df, mock_config_manager)
+        event_df = power_ratio_alarm(df, mock_config_manager, "fake_table", ratio_period_days=1)
 
         # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
@@ -191,15 +191,15 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
                         'end_time_pt': event_time_pts,
                         'event_type': ['SILENT_ALARM']*3,
                         'event_detail': [
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-02): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
                                         ],
                         'variable_name' : ['serious_var_5','serious_var_5','serious_var_5']})
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
-        event_df = power_ratio_alarm(df, mock_config_manager)
+        event_df = power_ratio_alarm(df, mock_config_manager, "fake_table", ratio_period_days=1)
 
         # Assert that mysql.connector.connect() was called
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
@@ -252,6 +252,7 @@ def test_flag_abnormal_COP(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_central_alarm_function(mock_config_manager, mocker):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    mock_config_manager.get_table_name.return_value = "fake_daily_table"
     cursor_mock = MagicMock()
     con_mock = MagicMock()
 
@@ -312,12 +313,12 @@ def test_central_alarm_function(mock_config_manager, mocker):
                                         "Lower bound alarm for serious_var_1 (longest at 01:06 for 5 minutes). Avg fault time : 4.5 minutes, Avg value during fault: -4.2",
                                         "Lower bound alarm for my sweet dude (longest at 01:05 for 3 minutes). Avg fault time : 3.0 minutes, Avg value during fault: -2.0",
                                         "Upper bound alarm for my sweet dude (longest at 01:08 for 3 minutes). Avg fault time : 3.0 minutes, Avg value during fault: 7.0",
-                                        "Power ratio alarm: serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-02): serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
                                         "Unexpected COP Value detected: System COP (Boundary Method) = 4.6",
                                         "Unexpected COP Value detected: System COP (Boundary Method) = -1.0"
                                         ],
@@ -327,7 +328,7 @@ def test_central_alarm_function(mock_config_manager, mocker):
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
-        event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager)
+        event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager, power_ratio_period_days=1)
 
         # Assert that mysql.connector.connect() was called
         # mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
@@ -337,6 +338,7 @@ def test_central_alarm_function(mock_config_manager, mocker):
 @patch('ecopipeline.ConfigManager')
 def test_central_alarm_function_with_ongoing_cop_data_loss(mock_config_manager, mocker):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    mock_config_manager.get_table_name.return_value = "fake_daily_table"
     cursor_mock = MagicMock()
     con_mock = MagicMock()
 
@@ -397,19 +399,19 @@ def test_central_alarm_function_with_ongoing_cop_data_loss(mock_config_manager, 
                                         "Lower bound alarm for serious_var_1 (longest at 01:06 for 5 minutes). Avg fault time : 4.5 minutes, Avg value during fault: -4.2",
                                         "Lower bound alarm for my sweet dude (longest at 01:05 for 3 minutes). Avg fault time : 3.0 minutes, Avg value during fault: -2.0",
                                         "Upper bound alarm for my sweet dude (longest at 01:08 for 3 minutes). Avg fault time : 3.0 minutes, Avg value during fault: 7.0",
-                                        "Power ratio alarm: serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
-                                        "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
-                                        "Power ratio alarm: serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_1 accounted for 94.49% of HPWH energy use. 60.0-80.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_3 accounted for 5.51% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% of HPWH energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-02): serious var 5 accounted for 0.0% of Other energy use. 20.0-50.0% of Other energy use expected."
                                         ],
                         'variable_name' : ['serious_var_1','serious_var_2','serious_var_1','serious_var_2','serious_var_2',
                                            'serious_var_1','serious_var_3','serious_var_5','serious_var_3','serious_var_5','serious_var_5']})
         df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
-        event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager)
+        event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager, power_ratio_period_days=1)
 
         # Assert that mysql.connector.connect() was called
         # mock_csv._once_with('fake/path/whatever/Variable_Names.csv')

@@ -4,15 +4,17 @@ import datetime as dt
 from ecopipeline import ConfigManager
 import re
 import mysql.connector.errors as mysqlerrors
+from datetime import timedelta
 
 def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "", 
                              default_cop_high_bound : float = 4.5, default_cop_low_bound : float = 0,
-                             default_boundary_fault_time : int = 15, site_name : str = None) -> pd.DataFrame:
+                             default_boundary_fault_time : int = 15, site_name : str = None, day_table_name_header : str = "day",
+                             power_ratio_period_days : int = 7) -> pd.DataFrame:
     day_list = daily_data.index.to_list()
     print('Checking for alarms...')
     alarm_df = _convert_silent_alarm_dict_to_df({})
     boundary_alarm_df = flag_boundary_alarms(df, config, full_days=day_list, system=system, default_fault_time= default_boundary_fault_time)
-    pwr_alarm_df = power_ratio_alarm(daily_data, config, system=system)
+    pwr_alarm_df = power_ratio_alarm(daily_data, config, day_table_name = config.get_table_name(day_table_name_header), system=system, ratio_period_days=power_ratio_period_days)
     abnormal_COP_df = flag_abnormal_COP(daily_data, config, system = system, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
 
     if len(boundary_alarm_df) > 0:
@@ -251,7 +253,31 @@ def _check_and_add_alarm(df : pd.DataFrame, mask : pd.Series, alarms_dict, day, 
         else:
             alarms_dict[day] = [[var_name, alarm_string]]
 
-def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: str = "", verbose : bool = False) -> pd.DataFrame:
+def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, day_table_name : str, system: str = "", verbose : bool = False, ratio_period_days : int = 7) -> pd.DataFrame:
+    """
+    Function will take a pandas dataframe of daily data and location of alarm information in a csv,
+    and create an dataframe with applicable alarm events
+
+    Parameters
+    ----------
+    daily_df: pd.DataFrame
+        post-transformed dataframe for daily data. It should be noted that this function expects consecutive, in order days. If days
+        are out of order or have gaps, the function may return erroneous alarms.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name", "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires the alarming and the ratio alarm code in the form "PR_{Power Ratio Name}:{low percentage}-{high percentage}
+    system: str
+        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
+    verbose : bool
+        add print statements in power ratio
+
+    Returns
+    ------- 
+    pd.DataFrame:
+        Pandas dataframe with alarm events, empty if no alarms triggered
+    """
     daily_df_copy = daily_df.copy()
     variable_names_path = config.get_var_names_path()
     try:
@@ -274,8 +300,15 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: st
     ratios_df = ratios_df.loc[:, ["variable_name", "alarm_codes", "pretty_name"]]
     ratios_df = ratios_df[ratios_df['alarm_codes'].str.contains('PR', na=False)]
     ratios_df.dropna(axis=0, thresh=2, inplace=True)
-    ratios_df.set_index(['variable_name'], inplace=True)
+    if ratio_period_days > 1:
+        if verbose:
+            print(f"adding last {ratio_period_days} to daily_df")
+        daily_df_copy = _append_previous_days_to_df(daily_df_copy, config, ratio_period_days, day_table_name)
+    elif ratio_period_days < 1:
+        print("power ratio alarm period, ratio_period_days, must be more than 1")
+        return pd.DataFrame()
 
+    ratios_df.set_index(['variable_name'], inplace=True)
     ratio_dict = {}
     for ratios_var, ratios in ratios_df.iterrows():
         if not ratios_var in daily_df_copy.columns:
@@ -297,26 +330,111 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, system: st
                     ratio_dict[pr_id] = [[ratios_var],[float(low_high[0])],[float(low_high[1])],[ratios['pretty_name']]]
     if verbose:
         print("ratio_dict keys:", ratio_dict.keys())
+    # Create blocks of ratio_period_days
+    blocks_df = _create_period_blocks(daily_df_copy, ratio_period_days, verbose)
+
+    if blocks_df.empty:
+        print("No complete blocks available for analysis")
+        return pd.DataFrame()
+    
     alarms = {}
     for key, value_list in ratio_dict.items():
-        daily_df_copy[key] = daily_df_copy[value_list[0]].sum(axis=1)
+        # Calculate total for each block
+        blocks_df[key] = blocks_df[value_list[0]].sum(axis=1)
         for i in range(len(value_list[0])):
             column_name = value_list[0][i]
-            daily_df_copy[f'{column_name}_{key}'] = (daily_df_copy[column_name]/daily_df_copy[key]) * 100
+            # Calculate ratio for each block
+            blocks_df[f'{column_name}_{key}'] = (blocks_df[column_name]/blocks_df[key]) * 100
             if verbose:
-                print(f"Ratios for {column_name}_{key}",daily_df_copy[f'{column_name}_{key}'])
-            _check_and_add_ratio_alarm(daily_df_copy, key, column_name, value_list[3][i], alarms, value_list[2][i], value_list[1][i])
-    return _convert_silent_alarm_dict_to_df(alarms)      
+                print(f"Block ratios for {column_name}_{key}:", blocks_df[f'{column_name}_{key}'])
+            _check_and_add_ratio_alarm_blocks(blocks_df, key, column_name, value_list[3][i], alarms, value_list[2][i], value_list[1][i], ratio_period_days)
+    return _convert_silent_alarm_dict_to_df(alarms) 
+    # alarms = {}
+    # for key, value_list in ratio_dict.items():
+    #     daily_df_copy[key] = daily_df_copy[value_list[0]].sum(axis=1)
+    #     for i in range(len(value_list[0])):
+    #         column_name = value_list[0][i]
+    #         daily_df_copy[f'{column_name}_{key}'] = (daily_df_copy[column_name]/daily_df_copy[key]) * 100
+    #         if verbose:
+    #             print(f"Ratios for {column_name}_{key}",daily_df_copy[f'{column_name}_{key}'])
+    #         _check_and_add_ratio_alarm(daily_df_copy, key, column_name, value_list[3][i], alarms, value_list[2][i], value_list[1][i])
+    # return _convert_silent_alarm_dict_to_df(alarms)      
 
-def _check_and_add_ratio_alarm(daily_df: pd.DataFrame, alarm_key : str, column_name : str, pretty_name : str, alarms_dict : dict, high_bound : float, low_bound : float):
-    alarm_daily_df = daily_df.loc[(daily_df[f"{column_name}_{alarm_key}"] < low_bound) | (daily_df[f"{column_name}_{alarm_key}"] > high_bound)]
-    if not alarm_daily_df.empty:
-        for day, values in alarm_daily_df.iterrows():
-            alarm_str = f"Power ratio alarm: {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use. {round(low_bound, 2)}-{round(high_bound, 2)}% of {alarm_key} energy use expected."
-            if day in alarms_dict:
-                alarms_dict[day].append([column_name, alarm_str])
+# def _check_and_add_ratio_alarm(daily_df: pd.DataFrame, alarm_key : str, column_name : str, pretty_name : str, alarms_dict : dict, high_bound : float, low_bound : float):
+#     alarm_daily_df = daily_df.loc[(daily_df[f"{column_name}_{alarm_key}"] < low_bound) | (daily_df[f"{column_name}_{alarm_key}"] > high_bound)]
+#     if not alarm_daily_df.empty:
+#         for day, values in alarm_daily_df.iterrows():
+#             alarm_str = f"Power ratio alarm: {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use. {round(low_bound, 2)}-{round(high_bound, 2)}% of {alarm_key} energy use expected."
+#             if day in alarms_dict:
+#                 alarms_dict[day].append([column_name, alarm_str])
+#             else:
+#                 alarms_dict[day] = [[column_name, alarm_str]]
+def _check_and_add_ratio_alarm_blocks(blocks_df: pd.DataFrame, alarm_key: str, column_name: str, pretty_name: str, alarms_dict: dict, high_bound: float, low_bound: float, ratio_period_days: int):
+    """
+    Check for alarms in block-based ratios and add to alarms dictionary.
+    """
+    alarm_blocks_df = blocks_df.loc[(blocks_df[f"{column_name}_{alarm_key}"] < low_bound) | (blocks_df[f"{column_name}_{alarm_key}"] > high_bound)]
+    if not alarm_blocks_df.empty:
+        for block_end_date, values in alarm_blocks_df.iterrows():
+            alarm_str = f"Power ratio alarm ({ratio_period_days}-day block ending {block_end_date.strftime('%Y-%m-%d')}): {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use. {round(low_bound, 2)}-{round(high_bound, 2)}% of {alarm_key} energy use expected."
+            if block_end_date in alarms_dict:
+                alarms_dict[block_end_date].append([column_name, alarm_str])
             else:
-                alarms_dict[day] = [[column_name, alarm_str]]
+                alarms_dict[block_end_date] = [[column_name, alarm_str]]
+
+def _create_period_blocks(daily_df: pd.DataFrame, ratio_period_days: int, verbose: bool = False) -> pd.DataFrame:
+    """
+    Create blocks of ratio_period_days by summing values within each block.
+    Each block will be represented by its end date.
+    """
+    if len(daily_df) < ratio_period_days:
+        if verbose:
+            print(f"Not enough data for {ratio_period_days}-day blocks. Need at least {ratio_period_days} days, have {len(daily_df)}")
+        return pd.DataFrame()
+    
+    blocks = []
+    block_dates = []
+    
+    # Create blocks by summing consecutive groups of ratio_period_days
+    for i in range(ratio_period_days - 1, len(daily_df)):
+        start_idx = i - ratio_period_days + 1
+        end_idx = i + 1
+        
+        block_data = daily_df.iloc[start_idx:end_idx].sum()
+        blocks.append(block_data)
+        # Use the end date of the block as the identifier
+        block_dates.append(daily_df.index[i])
+    
+    if not blocks:
+        return pd.DataFrame()
+    
+    blocks_df = pd.DataFrame(blocks, index=block_dates)
+    
+    if verbose:
+        print(f"Created {len(blocks_df)} blocks of {ratio_period_days} days each")
+        print(f"Block date range: {blocks_df.index.min()} to {blocks_df.index.max()}")
+    
+    return blocks_df
+
+def _append_previous_days_to_df(daily_df: pd.DataFrame, config : ConfigManager, ratio_period_days : int, day_table_name : str, primary_key : str = "time_pt") -> pd.DataFrame:
+    db_connection, cursor = config.connect_db()
+    period_start = daily_df.index.min() - timedelta(ratio_period_days)
+    try:
+        # find existing times in database for upsert statement
+        cursor.execute(
+            f"SELECT * FROM {day_table_name} WHERE {primary_key} < '{daily_df.index.min()}' AND {primary_key} >= '{period_start}'")
+        result = cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
+        old_days_df = pd.DataFrame(result, columns=column_names)
+        old_days_df = old_days_df.set_index(primary_key)
+        daily_df = pd.concat([daily_df, old_days_df])
+        daily_df = daily_df.sort_index(ascending=True)
+    except mysqlerrors.Error:
+        print(f"Table {day_table_name} has no data.")
+
+    db_connection.close()
+    cursor.close()
+    return daily_df
 
 # def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column : str, supply_temp : int = 110, consecutive_minutes : int = 15) -> pd.DataFrame:
 #     """
