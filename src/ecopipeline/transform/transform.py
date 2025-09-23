@@ -245,7 +245,6 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
         elif (cp == 0):  # ffill only up to length
             col.fillna(method='ffill', inplace=True, limit=length)
 
-
 def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and forward fill select variables with no entry. 
@@ -305,6 +304,81 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
 
     df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
+
+def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame, load_dict: dict = {1: "normal", 2: "loadUp", 3 : "shed"}, ls_column: str = 'ls',
+                      drop_ls_from_df : bool = True):
+    """
+    Function takes aggregated dfs and adds loadshift signals to hourly df and loadshift days to daily_df
+
+    Parameters
+    ---------- 
+    df: pd.DataFrame
+        Timestamp indexed Pandas dataframe of minute by minute values
+    hourly_df: pd.DataFrame
+        Timestamp indexed Pandas dataframe of hourly average values
+    daily_df: pd.DataFrame
+        Timestamp indexed Pandas dataframe of daily average values
+    load_dict: dict
+        dictionary of what loadshift signal is indicated by a value of the ls_column column in df
+    ls_column: str
+        the name of the loadshift column in df
+    drop_ls_from_df: bool
+        Set to true to drop ls_column from df after processing
+    
+    Returns
+    ------- 
+    df: pd.DataFrame 
+        Timestamp indexed Pandas dataframe of minute by minute values with ls_column removed if drop_ls_from_df = True
+    hourly_df: pd.DataFrame
+        Timestamp indexed Pandas dataframe of hourly average values with added column 'system_state' which contains the 
+        loadshift command value from load_dict from the average (rounded to the nearest integer) key for all indexes in 
+        df within that load_dict key. If the integer is not a key in load_dict, the loadshift command value will be null 
+    daily_df: pd.DataFrame
+        Timestamp indexed Pandas dataframe of daily average values with added boolean column 'load_shift_day' which holds
+        the value True on days which contains hours in hourly_df in which there are loadshift commands other than normal
+        and Fals on days where the only command in normal unknown
+    """
+    # Make copies to avoid modifying original dataframes
+    df_copy = df.copy()
+
+    if ls_column in df_copy.columns:
+        df_copy = df_copy[df_copy[ls_column].notna() & np.isfinite(df_copy[ls_column])]
+    
+    # Process hourly data - aggregate ls_column values by hour and map to system_state
+    if ls_column in df.columns:
+        # Group by hour and calculate mean of ls_column, then round to nearest integer
+        hourly_ls = df_copy[ls_column].resample('H').mean().round().astype(int)
+        
+        # Map the rounded integer values to load_dict, using None for unmapped values
+        hourly_df['system_state'] = hourly_ls.map(load_dict)
+        
+        # For hours not present in the minute data, system_state will be NaN
+        hourly_df['system_state'] = hourly_df['system_state'].where(
+            hourly_df.index.isin(hourly_ls.index)
+        )
+    else:
+        # If ls_column doesn't exist, set all system_state to None
+        hourly_df['system_state'] = None
+    
+    # Process daily data - determine if any non-normal loadshift commands occurred
+    if 'system_state' in hourly_df.columns:
+        # Group by date and check if any non-"normal" and non-null system_state exists
+        daily_ls = hourly_df.groupby(hourly_df.index.date)['system_state'].apply(
+            lambda x: any((state != "normal") and (state is not None) for state in x.dropna())
+        )
+        
+        # Map the daily boolean results to the daily_df index
+        daily_df['load_shift_day'] = daily_df.index.date
+        daily_df['load_shift_day'] = daily_df['load_shift_day'].map(daily_ls).fillna(False)
+    else:
+        # If no system_state column, set all days to False
+        daily_df['load_shift_day'] = False
+    
+    # Drop ls_column from df if requested
+    if drop_ls_from_df and ls_column in df.columns:
+        df = df.drop(columns=[ls_column])
+    
+    return df, hourly_df, daily_df
 
 def delete_erroneous_from_time_pt(df: pd.DataFrame, time_point : pd.Timestamp, column_names : list, new_value = None) -> pd.DataFrame:
     """
