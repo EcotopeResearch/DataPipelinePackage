@@ -306,7 +306,7 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
     return df
 
 def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame, load_dict: dict = {1: "normal", 2: "loadUp", 3 : "shed"}, ls_column: str = 'ls',
-                      drop_ls_from_df : bool = True):
+                      drop_ls_from_df : bool = False):
     """
     Function takes aggregated dfs and adds loadshift signals to hourly df and loadshift days to daily_df
 
@@ -342,12 +342,17 @@ def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.Da
     df_copy = df.copy()
 
     if ls_column in df_copy.columns:
+        # print("1",df_copy[np.isfinite(df_copy[ls_column])])
         df_copy = df_copy[df_copy[ls_column].notna() & np.isfinite(df_copy[ls_column])]
-    
+        # print("2",df_copy[np.isfinite(df_copy[ls_column])])
+
     # Process hourly data - aggregate ls_column values by hour and map to system_state
-    if ls_column in df.columns:
+    if ls_column in df_copy.columns:
         # Group by hour and calculate mean of ls_column, then round to nearest integer
-        hourly_ls = df_copy[ls_column].resample('H').mean().round().astype(int)
+        hourly_ls = df_copy[ls_column].resample('H').mean().round()
+        
+        # Convert to int only for non-NaN values
+        hourly_ls = hourly_ls.apply(lambda x: int(x) if pd.notna(x) else x)
         
         # Map the rounded integer values to load_dict, using None for unmapped values
         hourly_df['system_state'] = hourly_ls.map(load_dict)

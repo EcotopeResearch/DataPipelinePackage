@@ -295,6 +295,9 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
                     continue
                 
             temp_dfs.append(data)
+    if len(temp_dfs) <= 0:
+        print("no data for timefarme.")
+        return pd.DataFrame()
     df = pd.concat(temp_dfs, ignore_index=False)
 
     if create_time_pt_idx:
