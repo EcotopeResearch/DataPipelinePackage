@@ -78,7 +78,7 @@ def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: 
         for bound_var, bounds in bounds_df.iterrows():
             if bound_var in cop_columns:
                 for day, day_values in daily_data.iterrows():
-                    if day_values[bound_var] > bounds['high_alarm'] or day_values[bound_var] < bounds['low_alarm']:
+                    if not day_values[bound_var] is None and (day_values[bound_var] > bounds['high_alarm'] or day_values[bound_var] < bounds['low_alarm']):
                         alarm_str = f"Unexpected COP Value detected: {bounds['pretty_name']} = {round(day_values[bound_var],2)}"
                         if day in alarms_dict:
                             alarms_dict[day].append([bound_var, alarm_str])
@@ -135,6 +135,9 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
     pd.DataFrame:
         Pandas dataframe with alarm events
     """
+    if df.empty:
+        print("cannot flag boundary alarms. Dataframe is empty")
+        return pd.DataFrame()
     variable_names_path = config.get_var_names_path()
     try:
         bounds_df = pd.read_csv(variable_names_path)
