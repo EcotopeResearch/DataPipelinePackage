@@ -293,6 +293,9 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, day_table_
     for required_column in required_columns:
         if not required_column in ratios_df.columns:
             raise Exception(f"{required_column} is not present in Variable_Names.csv")
+    if ratios_df['alarm_codes'].isna().all() or ratios_df['alarm_codes'].isnull().all():
+        print("No alarm codes in ", variable_names_path)
+        return pd.DataFrame()
     if not 'pretty_name' in ratios_df.columns:
         ratios_df['pretty_name'] = ratios_df['variable_name']
     else:

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>EcoPipeline Documentation &#8212; DataPipelinePackage 0.8.11 documentation</title>
+    <title>EcoPipeline Documentation &#8212; DataPipelinePackage 0.11.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -28,7 +28,7 @@
         <li class="right" >
           <a href="utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 0.8.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 0.11.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">EcoPipeline Documentation</a></li> 
       </ul>
     </div>  
@@ -78,6 +78,7 @@
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.avg_duplicate_times"><code class="docutils literal notranslate"><span class="pre">avg_duplicate_times()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.calculate_cop_values"><code class="docutils literal notranslate"><span class="pre">calculate_cop_values()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.change_ID_to_HVAC"><code class="docutils literal notranslate"><span class="pre">change_ID_to_HVAC()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.column_name_change"><code class="docutils literal notranslate"><span class="pre">column_name_change()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.concat_last_row"><code class="docutils literal notranslate"><span class="pre">concat_last_row()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.condensate_calculations"><code class="docutils literal notranslate"><span class="pre">condensate_calculations()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.convert_c_to_f"><code class="docutils literal notranslate"><span class="pre">convert_c_to_f()</span></code></a></li>
@@ -115,6 +116,7 @@
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.nclarity_csv_to_df"><code class="docutils literal notranslate"><span class="pre">nclarity_csv_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.nclarity_filter_new"><code class="docutils literal notranslate"><span class="pre">nclarity_filter_new()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.nullify_erroneous"><code class="docutils literal notranslate"><span class="pre">nullify_erroneous()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.process_ls_signal"><code class="docutils literal notranslate"><span class="pre">process_ls_signal()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.remove_outliers"><code class="docutils literal notranslate"><span class="pre">remove_outliers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.remove_partial_days"><code class="docutils literal notranslate"><span class="pre">remove_partial_days()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.rename_sensors"><code class="docutils literal notranslate"><span class="pre">rename_sensors()</span></code></a></li>
@@ -136,7 +138,10 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="event_tracking/event_tracking.html">Event Tracking Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.central_alarm_df_creator"><code class="docutils literal notranslate"><span class="pre">central_alarm_df_creator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_abnormal_COP"><code class="docutils literal notranslate"><span class="pre">flag_abnormal_COP()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_boundary_alarms"><code class="docutils literal notranslate"><span class="pre">flag_boundary_alarms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.power_ratio_alarm"><code class="docutils literal notranslate"><span class="pre">power_ratio_alarm()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -204,7 +209,7 @@
         <li class="right" >
           <a href="utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 0.8.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 0.11.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">EcoPipeline Documentation</a></li> 
       </ul>
     </div>
