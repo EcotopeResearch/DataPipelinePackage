@@ -311,17 +311,16 @@ def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_mo
     
     Parameters:
     -----------
-    temp_F : float or array-like
-        Temperature in Fahrenheit
-    model_path : str, optional
-        Path to a pickle file containing a saved interpolation model.
-        If provided, loads and uses that model instead of the global interp_model.
-        If None, uses the global interp_model.
+    df: pd.DataFrame
+        Timestamp indexed Pandas dataframe of minute by minute values
+    column_name : str
+        Name of column with resistance conversion type 2 data
+    sensor_model : str
+        possible strings: veris, tasseron
     
     Returns:
     --------
-    float or ndarray
-        Resistance in Ohms
+    df: pd.DataFrame 
     """
     model_path_t_to_r = '../utils/pkls/'
     model_path_r_to_t = '../utils/pkls/'
@@ -341,6 +340,34 @@ def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_mo
         model = pickle.load(f)
     df[column_name] = df['resistance'].apply(model)
     df.drop(columns='resistance')
+    return df
+
+def estimate_power(df : pd.DataFrame, new_power_column : str, current_a_column : str, current_b_column : str, current_c_column : str,
+                 assumed_voltage : float = 208, power_factor : float = 1):
+    """
+    df: pd.DataFrame
+        Pandas dataframe with minute-to-minute data
+    new_power_column : str
+        The column name of the power varriable for the calculation. Units of the column should be kW
+    current_a_column : str
+        The column name of the Current A varriable for the calculation. Units of the column should be amps
+    current_b_column : str
+        The column name of the Current B varriable for the calculation. Units of the column should be amps
+    current_c_column : str
+        The column name of the Current C varriable for the calculation. Units of the column should be amps
+    assumed_voltage : float
+        The assumed voltage (default 208)
+    power_factor : float
+        The power factor (default 1)
+        
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas dataframe with new estimated power column of specified name.
+    """
+    #average current * 208V * PF * sqrt(3)
+    df[new_power_column] = (df[current_a_column] + df[current_b_column] + df[current_c_column]) / 3 * assumed_voltage * power_factor * np.sqrt(3) / 1000
+
     return df
 
 def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame, load_dict: dict = {1: "normal", 2: "loadUp", 3 : "shed"}, ls_column: str = 'ls',
