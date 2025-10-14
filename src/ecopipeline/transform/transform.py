@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
-import csv
+import pickle
 import os
 from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g, power_btuhr_to_kw, temp_f_to_c
 from ecopipeline import ConfigManager
@@ -303,6 +303,41 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
                 df[col] = np.nan 
 
     df.apply(_ffill, args=(ffill_df,previous_fill))
+    return df
+
+def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_model = 'veris') -> pd.DataFrame:
+    """
+    Convert temperature in Fahrenheit to resistance in Ohms for 10k Type 2 thermistor.
+    
+    Parameters:
+    -----------
+    temp_F : float or array-like
+        Temperature in Fahrenheit
+    model_path : str, optional
+        Path to a pickle file containing a saved interpolation model.
+        If provided, loads and uses that model instead of the global interp_model.
+        If None, uses the global interp_model.
+    
+    Returns:
+    --------
+    float or ndarray
+        Resistance in Ohms
+    """
+    model_path_t_to_r = '../utils/pkls/'
+    model_path_r_to_t = '../utils/pkls/'
+    if sensor_model == 'veris':
+        model_path_t_to_r = model_path_t_to_r + 'veris_temp_to_resistance_2.pkl'
+        model_path_r_to_t = model_path_r_to_t + 'veris_resistance_to_temp_3.pkl'
+    else:
+        raise Exception("unsupported sensor model")
+    
+    with open(os.path.join(os.path.dirname(__file__),model_path_t_to_r), 'rb') as f:
+        model = pickle.load(f)
+    df['resistance'] = df[column_name].apply(model)
+    with open(os.path.join(os.path.dirname(__file__),model_path_r_to_t), 'rb') as f:
+        model = pickle.load(f)
+    df[column_name] = df['resistance'].apply(model)
+    df.drop(columns='resistance')
     return df
 
 def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame, load_dict: dict = {1: "normal", 2: "loadUp", 3 : "shed"}, ls_column: str = 'ls',
