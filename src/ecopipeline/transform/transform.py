@@ -328,6 +328,9 @@ def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_mo
     if sensor_model == 'veris':
         model_path_t_to_r = model_path_t_to_r + 'veris_temp_to_resistance_2.pkl'
         model_path_r_to_t = model_path_r_to_t + 'veris_resistance_to_temp_3.pkl'
+    elif sensor_model == 'tasseron':
+        model_path_t_to_r = model_path_t_to_r + 'tasseron_temp_to_resistance_2.pkl'
+        model_path_r_to_t = model_path_r_to_t + 'tasseron_resistance_to_temp_3.pkl'
     else:
         raise Exception("unsupported sensor model")
     
