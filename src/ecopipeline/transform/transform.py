@@ -157,20 +157,29 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
     """
     Function will take in a pandas series and bounds information
     stored in a dataframe, then check each element of that column and set it to nan
-    if it is outside the given bounds. 
+    if it is outside the given bounds.
 
-    Args: 
-        col: pd.Series 
+    Args:
+        col: pd.Series
             Pandas dataframe column from data being processed
         bounds_df: pd.DataFrame
             Pandas dataframe indexed by the names of the columns from the dataframe that col came from. There should be at least
             two columns in this dataframe, lower_bound and upper_bound, for use in removing outliers
-    Returns: 
-        None 
+    Returns:
+        None
     """
     if (col.name in bounds_df.index):
-        c_lower = float(bounds_df.loc[col.name]["lower_bound"])
-        c_upper = float(bounds_df.loc[col.name]["upper_bound"])
+        c_lower = bounds_df.loc[col.name]["lower_bound"]
+        c_upper = bounds_df.loc[col.name]["upper_bound"]
+
+        # Skip if both bounds are NaN
+        if pd.isna(c_lower) and pd.isna(c_upper):
+            return
+
+        # Convert bounds to float, handling NaN values
+        c_lower = float(c_lower) if not pd.isna(c_lower) else -np.inf
+        c_upper = float(c_upper) if not pd.isna(c_upper) else np.inf
+
         col.mask((col > c_upper) | (col < c_lower), other=np.NaN, inplace=True)
 
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
@@ -784,7 +793,7 @@ def convert_on_off_col_to_bool(df: pd.DataFrame, column_names: list) -> pd.DataF
     pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.
     """
     
-    mapping = {'ON': True, 'OFF': False}
+    mapping = {'ON': True, 'OFF': False, 'On': True, 'Off': False}
     
     for column_name in column_names: 
         df[column_name] = df[column_name].map(mapping).where(df[column_name].notna(), df[column_name])

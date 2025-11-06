@@ -776,7 +776,7 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
     os.chdir(original_directory)
 
 def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : float = 1,
-                 sensor_keys : list = [], seperate_keys : bool = False):
+                 sensor_keys : list = [], seperate_keys : bool = False, device_id_overwrite : str = None, csv_prefix : str = ""):
     """
     Function connects to the things board manager api to pull data and returns a dataframe.
 
@@ -796,6 +796,11 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         create csv files as you process such that API need not be relied upon for reprocessing
     query_hours : float
         number of hours to query at a time from ThingsBoard API
+
+    device_id_overwrite : str
+        Overwrites device ID for API pull
+    csv_prefix : str
+        prefix to add to the csv title
     
     Returns
     ------- 
@@ -804,16 +809,17 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         Will return with index in UTC so needs to be converted after to appropriate timezone
     """
     df = pd.DataFrame()
+    api_device_id = device_id_overwrite if not device_id_overwrite is None else config.api_device_id
     if len(sensor_keys) <= 0:
         token = config.get_thingsboard_token()
-        key_list = _get_tb_keys(config, token)
+        key_list = _get_tb_keys(token, api_device_id)
         if len(key_list) <= 0:
-            raise Exception(f"No sensors available at ThingsBoard site with id {config.api_device_id}")
-        return tb_api_to_df(config, startTime, endTime, create_csv, query_hours, key_list, seperate_keys)
+            raise Exception(f"No sensors available at ThingsBoard site with id {api_device_id}")
+        return tb_api_to_df(config, startTime, endTime, create_csv, query_hours, key_list, seperate_keys, device_id_overwrite, csv_prefix)
     if seperate_keys:
         df_list = []
         for sensor_key in sensor_keys:
-            df_list.append(tb_api_to_df(config, startTime, endTime, False, query_hours, [sensor_key], False))
+            df_list.append(tb_api_to_df(config, startTime, endTime, False, query_hours, [sensor_key], False, device_id_overwrite, csv_prefix))
         df = pd.concat(df_list)
     else:    
     # not seperate_keys:
@@ -826,13 +832,13 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         if endTime - timedelta(hours=query_hours) > startTime:
             time_diff = endTime - startTime
             midpointTime = startTime + time_diff / 2
-            df_1 = tb_api_to_df(config, startTime, midpointTime, query_hours=query_hours, sensor_keys=sensor_keys, create_csv=False)#True if startTime >= datetime(2025,7,13,9) and startTime <= datetime(2025,7,13,10) else csv_pass_down)
-            df_2 = tb_api_to_df(config, midpointTime, endTime, query_hours=query_hours, sensor_keys=sensor_keys,create_csv=False)#True if endTime >= datetime(2025,7,13,9) and endTime <= datetime(2025,7,13,10) else csv_pass_down)
+            df_1 = tb_api_to_df(config, startTime, midpointTime, query_hours=query_hours, sensor_keys=sensor_keys, create_csv=False, device_id_overwrite = device_id_overwrite)#True if startTime >= datetime(2025,7,13,9) and startTime <= datetime(2025,7,13,10) else csv_pass_down)
+            df_2 = tb_api_to_df(config, midpointTime, endTime, query_hours=query_hours, sensor_keys=sensor_keys,create_csv=False, device_id_overwrite = device_id_overwrite)#True if endTime >= datetime(2025,7,13,9) and endTime <= datetime(2025,7,13,10) else csv_pass_down)
             df = pd.concat([df_1, df_2])
             df = df.sort_index()
             df = df.groupby(df.index).mean()
         else:
-            url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/values/timeseries'
+            url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{api_device_id}/values/timeseries'
             token = config.get_thingsboard_token()
             key_string = ','.join(sensor_keys)
             params = {
@@ -844,7 +850,6 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
                 'interval' : '0',
                 'agg' : 'NONE'
             }
-
             # Headers
             headers = {
                 'accept': 'application/json',
@@ -855,14 +860,6 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
                 response = requests.get(url, headers=headers, params=params)
                 if response.status_code == 200:
                     response_json = response.json()
-                    # if create_csv:
-                    #     json_filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.json"
-                    #     print(f"filename: {json_filename}, url: {url}, params: {params}")
-                    #     original_directory = os.getcwd()
-                    #     os.chdir(config.data_directory)
-                    #     with open(json_filename, 'w') as f:
-                    #         json.dump(response_json, f, indent=4)  # indent=4 makes it human-readable
-                    #     os.chdir(original_directory)
                         
                     data = {}
                     for key, records in response_json.items():
@@ -886,7 +883,7 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
                 df = pd.DataFrame()
     # save to file
     if create_csv:
-        filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+        filename = f"{csv_prefix}{startTime.strftime('%Y%m%d%H%M%S')}.csv"
         original_directory = os.getcwd()
         os.chdir(config.data_directory)
         df.to_csv(filename, index_label='time_pt')
@@ -900,8 +897,8 @@ def _get_float_value(value):
     except (ValueError, TypeError):
         return None
     
-def _get_tb_keys(config: ConfigManager, token : str) -> List[str]:
-    url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{config.api_device_id}/keys/timeseries'
+def _get_tb_keys(token : str, api_device_id : str) -> List[str]:
+    url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{api_device_id}/keys/timeseries'
 
     # Headers
     headers = {

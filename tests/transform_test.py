@@ -620,6 +620,241 @@ def test_remove_outliers(mock_config_manager):
         assert_frame_equal(remove_outliers(df_input, mock_config_manager, site="site_1"), df_expected)
 
 @patch('ecopipeline.ConfigManager')
+def test_remove_outliers_empty_dataframe(mock_config_manager):
+    """Test remove_outliers with an empty dataframe"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
+                        'lower_bound': [5],
+                        'upper_bound': [15]})
+        mock_csv.return_value = csv_df
+
+        df_input = pd.DataFrame()
+        df_expected = pd.DataFrame()
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_no_bounds_columns(mock_config_manager):
+    """Test remove_outliers when dataframe columns don't match any bounds"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
+                        'lower_bound': [5, 10],
+                        'upper_bound': [15, 110]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
+        df_input = pd.DataFrame({
+                        'unrelated_var_1': [8, 1, 10],
+                        'unrelated_var_2': [8, 1, 10]})
+        df_input.index = timestamps
+        df_expected = df_input.copy()
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_missing_bounds_file(mock_config_manager):
+    """Test remove_outliers when the bounds file doesn't exist"""
+    mock_config_manager.get_var_names_path.return_value = "nonexistent/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.side_effect = FileNotFoundError
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [8, 1, 10],
+                        'serious_var_2': [8, 1, 10]})
+        df_input.index = timestamps
+        df_expected = df_input.copy()
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_nan_values(mock_config_manager):
+    """Test remove_outliers with NaN values in data"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
+                        'lower_bound': [5, 10],
+                        'upper_bound': [15, 110]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03', '2022-01-04'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [np.NaN, 10, 8, np.NaN],
+                        'serious_var_2': [50, np.NaN, 100, 15]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [np.NaN, 10, 8, np.NaN],
+                        'serious_var_2': [50, np.NaN, 100, 15]})
+        df_expected.index = timestamps
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_boundary_values(mock_config_manager):
+    """Test remove_outliers with values exactly at boundaries"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
+                        'lower_bound': [10],
+                        'upper_bound': [100]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03', '2022-01-04', '2022-01-05'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [9.99, 10.0, 50, 100.0, 100.01]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [np.NaN, 10.0, 50, 100.0, np.NaN]})
+        df_expected.index = timestamps
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_missing_lower_bound(mock_config_manager):
+    """Test remove_outliers when lower_bound is missing for some variables"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
+                        'lower_bound': [np.NaN, 10],
+                        'upper_bound': [100.0, 110]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [-1000.0, 50, 150],
+                        'serious_var_2': [5, 50.1, 150]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [-1000.0, 50, np.NaN],
+                        'serious_var_2': [np.NaN, 50.1, np.NaN]})
+        df_expected.index = timestamps
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_missing_upper_bound(mock_config_manager):
+    """Test remove_outliers when upper_bound is missing for some variables"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
+                        'lower_bound': [5, 10],
+                        'upper_bound': [np.NaN, 110]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [1, 50, 1000],
+                        'serious_var_2': [5, 50, 150]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [np.NaN, 50, 1000],
+                        'serious_var_2': [np.NaN, 50, np.NaN]})
+        df_expected.index = timestamps
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_negative_bounds(mock_config_manager):
+    """Test remove_outliers with negative boundary values"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
+                        'lower_bound': [-50],
+                        'upper_bound': [-10]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03', '2022-01-04', '2022-01-05'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [-60, -50, -30, -10, 0]})
+        df_input.index = timestamps
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [np.NaN, -50, -30, -10, np.NaN]})
+        df_expected.index = timestamps
+
+        result = remove_outliers(df_input, mock_config_manager)
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_preserves_original_dataframe(mock_config_manager):
+    """Test that remove_outliers doesn't modify the original dataframe"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
+                        'lower_bound': [5],
+                        'upper_bound': [15]})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [1, 10, 20]})
+        df_input.index = timestamps
+        df_original = df_input.copy()
+
+        result = remove_outliers(df_input, mock_config_manager)
+
+        # Original should be unchanged
+        assert_frame_equal(df_input, df_original)
+        # Result should have outliers removed
+        df_expected = pd.DataFrame({
+                        'serious_var_1': [np.NaN, 10, np.NaN]})
+        df_expected.index = timestamps
+        assert_frame_equal(result, df_expected)
+
+@patch('ecopipeline.ConfigManager')
+def test_remove_outliers_multiple_sites(mock_config_manager):
+    """Test remove_outliers with site filtering"""
+    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
+                        'lower_bound': [5, 100],
+                        'upper_bound': [15, 200],
+                        'site': ['site_A', 'site_B']})
+        mock_csv.return_value = csv_df
+
+        timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
+        df_input = pd.DataFrame({
+                        'serious_var_1': [1, 10, 20],
+                        'serious_var_2': [50, 150, 250]})
+        df_input.index = timestamps
+
+        # Test site_A filtering - should only apply bounds to serious_var_1
+        df_expected_A = pd.DataFrame({
+                        'serious_var_1': [np.NaN, 10, np.NaN],
+                        'serious_var_2': [50, 150, 250]})
+        df_expected_A.index = timestamps
+
+        result_A = remove_outliers(df_input, mock_config_manager, site="site_A")
+        assert_frame_equal(result_A, df_expected_A)
+
+        # Test site_B filtering - should only apply bounds to serious_var_2
+        df_expected_B = pd.DataFrame({
+                        'serious_var_1': [1, 10, 20],
+                        'serious_var_2': [np.NaN, 150, np.NaN]})
+        df_expected_B.index = timestamps
+
+        result_B = remove_outliers(df_input, mock_config_manager, site="site_B")
+        assert_frame_equal(result_B, df_expected_B)
+
+@patch('ecopipeline.ConfigManager')
 def test_nullify_erroneous(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
