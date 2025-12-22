@@ -661,6 +661,78 @@ def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
 
     return df_diff
 
+def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, time_zone: str = 'US/Pacific'):
+    """
+    Function connects to the field manager api to pull data and returns a dataframe.
+
+    Parameters
+    ----------  
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. The config manager
+        must contain information to connect to the api, i.e. the api user name and password as well as
+        the device id for the device the data is being pulled from.
+    startTime: datetime
+        The point in time for which we want to start the data extraction from. This 
+        is local time from the data's index. 
+    endTime: datetime
+        The point in time for which we want to end the data extraction. This 
+        is local time from the data's index. 
+    create_csv : bool
+        create csv files as you process such that API need not be relied upon for reprocessing
+    time_zone: str
+        The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
+        time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
+        defaults to 'US/Pacific'
+    
+    Returns
+    ------- 
+    pd.DataFrame: 
+        Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
+    """
+    #temporary solution while no date range available
+    
+    try:
+        df = pd.DataFrame()
+        temp_dfs = []
+        time_parser = startTime
+        while time_parser < endTime:
+            start_time_str = time_parser.strftime('%a, %d %b %H:%M:%S GMT')
+            skycentrics_token, date_str = config.get_skycentrics_token(request_str=f'GET /api/devices/{config.api_device_id}/data HTTP/1.1',date_str=start_time_str)
+            response = requests.get(f'https://api.skycentrics.com/api/devices/{config.api_device_id}/data', 
+                                headers={'Date': date_str, 'x-sc-api-token': skycentrics_token, 'Accept': 'application/json'})
+            if response.status_code == 200:
+                norm_data = pd.json_normalize(response.json(), record_path=['sensors'], meta=['time'], meta_prefix='response_')
+                if len(norm_data) != 0:
+
+                    norm_data["time_pt"] = pd.to_datetime(norm_data["response_time"])
+
+                    norm_data["time_pt"] = norm_data["time_pt"].dt.tz_convert(time_zone)
+                    norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
+                    # Iterate over the index and round up if necessary (work around for json format from sensors)
+                    for i in range(len(norm_data.index)):
+                        if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
+                            norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
+                    temp_dfs.append(norm_data)
+            else:
+                print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+            time_parser = time_parser + timedelta(minutes=1)
+        if len(temp_dfs) > 0:
+            df = pd.concat(temp_dfs, ignore_index=False)
+            if create_csv:
+                filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+                original_directory = os.getcwd()
+                os.chdir(config.data_directory)
+                df.to_csv(filename, index_label='time_pt')
+                os.chdir(original_directory)
+        else:
+            print("No skycentrics data retieved for time frame.")
+        return df
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise e
+    return pd.DataFrame()
+
 def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True) -> pd.DataFrame:
     """
     Function connects to the field manager api to pull data and returns a dataframe.

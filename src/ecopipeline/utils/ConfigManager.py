@@ -4,6 +4,9 @@ import mysql.connector
 import mysql.connector.cursor
 import requests
 from datetime import datetime
+import base64
+import hashlib
+import hmac
 
 class ConfigManager:
     """
@@ -56,6 +59,8 @@ class ConfigManager:
         self.data_directory = data_directory
         self.api_usr = None
         self.api_pw = None
+        self.api_token = None
+        self.api_secret = None
         self.api_device_id = None
         if self.data_directory is None:
             configured_data_method = False
@@ -72,6 +77,11 @@ class ConfigManager:
                 elif 'api_usr' in configure['data'] and 'api_pw' in configure['data'] and 'device_id' in configure['data']:
                     self.api_usr = configure.get('data', 'api_usr')
                     self.api_pw = configure.get('data', 'api_pw')
+                    self.api_device_id = configure.get('data','device_id')
+                    configured_data_method = True
+                elif 'api_token' in configure['data'] and 'api_secret' in configure['data']:
+                    self.api_token = configure.get('data', 'api_token')
+                    self.api_secret = configure.get('data', 'api_secret')
                     self.api_device_id = configure.get('data','device_id')
                     configured_data_method = True
             if not configured_data_method:
@@ -262,3 +272,13 @@ class ConfigManager:
         if self.api_device_id is None:
             raise Exception("Field Manager device ID has not been configured.")
         return self.api_device_id
+    
+    def get_skycentrics_token(self, request_str = 'GET /api/devices/ HTTP/1.', date_str : str = None) -> tuple:
+        if date_str is None:
+            date_str = datetime.utcnow().strftime('%a, %d %b %H:%M:%S GMT')
+        print(f"why am I here {date_str}")
+        signature = base64.b64encode(hmac.new(self.api_secret.encode(),
+            '{}\n{}\n{}\n{}'.format(request_str, date_str, '', hashlib.md5(''.encode()).hexdigest()).encode(),
+            hashlib.sha1).digest())
+        token = '{}:{}'.format(self.api_token, signature.decode())
+        return token, date_str
