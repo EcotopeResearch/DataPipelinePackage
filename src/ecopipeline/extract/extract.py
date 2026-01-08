@@ -15,6 +15,7 @@ import mysql.connector.errors as mysqlerrors
 import requests
 import subprocess
 import traceback
+import time
 
 
 def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
@@ -715,6 +716,7 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
                     temp_dfs.append(norm_data)
             else:
                 print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+            time.sleep(60)
             time_parser = time_parser + timedelta(minutes=1)
         if len(temp_dfs) > 0:
             df = pd.concat(temp_dfs, ignore_index=False)

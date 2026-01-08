@@ -1184,6 +1184,9 @@ def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame) -> pd.Dat
     pd.DataFrame:
         A single, joined dataframe
     """
+    #fixing pipelines for new years
+    if 'OAT_NOAA' in noaa_data.columns and not noaa_data['OAT_NOAA'].notnull().any():
+        return hourly_data
     out_df = hourly_data.join(noaa_data)
     return out_df
 

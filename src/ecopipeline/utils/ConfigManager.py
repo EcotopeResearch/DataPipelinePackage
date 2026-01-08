@@ -276,7 +276,6 @@ class ConfigManager:
     def get_skycentrics_token(self, request_str = 'GET /api/devices/ HTTP/1.', date_str : str = None) -> tuple:
         if date_str is None:
             date_str = datetime.utcnow().strftime('%a, %d %b %H:%M:%S GMT')
-        print(f"why am I here {date_str}")
         signature = base64.b64encode(hmac.new(self.api_secret.encode(),
             '{}\n{}\n{}\n{}'.format(request_str, date_str, '', hashlib.md5(''.encode()).hexdigest()).encode(),
             hashlib.sha1).digest())
