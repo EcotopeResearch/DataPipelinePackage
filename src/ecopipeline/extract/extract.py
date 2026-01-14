@@ -1,5 +1,6 @@
 from typing import List
 import pandas as pd
+import openmeteo_requests
 import re
 from ftplib import FTP
 from datetime import datetime, timedelta
@@ -1017,6 +1018,45 @@ def get_sub_dirs(dir: str) -> List[str]:
         return
     return directories
 
+def get_OAT_open_meteo(lat: float, long: float, start_date: datetime, end_date: datetime = None):
+    openmeteo = openmeteo_requests.Client()
+    if end_date is None:
+        end_date = datetime.today()
+    # datetime.today().date().strftime('%Y%m%d%H%M%S')
+    start_date_str = start_date.date().strftime('%Y-%m-%d')
+    end_date_str = end_date.date().strftime('%Y-%m-%d')
+    # url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={long}&start_date={start_date_str}&end_date={end_date_str}&hourly=temperature_2m&temperature_unit=fahrenheit"
+
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": lat,
+        "longitude": long,
+        "start_date": start_date_str,
+        "end_date": end_date_str,
+        "hourly": "temperature_2m",
+        "temperature_unit": "fahrenheit",
+    }
+    responses = openmeteo.weather_api(url, params=params)
+
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+
+    hourly_data = {"date": pd.date_range(
+        start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+        end =  pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+        freq = pd.Timedelta(seconds = hourly.Interval()),
+        inclusive = "left"
+    )}
+
+    hourly_data["temperature_2m"] = hourly_temperature_2m
+
+    print(hourly_data)
+    return hourly_data
+
 
 def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids : dict = {}) -> dict:
     """
@@ -1034,6 +1074,7 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
     dict: 
         Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
+    #TODO swap out for this if empty: https://open-meteo.com/en/docs/historical-weather-api?start_date=2025-12-29&latitude=47.6&longitude=-122.33&temperature_unit=fahrenheit&end_date=2026-01-04
     formatted_dfs = {}
     weather_directory = config.get_weather_dir_path()
     try:

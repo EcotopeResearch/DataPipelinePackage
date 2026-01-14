@@ -743,3 +743,769 @@ def test_flag_abnormal_COP_all_null_high_alarm(mock_config_manager):
 
         # Should detect alarms for values exceeding default bound
         assert len(event_df) == 2  # COP_Equipment at 5.0 and COP_Boundary at 4.8
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_no_sts_codes(mock_config_manager):
+    """Test that flag_high_swing_setpoint returns empty dataframe when no STS alarm codes exist"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['var_1', 'var_2', 'var_3'],
+            'alarm_codes': ['PR_HPWH:60-80', None, 'OTHER_CODE:100']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({'var_1': [100, 100, 100]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'var_1': [1000]})
+        daily_df.index = daily_timestamps
+
+        # Should return empty dataframe when no STS codes exist
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
+    """Test T and SP alarm when temperature is high while powered for 3+ minutes"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power'],
+            'alarm_codes': ['STS_T_1', 'STS_SP_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+                                           '2022-01-01 01:04','2022-01-01 01:05'])
+        minute_df = pd.DataFrame({
+            'tank_temp': [135, 135, 135, 135, 135],
+            'tank_power': [5, 5, 5, 5, 5]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [135], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_setpoint=130.0, default_power_indication=1.0)
+
+        assert len(event_df) == 1
+        assert 'High swing tank setpoint' in event_df.iloc[0]['event_detail']
+        assert 'tank_power' == event_df.iloc[0]['variable_name']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_t_and_sp_no_alarm(mock_config_manager):
+    """Test T and SP with no alarm when conditions not met"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power'],
+            'alarm_codes': ['STS_T_1', 'STS_SP_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'tank_temp': [120, 120, 120],  # Below setpoint
+            'tank_power': [5, 5, 5]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [120], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_setpoint=130.0)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_st_setpoint_altered(mock_config_manager):
+    """Test ST alarm when setpoint is altered for 10+ minutes"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_setpoint'],
+            'alarm_codes': ['STS_ST_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+                                           '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06',
+                                           '2022-01-01 01:07','2022-01-01 01:08','2022-01-01 01:09',
+                                           '2022-01-01 01:10','2022-01-01 01:11','2022-01-01 01:12'])
+        minute_df = pd.DataFrame({
+            'tank_setpoint': [140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]  # Altered from 130
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_setpoint': [140]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_setpoint=130.0)
+
+        assert len(event_df) == 1
+        assert 'Swing tank setpoint was altered' in event_df.iloc[0]['event_detail']
+        assert 'tank_setpoint' == event_df.iloc[0]['variable_name']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_st_no_alteration(mock_config_manager):
+    """Test ST with no alarm when setpoint matches default"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_setpoint'],
+            'alarm_codes': ['STS_ST_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'tank_setpoint': [130, 130, 130]  # Matches default
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_setpoint': [130]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_setpoint=130.0)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_tp_and_sp_high_ratio(mock_config_manager):
+    """Test TP and SP alarm when power ratio exceeds threshold"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_power', 'total_power'],
+            'alarm_codes': ['STS_SP_1', 'STS_TP_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
+        minute_df = pd.DataFrame({
+            'tank_power': [100, 100],
+            'total_power': [150, 150]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'tank_power': [500],  # 50% of total
+            'total_power': [1000]
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_power_ratio=0.4)  # 40% threshold
+
+        assert len(event_df) == 1
+        assert 'High swing tank power ratio' in event_df.iloc[0]['event_detail']
+        assert '40.0%' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_tp_and_sp_normal_ratio(mock_config_manager):
+    """Test TP and SP with no alarm when power ratio is normal"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_power', 'total_power'],
+            'alarm_codes': ['STS_SP_1', 'STS_TP_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
+        minute_df = pd.DataFrame({
+            'tank_power': [100, 100],
+            'total_power': [150, 150]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'tank_power': [300],  # 30% of total
+            'total_power': [1000]
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_power_ratio=0.4)  # 40% threshold
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_multiple_sts_codes(mock_config_manager):
+    """Test multiple STS codes separated by semicolons"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power', 'other_var'],
+            'alarm_codes': ['STS_T_1;PR_HPWH:60-80', 'STS_SP_1', 'OTHER_CODE:100']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'tank_temp': [135, 135, 135],
+            'tank_power': [5, 5, 5]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [135], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert len(event_df) == 1
+        assert 'High swing tank setpoint' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_improper_format_no_underscore(mock_config_manager):
+    """Test that improper STS format (no underscore) raises exception"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp'],
+            'alarm_codes': ['STST1']  # No underscore
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
+        minute_df = pd.DataFrame({'tank_temp': [135]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [135]})
+        daily_df.index = daily_timestamps
+
+        with pytest.raises(Exception) as excinfo:
+            flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert 'improper STS alarm code format' in str(excinfo.value)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_improper_format_too_many_underscores(mock_config_manager):
+    """Test that improper STS format (too many underscores) raises exception"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp'],
+            'alarm_codes': ['STS_T_1_EXTRA']  # Too many underscores
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
+        minute_df = pd.DataFrame({'tank_temp': [135]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [135]})
+        daily_df.index = daily_timestamps
+
+        with pytest.raises(Exception) as excinfo:
+            flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert 'improper STS alarm code format' in str(excinfo.value)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_multiple_t_codes_same_id(mock_config_manager):
+    """Test that multiple T codes with same ID raises exception"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp_1', 'tank_temp_2', 'tank_power'],
+            'alarm_codes': ['STS_T_1', 'STS_T_1', 'STS_SP_1']  # Duplicate T with ID 1
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
+        minute_df = pd.DataFrame({'tank_temp_1': [135], 'tank_temp_2': [135], 'tank_power': [5]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp_1': [135], 'tank_temp_2': [135], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        with pytest.raises(Exception) as excinfo:
+            flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert 'Improper alarm codes for swing tank setpoint with id' in str(excinfo.value)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_empty_dataframe(mock_config_manager):
+    """Test that empty dataframe returns empty result"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp'],
+            'alarm_codes': ['STS_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_df = pd.DataFrame({'tank_temp': []})
+        daily_df = pd.DataFrame({'tank_temp': []})
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_file_not_found(mock_config_manager):
+    """Test that file not found returns empty dataframe"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/nonexistent.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.side_effect = FileNotFoundError("File not found")
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
+        minute_df = pd.DataFrame({'tank_temp': [135]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [135]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_multiple_days_multiple_alarms(mock_config_manager):
+    """Test multiple days with multiple alarm types triggered"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power', 'total_power', 'tank_setpoint'],
+            'alarm_codes': ['STS_T_1', 'STS_SP_1', 'STS_TP_1', 'STS_ST_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-02 01:01','2022-01-02 01:02','2022-01-02 01:03',
+            '2022-01-02 01:04','2022-01-02 01:05','2022-01-02 01:06',
+            '2022-01-02 01:07','2022-01-02 01:08','2022-01-02 01:09',
+            '2022-01-02 01:10','2022-01-02 01:11'
+        ])
+        minute_df = pd.DataFrame({
+            'tank_temp': [135, 135, 135, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120],
+            'tank_power': [5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+            'total_power': [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
+            'tank_setpoint': [130, 130, 130, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00', '2022-01-02 00:00'])
+        daily_df = pd.DataFrame({
+            'tank_temp': [135, 120],
+            'tank_power': [500, 600],
+            'total_power': [1000, 1000],
+            'tank_setpoint': [130, 140]
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_power_ratio=0.4)
+
+        # Should have alarms: Day 1 T+SP alarm, Day 2 TP+SP alarm, Day 2 ST alarm
+        assert len(event_df) >= 2
+        assert any('High swing tank setpoint' in detail for detail in event_df['event_detail'])
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_sts_with_two_parts(mock_config_manager):
+    """Test STS code with only two parts (no ID)"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power'],
+            'alarm_codes': ['STS_T', 'STS_SP']  # No ID (None)
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'tank_temp': [135, 135, 135],
+            'tank_power': [5, 5, 5]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [135], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        # Should process correctly with None as ID
+        assert len(event_df) == 1
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_custom_t_bound(mock_config_manager):
+    """Test T and SP alarm with custom temperature bound specified after colon"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power'],
+            'alarm_codes': ['STS_T_1:140', 'STS_SP_1:2.0']  # Custom bounds: 140°F temp, 2.0 kW power
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'tank_temp': [142, 142, 142],  # Above custom 140 threshold
+            'tank_power': [5, 5, 5]  # Above custom 2.0 threshold
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [142], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        # Should trigger alarm using custom bound of 140
+        assert len(event_df) == 1
+        assert '140.0' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_custom_st_bound(mock_config_manager):
+    """Test ST alarm with custom setpoint bound specified after colon"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_setpoint'],
+            'alarm_codes': ['STS_ST_1:125']  # Custom setpoint bound of 125
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+                                           '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06',
+                                           '2022-01-01 01:07','2022-01-01 01:08','2022-01-01 01:09',
+                                           '2022-01-01 01:10','2022-01-01 01:11','2022-01-01 01:12'])
+        minute_df = pd.DataFrame({
+            'tank_setpoint': [130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130]  # Not 125
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_setpoint': [130]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        # Should trigger alarm because setpoint is 130, not custom bound of 125
+        assert len(event_df) == 1
+        assert 'Swing tank setpoint was altered' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_custom_tp_ratio_bound(mock_config_manager):
+    """Test TP and SP alarm with custom power ratio bound specified after colon"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_power', 'total_power'],
+            'alarm_codes': ['STS_SP_1', 'STS_TP_1:0.3']  # Custom ratio bound of 30%
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
+        minute_df = pd.DataFrame({
+            'tank_power': [100, 100],
+            'total_power': [150, 150]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'tank_power': [400],  # 40% of total
+            'total_power': [1000]
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager)
+
+        # Should trigger alarm because 40% > custom 30% threshold
+        assert len(event_df) == 1
+        assert 'High swing tank power ratio' in event_df.iloc[0]['event_detail']
+        assert '30.0%' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_swing_setpoint_no_custom_bound_uses_default(mock_config_manager):
+    """Test that default bounds are used when no custom bound specified"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['tank_temp', 'tank_power'],
+            'alarm_codes': ['STS_T_1', 'STS_SP_1']  # No custom bounds
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'tank_temp': [132, 132, 132],  # Above default 130 but below 140
+            'tank_power': [5, 5, 5]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'tank_temp': [132], 'tank_power': [100]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_swing_setpoint(minute_df, daily_df, mock_config_manager,
+                                            default_setpoint=130.0, default_power_indication=1.0)
+
+        # Should trigger alarm using default bound of 130
+        assert len(event_df) == 1
+        assert '130.0' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_no_bv_codes(mock_config_manager):
+    """Test that flag_recirc_balance_valve returns empty dataframe when no BV alarm codes exist"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['var_1', 'var_2', 'var_3'],
+            'alarm_codes': ['PR_HPWH:60-80', None, 'STS_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'var_1': [1000]})
+        daily_df.index = daily_timestamps
+
+        # Should return empty dataframe when no BV codes exist
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_alarm_triggered(mock_config_manager):
+    """Test ER and OUT alarm when recirculation sum exceeds threshold"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'recirc_eq_2', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_ER_1', 'BV_OUT_1:0.5']  # 50% threshold
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_eq_1': [300],
+            'recirc_eq_2': [200],
+            'heating_output': [1000]  # ER sum (500) >= 1000/0.5 (500)
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert len(event_df) == 1
+        assert 'Recirculation imbalance' in event_df.iloc[0]['event_detail']
+        assert '500.00' in event_df.iloc[0]['event_detail']
+        assert '50.00%' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_no_alarm(mock_config_manager):
+    """Test ER and OUT with no alarm when recirculation is below threshold"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'recirc_eq_2', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_ER_1', 'BV_OUT_1:0.5']  # 50% threshold
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_eq_1': [200],
+            'recirc_eq_2': [100],
+            'heating_output': [1000]  # ER sum (300) < 1000/0.5 (500)
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_custom_bound(mock_config_manager):
+    """Test BV alarm with custom bound specified"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_OUT_1:0.3']  # Custom 30% threshold
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_eq_1': [350],
+            'heating_output': [1000]  # ER sum (350) >= 1000/0.3 (333.33)
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert len(event_df) == 1
+        assert '30.00%' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_default_bound(mock_config_manager):
+    """Test that default bound is used when no custom bound specified"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_OUT_1']  # No custom bound
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_eq_1': [450],
+            'heating_output': [1000]  # ER sum (450) >= 1000/0.4 (250) with default 40%
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager,
+                                              default_power_ratio=0.4)
+
+        assert len(event_df) == 1
+        assert '40.00%' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_multiple_days(mock_config_manager):
+    """Test BV alarm across multiple days"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_OUT_1:0.5']
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00', '2022-01-02 00:00', '2022-01-03 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_eq_1': [600, 300, 550],
+            'heating_output': [1000, 1000, 1000]  # Day 1 and 3 trigger (>= 500), Day 2 doesn't (< 500)
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert len(event_df) == 2
+        assert all('Recirculation imbalance' in detail for detail in event_df['event_detail'])
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_multiple_out_codes_error(mock_config_manager):
+    """Test that multiple OUT codes with same ID raises exception"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'heating_out_1', 'heating_out_2'],
+            'alarm_codes': ['BV_ER_1', 'BV_OUT_1', 'BV_OUT_1']  # Duplicate OUT codes
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_eq_1': [500],
+            'heating_out_1': [1000],
+            'heating_out_2': [1000]
+        })
+        daily_df.index = daily_timestamps
+
+        with pytest.raises(Exception) as excinfo:
+            flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert 'Improper alarm codes for balancing valve with id' in str(excinfo.value)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_no_er_codes_error(mock_config_manager):
+    """Test that no ER codes raises exception"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['heating_output'],
+            'alarm_codes': ['BV_OUT_1']  # No ER codes
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'heating_output': [1000]
+        })
+        daily_df.index = daily_timestamps
+
+        with pytest.raises(Exception) as excinfo:
+            flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert 'Improper alarm codes for balancing valve with id' in str(excinfo.value)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_empty_dataframe(mock_config_manager):
+    """Test that empty dataframe returns empty result"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_eq_1', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_OUT_1']
+        })
+        mock_csv.return_value = csv_df
+
+        daily_df = pd.DataFrame({'recirc_eq_1': [], 'heating_output': []})
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_file_not_found(mock_config_manager):
+    """Test that file not found returns empty dataframe"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/nonexistent.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.side_effect = FileNotFoundError("File not found")
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'heating_output': [1000]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
+    """Test BV alarm with multiple ER variables"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['recirc_1', 'recirc_2', 'recirc_3', 'heating_output'],
+            'alarm_codes': ['BV_ER_1', 'BV_ER_1', 'BV_ER_1', 'BV_OUT_1:0.6']  # 60% threshold
+        })
+        mock_csv.return_value = csv_df
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({
+            'recirc_1': [200],
+            'recirc_2': [150],
+            'recirc_3': [250],
+            'heating_output': [1000]  # ER sum (600) >= 1000/0.6 (600)? Yes
+        })
+        daily_df.index = daily_timestamps
+
+        event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
+
+        assert not event_df.empty
+        assert len(event_df) == 1
