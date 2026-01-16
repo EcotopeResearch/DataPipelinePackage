@@ -696,17 +696,29 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
     try:
         df = pd.DataFrame()
         temp_dfs = []
+        ###############
+        if endTime is None:
+            endTime = datetime.utcnow()
+        if startTime is None:
+            startTime = endTime - timedelta(1)
         time_parser = startTime
         while time_parser < endTime:
-            start_time_str = time_parser.strftime('%a, %d %b %H:%M:%S GMT')
-            skycentrics_token, date_str = config.get_skycentrics_token(request_str=f'GET /api/devices/{config.api_device_id}/data HTTP/1.1',date_str=start_time_str)
-            response = requests.get(f'https://api.skycentrics.com/api/devices/{config.api_device_id}/data', 
-                                headers={'Date': date_str, 'x-sc-api-token': skycentrics_token, 'Accept': 'application/json'})
+            time_parse_end = time_parser + timedelta(1)
+            start_time_str = time_parser.strftime('%Y-%m-%dT%H:%M:%S')
+            end_time_str = time_parse_end.strftime('%Y-%m-%dT%H:%M:%S')
+            skycentrics_token, date_str = config.get_skycentrics_token(
+                request_str=f'GET /api/devices/{config.api_device_id}/data?b={start_time_str}&e={end_time_str}&g=1 HTTP/1.1',
+                date_str=None)
+            response = requests.get(f'https://api.skycentrics.com/api/devices/{config.api_device_id}/data?b={start_time_str}&e={end_time_str}&g=1',
+                                headers={'Date': date_str, 'x-sc-api-token': skycentrics_token, 'Accept': 'application/gzip'})
             if response.status_code == 200:
-                norm_data = pd.json_normalize(response.json(), record_path=['sensors'], meta=['time'], meta_prefix='response_')
+                # Decompress the gzip response
+                decompressed_data = gzip.decompress(response.content)
+                # Parse JSON from decompressed data
+                json_data = json.loads(decompressed_data)
+                norm_data = pd.json_normalize(json_data, record_path=['sensors'], meta=['time'], meta_prefix='response_')
                 if len(norm_data) != 0:
-
-                    norm_data["time_pt"] = pd.to_datetime(norm_data["response_time"])
+                    norm_data["time_pt"] = pd.to_datetime(norm_data["response_time"], utc=True)
 
                     norm_data["time_pt"] = norm_data["time_pt"].dt.tz_convert(time_zone)
                     norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
@@ -717,8 +729,8 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
                     temp_dfs.append(norm_data)
             else:
                 print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
-            time.sleep(60)
-            time_parser = time_parser + timedelta(minutes=1)
+            time_parser = time_parse_end
+        ##############
         if len(temp_dfs) > 0:
             df = pd.concat(temp_dfs, ignore_index=False)
             if create_csv:
@@ -734,7 +746,7 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
     except Exception as e:
         print(f"An error occurred: {e}")
         raise e
-    return pd.DataFrame()
+    # return pd.DataFrame()
 
 def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True) -> pd.DataFrame:
     """

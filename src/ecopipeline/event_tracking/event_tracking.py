@@ -19,6 +19,8 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     dict_of_alarms['abnormal COP'] = flag_abnormal_COP(daily_data, config, system = system, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
     dict_of_alarms['swing tank setpoint'] = flag_high_swing_setpoint(df, daily_data, config, system=system)
     dict_of_alarms['recirculation loop balancing valve'] = flag_recirc_balance_valve(daily_data, config, system=system)
+    dict_of_alarms['HPWH inlet temperature'] = flag_hp_inlet_temp(df, daily_data, config, system)
+    print("hihihihi", dict_of_alarms['HPWH inlet temperature'])
 
     ongoing_COP_exception = ['abnormal COP']
 
@@ -30,37 +32,6 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
             alarm_df = pd.concat([alarm_df, value])
         else:
             print(f"No {key} alarm(s) detected.")
-    # boundary_alarm_df = flag_boundary_alarms(df, config, full_days=day_list, system=system, default_fault_time= default_boundary_fault_time)
-    # pwr_alarm_df = power_ratio_alarm(daily_data, config, day_table_name = config.get_table_name(day_table_name_header), system=system, ratio_period_days=power_ratio_period_days)
-    # abnormal_COP_df = flag_abnormal_COP(daily_data, config, system = system, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
-    # swing_setpoint_alarm_df = flag_high_swing_setpoint(df, daily_data, config, system=system)
-    # balence_valve_alarm_df = flag_recirc_balance_valve(daily_data, config, system=system)
-
-    # if len(boundary_alarm_df) > 0:
-    #     print("Boundary alarms detected. Adding them to event df...")
-    #     alarm_df = boundary_alarm_df
-    # else:
-    #     print("No boundary alarms detected.")
-
-    # if len(pwr_alarm_df) > 0:
-    #     print("Power alarms detected. Adding them to event df...")
-    #     alarm_df = pd.concat([alarm_df, pwr_alarm_df])
-    # else:
-    #     print("No power alarms detected.")
-
-    # if len(swing_setpoint_alarm_df) > 0:
-    #     print("Swing tank setpoint alarms detected. Adding them to event df...")
-    #     alarm_df = pd.concat([alarm_df, swing_setpoint_alarm_df])
-    # else:
-    #     print("No swing tank setpoint alarms detected.")
-    
-    # if _check_if_during_ongoing_cop_alarm(daily_data, config, site_name):
-    #     print("Ongoing DATA_LOSS_COP detected. No further DATA_LOSS_COP events will be uploaded")
-    # elif len(abnormal_COP_df) > 0:
-    #     print("Abnormal COPs detected. Adding them to event df...")
-    #     alarm_df = pd.concat([alarm_df, abnormal_COP_df])
-    # else:
-    #     print("No abnormal COPs.")
 
     return alarm_df
 
@@ -265,79 +236,14 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
         print("File Not Found: ", variable_names_path)
         return pd.DataFrame()
 
-    if (system != ""):
-        if not 'system' in bounds_df.columns:
-            raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
-        bounds_df = bounds_df.loc[bounds_df['system'] == system]
-
-    required_columns = ["variable_name", "alarm_codes"]
-    for required_column in required_columns:
-        if not required_column in bounds_df.columns:
-            raise Exception(f"{required_column} is not present in Variable_Names.csv")
-    if not 'pretty_name' in bounds_df.columns:
-        bounds_df['pretty_name'] = bounds_df['variable_name']
-    else:
-        bounds_df['pretty_name'] = bounds_df['pretty_name'].fillna(bounds_df['variable_name'])
-    # if not 'fault_time' in bounds_df.columns:
-    #     bounds_df['fault_time'] = default_fault_time
-    
-    bounds_df = bounds_df.loc[:, ["variable_name", "alarm_codes", "pretty_name"]]
-    bounds_df.dropna(axis=0, thresh=2, inplace=True)
-    bounds_df = bounds_df[bounds_df['alarm_codes'].str.contains('STS', na=False)]
-    bounds_df.dropna(axis=0, thresh=2, inplace=True)
-
-    # Split alarm_codes by semicolons and create a row for each STS code
-    expanded_rows = []
-    for idx, row in bounds_df.iterrows():
-        alarm_codes = str(row['alarm_codes']).split(';')
-        sts_codes = [code.strip() for code in alarm_codes if code.strip().startswith('STS')]
-
-        if sts_codes:  # Only process if there are STS codes
-            for sts_code in sts_codes:
-                new_row = row.copy()
-                if ":" in sts_code:
-                    sts_parts = sts_code.split(':')
-                    if len(sts_parts) > 2:
-                        raise Exception(f"Improperly formated alarm code : {sts_code}")
-                    new_row['bound'] = sts_parts[1]
-                    sts_code = sts_parts[0]
-                else:
-                    new_row['bound'] = None
-                new_row['alarm_codes'] = sts_code
-
-                expanded_rows.append(new_row)
-
-    if expanded_rows:
-        bounds_df = pd.DataFrame(expanded_rows)
-    else:
-        return _convert_silent_alarm_dict_to_df({}) # no STS alarms to look into 
-        # bounds_df = pd.DataFrame(columns=bounds_df.columns)
-    # Split alarm_codes into 3 columns by '_'
-    alarm_code_parts = []
-    for idx, row in bounds_df.iterrows():
-        parts = row['alarm_codes'].split('_')
-        if len(parts) == 2:
-            alarm_code_parts.append([parts[1], "No ID"])
-        elif len(parts) == 3:
-            alarm_code_parts.append([parts[1], parts[2]])
-        else:
-            raise Exception(f"improper STS alarm code format for {row['variable_name']}")
-    if alarm_code_parts:
-        bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
-
-        # Replace None bounds with appropriate defaults based on alarm_code_type
-        for idx, row in bounds_df.iterrows():
-            if pd.isna(row['bound']) or row['bound'] is None:
-                if row['alarm_code_type'] == 'T':
-                    bounds_df.at[idx, 'bound'] = default_setpoint
-                elif row['alarm_code_type'] == 'SP':
-                    bounds_df.at[idx, 'bound'] = default_power_indication
-                elif row['alarm_code_type'] == 'TP':
-                    bounds_df.at[idx, 'bound'] = default_power_ratio
-                elif row['alarm_code_type'] == 'ST':
-                    bounds_df.at[idx, 'bound'] = default_setpoint
-        # Coerce bound column to float
-        bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'STS', 
+                {'T' : default_setpoint,
+                 'SP': default_power_indication,
+                 'TP': default_power_ratio,
+                 'ST': default_setpoint},
+                system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
 
     # Process each unique alarm_code_id
     alarms = {}
@@ -449,72 +355,11 @@ def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, sy
     except FileNotFoundError:
         print("File Not Found: ", variable_names_path)
         return pd.DataFrame()
-
-    if (system != ""):
-        if not 'system' in bounds_df.columns:
-            raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
-        bounds_df = bounds_df.loc[bounds_df['system'] == system]
-
-    required_columns = ["variable_name", "alarm_codes"]
-    for required_column in required_columns:
-        if not required_column in bounds_df.columns:
-            raise Exception(f"{required_column} is not present in Variable_Names.csv")
-    if not 'pretty_name' in bounds_df.columns:
-        bounds_df['pretty_name'] = bounds_df['variable_name']
-    else:
-        bounds_df['pretty_name'] = bounds_df['pretty_name'].fillna(bounds_df['variable_name'])
-
-    bounds_df = bounds_df.loc[:, ["variable_name", "alarm_codes", "pretty_name"]]
-    bounds_df.dropna(axis=0, thresh=2, inplace=True)
-    bounds_df = bounds_df[bounds_df['alarm_codes'].str.contains('BV', na=False)]
-    bounds_df.dropna(axis=0, thresh=2, inplace=True)
-
-    # Split alarm_codes by semicolons and create a row for each STS code
-    expanded_rows = []
-    for idx, row in bounds_df.iterrows():
-        alarm_codes = str(row['alarm_codes']).split(';')
-        bv_codes = [code.strip() for code in alarm_codes if code.strip().startswith('BV')]
-
-        if bv_codes:  # Only process if there are STS codes
-            for bv_code in bv_codes:
-                new_row = row.copy()
-                if ":" in bv_code:
-                    bv_parts = bv_code.split(':')
-                    if len(bv_parts) > 2:
-                        raise Exception(f"Improperly formated alarm code : {bv_code}")
-                    new_row['bound'] = bv_parts[1]
-                    bv_code = bv_parts[0]
-                else:
-                    new_row['bound'] = None
-                new_row['alarm_codes'] = bv_code
-
-                expanded_rows.append(new_row)
-
-    if expanded_rows:
-        bounds_df = pd.DataFrame(expanded_rows)
-    else:
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'BV', 
+                {'OUT' : default_power_ratio},
+                system)
+    if bounds_df.empty:
         return _convert_silent_alarm_dict_to_df({}) # no BV alarms to look into 
-    
-    alarm_code_parts = []
-    for idx, row in bounds_df.iterrows():
-        parts = row['alarm_codes'].split('_')
-        if len(parts) == 2:
-            alarm_code_parts.append([parts[1], "No ID"])
-        elif len(parts) == 3:
-            alarm_code_parts.append([parts[1], parts[2]])
-        else:
-            raise Exception(f"improper STS alarm code format for {row['variable_name']}")
-    if alarm_code_parts:
-        bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
-
-        # Replace None bounds with appropriate defaults based on alarm_code_type
-        for idx, row in bounds_df.iterrows():
-            if pd.isna(row['bound']) or row['bound'] is None:
-                if row['alarm_code_type'] == 'OUT':
-                    bounds_df.at[idx, 'bound'] = default_power_ratio
-        # Coerce bound column to float
-        bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-
     # Process each unique alarm_code_id
     alarms = {}
     for alarm_id in bounds_df['alarm_code_id'].unique():
@@ -540,6 +385,166 @@ def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, sy
                     if er_sum >= out_value*out_bound:
                         _add_an_alarm(alarms, day, out_var_name, f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(out_bound * 100):.2f}% of heating output.")
     return _convert_silent_alarm_dict_to_df(alarms)
+
+def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
+                       default_temp_threshold : float = 115.0, fault_time : int = 5) -> pd.DataFrame:
+    """
+    Function will take a pandas dataframe and location of alarm information in a csv,
+    and create an dataframe with applicable alarm events
+
+    VarNames syntax:
+    HPI_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
+        the heat pump is considered 'on'
+    HPI_T_[OPTIONAL ID]:### - Indicates heat pump inlet temperature variable. ### is the temperature threshold (default 120.0)
+        that should not be exceeded while the heat pump is on
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        post-transformed dataframe for daily data.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the HPI alarm codes (e.g., HPI_POW_1:0.5, HPI_T_1:125.0)
+    system: str
+        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
+    default_power_threshold : float
+        Default power threshold for POW alarm codes when no custom bound is specified (default 0.4). Heat pump is considered 'on'
+        when power exceeds this value.
+    default_temp_threshold : float
+        Default temperature threshold for T alarm codes when no custom bound is specified (default 120.0). Alarm triggers when
+        temperature exceeds this value while heat pump is on.
+    fault_time : int
+        Number of consecutive minutes that both power and temperature must exceed their thresholds before triggering an alarm (default 10).
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag missing balancing valve alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'HPI',
+                                               {'POW' : default_power_threshold,
+                                                'T' : default_temp_threshold},
+                                                system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for alarm_id in bounds_df['alarm_code_id'].unique():
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+            id_group = bounds_df[bounds_df['alarm_code_id'] == alarm_id]
+            pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
+            pow_var_name = pow_codes.iloc[0]['variable_name']
+            pow_thresh = pow_codes.iloc[0]['bound']
+            t_codes = id_group[id_group['alarm_code_type'] == 'T']
+            t_var_name = t_codes.iloc[0]['variable_name']
+            t_pretty_name = t_codes.iloc[0]['pretty_name']
+            t_thresh = t_codes.iloc[0]['bound']
+            if len(t_codes) != 1 or len(pow_codes) != 1:
+                raise Exception(f"Improper alarm codes for balancing valve with id {alarm_id}")
+            if pow_var_name in filtered_df.columns and t_var_name in filtered_df.columns:
+                # Check for consecutive minutes where both power and temp exceed thresholds
+                power_mask = filtered_df[pow_var_name] > pow_thresh
+                temp_mask = filtered_df[t_var_name] > t_thresh
+                combined_mask = power_mask & temp_mask
+
+                # Check for fault_time consecutive minutes
+                consecutive_condition = combined_mask.rolling(window=fault_time).min() == 1
+                if consecutive_condition.any():
+                    first_true_index = consecutive_condition.idxmax()
+                    adjusted_time = first_true_index - pd.Timedelta(minutes=fault_time-1)
+                    _add_an_alarm(alarms, day, t_var_name, f"High heat pump inlet temperature: {t_pretty_name} was above {t_thresh:.1f} while HP was ON starting at {adjusted_time}.")
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def _process_bounds_df_alarm_codes(bounds_df : pd.DataFrame, alarm_tag : str, type_default_dict : dict = {}, system : str = "") -> pd.DataFrame:
+    # Should only do for alarm codes of format: [TAG]_[TYPE]_[OPTIONAL_ID]:[BOUND]
+    if (system != ""):
+        if not 'system' in bounds_df.columns:
+            raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
+        bounds_df = bounds_df.loc[bounds_df['system'] == system]
+
+    required_columns = ["variable_name", "alarm_codes"]
+    for required_column in required_columns:
+        if not required_column in bounds_df.columns:
+            raise Exception(f"{required_column} is not present in Variable_Names.csv")
+    if not 'pretty_name' in bounds_df.columns:
+        bounds_df['pretty_name'] = bounds_df['variable_name']
+    else:
+        bounds_df['pretty_name'] = bounds_df['pretty_name'].fillna(bounds_df['variable_name'])
+
+    bounds_df = bounds_df.loc[:, ["variable_name", "alarm_codes", "pretty_name"]]
+    bounds_df.dropna(axis=0, thresh=2, inplace=True)
+
+    # Check if all alarm_codes are null or if dataframe is empty
+    if bounds_df.empty or bounds_df['alarm_codes'].isna().all():
+        return pd.DataFrame()
+    
+    bounds_df = bounds_df[bounds_df['alarm_codes'].str.contains(alarm_tag, na=False)]
+
+    # Split alarm_codes by semicolons and create a row for each STS code
+    expanded_rows = []
+    for idx, row in bounds_df.iterrows():
+        alarm_codes = str(row['alarm_codes']).split(';')
+        tag_codes = [code.strip() for code in alarm_codes if code.strip().startswith(alarm_tag)]
+
+        if tag_codes:  # Only process if there are STS codes
+            for tag_code in tag_codes:
+                new_row = row.copy()
+                if ":" in tag_code:
+                    tag_parts = tag_code.split(':')
+                    if len(tag_parts) > 2:
+                        raise Exception(f"Improperly formated alarm code : {tag_code}")
+                    new_row['bound'] = tag_parts[1]
+                    tag_code = tag_parts[0]
+                else:
+                    new_row['bound'] = None
+                new_row['alarm_codes'] = tag_code
+
+                expanded_rows.append(new_row)
+
+    if expanded_rows:
+        bounds_df = pd.DataFrame(expanded_rows)
+    else:
+        return pd.DataFrame()# no tagged alarms to look into
+    
+    alarm_code_parts = []
+    for idx, row in bounds_df.iterrows():
+        parts = row['alarm_codes'].split('_')
+        if len(parts) == 2:
+            alarm_code_parts.append([parts[1], "No ID"])
+        elif len(parts) == 3:
+            alarm_code_parts.append([parts[1], parts[2]])
+        else:
+            raise Exception(f"improper STS alarm code format for {row['variable_name']}")
+    if alarm_code_parts:
+        bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
+
+        # Replace None bounds with appropriate defaults based on alarm_code_type
+        for idx, row in bounds_df.iterrows():
+            if pd.isna(row['bound']) or row['bound'] is None:
+                if row['alarm_code_type'] in type_default_dict.keys():
+                    bounds_df.at[idx, 'bound'] = type_default_dict[row['alarm_code_type']]
+        # Coerce bound column to float
+        bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+    return bounds_df
 
 def _add_an_alarm(alarm_dict : dict, day : datetime, var_name : str, alarm_string : str):
     # Round down to beginning of day

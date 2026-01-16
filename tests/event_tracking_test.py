@@ -1509,3 +1509,304 @@ def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
 
         assert not event_df.empty
         assert len(event_df) == 1
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_no_hpi_codes(mock_config_manager):
+    """Test that flag_hp_inlet_temp returns empty dataframe when no HPI alarm codes exist"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['var_1', 'var_2', 'var_3'],
+            'alarm_codes': ['PR_HPWH:60-80', None, 'STS_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({'var_1': [100, 100, 100]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_alarm_triggered(mock_config_manager):
+    """Test HPI alarm when both power and temp exceed thresholds for fault_time minutes"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1'],
+            'pretty_name': ['HP Power', 'HP Inlet Temperature']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
+        ])
+        minute_df = pd.DataFrame({
+            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0
+            'hp_inlet_temp': [120, 120, 120, 120, 120, 120]  # Above 115
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)  # Using defaults: 1.0, 115.0, 5
+
+        assert len(event_df) == 1
+        assert 'High heat pump inlet temperature' in event_df.iloc[0]['event_detail']
+        assert 'HP Inlet Temperature' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_no_alarm_temp_low(mock_config_manager):
+    """Test no alarm when temperature is below threshold"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
+        ])
+        minute_df = pd.DataFrame({
+            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0 threshold
+            'hp_inlet_temp': [110, 110, 110, 110, 110, 110]  # Below 115
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)  # Using defaults
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_no_alarm_power_low(mock_config_manager):
+    """Test no alarm when power is below threshold"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
+        ])
+        minute_df = pd.DataFrame({
+            'hp_power': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],  # Below 1.0
+            'hp_inlet_temp': [120, 120, 120, 120, 120, 120]  # Above 115 threshold
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)  # Using defaults
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_custom_bounds(mock_config_manager):
+    """Test HPI alarm with custom bounds specified"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1:1.0', 'HPI_T_1:130.0']  # Custom thresholds
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06',
+            '2022-01-01 01:07','2022-01-01 01:08','2022-01-01 01:09',
+            '2022-01-01 01:10','2022-01-01 01:11'
+        ])
+        minute_df = pd.DataFrame({
+            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0
+            'hp_inlet_temp': [135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135]  # Above 130
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager, fault_time=10)
+
+        assert len(event_df) == 1
+        assert '130.0' in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_not_enough_consecutive_minutes(mock_config_manager):
+    """Test no alarm when conditions met but not for enough consecutive minutes"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-01 01:04'
+        ])
+        # Only 4 consecutive minutes, need 5
+        minute_df = pd.DataFrame({
+            'hp_power': [1.5, 1.5, 1.5, 1.5],
+            'hp_inlet_temp': [120, 120, 120, 120]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)  # Using defaults
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_multiple_pow_codes_error(mock_config_manager):
+    """Test that multiple POW codes with same ID raises exception"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power_1', 'hp_power_2', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_POW_1', 'HPI_T_1']  # Duplicate POW codes
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
+        minute_df = pd.DataFrame({
+            'hp_power_1': [1.5],
+            'hp_power_2': [1.5],
+            'hp_inlet_temp': [125]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        with pytest.raises(Exception) as excinfo:
+            flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)
+
+        assert 'Improper alarm codes for balancing valve with id' in str(excinfo.value)
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_empty_dataframe(mock_config_manager):
+    """Test that empty dataframe returns empty result"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_df = pd.DataFrame({'hp_power': [], 'hp_inlet_temp': []})
+
+        daily_df = pd.DataFrame({'dummy': []})
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_file_not_found(mock_config_manager):
+    """Test that file not found returns empty dataframe"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/nonexistent.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.side_effect = FileNotFoundError("File not found")
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
+        minute_df = pd.DataFrame({'hp_power': [1.5], 'hp_inlet_temp': [125]})
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)
+
+        assert event_df.empty
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_custom_fault_time(mock_config_manager):
+    """Test HPI alarm with custom fault_time parameter"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'
+        ])
+        minute_df = pd.DataFrame({
+            'hp_power': [1.5, 1.5, 1.5],
+            'hp_inlet_temp': [120, 120, 120]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        # Should trigger with fault_time=3 (custom, different from default 5)
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager, fault_time=3)
+
+        assert len(event_df) == 1
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
+    """Test no alarm when condition is intermittent and not consecutive"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['hp_power', 'hp_inlet_temp'],
+            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime([
+            '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
+            '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
+        ])
+        # Power drops in the middle, breaking consecutive streak
+        minute_df = pd.DataFrame({
+            'hp_power': [1.5, 1.5, 0.5, 1.5, 1.5, 1.5],  # Drops below 1.0 at minute 3
+            'hp_inlet_temp': [120, 120, 120, 120, 120, 120]
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)  # Using defaults
+
+        # Should not trigger because consecutive condition broken at minute 3
+        assert event_df.empty
