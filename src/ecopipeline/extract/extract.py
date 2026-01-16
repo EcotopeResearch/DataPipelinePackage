@@ -1030,44 +1030,61 @@ def get_sub_dirs(dir: str) -> List[str]:
         return
     return directories
 
-def get_OAT_open_meteo(lat: float, long: float, start_date: datetime, end_date: datetime = None):
-    openmeteo = openmeteo_requests.Client()
+def get_OAT_open_meteo(lat: float, long: float, start_date: datetime, end_date: datetime = None, time_zone: str = "America/Los_Angeles",
+                       use_noaa_names : bool = True) -> pd.DataFrame:
     if end_date is None:
-        end_date = datetime.today()
+        end_date = datetime.today() - timedelta(1)
     # datetime.today().date().strftime('%Y%m%d%H%M%S')
     start_date_str = start_date.date().strftime('%Y-%m-%d')
     end_date_str = end_date.date().strftime('%Y-%m-%d')
-    # url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={long}&start_date={start_date_str}&end_date={end_date_str}&hourly=temperature_2m&temperature_unit=fahrenheit"
+    print(f"Getting Open Meteao data for {start_date_str} to {end_date_str}")
+    try:
+        openmeteo = openmeteo_requests.Client()
+        
+        url = "https://archive-api.open-meteo.com/v1/archive"
+        params = {
+            "latitude": lat,
+            "longitude": long,
+            "start_date": start_date_str,
+            "end_date": end_date_str,
+            "hourly": "temperature_2m",
+            "temperature_unit": "fahrenheit",
+            "timezone": time_zone,
+        }
+        responses = openmeteo.weather_api(url, params=params)
 
-    url = "https://archive-api.open-meteo.com/v1/archive"
-    params = {
-        "latitude": lat,
-        "longitude": long,
-        "start_date": start_date_str,
-        "end_date": end_date_str,
-        "hourly": "temperature_2m",
-        "temperature_unit": "fahrenheit",
-    }
-    responses = openmeteo.weather_api(url, params=params)
+        # Process first location. Add a for-loop for multiple locations or weather models
+        response = responses[0]
 
-    # Process first location. Add a for-loop for multiple locations or weather models
-    response = responses[0]
+        # Process hourly data. The order of variables needs to be the same as requested.
+        hourly = response.Hourly()
+        hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
 
-    # Process hourly data. The order of variables needs to be the same as requested.
-    hourly = response.Hourly()
-    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+        hourly_data = {"time_pt": pd.date_range(
+            start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+            end =  pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+            freq = pd.Timedelta(seconds = hourly.Interval()),
+            inclusive = "left"
+        )}
 
-    hourly_data = {"date": pd.date_range(
-        start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
-        end =  pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
-        freq = pd.Timedelta(seconds = hourly.Interval()),
-        inclusive = "left"
-    )}
+        hourly_data["temperature_2m"] = hourly_temperature_2m
+        hourly_data["time_pt"] = hourly_data["time_pt"].tz_convert(time_zone).tz_localize(None)
 
-    hourly_data["temperature_2m"] = hourly_temperature_2m
+        hourly_data = pd.DataFrame(hourly_data)
+        hourly_data.set_index('time_pt', inplace = True)
 
-    print(hourly_data)
-    return hourly_data
+        if use_noaa_names:
+            hourly_data = hourly_data.rename(columns = {'temperature_2m':'airTemp_F'})
+            hourly_data['dewPoint_F'] = None
+
+        # Convert float32 to float64 for SQL database compatibility
+        for col in hourly_data.select_dtypes(include=['float32']).columns:
+            hourly_data[col] = hourly_data[col].astype('float64')
+
+        return hourly_data
+    except Exception as e:
+        print(f'Could not get OAT data: {e}')
+        return pd.DataFrame()
 
 
 def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids : dict = {}) -> dict:

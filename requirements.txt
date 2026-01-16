@@ -6,4 +6,5 @@ mysql-connector-python==8.0.32
 pytest
 pytest-mock
 requests
+openmeteo_requests
 -e .

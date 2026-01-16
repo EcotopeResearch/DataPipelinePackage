@@ -20,7 +20,6 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     dict_of_alarms['swing tank setpoint'] = flag_high_swing_setpoint(df, daily_data, config, system=system)
     dict_of_alarms['recirculation loop balancing valve'] = flag_recirc_balance_valve(daily_data, config, system=system)
     dict_of_alarms['HPWH inlet temperature'] = flag_hp_inlet_temp(df, daily_data, config, system)
-    print("hihihihi", dict_of_alarms['HPWH inlet temperature'])
 
     ongoing_COP_exception = ['abnormal COP']
 
