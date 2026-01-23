@@ -352,7 +352,7 @@ def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_mo
     return df
 
 def estimate_power(df : pd.DataFrame, new_power_column : str, current_a_column : str, current_b_column : str, current_c_column : str,
-                 assumed_voltage : float = 208, power_factor : float = 1):
+                 assumed_voltage : float = 208, power_factor : float = 1) -> pd.DataFrame:
     """
     df: pd.DataFrame
         Pandas dataframe with minute-to-minute data

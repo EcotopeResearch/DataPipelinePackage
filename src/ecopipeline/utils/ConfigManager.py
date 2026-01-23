@@ -7,6 +7,7 @@ from datetime import datetime
 import base64
 import hashlib
 import hmac
+import pandas as pd
 
 class ConfigManager:
     """
@@ -281,3 +282,14 @@ class ConfigManager:
             hashlib.sha1).digest())
         token = '{}:{}'.format(self.api_token, signature.decode())
         return token, date_str
+    
+    def get_ls_df(self, ls_file_name : str = 'load_shift.csv') -> pd.DataFrame:
+        full_ls_filename = f"{self.input_directory}load_shift.csv" 
+        if ls_file_name != "" and os.path.exists(full_ls_filename):
+            ls_df = pd.read_csv(full_ls_filename)
+            ls_df['startDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['startTime'])
+            ls_df['endDateTime'] = pd.to_datetime(ls_df['date'] + ' ' + ls_df['endTime'])
+            return ls_df
+        else:
+            print(f"The loadshift file '{full_ls_filename}' does not exist. Thus loadshifting will not be added to daily dataframe.")
+            return pd.DataFrame()

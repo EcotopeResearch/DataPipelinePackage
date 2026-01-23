@@ -17,9 +17,18 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     dict_of_alarms['boundary'] = flag_boundary_alarms(df, config, full_days=day_list, system=system, default_fault_time= default_boundary_fault_time)
     dict_of_alarms['power ratio'] = power_ratio_alarm(daily_data, config, day_table_name = config.get_table_name(day_table_name_header), system=system, ratio_period_days=power_ratio_period_days)
     dict_of_alarms['abnormal COP'] = flag_abnormal_COP(daily_data, config, system = system, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
-    dict_of_alarms['swing tank setpoint'] = flag_high_swing_setpoint(df, daily_data, config, system=system)
+    dict_of_alarms['temperature maintenance setpoint'] = flag_high_tm_setpoint(df, daily_data, config, system=system)
     dict_of_alarms['recirculation loop balancing valve'] = flag_recirc_balance_valve(daily_data, config, system=system)
     dict_of_alarms['HPWH inlet temperature'] = flag_hp_inlet_temp(df, daily_data, config, system)
+    dict_of_alarms['HPWH outlet temperature'] = flag_hp_outlet_temp(df, daily_data, config, system)
+    dict_of_alarms['improper backup heating use'] = flag_backup_use(df, daily_data, config, system)
+    dict_of_alarms['blown equipment fuse'] = flag_blown_fuse(df, daily_data, config, system)
+    dict_of_alarms['unexpected SOO change'] = flag_unexpected_soo_change(df, daily_data, config, system)
+    dict_of_alarms['short cycle'] = flag_shortcycle(df, daily_data, config, system)
+    dict_of_alarms['HPWH outage'] = flag_HP_outage(df, daily_data, config, day_table_name = config.get_table_name(day_table_name_header), system=system)
+    dict_of_alarms['unexpected temperature'] = flag_unexpected_temp(df, daily_data, config, system)
+    dict_of_alarms['demand response inconsistency'] = flag_ls_mode_inconsistancy(df, daily_data, config, system)
+
 
     ongoing_COP_exception = ['abnormal COP']
 
@@ -183,7 +192,7 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
 
     return _convert_silent_alarm_dict_to_df(alarms)
 
-def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 3, 
+def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 3, 
                              system: str = "", default_setpoint : float = 130.0, default_power_indication : float = 1.0,
                              default_power_ratio : float = 0.4) -> pd.DataFrame:
     """
@@ -191,10 +200,10 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
     and create an dataframe with applicable alarm events
 
     VarNames syntax:
-    STS_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
-    STS_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered 'on'. Defaults to 1.0
-    STS_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
-    STS_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)
+    TMSTPT_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
+    TMSTPT_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered 'on'. Defaults to 1.0
+    TMSTPT_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
+    TMSTPT_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)
 
     Parameters
     ----------
@@ -207,7 +216,7 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
         called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the STS alarm codes (e.g., STS_T_1:140, STS_SP_1:2.0)
+        name of each variable in the dataframe that requires alarming and the TMSTPT alarm codes (e.g., TMSTPT_T_1:140, TMSTPT_SP_1:2.0)
     default_fault_time : int
         Number of consecutive minutes for T+SP alarms (default 3). T+SP alarms trigger when tank is powered and temperature exceeds
         setpoint for this many consecutive minutes.
@@ -235,7 +244,7 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
         print("File Not Found: ", variable_names_path)
         return pd.DataFrame()
 
-    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'STS', 
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'TMSTPT', 
                 {'T' : default_setpoint,
                  'SP': default_power_indication,
                  'TP': default_power_ratio,
@@ -266,7 +275,9 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
             # Check if we have both T and SP
             if len(t_codes) == 1 and len(sp_codes) == 1:
                 t_var_name = t_codes.iloc[0]['variable_name']
+                t_pretty_name = t_codes.iloc[0]['pretty_name']
                 sp_var_name = sp_codes.iloc[0]['variable_name']
+                sp_pretty_name = sp_codes.iloc[0]['pretty_name']
                 sp_power_indication = sp_codes.iloc[0]['bound']
                 t_setpoint = t_codes.iloc[0]['bound']
                 # Check if both variables exist in df
@@ -284,11 +295,12 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
                         first_true_index = consecutive_condition.idxmax()
                         # Adjust for the rolling window (first fault_time-1 minutes don't count)
                         adjusted_time = first_true_index - pd.Timedelta(minutes=default_fault_time-1)
-                        _add_an_alarm(alarms, adjusted_time, sp_var_name, f"High swing tank setpoint: Swing tank was powered at {adjusted_time} although temperature was above {t_setpoint}.")
+                        _add_an_alarm(alarms, adjusted_time, sp_var_name, f"High TM Setpoint: {sp_pretty_name} showed draw at {adjusted_time} although {t_pretty_name} was above {t_setpoint} F.")
                         alarmed_for_day = True
             if not alarmed_for_day and len(st_codes) == 1:
                 st_var_name = st_codes.iloc[0]['variable_name']
                 st_setpoint = st_codes.iloc[0]['bound']
+                st_pretty_name = st_codes.iloc[0]['pretty_name']
                 # Check if st_var_name exists in filtered_df
                 if st_var_name in filtered_df.columns:
                     # Check if setpoint was altered for over 10 minutes
@@ -299,11 +311,12 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
                         first_true_index = consecutive_condition.idxmax()
                         # Adjust for the rolling window
                         adjusted_time = first_true_index - pd.Timedelta(minutes=9)
-                        _add_an_alarm(alarms, day, st_var_name, f"Swing tank setpoint was altered at {adjusted_time}")
+                        _add_an_alarm(alarms, day, st_var_name, f"{st_pretty_name} was altered at {adjusted_time}")
                         alarmed_for_day = True
             if not alarmed_for_day and len(tp_codes) == 1 and len(sp_codes) == 1:
                 tp_var_name = tp_codes.iloc[0]['variable_name']
                 sp_var_name = sp_codes.iloc[0]['variable_name']
+                sp_pretty_name = sp_codes.iloc[0]['pretty_name']
                 tp_ratio = tp_codes.iloc[0]['bound']
                 # Check if both variables exist in df
                 if tp_var_name in daily_df.columns and sp_var_name in daily_df.columns:
@@ -311,37 +324,252 @@ def flag_high_swing_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : 
                     if day in daily_df.index and daily_df.loc[day, tp_var_name] != 0:
                         power_ratio = daily_df.loc[day, sp_var_name] / daily_df.loc[day, tp_var_name]
                         if power_ratio > tp_ratio:
-                            _add_an_alarm(alarms, day, sp_var_name, f"High swing tank power ratio: Swing tank accounted for more than {tp_ratio * 100}% of daily power.")
+                            _add_an_alarm(alarms, day, sp_var_name, f"High temperature maintenace power ratio: {sp_pretty_name} accounted for more than {tp_ratio * 100}% of daily power.")
     return _convert_silent_alarm_dict_to_df(alarms) 
 
-def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_ratio : float = 0.4) -> pd.DataFrame:
+def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, 
+                             system: str = "", default_setpoint : float = 130.0, default_power_ratio : float = 0.1) -> pd.DataFrame:
     """
     Function will take a pandas dataframe and location of alarm information in a csv,
     and create an dataframe with applicable alarm events
 
     VarNames syntax:
-    BV_ER_[OPTIONAL ID] : Indicates a power variable for an ER heater (equipment recirculation)
-    BV_OUT_[OPTIONAL ID]:### - Indicates the heating output variable the ER heating contributes to. Optional ### for the percentage
-        threshold that should not be crossed by the ER elements (default 0.4 for 40%)
+    BU_P_ID - Back Up Tank Power Varriable. Must be in same power units as total system power
+    BU_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
+    BU_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)
 
     Parameters
     ----------
+    df: pd.DataFrame
+        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
     daily_df: pd.DataFrame
-        post-transformed dataframe for daily data. Used for checking recirculation balance by comparing sum of ER equipment
-        power to heating output power.
+        post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
         called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the BV alarm codes (e.g., BV_ER_1, BV_OUT_1:0.5)
+        name of each variable in the dataframe that requires alarming and the STS alarm codes (e.g., STS_T_1:140, STS_SP_1:2.0)
     system: str
         string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
+    default_setpoint : float
+        Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)
+    default_power_indication : float
+        Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)
     default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for OUT alarm codes when no custom bound is specified (default 0.4).
-        Alarm triggers when sum of ER equipment >= (OUT value / default_power_ratio)
+        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)
 
     Returns
     ------- 
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag swing tank setpoint alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'BU', 
+                {'POW': None,
+                 'TP': default_power_ratio,
+                 'ST': default_setpoint},
+                system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for day in daily_df.index:
+        next_day = day + pd.Timedelta(days=1)
+        filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+        alarmed_for_day = False
+        for alarm_id in bounds_df['alarm_code_id'].unique():
+            id_group = bounds_df[bounds_df['alarm_code_id'] == alarm_id]
+
+            # Get T and SP alarm codes for this ID
+            pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
+            tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
+            st_codes = id_group[id_group['alarm_code_type'] == 'ST']
+
+            # Check for multiple T or SP codes with same ID
+            if len(tp_codes) > 1:
+                raise Exception(f"Improper alarm codes for swing tank setpoint with id {alarm_id}")
+
+            if not alarmed_for_day and len(st_codes) >= 1:
+                # Check each ST code against its individual bound
+                for idx, st_row in st_codes.iterrows():
+                    st_var_name = st_row['variable_name']
+                    st_setpoint = st_row['bound']
+                    # Check if st_var_name exists in filtered_df
+                    if st_var_name in filtered_df.columns:
+                        # Check if setpoint was altered for over 10 minutes
+                        altered_mask = filtered_df[st_var_name] != st_setpoint
+                        consecutive_condition = altered_mask.rolling(window=10).min() == 1
+                        if consecutive_condition.any():
+                            # Get the first index where condition was met
+                            first_true_index = consecutive_condition.idxmax()
+                            # Adjust for the rolling window
+                            adjusted_time = first_true_index - pd.Timedelta(minutes=9)
+                            _add_an_alarm(alarms, day, st_var_name, f"Swing tank setpoint was altered at {adjusted_time}")
+                            alarmed_for_day = True
+                            break  # Exit loop once we've found an alarm for this day
+            if not alarmed_for_day and len(tp_codes) == 1 and len(pow_codes) >= 1:
+                tp_var_name = tp_codes.iloc[0]['variable_name']
+                tp_bound = tp_codes.iloc[0]['bound']
+                if tp_var_name in daily_df.columns:
+                    # Get list of ER variable names
+                    bu_pow_names = pow_codes['variable_name'].tolist()
+
+                    # Check if all ER variables exist in daily_df
+                    if all(var in daily_df.columns for var in bu_pow_names):
+                        # Sum all ER variables for this day
+                        bu_pow_sum = daily_df.loc[day, bu_pow_names].sum()
+                        tp_value = daily_df.loc[day, tp_var_name]
+
+                        # Check if sum of ER >= OUT value
+                        if bu_pow_sum >= tp_value*tp_bound:
+                            _add_an_alarm(alarms, day, tp_var_name, f"Improper Back Up Use: Sum of back up equipment ({bu_pow_sum:.2f}) exceeds {(tp_bound * 100):.2f}% of total power.")
+    
+    return _convert_silent_alarm_dict_to_df(alarms) 
+
+def flag_HP_outage(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, day_table_name : str, system: str = "", default_power_ratio : float = 0.3,
+                   ratio_period_days : int = 7) -> pd.DataFrame:
+    """
+    Detects possible heat pump failures or outages by checking if heat pump power consumption falls below
+    an expected ratio of total system power over a rolling period, or by checking for non-zero values in
+    a direct alarm variable from the heat pump controller.
+
+    VarNames syntax:
+    HPOUT_POW_[OPTIONAL ID]:### - Heat pump power variable. ### is the minimum expected ratio of HP power to total power
+        (default 0.3 for 30%). Must be in same power units as total system power.
+    HPOUT_TP_[OPTIONAL ID] - Total system power variable for ratio comparison. Required when using POW codes.
+    HPOUT_ALRM_[OPTIONAL ID] - Direct alarm variable from HP controller. Alarm triggers if any non-zero value is detected.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. Used for checking ALRM codes for non-zero values.
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data. Used for checking power ratios over the rolling period.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the HPOUT alarm codes (e.g., HPOUT_POW_1:0.3, HPOUT_TP_1, HPOUT_ALRM_1).
+    day_table_name : str
+        Name of the daily database table to fetch previous days' data for the rolling period calculation.
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_power_ratio : float
+        Default minimum power ratio threshold (as decimal, e.g., 0.3 for 30%) for POW alarm codes when no custom bound is specified (default 0.3).
+        An alarm triggers if HP power falls below this ratio of total power over the rolling period.
+    ratio_period_days : int
+        Number of days to use for the rolling power ratio calculation (default 7). Must be greater than 1.
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag swing tank setpoint alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'HPOUT', 
+                {'POW': default_power_ratio,
+                 'TP': None,
+                 'ALRM': None},
+                system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for alarm_id in bounds_df['alarm_code_id'].unique():
+            id_group = bounds_df[bounds_df['alarm_code_id'] == alarm_id]
+
+            # Get T and SP alarm codes for this ID
+            pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
+            tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
+            alrm_codes = id_group[id_group['alarm_code_type'] == 'ALRM']
+            if len(pow_codes) > 0 and len(tp_codes) != 1:
+                raise Exception(f"Improper alarm codes for heat pump outage with id {alarm_id}. Requires 1 total power (TP) variable.")
+            elif len(pow_codes) > 0 and len(tp_codes) == 1:
+                if ratio_period_days <= 1:
+                    print("HP Outage alarm period, ratio_period_days, must be more than 1")
+                else: 
+                    tp_var_name = tp_codes.iloc[0]['variable_name'] 
+                    daily_df_copy = daily_df.copy()
+                    daily_df_copy = _append_previous_days_to_df(daily_df_copy, config, ratio_period_days, day_table_name)
+                    for i in range(ratio_period_days - 1, len(daily_df_copy)):
+                        start_idx = i - ratio_period_days + 1
+                        end_idx = i + 1
+                        day = daily_df_copy.index[i]
+                        block_data = daily_df_copy.iloc[start_idx:end_idx].sum()
+                        for j in range(len(pow_codes)):
+                            pow_var_name = pow_codes.iloc[j]['variable_name']
+                            pow_var_bound = pow_codes.iloc[j]['bound']
+                            if block_data[pow_var_name] < block_data[tp_var_name] * pow_var_bound:
+                                _add_an_alarm(alarms, day, pow_var_name, f"Possible Heat Pump failure or outage.")
+            elif len(alrm_codes) > 0:
+                for i in range(len(alrm_codes)):
+                    alrm_var_name = alrm_codes.iloc[i]['variable_name']
+                    if alrm_var_name in df.columns:
+                        for day in daily_df.index:
+                            next_day = day + pd.Timedelta(days=1)
+                            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+                            if not filtered_df.empty and (filtered_df[alrm_var_name] != 0).any():
+                                _add_an_alarm(alarms, day, alrm_var_name, f"Heat pump alarm triggered.")
+                                break
+
+    return _convert_silent_alarm_dict_to_df(alarms) 
+
+def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_ratio : float = 0.4) -> pd.DataFrame:
+    """
+    Detects recirculation balance issues by comparing sum of ER (equipment recirculation) heater
+    power to either total power or heating output.
+
+    VarNames syntax:
+    BV_ER_[OPTIONAL ID] - Indicates a power variable for an ER heater (equipment recirculation).
+        Multiple ER variables with the same ID will be summed together.
+    BV_TP_[OPTIONAL ID]:### - Indicates the Total Power of the system. Optional ### for the percentage
+        threshold that should not be crossed by the ER elements (default 0.4 for 40%).
+        Alarm triggers when sum of ER >= total_power * threshold.
+    BV_OUT_[OPTIONAL ID] - Indicates the heating output variable the ER heating contributes to.
+        Alarm triggers when sum of ER > sum of OUT * 0.95 (i.e., ER exceeds 95% of heating output).
+        Multiple OUT variables with the same ID will be summed together.
+
+    Note: Each alarm ID requires at least one ER code AND either one TP code OR at least one OUT code.
+    If a TP code exists for an ID, it takes precedence over OUT codes.
+
+    Parameters
+    ----------
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data. Used for checking recirculation balance by comparing sum of ER equipment
+        power to total power or heating output power.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the BV alarm codes (e.g., BV_ER_1, BV_TP_1:0.3)
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_power_ratio : float
+        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4).
+
+    Returns
+    -------
     pd.DataFrame:
         Pandas dataframe with alarm events
     """
@@ -355,7 +583,7 @@ def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, sy
         print("File Not Found: ", variable_names_path)
         return pd.DataFrame()
     bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'BV', 
-                {'OUT' : default_power_ratio},
+                {'TP' : default_power_ratio},
                 system)
     if bounds_df.empty:
         return _convert_silent_alarm_dict_to_df({}) # no BV alarms to look into 
@@ -364,25 +592,38 @@ def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, sy
     for alarm_id in bounds_df['alarm_code_id'].unique():
         id_group = bounds_df[bounds_df['alarm_code_id'] == alarm_id]
         out_codes = id_group[id_group['alarm_code_type'] == 'OUT']
-        out_var_name = out_codes.iloc[0]['variable_name']
-        out_bound = out_codes.iloc[0]['bound']
+        tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
         er_codes = id_group[id_group['alarm_code_type'] == 'ER']
-        if len(out_codes) > 1 or len(er_codes) < 1:
+        if len(er_codes) < 1 or (len(out_codes) < 1 and len(tp_codes) != 1):
             raise Exception(f"Improper alarm codes for balancing valve with id {alarm_id}")
-        for day in daily_df.index:
-            if out_var_name in daily_df.columns:
-                # Get list of ER variable names
-                er_var_names = er_codes['variable_name'].tolist()
+        er_var_names = er_codes['variable_name'].tolist()
+        if len(tp_codes) == 1 and tp_codes.iloc[0]['variable_name']in daily_df.columns:
+            tp_var_name = tp_codes.iloc[0]['variable_name']
+            tp_bound = tp_codes.iloc[0]['bound']
+            for day in daily_df.index:
 
                 # Check if all ER variables exist in daily_df
                 if all(var in daily_df.columns for var in er_var_names):
                     # Sum all ER variables for this day
                     er_sum = daily_df.loc[day, er_var_names].sum()
-                    out_value = daily_df.loc[day, out_var_name]
+                    tp_value = daily_df.loc[day, tp_var_name]
 
                     # Check if sum of ER >= OUT value
-                    if er_sum >= out_value*out_bound:
-                        _add_an_alarm(alarms, day, out_var_name, f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(out_bound * 100):.2f}% of heating output.")
+                    if er_sum >= tp_value*tp_bound:
+                        _add_an_alarm(alarms, day, tp_var_name, f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(tp_bound * 100):.2f}% of total power.")
+        elif len(out_codes) >= 1:
+            out_var_names = out_codes['variable_name'].tolist()
+            for day in daily_df.index:
+
+                # Check if all ER variables exist in daily_df
+                if all(var in daily_df.columns for var in er_var_names) and all(var in daily_df.columns for var in out_var_names):
+                    # Sum all ER variables for this day
+                    er_sum = daily_df.loc[day, er_var_names].sum()
+                    out_sum = daily_df.loc[day, out_var_names].sum()
+
+                    # Check if sum of ER >= OUT value
+                    if er_sum > out_sum:
+                        _add_an_alarm(alarms, day, out_codes.iloc[0]['variable_name'], f"Recirculation imbalance: Sum of recirculation equipment power ({er_sum:.2f} kW) exceeds TM heating output ({out_sum:.2f} kW).")
     return _convert_silent_alarm_dict_to_df(alarms)
 
 def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
@@ -473,7 +714,612 @@ def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Config
 
     return _convert_silent_alarm_dict_to_df(alarms)
 
-def _process_bounds_df_alarm_codes(bounds_df : pd.DataFrame, alarm_tag : str, type_default_dict : dict = {}, system : str = "") -> pd.DataFrame:
+def flag_hp_outlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
+                       default_temp_threshold : float = 140.0, fault_time : int = 5) -> pd.DataFrame:
+    """
+    Detects low heat pump outlet temperature by checking if the outlet temperature falls below a threshold
+    while the heat pump is running. The first 10 minutes after each HP turn-on are excluded as a warmup
+    period. An alarm triggers if the temperature stays below the threshold for `fault_time` consecutive
+    minutes after the warmup period.
+
+    VarNames syntax:
+    HPO_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
+        the heat pump is considered 'on'.
+    HPO_T_[OPTIONAL ID]:### - Indicates heat pump outlet temperature variable. ### is the temperature threshold (default 140.0)
+        that should always be exceeded while the heat pump is on after the 10-minute warmup period.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the HPO alarm codes (e.g., HPO_POW_1:1.0, HPO_T_1:140.0).
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_power_threshold : float
+        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
+        when power exceeds this value.
+    default_temp_threshold : float
+        Default temperature threshold for T alarm codes when no custom bound is specified (default 140.0). Alarm triggers when
+        temperature falls BELOW this value while heat pump is on (after warmup period).
+    fault_time : int
+        Number of consecutive minutes that temperature must be below threshold (after warmup) before triggering an alarm (default 5).
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag missing balancing valve alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'HPO',
+                                               {'POW' : default_power_threshold,
+                                                'T' : default_temp_threshold},
+                                                system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for alarm_id in bounds_df['alarm_code_id'].unique():
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+            id_group = bounds_df[bounds_df['alarm_code_id'] == alarm_id]
+            pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
+            pow_var_name = pow_codes.iloc[0]['variable_name']
+            pow_thresh = pow_codes.iloc[0]['bound']
+            t_codes = id_group[id_group['alarm_code_type'] == 'T']
+            t_var_name = t_codes.iloc[0]['variable_name']
+            t_pretty_name = t_codes.iloc[0]['pretty_name']
+            t_thresh = t_codes.iloc[0]['bound']
+            if len(t_codes) != 1 or len(pow_codes) != 1:
+                raise Exception(f"Improper alarm codes for balancing valve with id {alarm_id}")
+            if pow_var_name in filtered_df.columns and t_var_name in filtered_df.columns:
+                # Check for consecutive minutes where both power and temp exceed thresholds
+                power_mask = filtered_df[pow_var_name] > pow_thresh
+                temp_mask = filtered_df[t_var_name] < t_thresh
+
+                # Exclude first 10 minutes after each HP turn-on (warmup period)
+                warmup_minutes = 10
+                mask_changes = power_mask != power_mask.shift(1)
+                run_groups = mask_changes.cumsum()
+                cumcount_in_run = power_mask.groupby(run_groups).cumcount() + 1
+                past_warmup_mask = power_mask & (cumcount_in_run > warmup_minutes)
+
+                combined_mask = past_warmup_mask & temp_mask
+
+                # Check for fault_time consecutive minutes
+                consecutive_condition = combined_mask.rolling(window=fault_time).min() == 1
+                if consecutive_condition.any():
+                    first_true_index = consecutive_condition.idxmax()
+                    adjusted_time = first_true_index - pd.Timedelta(minutes=fault_time-1)
+                    _add_an_alarm(alarms, day, t_var_name, f"Low heat pump outlet temperature: {t_pretty_name} was below {t_thresh:.1f} while HP was ON starting at {adjusted_time}.")
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def flag_blown_fuse(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
+                       default_power_range : float = 2.0, default_power_draw : float = 30, fault_time : int = 3) -> pd.DataFrame:
+    """
+    Detects blown fuse alarms for heating elements by identifying when an element is drawing power
+    but significantly less than expected, which may indicate a blown fuse.
+
+    VarNames syntax:
+    BF_[OPTIONAL ID]:### - Indicates a blown fuse alarm for an element. ### is the expected kW input when the element is on.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the BF alarm codes (e.g., BF:30, BF_1:25).
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_power_threshold : float
+        Power threshold to determine if the element is "on" (default 1.0). Element is considered on when power exceeds this value.
+    default_power_range : float
+        Allowable variance below the expected power draw (default 2.0). An alarm triggers when the actual power draw is less than
+        (expected_power_draw - default_power_range) while the element is on.
+    default_power_draw : float
+        Default expected power draw in kW when no custom bound is specified in the alarm code (default 30).
+    fault_time : int
+        Number of consecutive minutes that the fault condition must persist before triggering an alarm (default 3).
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag missing balancing valve alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'BF',
+                                               {'default' : default_power_draw},
+                                                system, two_part_tag=False)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for var_name in bounds_df['variable_name'].unique():
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+            rows = bounds_df[bounds_df['variable_name'] == var_name]
+            expected_power_draw = rows.iloc[0]['bound']
+            if len(rows) != 1:
+                raise Exception(f"Multiple blown fuse alarm codes for {var_name}")
+            if var_name in filtered_df.columns:
+                # Check for consecutive minutes where both power and temp exceed thresholds
+                power_on_mask = filtered_df[var_name] > default_power_threshold
+                unexpected_power_mask = filtered_df[var_name] < expected_power_draw - default_power_range
+                combined_mask = power_on_mask & unexpected_power_mask
+
+                # Check for fault_time consecutive minutes
+                consecutive_condition = combined_mask.rolling(window=fault_time).min() == 1
+                if consecutive_condition.any():
+                    first_true_index = consecutive_condition.idxmax()
+                    adjusted_time = first_true_index - pd.Timedelta(minutes=fault_time-1)
+                    _add_an_alarm(alarms, day, var_name, f"Blown Fuse: {var_name} had a power draw less than {expected_power_draw - default_power_range:.1f} while element was ON starting at {adjusted_time}.")
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def flag_unexpected_soo_change(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
+                       default_on_temp : float = 115.0, default_off_temp : float = 140.0) -> pd.DataFrame:
+    """
+    Detects unexpected state of operation (SOO) changes by checking if the heat pump turns on or off
+    when the temperature is not near the expected aquastat setpoint thresholds. An alarm is triggered
+    if the HP turns on/off and the corresponding temperature is more than 5.0 degrees away from the
+    expected threshold.
+
+    VarNames syntax:
+    SOOCHNG_POW:### - Indicates a power variable for the heat pump system (should be total power across all primary heat pumps). ### is the power threshold (default 1.0) above which
+        the heat pump system is considered 'on'.
+    SOOCHNG_ON_[Mode ID]:### - Indicates the temperature variable at the ON aquastat fraction. ### is the temperature (default 115.0)
+        that should trigger the heat pump to turn ON. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
+    SOOCHNG_OFF_[Mode ID]:### - Indicates the temperature variable at the OFF aquastat fraction (can be same as ON aquastat). ### is the temperature (default 140.0)
+        that should trigger the heat pump to turn OFF. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the SOOCHNG alarm codes (e.g., SOOCHNG_POW_normal:1.0, SOOCHNG_ON_normal:115.0, SOOCHNG_OFF_normal:140.0).
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_power_threshold : float
+        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
+        when power exceeds this value.
+    default_on_temp : float
+        Default ON temperature threshold (default 115.0). When the HP turns on, an alarm triggers if the temperature
+        is more than 5.0 degrees away from this value.
+    default_off_temp : float
+        Default OFF temperature threshold (default 140.0). When the HP turns off, an alarm triggers if the temperature
+        is more than 5.0 degrees away from this value.
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    soo_dict = {
+        'loadUp' : 'LOAD UP',
+        'shed' : 'SHED',
+        'criticalPeak': 'CRITICAL PEAK',
+        'gridEmergency' : 'GRID EMERGENCY',
+        'advLoadUp' : 'ADVANCED LOAD UP'
+    }
+    if df.empty:
+        print("cannot flag missing balancing valve alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'SOOCHNG',
+                                               {'POW' : default_power_threshold,
+                                                'ON' : default_on_temp,
+                                                'OFF' : default_off_temp},
+                                                system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+    
+    ls_df = config.get_ls_df()
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    pow_codes = bounds_df[bounds_df['alarm_code_type'] == 'POW']
+    if len(pow_codes) != 1:
+                raise Exception(f"Improper alarm codes for SOO changes; must have 1 POW variable to indicate power to HPWH(s).")
+    pow_var_name = pow_codes.iloc[0]['variable_name']
+    pow_thresh = pow_codes.iloc[0]['bound']
+    bounds_df = bounds_df[bounds_df['alarm_code_type'] != 'POW']
+
+    for alarm_id in bounds_df['alarm_code_id'].unique():
+        ls_filtered_df = df.copy()
+        soo_mode_name = 'NORMAL'
+        if alarm_id in soo_dict.keys():
+            if not ls_df.empty:
+                # Filter ls_filtered_df for only date ranges in the right mode of ls_df
+                mode_rows = ls_df[ls_df['event'] == alarm_id]
+                mask = pd.Series(False, index=ls_filtered_df.index)
+                for _, row in mode_rows.iterrows():
+                    mask |= (ls_filtered_df.index >= row['startDateTime']) & (ls_filtered_df.index < row['endDateTime'])
+                ls_filtered_df = ls_filtered_df[mask]
+                soo_mode_name = soo_dict[alarm_id]
+            else:
+                print(f"Cannot check for {alarm_id} because there are no {alarm_id} periods in time frame.")
+                continue
+        elif not ls_df.empty:
+            # Filter out all date range rows from ls_filtered_df's indexes
+            mask = pd.Series(True, index=ls_filtered_df.index)
+            for _, row in ls_df.iterrows():
+                mask &= ~((ls_filtered_df.index >= row['startDateTime']) & (ls_filtered_df.index < row['endDateTime']))
+            ls_filtered_df = ls_filtered_df[mask]
+
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = ls_filtered_df.loc[(ls_filtered_df.index >= day) & (ls_filtered_df.index < next_day)]
+            id_group = bounds_df[bounds_df['alarm_code_id'] == alarm_id]
+            on_t_codes = id_group[id_group['alarm_code_type'] == 'ON']
+            off_t_codes = id_group[id_group['alarm_code_type'] == 'ON']
+            if len(on_t_codes) != 1 or len(off_t_codes) != 1:
+                raise Exception(f"Improper alarm codes for SOO changes with id {alarm_id}. Must have 1 ON and 1 OFF variable")
+            on_t_var_name = on_t_codes.iloc[0]['variable_name']
+            on_t_pretty_name = on_t_codes.iloc[0]['pretty_name']
+            on_t_thresh = on_t_codes.iloc[0]['bound']
+            off_t_var_name = off_t_codes.iloc[0]['variable_name']
+            off_t_pretty_name = off_t_codes.iloc[0]['pretty_name']
+            off_t_thresh = off_t_codes.iloc[0]['bound']
+            if pow_var_name in filtered_df.columns: 
+                found_alarm = False
+                power_below = filtered_df[pow_var_name] <= pow_thresh
+                power_above = filtered_df[pow_var_name] > pow_thresh
+                if on_t_var_name in filtered_df.columns:
+                    power_turn_on = power_below.shift(1) & power_above
+                    power_on_times = filtered_df.index[power_turn_on.fillna(False)]
+                    # Check if temperature is within 5.0 of on_t_thresh at each turn-on moment
+                    for power_time in power_on_times:
+                        temp_at_turn_on = filtered_df.loc[power_time, on_t_var_name]
+                        if abs(temp_at_turn_on - on_t_thresh) > 5.0:
+                            _add_an_alarm(alarms, day, on_t_var_name,
+                                f"Unexpected SOO change: during {soo_mode_name}, HP turned on at {power_time} but {on_t_pretty_name} was {temp_at_turn_on:.1f} F (setpoint at {on_t_thresh} F).")
+                            found_alarm = True
+                            break # TODO soon don't do this
+                if not found_alarm and off_t_var_name in filtered_df.columns:
+                    power_turn_off = power_above.shift(1) & power_below
+                    power_off_times = filtered_df.index[power_turn_off.fillna(False)]
+                    # Check if temperature is within 5.0 of off_t_thresh at each turn-on moment
+                    for power_time in power_off_times:
+                        temp_at_turn_off = filtered_df.loc[power_time, off_t_var_name]
+                        if abs(temp_at_turn_off - off_t_thresh) > 5.0:
+                            _add_an_alarm(alarms, day, off_t_var_name,
+                                f"Unexpected SOO change: during {soo_mode_name}, HP turned off at {power_time} but {off_t_pretty_name} was {temp_at_turn_off:.1f} F (setpoint at {off_t_thresh} F)).")
+                            found_alarm = True
+                            break # TODO soon don't do this
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def flag_ls_mode_inconsistancy(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "") -> pd.DataFrame:
+    """
+    Detects when a variable does not match its expected value during a load shifting event.
+    An alarm is triggered if the variable value does not equal the expected value during the
+    time periods defined in the load shifting schedule for that mode.
+
+    VarNames syntax:
+    SOO_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.
+        [mode] can be: loadUp, shed, criticalPeak, gridEmergency, advLoadUp
+        ### is the expected value (e.g., SOO_loadUp:1 means the variable should be 1 during loadUp events)
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive,
+        in order minutes. If minutes are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        Pandas dataframe with daily data. This dataframe should have a datetime index.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems.
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag load shift mode inconsistency alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'SOO', {}, system)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({})  # no alarms to look into
+
+    ls_df = config.get_ls_df()
+    if ls_df.empty:
+        return _convert_silent_alarm_dict_to_df({})  # no load shifting events to check
+
+    valid_modes = ['loadUp', 'shed', 'criticalPeak', 'gridEmergency', 'advLoadUp']
+
+    alarms = {}
+    for _, row in bounds_df.iterrows():
+        mode = row['alarm_code_type']
+        if mode not in valid_modes and mode != 'normal':
+            continue
+
+        var_name = row['variable_name']
+        pretty_name = row['pretty_name']
+        expected_value = row['bound']
+
+        if var_name not in df.columns:
+            continue
+
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+
+            if filtered_df.empty:
+                continue
+
+            if mode == 'normal':
+                # For 'normal' mode, check periods NOT covered by any load shifting events
+                normal_df = filtered_df.copy()
+                if not ls_df.empty:
+                    mask = pd.Series(True, index=normal_df.index)
+                    for _, event_row in ls_df.iterrows():
+                        event_start = event_row['startDateTime']
+                        event_end = event_row['endDateTime']
+                        mask &= ~((normal_df.index >= event_start) & (normal_df.index < event_end))
+                    normal_df = normal_df[mask]
+
+                if normal_df.empty:
+                    continue
+
+                # Check if any values don't match the expected value during normal periods
+                mismatched = normal_df[normal_df[var_name] != expected_value]
+
+                if not mismatched.empty:
+                    first_mismatch_time = mismatched.index[0]
+                    actual_value = mismatched.iloc[0][var_name]
+                    _add_an_alarm(alarms, day, var_name,
+                        f"Load shift mode inconsistency: {pretty_name} was {actual_value} at {first_mismatch_time} during normal operation (expected {expected_value}).")
+            else:
+                # For load shifting modes, check periods covered by those specific events
+                mode_events = ls_df[ls_df['event'] == mode]
+                if mode_events.empty:
+                    continue
+
+                # Check each load shifting event for this mode on this day
+                for _, event_row in mode_events.iterrows():
+                    event_start = event_row['startDateTime']
+                    event_end = event_row['endDateTime']
+
+                    # Filter for data during this event
+                    event_df = filtered_df.loc[(filtered_df.index >= event_start) & (filtered_df.index < event_end)]
+
+                    if event_df.empty:
+                        continue
+
+                    # Check if any values don't match the expected value
+                    mismatched = event_df[event_df[var_name] != expected_value]
+
+                    if not mismatched.empty:
+                        first_mismatch_time = mismatched.index[0]
+                        actual_value = mismatched.iloc[0][var_name]
+                        _add_an_alarm(alarms, day, var_name,
+                            f"Load shift mode inconsistency: {pretty_name} was {actual_value} at {first_mismatch_time} during {mode} event (expected {expected_value}).")
+                        break  # Only one alarm per variable per day
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def flag_unexpected_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_high_temp : float = 130,
+                       default_low_temp : float = 115, fault_time : int = 10) -> pd.DataFrame:
+    """
+    Detects when domestic hot water (DHW) supply temperature falls outside an acceptable range for
+    too long. An alarm is triggered if the temperature is above the high bound or below the low bound
+    for `fault_time` consecutive minutes.
+
+    VarNames syntax:
+    TMPRNG_[OPTIONAL ID]:###-### - Indicates a temperature variable. ###-### is the acceptable temperature range
+        (e.g., TMPRNG:110-130 means temperature should stay between 110 and 130 degrees).
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data. Used for determining which days to process.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the DHW alarm codes (e.g., DHW:110-130, DHW_1:115-125).
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_high_temp : float
+        Default high temperature bound when no custom range is specified in the alarm code (default 130). Temperature above this triggers alarm.
+    default_low_temp : float
+        Default low temperature bound when no custom range is specified in the alarm code (default 130). Temperature below this triggers alarm.
+    fault_time : int
+        Number of consecutive minutes that temperature must be outside the acceptable range before triggering an alarm (default 10).
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag missing balancing valve alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'TMPRNG',
+                                               {'default': [default_low_temp,default_high_temp]},
+                                                system, two_part_tag=False,
+                                                range_bounds=True)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for dhw_var in bounds_df['variable_name'].unique():
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+            rows = bounds_df[bounds_df['variable_name'] == dhw_var]
+            low_bound = rows.iloc[0]['bound']
+            high_bound = rows.iloc[0]['bound2']
+            pretty_name = rows.iloc[0]['pretty_name']
+
+            if dhw_var in filtered_df.columns:
+                # Check if temp is above high bound or below low bound
+                out_of_range_mask = (filtered_df[dhw_var] > high_bound) | (filtered_df[dhw_var] < low_bound)
+
+                # Check for fault_time consecutive minutes
+                consecutive_condition = out_of_range_mask.rolling(window=fault_time).min() == 1
+                if consecutive_condition.any():
+                    first_true_index = consecutive_condition.idxmax()
+                    adjusted_time = first_true_index - pd.Timedelta(minutes=fault_time-1)
+                    _add_an_alarm(alarms, day, dhw_var,
+                        f"Temperature out of range: {pretty_name} was outside {low_bound}-{high_bound} F for {fault_time}+ consecutive minutes starting at {adjusted_time}.")
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def flag_shortcycle(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
+                       short_cycle_time : int = 15) -> pd.DataFrame:
+    """
+    Detects short cycling by identifying when the heat pump turns on for less than `short_cycle_time`
+    consecutive minutes before turning off again. Short cycling can indicate equipment issues or
+    improper system sizing.
+
+    VarNames syntax:
+    SHRTCYC_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
+        the heat pump is considered 'on'.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
+        are out of order or have gaps, the function may return erroneous alarms.
+    daily_df: pd.DataFrame
+        Post-transformed dataframe for daily data.
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
+        name of each variable in the dataframe that requires alarming and the SHRTCYC alarm codes (e.g., SHRTCYC:1.0, SHRTCYC_1:0.5).
+    system: str
+        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
+    default_power_threshold : float
+        Default power threshold when no custom bound is specified in the alarm code (default 1.0). Heat pump is considered 'on'
+        when power exceeds this value.
+    short_cycle_time : int
+        Minimum expected run time in minutes (default 15). An alarm triggers if the heat pump runs for fewer than this many
+        consecutive minutes before turning off.
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas dataframe with alarm events
+    """
+    if df.empty:
+        print("cannot flag missing balancing valve alarms. Dataframe is empty")
+        return pd.DataFrame()
+    variable_names_path = config.get_var_names_path()
+    try:
+        bounds_df = pd.read_csv(variable_names_path)
+    except FileNotFoundError:
+        print("File Not Found: ", variable_names_path)
+        return pd.DataFrame()
+
+    bounds_df = _process_bounds_df_alarm_codes(bounds_df, 'SHRTCYC',
+                                               {'default' : default_power_threshold},
+                                                system, two_part_tag=False)
+    if bounds_df.empty:
+        return _convert_silent_alarm_dict_to_df({}) # no alarms to look into 
+
+    # Process each unique alarm_code_id
+    alarms = {}
+    for var_name in bounds_df['variable_name'].unique():
+        for day in daily_df.index:
+            next_day = day + pd.Timedelta(days=1)
+            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+            rows = bounds_df[bounds_df['variable_name'] == var_name]
+            pwr_thresh = rows.iloc[0]['bound']
+            var_pretty = rows.iloc[0]['pretty_name']
+            if len(rows) != 1:
+                raise Exception(f"Multiple blown fuse alarm codes for {var_name}")
+            if var_name in filtered_df.columns:
+                power_on_mask = filtered_df[var_name] > pwr_thresh
+
+                # Find runs of consecutive True values by detecting changes in the mask
+                mask_changes = power_on_mask != power_on_mask.shift(1)
+                run_groups = mask_changes.cumsum()
+
+                # For each run where power is on, check if it's shorter than short_cycle_time
+                for group_id in run_groups[power_on_mask].unique():
+                    run_indices = filtered_df.index[(run_groups == group_id) & power_on_mask]
+                    run_length = len(run_indices)
+                    if run_length > 0 and run_length < short_cycle_time:
+                        start_time = run_indices[0]
+                        _add_an_alarm(alarms, day, var_name,
+                            f"Short cycle: {var_pretty} was on for only {run_length} minutes starting at {start_time}.")
+                        break
+
+    return _convert_silent_alarm_dict_to_df(alarms)
+
+def _process_bounds_df_alarm_codes(bounds_df : pd.DataFrame, alarm_tag : str, type_default_dict : dict = {}, system : str = "",
+                                   two_part_tag : bool = True, range_bounds : bool = False) -> pd.DataFrame:
     # Should only do for alarm codes of format: [TAG]_[TYPE]_[OPTIONAL_ID]:[BOUND]
     if (system != ""):
         if not 'system' in bounds_df.columns:
@@ -511,10 +1357,20 @@ def _process_bounds_df_alarm_codes(bounds_df : pd.DataFrame, alarm_tag : str, ty
                     tag_parts = tag_code.split(':')
                     if len(tag_parts) > 2:
                         raise Exception(f"Improperly formated alarm code : {tag_code}")
-                    new_row['bound'] = tag_parts[1]
+                    if range_bounds:
+                        bounds = tag_parts[1]
+                        bound_range = bounds.split('-')
+                        if len(bound_range) != 2:
+                            raise Exception(f"Improperly formated alarm code : {tag_code}. Expected bound range in form '[number]-[number]' but recieved '{bounds}'.")
+                        new_row['bound'] = bound_range[0]
+                        new_row['bound2'] = bound_range[1]
+                    else:    
+                        new_row['bound'] = tag_parts[1]
                     tag_code = tag_parts[0]
                 else:
                     new_row['bound'] = None
+                    if range_bounds:
+                        new_row['bound2'] = None
                 new_row['alarm_codes'] = tag_code
 
                 expanded_rows.append(new_row)
@@ -527,12 +1383,20 @@ def _process_bounds_df_alarm_codes(bounds_df : pd.DataFrame, alarm_tag : str, ty
     alarm_code_parts = []
     for idx, row in bounds_df.iterrows():
         parts = row['alarm_codes'].split('_')
-        if len(parts) == 2:
-            alarm_code_parts.append([parts[1], "No ID"])
-        elif len(parts) == 3:
-            alarm_code_parts.append([parts[1], parts[2]])
+        if two_part_tag:
+            if len(parts) == 2:
+                alarm_code_parts.append([parts[1], "No ID"])
+            elif len(parts) == 3:
+                alarm_code_parts.append([parts[1], parts[2]])
+            else:
+                raise Exception(f"improper {alarm_tag} alarm code format for {row['variable_name']}")
         else:
-            raise Exception(f"improper STS alarm code format for {row['variable_name']}")
+            if len(parts) == 1:
+                alarm_code_parts.append(["default", "No ID"])
+            elif len(parts) == 2:
+                alarm_code_parts.append(["default", parts[1]])
+            else:
+                raise Exception(f"improper {alarm_tag} alarm code format for {row['variable_name']}")
     if alarm_code_parts:
         bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
 
@@ -540,9 +1404,16 @@ def _process_bounds_df_alarm_codes(bounds_df : pd.DataFrame, alarm_tag : str, ty
         for idx, row in bounds_df.iterrows():
             if pd.isna(row['bound']) or row['bound'] is None:
                 if row['alarm_code_type'] in type_default_dict.keys():
-                    bounds_df.at[idx, 'bound'] = type_default_dict[row['alarm_code_type']]
+                    if range_bounds:
+                        bounds_df.at[idx, 'bound'] = type_default_dict[row['alarm_code_type']][0]
+                        bounds_df.at[idx, 'bound2'] = type_default_dict[row['alarm_code_type']][1]
+                    else:
+                        bounds_df.at[idx, 'bound'] = type_default_dict[row['alarm_code_type']]
         # Coerce bound column to float
         bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+        if range_bounds:
+            bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
+
     return bounds_df
 
 def _add_an_alarm(alarm_dict : dict, day : datetime, var_name : str, alarm_string : str):
