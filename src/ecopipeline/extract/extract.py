@@ -862,6 +862,90 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 
     os.chdir(original_directory)
 
+def licor_cloud_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True) -> pd.DataFrame:
+    """
+    Connects to the LI-COR Cloud API to pull sensor data and returns a dataframe.
+
+    The function queries the LI-COR Cloud API for sensor data within the specified time range.
+    Each sensor's data is returned as a separate column in the dataframe, indexed by timestamp.
+
+    Parameters
+    ----------
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline. The config manager
+        must contain the api_token and api_device_id (device serial number) for authentication
+        with the LI-COR Cloud API.
+    startTime : datetime
+        The start time for data extraction. If None, defaults to 28 hours before endTime.
+    endTime : datetime
+        The end time for data extraction. If None, defaults to the current time.
+    create_csv : bool
+        If True, saves the extracted data to a CSV file in the data directory (default True).
+
+    Returns
+    -------
+    pd.DataFrame:
+        Pandas DataFrame with sensor serial numbers as column headers and timestamps as the index.
+        The index is in UTC and may need to be converted to the appropriate timezone.
+        Returns an empty DataFrame if the API call fails.
+    """
+    df = pd.DataFrame()
+    api_device_id = config.api_device_id
+    if endTime is None:
+        endTime = datetime.now()
+    if startTime is None:
+        # 28 hours to ensure encapsulation of last day
+        startTime = endTime - timedelta(hours=28)
+
+    url = f'https://api.licor.cloud/v2/data'
+    token = config.api_token
+    params = {
+        'deviceSerialNumber': api_device_id,
+        'startTime': f'{int(startTime.timestamp())*1000}',
+        'endTime': f'{int(endTime.timestamp())*1000}'
+    }
+    # Headers
+    headers = {
+        'accept': 'application/json',
+        'Authorization': f'Bearer {token}'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            response_json = response.json()
+            data = {}
+            if 'sensors' in response_json.keys():
+                for sensor in response_json['sensors']:
+                    sensor_id = sensor['sensorSerialNumber']
+                    for measurement in sensor.get('data', []):
+                        try:
+                            records = measurement.get('records', [])
+                            series = pd.Series(
+                                data={record[0]: _get_float_value(record[1]) for record in records}
+                            )
+                            data[sensor_id] = series
+                        except:
+                            print(f"Could not convert {sensor_id} values to floats.")
+            df = pd.DataFrame(data)
+            df.index = pd.to_datetime(df.index, unit='ms')
+            df = df.sort_index()
+        else:
+            print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")
+            df = pd.DataFrame()
+    except Exception as e:
+        traceback.print_exc()
+        print(f"An error occurred: {e}")
+        df = pd.DataFrame()
+    # save to file
+    if create_csv:
+        filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+        original_directory = os.getcwd()
+        os.chdir(config.data_directory)
+        df.to_csv(filename, index_label='time_pt')
+        os.chdir(original_directory)
+    return df
+
 def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True, query_hours : float = 1,
                  sensor_keys : list = [], seperate_keys : bool = False, device_id_overwrite : str = None, csv_prefix : str = ""):
     """

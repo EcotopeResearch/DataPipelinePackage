@@ -80,9 +80,10 @@ class ConfigManager:
                     self.api_pw = configure.get('data', 'api_pw')
                     self.api_device_id = configure.get('data','device_id')
                     configured_data_method = True
-                elif 'api_token' in configure['data'] and 'api_secret' in configure['data']:
+                elif 'api_token' in configure['data']:
                     self.api_token = configure.get('data', 'api_token')
-                    self.api_secret = configure.get('data', 'api_secret')
+                    if 'api_secret' in configure['data']:
+                        self.api_secret = configure.get('data', 'api_secret')
                     self.api_device_id = configure.get('data','device_id')
                     configured_data_method = True
             if not configured_data_method:
