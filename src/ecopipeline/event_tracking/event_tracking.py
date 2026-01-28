@@ -1039,13 +1039,13 @@ def flag_unexpected_soo_change(df: pd.DataFrame, daily_df: pd.DataFrame, config 
 
 def flag_ls_mode_inconsistancy(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "") -> pd.DataFrame:
     """
-    Detects when a variable does not match its expected value during a load shifting event.
+    Detects when reported loadshift mode does not match its expected value during a load shifting event.
     An alarm is triggered if the variable value does not equal the expected value during the
     time periods defined in the load shifting schedule for that mode.
 
     VarNames syntax:
     SOO_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.
-        [mode] can be: loadUp, shed, criticalPeak, gridEmergency, advLoadUp
+        [mode] can be: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp
         ### is the expected value (e.g., SOO_loadUp:1 means the variable should be 1 during loadUp events)
 
     Parameters
@@ -1159,7 +1159,7 @@ def flag_ls_mode_inconsistancy(df: pd.DataFrame, daily_df: pd.DataFrame, config 
 def flag_unexpected_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_high_temp : float = 130,
                        default_low_temp : float = 115, fault_time : int = 10) -> pd.DataFrame:
     """
-    Detects when domestic hot water (DHW) supply temperature falls outside an acceptable range for
+    Detects when a temperature value falls outside an acceptable range for
     too long. An alarm is triggered if the temperature is above the high bound or below the low bound
     for `fault_time` consecutive minutes.
 
