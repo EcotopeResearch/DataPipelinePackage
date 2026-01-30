@@ -302,6 +302,14 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     bool: 
         A boolean value indicating if the data was successfully written to the database. 
     """
+    if event_df.empty:
+        print("No events to load. DataFrame is empty.")
+        return True
+    if site_name is None:
+        site_name = config.get_site_name()
+    if 'alarm_type' in event_df.columns:
+        print("Alarm dataframe detected... redirecting dataframe to load_alarms() function...")
+        return load_alarms(config, event_df, site_name)
     # define constants
     proj_cop_filters = ['MV_COMMISSIONED','PLANT_COMMISSIONED','DATA_LOSS_COP','SYSTEM_MAINTENANCE','SYSTEM_TESTING']
     optim_cop_filters = ['MV_COMMISSIONED','PLANT_COMMISSIONED','DATA_LOSS_COP','INSTALLATION_ERROR_COP',
@@ -320,8 +328,6 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
     print(f"Attempting to write data for {event_df.index[0]} to {event_df.index[-1]} into {table_name}")
     
     # Get string of all column names for sql insert
-    if site_name is None:
-        site_name = config.get_site_name()
     column_names = f"start_time_pt,site_name"
     column_types = ["datetime","varchar(25)","datetime",
                     "ENUM('MISC_EVENT','DATA_LOSS','DATA_LOSS_COP','SITE_VISIT','SYSTEM_MAINTENANCE','EQUIPMENT_MALFUNCTION','PARTIAL_OCCUPANCY','INSTALLATION_ERROR','ALARM','SILENT_ALARM','MV_COMMISSIONED','PLANT_COMMISSIONED','INSTALLATION_ERROR_COP','SOO_PERIOD','SOO_PERIOD_COP','SYSTEM_TESTING')",
@@ -544,3 +550,226 @@ def _generate_mysql_update(row, index, table_name, primary_key):
         statement = ""
 
     return statement, values
+
+
+def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = None) -> bool:
+    """
+    Loads alarm data from central_alarm_df_creator() output into the alarm and alarm_inst tables.
+
+    For each alarm instance in the DataFrame:
+    - Checks if a matching alarm record exists (same site_name, alarm_type, variable_name)
+    - If no matching alarm exists, creates a new record in the alarm table
+    - Inserts the alarm instance (with start/end times) into the alarm_inst table
+
+    Parameters
+    ----------
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+    alarm_df : pd.DataFrame
+        The pandas DataFrame output from central_alarm_df_creator(). Must have columns:
+        start_time_pt, end_time_pt, alarm_type, alarm_detail, variable_name
+    site_name : str
+        The name of the site to associate alarms with. If None, defaults to config.get_site_name()
+    var_names_id : str
+        Optional identifier for the variable names configuration. If None, defaults to site_name.
+
+    Returns
+    -------
+    bool:
+        A boolean value indicating if the data was successfully written to the database.
+    """
+    if alarm_df.empty:
+        print("No alarms to load. DataFrame is empty.")
+        return True
+
+    # Validate required columns
+    required_columns = ['start_time_pt', 'end_time_pt', 'alarm_type', 'variable_name']
+    missing_columns = [col for col in required_columns if col not in alarm_df.columns]
+    if missing_columns:
+        raise Exception(f"alarm_df is missing required columns: {missing_columns}")
+
+    # Sort by start_time_pt to process alarms in chronological order
+    alarm_df = alarm_df.sort_values(by='start_time_pt').reset_index(drop=True)
+
+    if site_name is None:
+        site_name = config.get_site_name()
+
+    dbname = config.get_db_name()
+    alarm_table = "alarm"
+    alarm_inst_table = "alarm_inst"
+
+    connection, cursor = config.connect_db()
+
+    try:
+        # Check if tables exist
+        if not check_table_exists(cursor, alarm_table, dbname):
+            create_table_statement = """
+                CREATE TABLE alarm (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    var_names_id VARCHAR(40),
+                    start_time_pt DATETIME NOT NULL,
+                    end_time_pt DATETIME NULL,
+                    site_name VARCHAR(20),
+                    alarm_type VARCHAR(20),
+                    varriable_name VARCHAR(70),
+                    silenced BOOLEAN,
+                    closing_event_id INT NULL,
+                    FOREIGN KEY (closing_event_id) REFERENCES site_events(id),
+                    UNIQUE INDEX unique_alarm (site_name, alarm_type, varriable_name, start_time_pt, end_time_pt)
+                );
+                """
+            cursor.execute(create_table_statement)
+        if not check_table_exists(cursor, alarm_inst_table, dbname):
+            create_table_statement = """
+            CREATE TABLE alarm_inst (
+                id INT,
+                start_time_pt DATETIME NOT NULL,
+                end_time_pt DATETIME NOT NULL,
+                FOREIGN KEY (id) REFERENCES alarm(id)
+            );
+            """
+            cursor.execute(create_table_statement)
+
+        # Get existing alarms for this site
+        cursor.execute(
+            f"SELECT id, alarm_type, varriable_name, start_time_pt, end_time_pt FROM {alarm_table} WHERE site_name = %s",
+            (site_name,)
+        )
+        existing_alarms = cursor.fetchall()
+        # Create lookup dict: (alarm_type, variable_name) -> list of (alarm_id, start_time, end_time)
+        # Using a list because there can be multiple alarms with same type/variable but different date ranges
+        alarm_lookup = {}
+        for row in existing_alarms:
+            key = (row[1], row[2])  # (alarm_type, variable_name)
+            if key not in alarm_lookup:
+                alarm_lookup[key] = []
+            alarm_lookup[key].append({
+                'id': row[0],
+                'start_time': row[3],
+                'end_time': row[4]
+            })
+
+        # SQL statements
+        insert_alarm_sql = f"""
+            INSERT INTO {alarm_table} (var_names_id, start_time_pt, end_time_pt, site_name, alarm_type, varriable_name, silenced)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        update_alarm_dates_sql = f"""
+            UPDATE {alarm_table} SET start_time_pt = %s, end_time_pt = %s WHERE id = %s
+        """
+        insert_inst_sql = f"""
+            INSERT INTO {alarm_inst_table} (id, start_time_pt, end_time_pt)
+            VALUES (%s, %s, %s)
+        """
+
+        new_alarms = 0
+        updated_alarms = 0
+        new_instances = 0
+        max_gap_days = 3
+
+        for _, row in alarm_df.iterrows():
+            start_time = row['start_time_pt']
+            end_time = row['end_time_pt']
+            alarm_type = row['alarm_type']
+            variable_name = row['variable_name']
+
+            lookup_key = (alarm_type, variable_name)
+            alarm_id = None
+
+            if lookup_key in alarm_lookup:
+                # Find matching alarm based on date range logic
+                for alarm_record in alarm_lookup[lookup_key]:
+                    alarm_start = alarm_record['start_time']
+                    alarm_end = alarm_record['end_time']
+
+                    # Case 1: Alarm dates encapsulate row dates - just use this alarm
+                    if alarm_start <= start_time and alarm_end >= end_time:
+                        alarm_id = alarm_record['id']
+                        break
+
+                    # Calculate gap between date ranges
+                    if end_time < alarm_start:
+                        gap = (alarm_start - end_time).days
+                    elif start_time > alarm_end:
+                        gap = (start_time - alarm_end).days
+                    else:
+                        gap = 0  # Overlapping
+
+                    # Case 2: Overlapping or within 3 days - extend the alarm dates
+                    if gap <= max_gap_days:
+                        alarm_id = alarm_record['id']
+                        new_start = min(alarm_start, start_time)
+                        new_end = max(alarm_end, end_time)
+
+                        # Only update if dates actually changed
+                        if new_start != alarm_start or new_end != alarm_end:
+                            cursor.execute(update_alarm_dates_sql, (new_start, new_end, alarm_id))
+                            # Update the lookup cache
+                            alarm_record['start_time'] = new_start
+                            alarm_record['end_time'] = new_end
+                            updated_alarms += 1
+                        break
+
+                # Case 3: No matching alarm found (gap > 3 days for all existing alarms)
+                # Will create a new alarm below
+
+            if alarm_id is None:
+                # Create new alarm record
+                cursor.execute(insert_alarm_sql, (
+                    "No ID",  # TODO add actual ID?
+                    start_time,
+                    end_time,
+                    site_name,
+                    alarm_type,
+                    variable_name,
+                    False  # silenced = False by default
+                ))
+                # Retrieve the ID from database to handle concurrent inserts safely
+                cursor.execute(
+                    f"""SELECT id FROM {alarm_table}
+                        WHERE site_name = %s AND alarm_type = %s AND varriable_name = %s
+                        AND start_time_pt = %s AND end_time_pt = %s""",
+                    (site_name, alarm_type, variable_name, start_time, end_time)
+                )
+                result = cursor.fetchone()
+                if result is None:
+                    raise Exception(f"Failed to retrieve alarm ID after insert for {alarm_type}/{variable_name}")
+                alarm_id = result[0]
+                # Add to lookup cache
+                if lookup_key not in alarm_lookup:
+                    alarm_lookup[lookup_key] = []
+                alarm_lookup[lookup_key].append({
+                    'id': alarm_id,
+                    'start_time': start_time,
+                    'end_time': end_time
+                })
+                new_alarms += 1
+
+            # Delete any existing alarm instances that fall within the new instance's time range to avoid duplicates and redundancies
+            cursor.execute(
+                f"DELETE FROM {alarm_inst_table} WHERE id = %s AND start_time_pt >= %s AND end_time_pt <= %s",
+                (alarm_id, start_time, end_time)
+            )
+
+            # Check if this exact instance already exists
+            cursor.execute(
+                f"SELECT id FROM {alarm_inst_table} WHERE id = %s AND start_time_pt = %s AND end_time_pt = %s",
+                (alarm_id, start_time, end_time)
+            )
+            if cursor.fetchone() is None:
+                # Insert alarm instance
+                cursor.execute(insert_inst_sql, (alarm_id, start_time, end_time))
+                new_instances += 1
+
+        connection.commit()
+        print(f"Successfully loaded alarms: {new_alarms} new alarm records, {updated_alarms} updated alarm records, {new_instances} new instances.")
+        return True
+
+    except Exception as e:
+        print(f"Error loading alarms: {e}")
+        connection.rollback()
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
