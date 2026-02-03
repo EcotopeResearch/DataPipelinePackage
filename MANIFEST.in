@@ -1,2 +1,3 @@
 include README.md
 recursive-include src/ecopipeline/utils/pkls *.pkl
+include src/ecopipeline/extract/zip_to_lat_long.csv

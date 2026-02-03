@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import gzip
 import os
 import json
+import csv
 from ecopipeline.utils.unit_convert import temp_c_to_f, divide_num_by_ten, windspeed_mps_to_knots, precip_cm_to_mm, conditions_index_to_desc
 from ecopipeline import ConfigManager
 import numpy as np
@@ -1190,6 +1191,7 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
     #TODO swap out for this if empty: https://open-meteo.com/en/docs/historical-weather-api?start_date=2025-12-29&latitude=47.6&longitude=-122.33&temperature_unit=fahrenheit&end_date=2026-01-04
     formatted_dfs = {}
     weather_directory = config.get_weather_dir_path()
+    noaa_retrieved = False
     try:
         noaa_dictionary = _get_noaa_dictionary(weather_directory)
         if len(station_ids.keys()) == 0:
@@ -1198,6 +1200,15 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
         noaa_filenames = _download_noaa_data(station_ids, weather_directory)
         noaa_dfs = _convert_to_df(station_ids, noaa_filenames, weather_directory)
         formatted_dfs = _format_df(station_ids, noaa_dfs)
+        for station_name in station_names:
+            df = formatted_dfs[station_name]
+            if not df.empty:
+                max_idx = df.index.max()
+                if max_idx >= datetime.now() - timedelta(days=7):
+                    last_row = df.loc[max_idx]
+                    if last_row.notna().any() and not all(v is None for v in last_row):
+                        noaa_retrieved = True
+                        break
     except:
         # temporary solution for NOAA ftp not including 2025
         noaa_df = pd.DataFrame(index=pd.date_range(start='2025-01-01', periods=10, freq='H'))
@@ -1207,6 +1218,46 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
         for station_name in station_names:
             formatted_dfs[station_name] = noaa_df
         print("Unable to collect NOAA data for timeframe")
+
+    if not noaa_retrieved:
+        print("No NOAA data available. Attempting to retrieve data from Open Meteo. Defaulting to last week time frame.")
+        db_connection, db_cursor = config.connect_siteConfig_db()
+        table_config_dict = config.get_db_table_info(["minute"])
+    
+        try:
+            db_cursor.execute(
+                f"SELECT zip_code FROM site WHERE site_name = '{table_config_dict['minute']['table_name']}' LIMIT 1;")
+            zip_code_data = pd.DataFrame(db_cursor.fetchall())
+            if len(zip_code_data.index) > 0:
+                zip_code = zip_code_data[0][0]
+                print(f"Zip code for site retrieved: {zip_code}")
+                csv_path = os.path.join(os.path.dirname(__file__), 'zip_to_lat_long.csv')
+                latitude, longitude = None, None
+                with open(csv_path, 'r') as csv_file:
+                    reader = csv.DictReader(csv_file)
+                    for row in reader:
+                        if int(row['zip']) == int(zip_code):
+                            latitude = float(row['lattitude'])
+                            longitude = float(row['longitude'])
+                            break
+                if latitude is not None and longitude is not None:
+                    # default to last week of data
+                    # TODO use actual time frame and use appropriate time zones
+                    end_time = datetime.today()
+                    start_time = end_time - timedelta(7)
+                    open_meteo_df = get_OAT_open_meteo(latitude, longitude, start_time, end_time)
+                    for station_name in station_names:
+                        formatted_dfs[station_name] = open_meteo_df
+                else:
+                    print(f"Zip code {zip_code} not found in datapipeline package zip code repository.")
+            else:
+                print(f"No available zipcode for {table_config_dict['minute']['table_name']}. Cannot retrieve OAT data")
+        except mysqlerrors.Error:
+            print("Unable to find zip code in database.")
+
+        db_cursor.close()
+        db_connection.close()
+
     return formatted_dfs
 
 

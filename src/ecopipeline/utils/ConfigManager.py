@@ -222,6 +222,36 @@ class ConfigManager:
         print(f"Successfully connected to database.")
         return connection, connection.cursor()
     
+    def connect_siteConfig_db(self) -> (mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor):
+        """
+        Create a connection with the mySQL server. 
+
+        Parameters
+        ----------  
+        None
+
+        Returns
+        ------- 
+        mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor: 
+            A connection and cursor object. THe cursor can be used to execute
+            mySQL queries and the connection object can be used to save those changes. 
+        """
+
+        connection = None
+        try:
+            connection = mysql.connector.connect(
+                host=self.db_connection_info['host'],
+                user=self.db_connection_info['user'],
+                password=self.db_connection_info['password'],
+                database="SiteConfig"
+            )
+        except mysql.connector.Error:
+            print("Unable to connect to database with given credentials.")
+            return None, None
+
+        print(f"Successfully connected to database.")
+        return connection, connection.cursor()
+    
     def get_fm_token(self) -> str:
         # for getting feild manager api token
         if self.api_usr is None or self.api_pw is None:
