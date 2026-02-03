@@ -15,9 +15,9 @@ class HPWHOutlet(Alarm):
     minutes after the warmup period.
 
     VarNames syntax:
-    HPO_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
+    HPOUTLT_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
         the heat pump is considered 'on'.
-    HPO_T_[OPTIONAL ID]:### - Indicates heat pump outlet temperature variable. ### is the temperature threshold (default 140.0)
+    HPOUTLT_T_[OPTIONAL ID]:### - Indicates heat pump outlet temperature variable. ### is the temperature threshold (default 140.0)
         that should always be exceeded while the heat pump is on after the 10-minute warmup period.
 
     Parameters
@@ -33,7 +33,7 @@ class HPWHOutlet(Alarm):
 
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_temp_threshold : float = 140.0, fault_time : int = 5):
-        alarm_tag = 'HPO'
+        alarm_tag = 'HPOUTLT'
         type_default_dict = {
                 'POW' : default_power_threshold,
                 'T' : default_temp_threshold

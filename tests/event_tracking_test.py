@@ -78,7 +78,7 @@ def test_flag_ratio_alarms(mock_config_manager):
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5'],
-                        'alarm_codes': ['PR_HPWH:60-80', None, "PR_HPWH:20-40;PR_Other:0-100",None,"PR_Other:20-50"]})
+                        'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -100,7 +100,8 @@ def test_flag_ratio_alarms(mock_config_manager):
                                         "Power ratio alarm (1-day block ending 2022-01-01): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% expected.",
                                         "Power ratio alarm (1-day block ending 2022-01-03): serious_var_1 accounted for 94.5% of HPWH energy use. 60.0-80.0% expected."
                                         ],
-                        'variable_name' : ['serious_var_3','serious_var_3','serious_var_5','serious_var_1']})
+                        'variable_name' : ['serious_var_3','serious_var_3','serious_var_5','serious_var_1'],
+                        'certainty': [3]*4})
         # df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
@@ -119,7 +120,7 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5'],
-                        'alarm_codes': ['TZ_HPWH:60-80', None, "PR_HPWH:0-100;PR_Other:0-100",None,"PR_Other:20-50"]})
+                        'alarm_codes': ['TZ_HPWH:60-80', None, "POWRRAT_HPWH:0-100;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -138,7 +139,8 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
                         'event_detail': [
                                         "Power ratio alarm (1-day block ending 2022-01-01): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% expected."
                                         ],
-                        'variable_name' : ['serious_var_5']})
+                        'variable_name' : ['serious_var_5'],
+                        'certainty': [3]})
         # df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
@@ -183,7 +185,8 @@ def test_flag_abnormal_COP(mock_config_manager):
                             'COP_Equipment',
                             'SystemCOP',
                             'COP_Boundary'
-                            ]})
+                            ],
+                        'certainty': [3]*4})
         # df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
@@ -234,7 +237,7 @@ def test_flag_abnormal_COP(mock_config_manager):
 #                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5,None],
 #                         'high_alarm': [1,2,None,None,76,None],
 #                         'fault_time': [3,3,3,None,3,None],
-#                         'alarm_codes': ['PR_HPWH:60-80', None, "PR_HPWH:20-40;PR_Other:0-100",None,"PR_Other:20-50",None]})
+#                         'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50",None]})
 #         mock_csv.return_value = csv_df
 
 #         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -315,7 +318,7 @@ def test_flag_abnormal_COP(mock_config_manager):
 #                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5,None],
 #                         'high_alarm': [1,2,None,None,76,None],
 #                         'fault_time': [3,3,3,None,3,None],
-#                         'alarm_codes': ['PR_HPWH:60-80', None, "PR_HPWH:20-40;PR_Other:0-100",None,"PR_Other:20-50",None]})
+#                         'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50",None]})
 #         mock_csv.return_value = csv_df
 
 #         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -397,7 +400,7 @@ def test_power_ratio_alarm_all_null_values(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3'],
-                        'alarm_codes': ['PR_HPWH:60-80', None, "PR_HPWH:20-40"]})
+                        'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -419,7 +422,7 @@ def test_power_ratio_alarm_all_zero_values(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3'],
-                        'alarm_codes': ['PR_HPWH:60-80', None, "PR_HPWH:20-40"]})
+                        'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -677,13 +680,13 @@ def test_flag_abnormal_COP_all_null_high_alarm(mock_config_manager):
         assert len(event_df) == 2  # COP_Equipment at 5.0 and COP_Boundary at 4.8
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_high_tm_setpoint_no_tmstpt_codes(mock_config_manager):
-    """Test that flag_high_tm_setpoint returns empty dataframe when no TMSTPT alarm codes exist"""
+def test_flag_high_tm_setpoint_no_TMNSTPT_codes(mock_config_manager):
+    """Test that flag_high_tm_setpoint returns empty dataframe when no TMNSTPT alarm codes exist"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['PR_HPWH:60-80', None, 'OTHER_CODE:100']
+            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'OTHER_CODE:100']
         })
         mock_csv.return_value = csv_df
 
@@ -695,7 +698,7 @@ def test_flag_high_tm_setpoint_no_tmstpt_codes(mock_config_manager):
         daily_df = pd.DataFrame({'var_1': [1000]})
         daily_df.index = daily_timestamps
 
-        # Should return empty dataframe when no TMSTPT codes exist
+        # Should return empty dataframe when no TMNSTPT codes exist
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
 
         assert event_df.empty
@@ -707,7 +710,7 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMSTPT_T_1', 'TMSTPT_SP_1']
+            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1']
         })
         mock_csv.return_value = csv_df
 
@@ -737,7 +740,7 @@ def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMSTPT_T_1', 'TMSTPT_SP_1']
+            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1']
         })
         mock_csv.return_value = csv_df
 
@@ -764,7 +767,7 @@ def test_flag_high_tm_setpoint_st_setpoint_altered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_setpoint'],
-            'alarm_codes': ['TMSTPT_ST_1']
+            'alarm_codes': ['TMNSTPT_ST_1']
         })
         mock_csv.return_value = csv_df
 
@@ -795,7 +798,7 @@ def test_flag_high_tm_setpoint_st_no_alteration(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_setpoint'],
-            'alarm_codes': ['TMSTPT_ST_1']
+            'alarm_codes': ['TMNSTPT_ST_1']
         })
         mock_csv.return_value = csv_df
 
@@ -821,7 +824,7 @@ def test_flag_high_tm_setpoint_tp_and_sp_high_ratio(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_power', 'total_power'],
-            'alarm_codes': ['TMSTPT_SP_1', 'TMSTPT_TP_1']
+            'alarm_codes': ['TMNSTPT_SP_1', 'TMNSTPT_TP_1']
         })
         mock_csv.return_value = csv_df
 
@@ -853,7 +856,7 @@ def test_flag_high_tm_setpoint_tp_and_sp_normal_ratio(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_power', 'total_power'],
-            'alarm_codes': ['TMSTPT_SP_1', 'TMSTPT_TP_1']
+            'alarm_codes': ['TMNSTPT_SP_1', 'TMNSTPT_TP_1']
         })
         mock_csv.return_value = csv_df
 
@@ -877,13 +880,13 @@ def test_flag_high_tm_setpoint_tp_and_sp_normal_ratio(mock_config_manager):
         assert event_df.empty
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_high_tm_setpoint_multiple_tmstpt_codes(mock_config_manager):
-    """Test multiple TMSTPT codes separated by semicolons"""
+def test_flag_high_tm_setpoint_multiple_TMNSTPT_codes(mock_config_manager):
+    """Test multiple TMNSTPT codes separated by semicolons"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power', 'other_var'],
-            'alarm_codes': ['TMSTPT_T_1;PR_HPWH:60-80', 'TMSTPT_SP_1', 'OTHER_CODE:100']
+            'alarm_codes': ['TMNSTPT_T_1;POWRRAT_HPWH:60-80', 'TMNSTPT_SP_1', 'OTHER_CODE:100']
         })
         mock_csv.return_value = csv_df
 
@@ -905,12 +908,12 @@ def test_flag_high_tm_setpoint_multiple_tmstpt_codes(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_improper_format_no_underscore(mock_config_manager):
-    """Test that improper TMSTPT format (no underscore) raises exception"""
+    """Test that improper TMNSTPT format (no underscore) raises exception"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp'],
-            'alarm_codes': ['TMSTPTT1']  # No underscore
+            'alarm_codes': ['TMNSTPTT1']  # No underscore
         })
         mock_csv.return_value = csv_df
 
@@ -925,16 +928,16 @@ def test_flag_high_tm_setpoint_improper_format_no_underscore(mock_config_manager
         with pytest.raises(Exception) as excinfo:
             flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
 
-        assert 'improper TMSTPT alarm code format' in str(excinfo.value)
+        assert 'improper TMNSTPT alarm code format' in str(excinfo.value)
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_improper_format_too_many_underscores(mock_config_manager):
-    """Test that improper TMSTPT format (too many underscores) raises exception"""
+    """Test that improper TMNSTPT format (too many underscores) raises exception"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp'],
-            'alarm_codes': ['TMSTPT_T_1_EXTRA']  # Too many underscores
+            'alarm_codes': ['TMNSTPT_T_1_EXTRA']  # Too many underscores
         })
         mock_csv.return_value = csv_df
 
@@ -949,7 +952,7 @@ def test_flag_high_tm_setpoint_improper_format_too_many_underscores(mock_config_
         with pytest.raises(Exception) as excinfo:
             flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
 
-        assert 'improper TMSTPT alarm code format' in str(excinfo.value)
+        assert 'improper TMNSTPT alarm code format' in str(excinfo.value)
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_multiple_t_codes_same_id(mock_config_manager):
@@ -958,7 +961,7 @@ def test_flag_high_tm_setpoint_multiple_t_codes_same_id(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp_1', 'tank_temp_2', 'tank_power'],
-            'alarm_codes': ['TMSTPT_T_1', 'TMSTPT_T_1', 'TMSTPT_SP_1']  # Duplicate T with ID 1
+            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_T_1', 'TMNSTPT_SP_1']  # Duplicate T with ID 1
         })
         mock_csv.return_value = csv_df
 
@@ -982,7 +985,7 @@ def test_flag_high_tm_setpoint_empty_dataframe(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp'],
-            'alarm_codes': ['TMSTPT_T_1']
+            'alarm_codes': ['TMNSTPT_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1019,7 +1022,7 @@ def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power', 'total_power', 'tank_setpoint'],
-            'alarm_codes': ['TMSTPT_T_1', 'TMSTPT_SP_1', 'TMSTPT_TP_1', 'TMSTPT_ST_1']
+            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1', 'TMNSTPT_TP_1', 'TMNSTPT_ST_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1051,17 +1054,17 @@ def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager
                                             default_power_ratio=0.4)
 
         # Should have alarms: Day 1 T+SP alarm, Day 2 T+SP alarm, Day 2 ST alarm
-        assert len(event_df) == 2
+        assert len(event_df) == 6
         assert any('High TM Setpoint' in detail for detail in event_df['event_detail'])
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_high_tm_setpoint_tmstpt_with_two_parts(mock_config_manager):
-    """Test TMSTPT code with only two parts (no ID)"""
+def test_flag_high_tm_setpoint_TMNSTPT_with_two_parts(mock_config_manager):
+    """Test TMNSTPT code with only two parts (no ID)"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMSTPT_T', 'TMSTPT_SP']  # No ID (None)
+            'alarm_codes': ['TMNSTPT_T', 'TMNSTPT_SP']  # No ID (None)
         })
         mock_csv.return_value = csv_df
 
@@ -1088,7 +1091,7 @@ def test_flag_high_tm_setpoint_custom_t_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMSTPT_T_1:140', 'TMSTPT_SP_1:2.0']  # Custom bounds: 140°F temp, 2.0 kW power
+            'alarm_codes': ['TMNSTPT_T_1:140', 'TMNSTPT_SP_1:2.0']  # Custom bounds: 140°F temp, 2.0 kW power
         })
         mock_csv.return_value = csv_df
 
@@ -1116,7 +1119,7 @@ def test_flag_high_tm_setpoint_custom_st_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_setpoint'],
-            'alarm_codes': ['TMSTPT_ST_1:125']  # Custom setpoint bound of 125
+            'alarm_codes': ['TMNSTPT_ST_1:125']  # Custom setpoint bound of 125
         })
         mock_csv.return_value = csv_df
 
@@ -1146,7 +1149,7 @@ def test_flag_high_tm_setpoint_custom_tp_ratio_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_power', 'total_power'],
-            'alarm_codes': ['TMSTPT_SP_1', 'TMSTPT_TP_1:0.3']  # Custom ratio bound of 30%
+            'alarm_codes': ['TMNSTPT_SP_1', 'TMNSTPT_TP_1:0.3']  # Custom ratio bound of 30%
         })
         mock_csv.return_value = csv_df
 
@@ -1178,7 +1181,7 @@ def test_flag_high_tm_setpoint_no_custom_bound_uses_default(mock_config_manager)
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMSTPT_T_1', 'TMSTPT_SP_1']  # No custom bounds
+            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1']  # No custom bounds
         })
         mock_csv.return_value = csv_df
 
@@ -1201,13 +1204,13 @@ def test_flag_high_tm_setpoint_no_custom_bound_uses_default(mock_config_manager)
         assert '130.0' in event_df.iloc[0]['event_detail']
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_recirc_balance_valve_no_bv_codes(mock_config_manager):
+def test_flag_recirc_balance_valve_no_BALVALV_codes(mock_config_manager):
     """Test that flag_recirc_balance_valve returns empty dataframe when no BV alarm codes exist"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['PR_HPWH:60-80', None, 'TMSTPT_T_1']
+            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'TMNSTPT_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1227,7 +1230,7 @@ def test_flag_recirc_balance_valve_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'recirc_eq_2', 'heating_output'],
-            'alarm_codes': ['BV_ER_1', 'BV_ER_1', 'BV_OUT_1']
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_OUT_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1252,7 +1255,7 @@ def test_flag_recirc_balance_valve_no_alarm(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'recirc_eq_2', 'heating_output'],
-            'alarm_codes': ['BV_ER_1', 'BV_ER_1', 'BV_OUT_1']
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_OUT_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1275,7 +1278,7 @@ def test_flag_recirc_balance_valve_tp_custom_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'total_power'],
-            'alarm_codes': ['BV_ER_1', 'BV_TP_1:0.3']  # Custom 30% threshold
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_TP_1:0.3']  # Custom 30% threshold
         })
         mock_csv.return_value = csv_df
 
@@ -1298,7 +1301,7 @@ def test_flag_recirc_balance_valve_tp_default_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'total_power'],
-            'alarm_codes': ['BV_ER_1', 'BV_TP_1']  # No custom bound, uses default
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_TP_1']  # No custom bound, uses default
         })
         mock_csv.return_value = csv_df
 
@@ -1322,7 +1325,7 @@ def test_flag_recirc_balance_valve_multiple_days(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'heating_output'],
-            'alarm_codes': ['BV_ER_1', 'BV_OUT_1']
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_OUT_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1345,7 +1348,7 @@ def test_flag_recirc_balance_valve_multiple_out_codes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'heating_out_1', 'heating_out_2'],
-            'alarm_codes': ['BV_ER_1', 'BV_OUT_1', 'BV_OUT_1']  # Multiple OUT codes
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_OUT_1', 'BALVALV_OUT_1']  # Multiple OUT codes
         })
         mock_csv.return_value = csv_df
 
@@ -1369,7 +1372,7 @@ def test_flag_recirc_balance_valve_no_er_codes_error(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['heating_output'],
-            'alarm_codes': ['BV_OUT_1']  # No ER codes
+            'alarm_codes': ['BALVALV_OUT_1']  # No ER codes
         })
         mock_csv.return_value = csv_df
 
@@ -1391,7 +1394,7 @@ def test_flag_recirc_balance_valve_empty_dataframe(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_eq_1', 'heating_output'],
-            'alarm_codes': ['BV_ER_1', 'BV_OUT_1']
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_OUT_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1423,7 +1426,7 @@ def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['recirc_1', 'recirc_2', 'recirc_3', 'heating_output'],
-            'alarm_codes': ['BV_ER_1', 'BV_ER_1', 'BV_ER_1', 'BV_OUT_1']
+            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_OUT_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1442,13 +1445,13 @@ def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
         assert len(event_df) == 1
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_hp_inlet_temp_no_hpi_codes(mock_config_manager):
+def test_flag_hp_inlet_temp_no_HPINLET_codes(mock_config_manager):
     """Test that flag_hp_inlet_temp returns empty dataframe when no HPI alarm codes exist"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['PR_HPWH:60-80', None, 'TMSTPT_T_1']
+            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'TMNSTPT_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1471,7 +1474,7 @@ def test_flag_hp_inlet_temp_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1'],
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1'],
             'pretty_name': ['HP Power', 'HP Inlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -1503,7 +1506,7 @@ def test_flag_hp_inlet_temp_no_alarm_temp_low(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1532,7 +1535,7 @@ def test_flag_hp_inlet_temp_no_alarm_power_low(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1561,7 +1564,7 @@ def test_flag_hp_inlet_temp_custom_bounds(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1:1.0', 'HPI_T_1:130.0']  # Custom thresholds
+            'alarm_codes': ['HPINLET_POW_1:1.0', 'HPINLET_T_1:130.0']  # Custom thresholds
         })
         mock_csv.return_value = csv_df
 
@@ -1593,7 +1596,7 @@ def test_flag_hp_inlet_temp_not_enough_consecutive_minutes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1623,7 +1626,7 @@ def test_flag_hp_inlet_temp_multiple_pow_codes_error(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power_1', 'hp_power_2', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_POW_1', 'HPI_T_1']  # Duplicate POW codes
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_POW_1', 'HPINLET_T_1']  # Duplicate POW codes
         })
         mock_csv.return_value = csv_df
 
@@ -1651,7 +1654,7 @@ def test_flag_hp_inlet_temp_empty_dataframe(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1689,7 +1692,7 @@ def test_flag_hp_inlet_temp_custom_fault_time(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1718,7 +1721,7 @@ def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPI_POW_1', 'HPI_T_1']
+            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1743,13 +1746,13 @@ def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
         assert event_df.empty
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_backup_use_no_bu_codes(mock_config_manager):
+def test_flag_backup_use_no_IMBCKUP_codes(mock_config_manager):
     """Test that flag_backup_use returns empty dataframe when no BU alarm codes exist"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['PR_HPWH:60-80', None, 'TMSTPT_T_1']
+            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'TMNSTPT_T_1']
         })
         mock_csv.return_value = csv_df
 
@@ -1772,7 +1775,7 @@ def test_flag_backup_use_st_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['bu_setpoint'],
-            'alarm_codes': ['BU_ST_1:130.0']
+            'alarm_codes': ['IMBCKUP_ST_1:130.0']
         })
         mock_csv.return_value = csv_df
 
@@ -1804,7 +1807,7 @@ def test_flag_backup_use_st_alarm_not_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['bu_setpoint'],
-            'alarm_codes': ['BU_ST_1:130.0']
+            'alarm_codes': ['IMBCKUP_ST_1:130.0']
         })
         mock_csv.return_value = csv_df
 
@@ -1834,7 +1837,7 @@ def test_flag_backup_use_tp_pow_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['bu_power_1', 'total_power'],
-            'alarm_codes': ['BU_POW_1', 'BU_TP_1:0.1'],  # 10% ratio
+            'alarm_codes': ['IMBCKUP_POW_1', 'IMBCKUP_TP_1:0.1'],  # 10% ratio
             'pretty_name': ['Backup Power 1', 'Total Power']
         })
         mock_csv.return_value = csv_df
@@ -1866,7 +1869,7 @@ def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['element_power'],
-            'alarm_codes': ['BF:30'],  # Expected 30 kW when on
+            'alarm_codes': ['BLWNFSE:30'],  # Expected 30 kW when on
             'pretty_name': ['Element Power']
         })
         mock_csv.return_value = csv_df
@@ -1897,7 +1900,7 @@ def test_flag_blown_fuse_no_alarm_normal_power(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['element_power'],
-            'alarm_codes': ['BF:30'],  # Expected 30 kW when on
+            'alarm_codes': ['BLWNFSE:30'],  # Expected 30 kW when on
             'pretty_name': ['Element Power']
         })
         mock_csv.return_value = csv_df
@@ -1926,7 +1929,7 @@ def test_flag_blown_fuse_no_alarm_element_off(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['element_power'],
-            'alarm_codes': ['BF:30'],
+            'alarm_codes': ['BLWNFSE:30'],
             'pretty_name': ['Element Power']
         })
         mock_csv.return_value = csv_df
@@ -2340,7 +2343,7 @@ def test_flag_hp_outlet_temp_alarm_after_warmup(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'outlet_temp'],
-            'alarm_codes': ['HPO_POW_1:1.0', 'HPO_T_1:140'],
+            'alarm_codes': ['HPOUTLT_POW_1:1.0', 'HPOUTLT_T_1:140'],
             'pretty_name': ['HP Power', 'Outlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2369,7 +2372,7 @@ def test_flag_hp_outlet_temp_no_alarm_during_warmup(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'outlet_temp'],
-            'alarm_codes': ['HPO_POW_1:1.0', 'HPO_T_1:140'],
+            'alarm_codes': ['HPOUTLT_POW_1:1.0', 'HPOUTLT_T_1:140'],
             'pretty_name': ['HP Power', 'Outlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2397,7 +2400,7 @@ def test_flag_hp_outlet_temp_no_alarm_temp_above_threshold(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'outlet_temp'],
-            'alarm_codes': ['HPO_POW_1:1.0', 'HPO_T_1:140'],
+            'alarm_codes': ['HPOUTLT_POW_1:1.0', 'HPOUTLT_T_1:140'],
             'pretty_name': ['HP Power', 'Outlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2426,7 +2429,7 @@ def test_flag_HP_outage_alarm_triggered_low_power_ratio(mock_config_manager):
          patch('ecopipeline.event_tracking.Alarm.Alarm._append_previous_days_to_df') as mock_append:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'total_power'],
-            'alarm_codes': ['HPOUT_POW_1:0.3', 'HPOUT_TP_1'],
+            'alarm_codes': ['HPOUTGE_POW_1:0.3', 'HPOUTGE_TP_1'],
             'pretty_name': ['HP Power', 'Total Power']
         })
         mock_csv.return_value = csv_df
@@ -2460,7 +2463,7 @@ def test_flag_HP_outage_no_alarm_normal_power_ratio(mock_config_manager):
          patch('ecopipeline.event_tracking.Alarm.Alarm._append_previous_days_to_df') as mock_append:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_power', 'total_power'],
-            'alarm_codes': ['HPOUT_POW_1:0.3', 'HPOUT_TP_1'],
+            'alarm_codes': ['HPOUTGE_POW_1:0.3', 'HPOUTGE_TP_1'],
             'pretty_name': ['HP Power', 'Total Power']
         })
         mock_csv.return_value = csv_df
@@ -2491,7 +2494,7 @@ def test_flag_HP_outage_alarm_triggered_nonzero_alrm(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_alarm'],
-            'alarm_codes': ['HPOUT_ALRM_1'],
+            'alarm_codes': ['HPOUTGE_ALRM_1'],
             'pretty_name': ['HP Alarm']
         })
         mock_csv.return_value = csv_df
@@ -2521,7 +2524,7 @@ def test_flag_HP_outage_no_alarm_alrm_all_zero(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['hp_alarm'],
-            'alarm_codes': ['HPOUT_ALRM_1'],
+            'alarm_codes': ['HPOUTGE_ALRM_1'],
             'pretty_name': ['HP Alarm']
         })
         mock_csv.return_value = csv_df
@@ -2550,7 +2553,7 @@ def test_flag_dhw_unexpected_temp_alarm_above_high_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['dhw_temp'],
-            'alarm_codes': ['TMPRNG:110-130'],
+            'alarm_codes': ['TMPRANG:110-130'],
             'pretty_name': ['DHW Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2577,7 +2580,7 @@ def test_flag_dhw_unexpected_temp_alarm_below_low_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['dhw_temp'],
-            'alarm_codes': ['TMPRNG:110-130'],
+            'alarm_codes': ['TMPRANG:110-130'],
             'pretty_name': ['DHW Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2604,7 +2607,7 @@ def test_flag_dhw_unexpected_temp_no_alarm_within_range(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['dhw_temp'],
-            'alarm_codes': ['TMPRNG:110-130'],
+            'alarm_codes': ['TMPRANG:110-130'],
             'pretty_name': ['DHW Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2637,7 +2640,7 @@ def test_flag_ls_mode_inconsistancy_alarm_triggered(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_loadUp:1'],
+            'alarm_codes': ['SOOSCHD_loadUp:1'],
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df
@@ -2678,7 +2681,7 @@ def test_flag_ls_mode_inconsistancy_no_alarm_value_matches(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_shed:2'],
+            'alarm_codes': ['SOOSCHD_shed:2'],
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df
@@ -2710,7 +2713,7 @@ def test_flag_ls_mode_inconsistancy_no_alarm_empty_ls_df(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_loadUp:1'],
+            'alarm_codes': ['SOOSCHD_loadUp:1'],
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df
@@ -2746,7 +2749,7 @@ def test_flag_ls_mode_inconsistancy_no_alarm_no_matching_mode(mock_config_manage
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_loadUp:1'],  # Configured for loadUp, but only shed events exist
+            'alarm_codes': ['SOOSCHD_loadUp:1'],  # Configured for loadUp, but only shed events exist
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df
@@ -2783,7 +2786,7 @@ def test_flag_ls_mode_inconsistancy_multiple_modes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_loadUp:1;SOO_shed:2'],
+            'alarm_codes': ['SOOSCHD_loadUp:1;SOOSCHD_shed:2'],
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df
@@ -2825,7 +2828,7 @@ def test_flag_ls_mode_inconsistancy_normal_mode_alarm(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_normal:0'],
+            'alarm_codes': ['SOOSCHD_normal:0'],
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df
@@ -2866,7 +2869,7 @@ def test_flag_ls_mode_inconsistancy_normal_mode_no_alarm(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['soo_mode'],
-            'alarm_codes': ['SOO_normal:0'],
+            'alarm_codes': ['SOOSCHD_normal:0'],
             'pretty_name': ['SOO Mode Indicator']
         })
         mock_csv.return_value = csv_df

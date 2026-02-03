@@ -13,7 +13,7 @@ class BlownFuse(Alarm):
     but significantly less than expected, which may indicate a blown fuse.
 
     VarNames syntax:
-    BF_[OPTIONAL ID]:### - Indicates a blown fuse alarm for an element. ### is the expected kW input when the element is on.
+    BLWNFSE_[OPTIONAL ID]:### - Indicates a blown fuse alarm for an element. ### is the expected kW input when the element is on.
 
     Parameters
     ----------
@@ -28,7 +28,7 @@ class BlownFuse(Alarm):
         Number of consecutive minutes that the fault condition must persist before triggering an alarm (default 3).
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_power_range : float = 2.0, default_power_draw : float = 30, fault_time : int = 3):
-        alarm_tag = 'BF'
+        alarm_tag = 'BLWNFSE'
         type_default_dict = {'default' : default_power_draw}
         self.default_power_threshold = default_power_threshold
         self.default_power_range = default_power_range
@@ -64,7 +64,8 @@ class BlownFuse(Alarm):
                             end_time = streak_indices[-1]
 
                             self._add_an_alarm(start_time, end_time, var_name,
-                                f"Blown Fuse: {var_name} had a power draw less than {expected_power_draw - self.default_power_range:.1f} while element was ON starting at {start_time}.")
+                                f"Blown Fuse: {var_name} had a power draw less than {expected_power_draw - self.default_power_range:.1f} while element was ON starting at {start_time}.",
+                                certainty="high")
                             
                         # first_true_index = consecutive_condition.idxmax()
                         # adjusted_time = first_true_index - pd.Timedelta(minutes=self.fault_time-1)

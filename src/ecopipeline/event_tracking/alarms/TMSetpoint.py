@@ -13,10 +13,10 @@ class TMSetpoint(Alarm):
     and create an dataframe with applicable alarm events
 
     VarNames syntax:
-    TMSTPT_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
-    TMSTPT_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered 'on'. Defaults to 1.0
-    TMSTPT_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
-    TMSTPT_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)
+    TMNSTPT_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
+    TMNSTPT_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered 'on'. Defaults to 1.0
+    TMNSTPT_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
+    TMNSTPT_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ class TMSetpoint(Alarm):
     """
     def __init__(self, bounds_df : pd.DataFrame, default_fault_time : int = 3, default_setpoint : float = 130.0, default_power_indication : float = 1.0,
                              default_power_ratio : float = 0.4):
-        alarm_tag = 'TMSTPT'
+        alarm_tag = 'TMNSTPT'
         self.default_fault_time = default_fault_time
         type_default_dict = {'T' : default_setpoint,
                  'SP': default_power_indication,
@@ -57,6 +57,27 @@ class TMSetpoint(Alarm):
                 if len(t_codes) > 1 or len(sp_codes) > 1 or len(tp_codes) > 1 or len(st_codes) > 1:
                     raise Exception(f"Improper alarm codes for swing tank setpoint with id {alarm_id}")
                 trigger_columns_condition_met = False 
+                if len(st_codes) == 1:
+                    st_var_name = st_codes.iloc[0]['variable_name']
+                    st_setpoint = st_codes.iloc[0]['bound']
+                    st_pretty_name = st_codes.iloc[0]['pretty_name']
+                    # Check if st_var_name exists in filtered_df
+                    if st_var_name in filtered_df.columns:
+                        trigger_columns_condition_met = True
+                        # Check if setpoint was altered for over 10 minutes
+                        altered_mask = filtered_df[st_var_name] != st_setpoint
+                        consecutive_condition = altered_mask.rolling(window=10).min() == 1
+                        if consecutive_condition.any():
+                            # Find all consecutive groups where condition is true
+                            group = (consecutive_condition != consecutive_condition.shift()).cumsum()
+                            for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
+                                streak_indices = consecutive_condition[group == group_id].index
+                                start_time = streak_indices[0] - pd.Timedelta(minutes=9)
+                                end_time = streak_indices[-1]
+                                streak_length = len(streak_indices) + 9
+                                actual_value = filtered_df.loc[streak_indices[0], st_var_name]
+                                self._add_an_alarm(start_time, end_time, st_var_name,
+                                    f"Setpoint altered: {st_pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} (expected {st_setpoint}).")
                 # Check if we have both T and SP
                 if len(t_codes) == 1 and len(sp_codes) == 1:
                     t_var_name = t_codes.iloc[0]['variable_name']
@@ -86,31 +107,10 @@ class TMSetpoint(Alarm):
                                 streak_length = len(streak_indices) + self.default_fault_time - 1
                                 actual_temp = filtered_df.loc[streak_indices[0], t_var_name]
                                 self._add_an_alarm(start_time, end_time, sp_var_name,
-                                    f"High TM Setpoint: {sp_pretty_name} showed draw for {streak_length} minutes starting at {start_time} while {t_pretty_name} was {actual_temp:.1f} F (above {t_setpoint} F).")
+                                    f"High TM Setpoint: {sp_pretty_name} showed draw for {streak_length} minutes starting at {start_time} while {t_pretty_name} was {actual_temp:.1f} F (above {t_setpoint} F).",
+                                    certainty="med")
 
-                if not trigger_columns_condition_met and  len(st_codes) == 1:
-                    st_var_name = st_codes.iloc[0]['variable_name']
-                    st_setpoint = st_codes.iloc[0]['bound']
-                    st_pretty_name = st_codes.iloc[0]['pretty_name']
-                    # Check if st_var_name exists in filtered_df
-                    if st_var_name in filtered_df.columns:
-                        trigger_columns_condition_met = True
-                        # Check if setpoint was altered for over 10 minutes
-                        altered_mask = filtered_df[st_var_name] != st_setpoint
-                        consecutive_condition = altered_mask.rolling(window=10).min() == 1
-                        if consecutive_condition.any():
-                            # Find all consecutive groups where condition is true
-                            group = (consecutive_condition != consecutive_condition.shift()).cumsum()
-                            for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
-                                streak_indices = consecutive_condition[group == group_id].index
-                                start_time = streak_indices[0] - pd.Timedelta(minutes=9)
-                                end_time = streak_indices[-1]
-                                streak_length = len(streak_indices) + 9
-                                actual_value = filtered_df.loc[streak_indices[0], st_var_name]
-                                self._add_an_alarm(start_time, end_time, st_var_name,
-                                    f"Setpoint altered: {st_pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} (expected {st_setpoint}).")
-
-                if not trigger_columns_condition_met and len(tp_codes) == 1 and len(sp_codes) == 1:
+                if len(tp_codes) == 1 and len(sp_codes) == 1:
                     tp_var_name = tp_codes.iloc[0]['variable_name']
                     sp_var_name = sp_codes.iloc[0]['variable_name']
                     sp_pretty_name = sp_codes.iloc[0]['pretty_name']
@@ -123,4 +123,5 @@ class TMSetpoint(Alarm):
                             power_ratio = daily_df.loc[day, sp_var_name] / daily_df.loc[day, tp_var_name]
                             if power_ratio > tp_ratio:
                                 self._add_an_alarm(day, day + timedelta(1), sp_var_name,
-                                    f"High temperature maintenance power ratio: {sp_pretty_name} accounted for {power_ratio * 100:.1f}% of daily power (threshold {tp_ratio * 100}%).")
+                                    f"High temperature maintenance power ratio: {sp_pretty_name} accounted for {power_ratio * 100:.1f}% of daily power (threshold {tp_ratio * 100}%).",
+                                    certainty="low")

@@ -117,13 +117,13 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
         are out of order or have gaps, the function may return erroneous alarms.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least three columns which must be titled "variable_name", "low_alarm", and "high_alarm" which should contain the
         name of each variable in the dataframe that requires the alarming, the lower bound for acceptable data, and the upper bound for
         acceptable data respectively
     default_fault_time : int
         Number of consecutive minutes that a sensor must be out of bounds for to trigger an alarm. Can be customized for each variable with 
-        the fault_time column in Varriable_Names.csv
+        the fault_time column in Variable_Names.csv
     system: str
         string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
     full_days : list
@@ -168,7 +168,7 @@ def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : Con
         post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
         name of each variable in the dataframe that requires alarming and the TMSTPT alarm codes (e.g., TMSTPT_T_1:140, TMSTPT_SP_1:2.0)
     default_fault_time : int
@@ -207,7 +207,7 @@ def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
     and create an dataframe with applicable alarm events
 
     VarNames syntax:
-    BU_P_ID - Back Up Tank Power Varriable. Must be in same power units as total system power
+    BU_P_ID - Back Up Tank Power Variable. Must be in same power units as total system power
     BU_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
     BU_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)
 
@@ -220,7 +220,7 @@ def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
         post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
         name of each variable in the dataframe that requires alarming and the STS alarm codes (e.g., STS_T_1:140, STS_SP_1:2.0)
     system: str
@@ -372,7 +372,7 @@ def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Config
         post-transformed dataframe for daily data.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
         name of each variable in the dataframe that requires alarming and the HPI alarm codes (e.g., HPI_POW_1:0.5, HPI_T_1:125.0)
     system: str
@@ -742,7 +742,7 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, day_table_
         are out of order or have gaps, the function may return erroneous alarms.
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
+        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
         The file must have at least two columns which must be titled "variable_name", "alarm_codes" which should contain the
         name of each variable in the dataframe that requires the alarming and the ratio alarm code in the form "PR_{Power Ratio Name}:{low percentage}-{high percentage}
     system: str
@@ -763,71 +763,3 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, day_table_
         return pd.DataFrame()
     alarm = PowerRatio(bounds_df, day_table_name, ratio_period_days)
     return alarm.find_alarms(None, daily_df, config)
-
-def _check_and_add_ratio_alarm_blocks(blocks_df: pd.DataFrame, alarm_key: str, column_name: str, pretty_name: str, alarms_dict: dict, high_bound: float, low_bound: float, ratio_period_days: int):
-    """
-    Check for alarms in block-based ratios and add to alarms dictionary.
-    """
-    alarm_blocks_df = blocks_df.loc[(blocks_df[f"{column_name}_{alarm_key}"] < low_bound) | (blocks_df[f"{column_name}_{alarm_key}"] > high_bound)]
-    if not alarm_blocks_df.empty:
-        for block_end_date, values in alarm_blocks_df.iterrows():
-            alarm_str = f"Power ratio alarm ({ratio_period_days}-day block ending {block_end_date.strftime('%Y-%m-%d')}): {pretty_name} accounted for {round(values[f'{column_name}_{alarm_key}'], 2)}% of {alarm_key} energy use. {round(low_bound, 2)}-{round(high_bound, 2)}% of {alarm_key} energy use expected."
-            if block_end_date in alarms_dict:
-                alarms_dict[block_end_date].append([column_name, alarm_str])
-            else:
-                alarms_dict[block_end_date] = [[column_name, alarm_str]]
-
-def _create_period_blocks(daily_df: pd.DataFrame, ratio_period_days: int, verbose: bool = False) -> pd.DataFrame:
-    """
-    Create blocks of ratio_period_days by summing values within each block.
-    Each block will be represented by its end date.
-    """
-    if len(daily_df) < ratio_period_days:
-        if verbose:
-            print(f"Not enough data for {ratio_period_days}-day blocks. Need at least {ratio_period_days} days, have {len(daily_df)}")
-        return pd.DataFrame()
-    
-    blocks = []
-    block_dates = []
-    
-    # Create blocks by summing consecutive groups of ratio_period_days
-    for i in range(ratio_period_days - 1, len(daily_df)):
-        start_idx = i - ratio_period_days + 1
-        end_idx = i + 1
-        
-        block_data = daily_df.iloc[start_idx:end_idx].sum()
-        blocks.append(block_data)
-        # Use the end date of the block as the identifier
-        block_dates.append(daily_df.index[i])
-    
-    if not blocks:
-        return pd.DataFrame()
-    
-    blocks_df = pd.DataFrame(blocks, index=block_dates)
-    
-    if verbose:
-        print(f"Created {len(blocks_df)} blocks of {ratio_period_days} days each")
-        print(f"Block date range: {blocks_df.index.min()} to {blocks_df.index.max()}")
-    
-    return blocks_df
-
-def _append_previous_days_to_df(daily_df: pd.DataFrame, config : ConfigManager, ratio_period_days : int, day_table_name : str, primary_key : str = "time_pt") -> pd.DataFrame:
-    db_connection, cursor = config.connect_db()
-    period_start = daily_df.index.min() - timedelta(ratio_period_days)
-    try:
-        # find existing times in database for upsert statement
-        cursor.execute(
-            f"SELECT * FROM {day_table_name} WHERE {primary_key} < '{daily_df.index.min()}' AND {primary_key} >= '{period_start}'")
-        result = cursor.fetchall()
-        column_names = [desc[0] for desc in cursor.description]
-        old_days_df = pd.DataFrame(result, columns=column_names)
-        old_days_df = old_days_df.set_index(primary_key)
-        daily_df = pd.concat([daily_df, old_days_df])
-        daily_df = daily_df.sort_index(ascending=True)
-    except mysqlerrors.Error:
-        print(f"Table {day_table_name} has no data.")
-
-    db_connection.close()
-    cursor.close()
-    return daily_df
-

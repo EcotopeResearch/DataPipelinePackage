@@ -13,12 +13,12 @@ class BalancingValve(Alarm):
     power to either total power or heating output.
 
     VarNames syntax:
-    BV_ER_[OPTIONAL ID] - Indicates a power variable for an ER heater (equipment recirculation).
+    BALVALV_ER_[OPTIONAL ID] - Indicates a power variable for an ER heater (equipment recirculation).
         Multiple ER variables with the same ID will be summed together.
-    BV_TP_[OPTIONAL ID]:### - Indicates the Total Power of the system. Optional ### for the percentage
+    BALVALV_TP_[OPTIONAL ID]:### - Indicates the Total Power of the system. Optional ### for the percentage
         threshold that should not be crossed by the ER elements (default 0.4 for 40%).
         Alarm triggers when sum of ER >= total_power * threshold.
-    BV_OUT_[OPTIONAL ID] - Indicates the heating output variable the ER heating contributes to.
+    BALVALV_OUT_[OPTIONAL ID] - Indicates the heating output variable the ER heating contributes to.
         Alarm triggers when sum of ER > sum of OUT * 0.95 (i.e., ER exceeds 95% of heating output).
         Multiple OUT variables with the same ID will be summed together.
 
@@ -32,7 +32,7 @@ class BalancingValve(Alarm):
 
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_ratio : float = 0.4):
-        alarm_tag = 'BV'
+        alarm_tag = 'BALVALV'
         type_default_dict = {'TP' : default_power_ratio}
         super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='BALANCING_VALVE', daily_only=True)
 
@@ -58,7 +58,9 @@ class BalancingValve(Alarm):
 
                         # Check if sum of ER >= OUT value
                         if er_sum >= tp_value*tp_bound:
-                            self._add_an_alarm(day, day + timedelta(1), tp_var_name, f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(tp_bound * 100):.2f}% of total power.", add_one_minute_to_end=False)
+                            self._add_an_alarm(day, day + timedelta(1), tp_var_name, 
+                                               f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(tp_bound * 100):.2f}% of total power.", 
+                                               add_one_minute_to_end=False, certainty="low")
             elif len(out_codes) >= 1:
                 out_var_names = out_codes['variable_name'].tolist()
                 for day in daily_df.index:
@@ -71,4 +73,6 @@ class BalancingValve(Alarm):
 
                         # Check if sum of ER >= OUT value
                         if er_sum > out_sum:
-                            self._add_an_alarm(day, day + timedelta(1), out_codes.iloc[0]['variable_name'], f"Recirculation imbalance: Sum of recirculation equipment power ({er_sum:.2f} kW) exceeds TM heating output ({out_sum:.2f} kW).",add_one_minute_to_end=False)
+                            self._add_an_alarm(day, day + timedelta(1), out_codes.iloc[0]['variable_name'], 
+                                               f"Recirculation imbalance: Sum of recirculation equipment power ({er_sum:.2f} kW) exceeds TM heating output ({out_sum:.2f} kW).",
+                                               add_one_minute_to_end=False, certainty="low")

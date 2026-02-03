@@ -13,9 +13,9 @@ class HPWHInlet(Alarm):
     and create an dataframe with applicable alarm events
 
     VarNames syntax:
-    HPI_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
+    HPINLET_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
         the heat pump is considered 'on'
-    HPI_T_[OPTIONAL ID]:### - Indicates heat pump inlet temperature variable. ### is the temperature threshold (default 120.0)
+    HPINLET_T_[OPTIONAL ID]:### - Indicates heat pump inlet temperature variable. ### is the temperature threshold (default 120.0)
         that should not be exceeded while the heat pump is on
 
     Parameters
@@ -31,7 +31,7 @@ class HPWHInlet(Alarm):
 
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_temp_threshold : float = 115.0, fault_time : int = 5):
-        alarm_tag = 'HPI'
+        alarm_tag = 'HPINLET'
         type_default_dict = {
                 'POW' : default_power_threshold,
                 'T' : default_temp_threshold

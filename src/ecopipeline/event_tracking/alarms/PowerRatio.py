@@ -14,7 +14,7 @@ class PowerRatio(Alarm):
     range as a percentage of the group total.
 
     VarNames syntax:
-    PR_[ID]:###-### - Power variable to track. [ID] groups variables together for ratio calculation.
+    POWRRAT_[ID]:###-### - Power variable to track. [ID] groups variables together for ratio calculation.
         ###-### is the expected low-high percentage range (e.g., PR_HPWH:60-80 means this variable
         should account for 60-80% of the HPWH group total).
 
@@ -27,7 +27,7 @@ class PowerRatio(Alarm):
         the values over this many days before calculating ratios.
     """
     def __init__(self, bounds_df : pd.DataFrame, day_table_name : str, ratio_period_days : int = 7):
-        alarm_tag = 'PR'
+        alarm_tag = 'POWRRAT'
         type_default_dict = {}
         self.ratio_period_days = ratio_period_days
         self.day_table_name = day_table_name # TODO this could be a security issue. Swap it for config manager

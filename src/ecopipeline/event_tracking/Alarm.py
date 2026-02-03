@@ -21,7 +21,8 @@ class Alarm:
                 'end_time_pt' : [],
                 'alarm_type' : [],
                 'event_detail' : [],
-                'variable_name' : []
+                'variable_name' : [],
+                'certainty' : []
             }
         self.bounds_df = self._process_bounds_df_alarm_codes(bounds_df)
 
@@ -59,7 +60,16 @@ class Alarm:
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         self.triggered_alarms = {}
 
-    def _add_an_alarm(self, start_time : datetime, end_time : datetime, var_name : str, alarm_string : str, add_one_minute_to_end : bool = True):
+    def _add_an_alarm(self, start_time : datetime, end_time : datetime, var_name : str, alarm_string : str, add_one_minute_to_end : bool = True, certainty : str = "high"):
+        certainty_dict = {
+            "high" : 3,
+            "med" : 2,
+            "low" : 1
+        }
+        if certainty not in certainty_dict.keys():
+            raise Exception(f"{certainty} is not a valid certainty key. Valid keys are {certainty_dict.keys()}")
+        else: 
+            certainty = certainty_dict[certainty]
         if add_one_minute_to_end:
             end_time = end_time + timedelta(minutes=1)
         self.triggered_alarms['start_time_pt'].append(start_time)
@@ -67,6 +77,7 @@ class Alarm:
         self.triggered_alarms['alarm_type'].append(self.alarm_db_type)
         self.triggered_alarms['event_detail'].append(alarm_string)
         self.triggered_alarms['variable_name'].append(var_name)
+        self.triggered_alarms['certainty'].append(certainty)
     
     def _convert_silent_alarm_dict_to_df(self, alarm_dict : dict) -> pd.DataFrame:
 
@@ -106,6 +117,7 @@ class Alarm:
             current_start = None
             current_end = None
             current_detail = None
+            current_certainty = None
 
             for _, row in group.iterrows():
                 row_start = row['start_time_pt']
@@ -116,9 +128,54 @@ class Alarm:
                     current_start = row_start
                     current_end = row_end
                     current_detail = row['event_detail']
+                    current_certainty = row['certainty']
                 elif row_start <= current_end + timedelta(minutes=1):
-                    # This row is within 1 minute of current end - merge it
-                    current_end = max(current_end, row_end)
+                    # This row is within 1 minute of current end - merge it after checking 
+                    row_certainty = row['certainty']
+                    if row_certainty > current_certainty:
+                        if row_start > current_start:
+                            compressed_rows.append({
+                                'start_time_pt': current_start,
+                                'end_time_pt': row_start,
+                                'alarm_type': alarm_type,
+                                'event_detail': current_detail,
+                                'variable_name': var_name,
+                                'certainty': current_certainty
+                            })
+                        if row_end >= current_end:
+                            current_start = row_start
+                            current_end = row_end
+                            current_detail = row['event_detail']
+                            current_certainty = row_certainty
+                        else:
+                            #encompassed
+                            compressed_rows.append({
+                                    'start_time_pt': row_start,
+                                    'end_time_pt': row_end,
+                                    'alarm_type': alarm_type,
+                                    'event_detail': row['event_detail'],
+                                    'variable_name': var_name,
+                                    'certainty': row_certainty
+                                })
+                            current_start = row_end
+
+                    elif row_certainty < current_certainty:
+                        if row_end > current_end:
+                            compressed_rows.append({
+                                    'start_time_pt': current_start,
+                                    'end_time_pt': current_end,
+                                    'alarm_type': alarm_type,
+                                    'event_detail': current_detail,
+                                    'variable_name': var_name,
+                                    'certainty': current_certainty
+                                })
+                            current_start = current_end
+                            current_end = row_end
+                            current_detail = row['event_detail']
+                            current_certainty = row_certainty
+                        
+                    else:
+                        current_end = max(current_end, row_end)
                 else:
                     # Gap is more than 1 minute - save current and start new
                     compressed_rows.append({
@@ -126,11 +183,13 @@ class Alarm:
                         'end_time_pt': current_end,
                         'alarm_type': alarm_type,
                         'event_detail': current_detail,
-                        'variable_name': var_name
+                        'variable_name': var_name,
+                        'certainty': current_certainty
                     })
                     current_start = row_start
                     current_end = row_end
                     current_detail = row['event_detail']
+                    current_certainty = row['certainty']
 
             # Don't forget the last accumulated row
             if current_start is not None:
@@ -139,9 +198,9 @@ class Alarm:
                     'end_time_pt': current_end,
                     'alarm_type': alarm_type,
                     'event_detail': current_detail,
-                    'variable_name': var_name
+                    'variable_name': var_name,
+                    'certainty': current_certainty
                 })
-
         return pd.DataFrame(compressed_rows)
     
     def _process_bounds_df_alarm_codes(self, og_bounds_df : pd.DataFrame) -> pd.DataFrame:

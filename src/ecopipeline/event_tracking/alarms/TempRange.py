@@ -14,8 +14,8 @@ class TempRange(Alarm):
     for `fault_time` consecutive minutes.
 
     VarNames syntax:
-    TMPRNG_[OPTIONAL ID]:###-### - Indicates a temperature variable. ###-### is the acceptable temperature range
-        (e.g., TMPRNG:110-130 means temperature should stay between 110 and 130 degrees).
+    TMPRANG_[OPTIONAL ID]:###-### - Indicates a temperature variable. ###-### is the acceptable temperature range
+        (e.g., TMPRANG:110-130 means temperature should stay between 110 and 130 degrees).
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ class TempRange(Alarm):
         Pandas dataframe with alarm events
     """
     def __init__(self, bounds_df : pd.DataFrame, default_high_temp : float = 130, default_low_temp : float = 115, fault_time : int = 10):
-        alarm_tag = 'TMPRNG'
+        alarm_tag = 'TMPRANG'
         type_default_dict = {'default': [default_low_temp, default_high_temp]}
         self.fault_time = fault_time
         super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, range_bounds=True, alarm_db_type='TEMP_RANGE')

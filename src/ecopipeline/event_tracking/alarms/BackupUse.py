@@ -13,9 +13,9 @@ class BackupUse(Alarm):
     and create an dataframe with applicable alarm events
 
     VarNames syntax:
-    BU_P_ID - Back Up Tank Power Varriable. Must be in same power units as total system power
-    BU_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
-    BU_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)
+    IMBCKUP_P_ID - Back Up Tank Power Varriable. Must be in same power units as total system power
+    IMBCKUP_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
+    IMBCKUP_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ class BackupUse(Alarm):
         Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)
     """
     def __init__(self, bounds_df : pd.DataFrame, default_setpoint : float = 130.0, default_power_ratio : float = 0.1):
-        alarm_tag = 'BU'
+        alarm_tag = 'IMBCKUP'
         type_default_dict = {
                 'POW': None,
                 'TP': default_power_ratio,
@@ -90,5 +90,5 @@ class BackupUse(Alarm):
                             # Check if sum of ER >= OUT value
                             if bu_pow_sum >= tp_value*tp_bound:
                                 self._add_an_alarm(day, day + timedelta(1), tp_var_name,
-                                    f"Improper Back Up Use: Sum of back up equipment ({bu_pow_sum:.2f}) exceeds {(tp_bound * 100):.2f}% of total power.")
+                                    f"Improper Back Up Use: Sum of back up equipment ({bu_pow_sum:.2f}) exceeds {(tp_bound * 100):.2f}% of total power.", certainty="med")
     

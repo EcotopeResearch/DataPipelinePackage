@@ -14,12 +14,12 @@ class LSInconsist(Alarm):
     time periods defined in the load shifting schedule for that mode.
 
     VarNames syntax:
-    SOO_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.
+    SOOSCHD_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.
         [mode] can be: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp
-        ### is the expected value (e.g., SOO_loadUp:1 means the variable should be 1 during loadUp events)
+        ### is the expected value (e.g., SOOSCHD_loadUp:1 means the variable should be 1 during loadUp events)
     """
     def __init__(self, bounds_df : pd.DataFrame):
-        alarm_tag = 'SOO'
+        alarm_tag = 'SOOSCHD'
         type_default_dict = {}
         super().__init__(bounds_df, alarm_tag, type_default_dict, two_part_tag=True, alarm_db_type='LS_INCONSIST')
 

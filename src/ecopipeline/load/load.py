@@ -559,7 +559,14 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
     For each alarm instance in the DataFrame:
     - Checks if a matching alarm record exists (same site_name, alarm_type, variable_name)
     - If no matching alarm exists, creates a new record in the alarm table
-    - Inserts the alarm instance (with start/end times) into the alarm_inst table
+    - Inserts the alarm instance (with start/end times and certainty) into the alarm_inst table
+
+    Certainty-based overlap handling for alarm instances:
+    - If new alarm has higher certainty than existing overlapping instance: existing is split
+      around the new alarm so each time segment has the highest certainty available
+    - If new alarm has lower certainty than existing: only non-overlapping portions of new
+      alarm are inserted
+    - If same certainty: existing instance is extended to encompass both time periods
 
     Parameters
     ----------
@@ -567,11 +574,10 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
         The ConfigManager object that holds configuration data for the pipeline.
     alarm_df : pd.DataFrame
         The pandas DataFrame output from central_alarm_df_creator(). Must have columns:
-        start_time_pt, end_time_pt, alarm_type, alarm_detail, variable_name
+        start_time_pt, end_time_pt, alarm_type, variable_name. Optional column: certainty
+        (defaults to 3 if not present). Certainty values: 3=high, 2=med, 1=low.
     site_name : str
         The name of the site to associate alarms with. If None, defaults to config.get_site_name()
-    var_names_id : str
-        Optional identifier for the variable names configuration. If None, defaults to site_name.
 
     Returns
     -------
@@ -611,20 +617,22 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
                     end_time_pt DATETIME NULL,
                     site_name VARCHAR(20),
                     alarm_type VARCHAR(20),
-                    varriable_name VARCHAR(70),
+                    variable_name VARCHAR(70),
                     silenced BOOLEAN,
                     closing_event_id INT NULL,
                     FOREIGN KEY (closing_event_id) REFERENCES site_events(id),
-                    UNIQUE INDEX unique_alarm (site_name, alarm_type, varriable_name, start_time_pt, end_time_pt)
+                    UNIQUE INDEX unique_alarm (site_name, alarm_type, variable_name, start_time_pt, end_time_pt)
                 );
                 """
             cursor.execute(create_table_statement)
         if not check_table_exists(cursor, alarm_inst_table, dbname):
             create_table_statement = """
             CREATE TABLE alarm_inst (
+                inst_id INT AUTO_INCREMENT PRIMARY KEY,
                 id INT,
                 start_time_pt DATETIME NOT NULL,
                 end_time_pt DATETIME NOT NULL,
+                certainty INT NOT NULL,
                 FOREIGN KEY (id) REFERENCES alarm(id)
             );
             """
@@ -632,7 +640,7 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
 
         # Get existing alarms for this site
         cursor.execute(
-            f"SELECT id, alarm_type, varriable_name, start_time_pt, end_time_pt FROM {alarm_table} WHERE site_name = %s",
+            f"SELECT id, alarm_type, variable_name, start_time_pt, end_time_pt FROM {alarm_table} WHERE site_name = %s",
             (site_name,)
         )
         existing_alarms = cursor.fetchall()
@@ -651,20 +659,27 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
 
         # SQL statements
         insert_alarm_sql = f"""
-            INSERT INTO {alarm_table} (var_names_id, start_time_pt, end_time_pt, site_name, alarm_type, varriable_name, silenced)
+            INSERT INTO {alarm_table} (var_names_id, start_time_pt, end_time_pt, site_name, alarm_type, variable_name, silenced)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         update_alarm_dates_sql = f"""
             UPDATE {alarm_table} SET start_time_pt = %s, end_time_pt = %s WHERE id = %s
         """
         insert_inst_sql = f"""
-            INSERT INTO {alarm_inst_table} (id, start_time_pt, end_time_pt)
-            VALUES (%s, %s, %s)
+            INSERT INTO {alarm_inst_table} (id, start_time_pt, end_time_pt, certainty)
+            VALUES (%s, %s, %s, %s)
+        """
+        update_inst_sql = f"""
+            UPDATE {alarm_inst_table} SET start_time_pt = %s, end_time_pt = %s WHERE inst_id = %s
+        """
+        delete_inst_sql = f"""
+            DELETE FROM {alarm_inst_table} WHERE inst_id = %s
         """
 
         new_alarms = 0
         updated_alarms = 0
         new_instances = 0
+        updated_instances = 0
         max_gap_days = 3
 
         for _, row in alarm_df.iterrows():
@@ -672,6 +687,7 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
             end_time = row['end_time_pt']
             alarm_type = row['alarm_type']
             variable_name = row['variable_name']
+            certainty = row.get('certainty', 3)  # Default to high certainty if not specified
 
             lookup_key = (alarm_type, variable_name)
             alarm_id = None
@@ -727,7 +743,7 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
                 # Retrieve the ID from database to handle concurrent inserts safely
                 cursor.execute(
                     f"""SELECT id FROM {alarm_table}
-                        WHERE site_name = %s AND alarm_type = %s AND varriable_name = %s
+                        WHERE site_name = %s AND alarm_type = %s AND variable_name = %s
                         AND start_time_pt = %s AND end_time_pt = %s""",
                     (site_name, alarm_type, variable_name, start_time, end_time)
                 )
@@ -745,24 +761,80 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
                 })
                 new_alarms += 1
 
-            # Delete any existing alarm instances that fall within the new instance's time range to avoid duplicates and redundancies
+            # Get existing alarm instances for this alarm_id that might overlap
             cursor.execute(
-                f"DELETE FROM {alarm_inst_table} WHERE id = %s AND start_time_pt >= %s AND end_time_pt <= %s",
-                (alarm_id, start_time, end_time)
+                f"""SELECT inst_id, start_time_pt, end_time_pt, certainty
+                    FROM {alarm_inst_table}
+                    WHERE id = %s AND start_time_pt <= %s AND end_time_pt >= %s""",
+                (alarm_id, end_time, start_time)
             )
+            existing_instances = cursor.fetchall()
 
-            # Check if this exact instance already exists
-            cursor.execute(
-                f"SELECT id FROM {alarm_inst_table} WHERE id = %s AND start_time_pt = %s AND end_time_pt = %s",
-                (alarm_id, start_time, end_time)
-            )
-            if cursor.fetchone() is None:
-                # Insert alarm instance
-                cursor.execute(insert_inst_sql, (alarm_id, start_time, end_time))
-                new_instances += 1
+            # Track segments of the new alarm to insert (may be split by higher-certainty existing alarms)
+            new_segments = [(start_time, end_time, certainty)]
+
+            for existing in existing_instances:
+                existing_inst_id, existing_start, existing_end, existing_certainty = existing
+
+                # Process each new segment against this existing instance
+                updated_segments = []
+                for seg_start, seg_end, seg_certainty in new_segments:
+                    # Check if there's overlap
+                    if seg_end <= existing_start or seg_start >= existing_end:
+                        # No overlap, keep segment as is
+                        updated_segments.append((seg_start, seg_end, seg_certainty))
+                        continue
+
+                    # There is overlap - handle based on certainty comparison
+                    if existing_certainty < seg_certainty:
+                        # Case 1: New alarm has higher certainty - split existing around new
+                        # Part before new alarm (if any)
+                        if existing_start < seg_start:
+                            cursor.execute(update_inst_sql, (existing_start, seg_start, existing_inst_id))
+                            updated_instances += 1
+                            # Insert the part after new alarm (if any)
+                            if existing_end > seg_end:
+                                cursor.execute(insert_inst_sql, (alarm_id, seg_end, existing_end, existing_certainty))
+                                new_instances += 1
+                        elif existing_end > seg_end:
+                            # No part before, but there's a part after
+                            cursor.execute(update_inst_sql, (seg_end, existing_end, existing_inst_id))
+                            updated_instances += 1
+                        else:
+                            # Existing is completely encompassed by new - delete it
+                            cursor.execute(delete_inst_sql, (existing_inst_id,))
+                        # Keep the new segment as is
+                        updated_segments.append((seg_start, seg_end, seg_certainty))
+
+                    elif existing_certainty > seg_certainty:
+                        # Case 2: Existing has higher certainty - trim new segment to non-overlapping parts
+                        # Part before existing (if any)
+                        if seg_start < existing_start:
+                            updated_segments.append((seg_start, existing_start, seg_certainty))
+                        # Part after existing (if any)
+                        if seg_end > existing_end:
+                            updated_segments.append((existing_end, seg_end, seg_certainty))
+                        # The overlapping part of new segment is discarded
+
+                    else:
+                        # Case 3: Same certainty - merge to encompass both
+                        merged_start = min(seg_start, existing_start)
+                        merged_end = max(seg_end, existing_end)
+                        cursor.execute(update_inst_sql, (merged_start, merged_end, existing_inst_id))
+                        updated_instances += 1
+                        # Remove this segment from new_segments (it's been merged into existing)
+                        # Don't add to updated_segments
+
+                new_segments = updated_segments
+
+            # Insert any remaining new segments
+            for seg_start, seg_end, seg_certainty in new_segments:
+                if seg_start < seg_end:  # Only insert valid segments
+                    cursor.execute(insert_inst_sql, (alarm_id, seg_start, seg_end, seg_certainty))
+                    new_instances += 1
 
         connection.commit()
-        print(f"Successfully loaded alarms: {new_alarms} new alarm records, {updated_alarms} updated alarm records, {new_instances} new instances.")
+        print(f"Successfully loaded alarms: {new_alarms} new alarm records, {updated_alarms} updated alarm records, {new_instances} new instances, {updated_instances} updated instances.")
         return True
 
     except Exception as e:

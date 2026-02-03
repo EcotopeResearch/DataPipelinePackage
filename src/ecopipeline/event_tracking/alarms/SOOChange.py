@@ -111,7 +111,8 @@ class SOOChange(Alarm):
                             temp_at_turn_on = filtered_df.loc[power_time, on_t_var_name]
                             if abs(temp_at_turn_on - on_t_thresh) > 5.0:
                                 self._add_an_alarm(power_time, power_time, on_t_var_name,
-                                    f"Unexpected SOO change: during {soo_mode_name}, HP turned on at {power_time} but {on_t_pretty_name} was {temp_at_turn_on:.1f} F (setpoint at {on_t_thresh} F).")
+                                    f"Unexpected SOO change: during {soo_mode_name}, HP turned on at {power_time} but {on_t_pretty_name} was {temp_at_turn_on:.1f} F (setpoint at {on_t_thresh} F).",
+                                    certainty="med")
 
                     # Check all turn-off events
                     if off_t_var_name in filtered_df.columns:
@@ -122,4 +123,5 @@ class SOOChange(Alarm):
                             temp_at_turn_off = filtered_df.loc[power_time, off_t_var_name]
                             if abs(temp_at_turn_off - off_t_thresh) > 5.0:
                                 self._add_an_alarm(power_time, power_time, off_t_var_name,
-                                    f"Unexpected SOO change: during {soo_mode_name}, HP turned off at {power_time} but {off_t_pretty_name} was {temp_at_turn_off:.1f} F (setpoint at {off_t_thresh} F).")
+                                    f"Unexpected SOO change: during {soo_mode_name}, HP turned off at {power_time} but {off_t_pretty_name} was {temp_at_turn_off:.1f} F (setpoint at {off_t_thresh} F).",
+                                    certainty="med")
