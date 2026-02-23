@@ -1115,6 +1115,25 @@ def get_sub_dirs(dir: str) -> List[str]:
         return
     return directories
 
+def excel_to_csv(excel_folder_path : str, csv_folder_path : str):
+    dfs = []
+    for filename in os.listdir(excel_folder_path):
+        if filename.endswith('.xlsx') or filename.endswith('.xls'):
+            filepath = os.path.join(excel_folder_path, filename)
+            df = pd.read_excel(filepath)
+            dfs.append(df)
+    if not dfs:
+        print(f"No Excel files found in {excel_folder_path}")
+        return
+    combined = pd.concat(dfs, ignore_index=True)
+    combined['Time stamp'] = pd.to_datetime(combined['Time stamp'], format='%m/%d/%Y %I:%M:%S %p')
+    combined = combined.sort_values('Time stamp').reset_index(drop=True)
+    startTime = combined['Time stamp'].min()
+    output_filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
+    output_path = os.path.join(csv_folder_path, output_filename)
+    combined.to_csv(output_path, index=False)
+    print(f"Saved combined CSV to {output_path}")
+
 def get_OAT_open_meteo(lat: float, long: float, start_date: datetime, end_date: datetime = None, time_zone: str = "America/Los_Angeles",
                        use_noaa_names : bool = True) -> pd.DataFrame:
     if end_date is None:
