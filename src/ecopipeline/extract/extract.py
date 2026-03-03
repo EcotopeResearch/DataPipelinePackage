@@ -847,14 +847,14 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         print(f"An error occurred: {e}")
         return None
     
-def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, eGauge_pw : str, num_days : int = 1):
+def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, eGauge_pw : str, num_days : int = 2):
     original_directory = os.getcwd()
-
     os.chdir(config.data_directory)
+    num_rows = 1400 * num_days
     try:
         for eGauge_id in eGauge_ids:
             filename = f"{eGauge_id}.{datetime.today().date().strftime('%Y%m%d%H%M%S')}.csv"
-            cmd = f"wget --no-check-certificate -O {filename} \"https://egauge{eGauge_id}.egaug.es/cgi-bin/egauge-show?c&m&s=0&n=1499\" --user={eGauge_usr} --password={eGauge_pw}"
+            cmd = f"wget --no-check-certificate -O {filename} \"https://egauge{eGauge_id}.egaug.es/cgi-bin/egauge-show?c&m&s=0&n={num_rows}\" --user={eGauge_usr} --password={eGauge_pw}"
 
             # Running the shell command
             subprocess.run(cmd, shell=True)
