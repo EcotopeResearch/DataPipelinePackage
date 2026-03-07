@@ -35,7 +35,7 @@ class SOOChange(Alarm):
         is more than 5.0 degrees away from this value.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_on_temp : float = 115.0, default_off_temp : float = 140.0):
-        alarm_tag = 'SOO'
+        alarm_tag = 'SOOCHNG'
         self.default_power_threshold = default_power_threshold
         self.default_on_temp = default_on_temp
         self.default_off_temp = default_off_temp
