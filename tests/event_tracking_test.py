@@ -77,30 +77,30 @@ def test_flag_ratio_alarms(mock_config_manager):
 
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
-                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5'],
-                        'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50"]})
+                        'variable_name': ['PowerIn_HPWH1', 'Temp_whatever', 'PowerIn_HPWH2','PowerIn_Total','PowerIn_SwingTank'],
+                        'alarm_codes': ['POWRRAT:60-80', None, "POWRRAT:20-40","POWRRAT:0-100","POWRRAT:20-50"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
-        df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
-                        'serious_var_2': [2, 2, 90],
-                        'serious_var_3': [100, 40, 7],
-                        'serious_var_4': [4, 2, 2]})
+        df = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), 60, 120],
+                        'PowerIn_HPWH2': [2, 40, 7],
+                        'PowerIn_Total': [float('inf'), 100, 1000],
+                        'PowerIn_SwingTank': [4, 20, 500]})
         df.index = timestamps
         
         event_time_pts = pd.to_datetime(['2022-01-01','2022-01-03','2022-01-01','2022-01-03'])
-        end_event_time_pts = pd.to_datetime(['2022-01-02','2022-01-04','2022-01-04','2022-01-04'])
+        end_event_time_pts = pd.to_datetime(['2022-01-02','2022-01-04','2022-01-02','2022-01-04'])
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': end_event_time_pts,
                         'alarm_type': ['POWER_RATIO']*4,
                         'event_detail': [
-                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_3 accounted for 0.0% of HPWH energy use. 20.0-40.0% expected.",
-                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_3 accounted for 5.5% of HPWH energy use. 20.0-40.0% expected.",
-                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% expected.",
-                                        "Power ratio alarm (1-day block ending 2022-01-03): serious_var_1 accounted for 94.5% of HPWH energy use. 60.0-80.0% expected."
+                                        "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_HPWH2 accounted for 0.0% of HPWH energy use. 20.0-40.0% expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): PowerIn_HPWH2 accounted for 5.5% of HPWH energy use. 20.0-40.0% expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_SwingTank accounted for 0.0% of Total energy use. 20.0-50.0% expected.",
+                                        "Power ratio alarm (1-day block ending 2022-01-03): PowerIn_HPWH1 accounted for 94.5% of HPWH energy use. 60.0-80.0% expected."
                                         ],
-                        'variable_name' : ['serious_var_3','serious_var_3','serious_var_5','serious_var_1'],
+                        'variable_name' : ['PowerIn_HPWH2','PowerIn_HPWH2','PowerIn_SwingTank','PowerIn_HPWH1'],
                         'certainty': [3]*4})
         # df_expected.set_index('start_time_pt', inplace=True)
 
@@ -119,14 +119,14 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
 
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
-                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5'],
-                        'alarm_codes': ['TZ_HPWH:60-80', None, "POWRRAT_HPWH:0-100;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50"]})
+                        'variable_name': ['serious_var_1', 'serious_var_2', 'PowerIn_Total', 'serious_var_4','PowerIn_Whatever'],
+                        'alarm_codes': ['TZ_HPWH:60-80', None, "POWRRAT:0-100",None,"POWRRAT:20-50"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
         df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
                         'serious_var_2': [2, 2, 90],
-                        'serious_var_3': [100, 40, 7],
+                        'PowerIn_Total': [100, 40, 7],
                         'serious_var_4': [4, 2, 2]})
         df.index = timestamps
         
@@ -137,9 +137,9 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
                         'end_time_pt': event_time_pts_end,
                         'alarm_type': ['POWER_RATIO'],
                         'event_detail': [
-                                        "Power ratio alarm (1-day block ending 2022-01-01): serious_var_5 accounted for 0.0% of Other energy use. 20.0-50.0% expected."
+                                        "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_Whatever accounted for 0.0% of Total energy use. 20.0-50.0% expected."
                                         ],
-                        'variable_name' : ['serious_var_5'],
+                        'variable_name' : ['PowerIn_Whatever'],
                         'certainty': [3]})
         # df_expected.set_index('start_time_pt', inplace=True)
 
@@ -196,159 +196,159 @@ def test_flag_abnormal_COP(mock_config_manager):
         mock_csv._once_with('fake/path/whatever/Variable_Names.csv')
         assert_frame_equal(event_df, df_expected)
 
-# @patch('ecopipeline.ConfigManager')
-# def test_central_alarm_function(mock_config_manager, mocker):
-#     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
-#     mock_config_manager.get_table_name.return_value = "fake_daily_table"
-#     cursor_mock = MagicMock()
-#     con_mock = MagicMock()
+# # @patch('ecopipeline.ConfigManager')
+# # def test_central_alarm_function(mock_config_manager, mocker):
+# #     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+# #     mock_config_manager.get_table_name.return_value = "fake_daily_table"
+# #     cursor_mock = MagicMock()
+# #     con_mock = MagicMock()
 
-#     # Patch the cursor.execute method with the mock
-#     mocker.patch.object(cursor_mock, 'execute')
-#     mocker.patch.object(con_mock, 'close')
-#     mocker.patch.object(con_mock, 'commit')
+# #     # Patch the cursor.execute method with the mock
+# #     mocker.patch.object(cursor_mock, 'execute')
+# #     mocker.patch.object(con_mock, 'close')
+# #     mocker.patch.object(con_mock, 'commit')
 
-#     # Set the desired response for cursor.execute
-#     cursor_mock.fetchall.side_effect = [
-#         []
-#     ]
-#     mock_config_manager.connect_db.side_effect = [(con_mock,cursor_mock)]
-#     with patch('pandas.read_csv') as mock_csv:
+# #     # Set the desired response for cursor.execute
+# #     cursor_mock.fetchall.side_effect = [
+# #         []
+# #     ]
+# #     mock_config_manager.connect_db.side_effect = [(con_mock,cursor_mock)]
+# #     with patch('pandas.read_csv') as mock_csv:
 
-#         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03','2022-01-01 01:04','2022-01-01 01:05',
-#                                      '2022-01-02 01:01','2022-01-02 01:02','2022-01-02 01:03','2022-01-02 01:04','2022-01-02 01:05',
-#                                      '2022-01-02 01:06','2022-01-02 01:07','2022-01-02 01:08','2022-01-02 01:09','2022-01-02 01:10',
-#                                      '2022-01-03 01:01','2022-01-03 01:02'])
-#         minute_df = pd.DataFrame({'serious_var_1': [float('inf'), float('inf'), float('inf'), float('inf'), float('inf'),
-#                                              -3, -6, -3, -6, 0,
-#                                              -3, -6, -3, -6, -3,
-#                                              90, 82],
-#                         'serious_var_2': [2, 90, 80, 90, 80,
-#                                           90, 90, 2, 7, -2,
-#                                           -2, -2, 3, 7, 7,
-#                                           4,4],})
-#         minute_df.index = minute_timestamps
+# #         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03','2022-01-01 01:04','2022-01-01 01:05',
+# #                                      '2022-01-02 01:01','2022-01-02 01:02','2022-01-02 01:03','2022-01-02 01:04','2022-01-02 01:05',
+# #                                      '2022-01-02 01:06','2022-01-02 01:07','2022-01-02 01:08','2022-01-02 01:09','2022-01-02 01:10',
+# #                                      '2022-01-03 01:01','2022-01-03 01:02'])
+# #         minute_df = pd.DataFrame({'serious_var_1': [float('inf'), float('inf'), float('inf'), float('inf'), float('inf'),
+# #                                              -3, -6, -3, -6, 0,
+# #                                              -3, -6, -3, -6, -3,
+# #                                              90, 82],
+# #                         'serious_var_2': [2, 90, 80, 90, 80,
+# #                                           90, 90, 2, 7, -2,
+# #                                           -2, -2, 3, 7, 7,
+# #                                           4,4],})
+# #         minute_df.index = minute_timestamps
 
-#         # Set the desired response for mock_connect.return_value
-#         csv_df = pd.DataFrame({
-#                         'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh','cop'],
-#                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5','COP_Boundary'],
-#                         'pretty_name': [None, 'my sweet dude', 'serious_var_3', 'serious_var_4','serious var 5','System COP (Boundary Method)'],
-#                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5,None],
-#                         'high_alarm': [1,2,None,None,76,None],
-#                         'fault_time': [3,3,3,None,3,None],
-#                         'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50",None]})
-#         mock_csv.return_value = csv_df
+# #         # Set the desired response for mock_connect.return_value
+# #         csv_df = pd.DataFrame({
+# #                         'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh','cop'],
+# #                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5','COP_Boundary'],
+# #                         'pretty_name': [None, 'my sweet dude', 'serious_var_3', 'serious_var_4','serious var 5','System COP (Boundary Method)'],
+# #                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5,None],
+# #                         'high_alarm': [1,2,None,None,76,None],
+# #                         'fault_time': [3,3,3,None,3,None],
+# #                         'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50",None]})
+# #         mock_csv.return_value = csv_df
 
-#         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
-#         daily_df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
-#                         'serious_var_2': [2, 2, 90],
-#                         'serious_var_3': [100, 40, 7],
-#                         'serious_var_4': [4, 2, 2],
-#                         'COP_Boundary': [4.6, 2.7, -1]})
-#         daily_df.index = timestamps
+# #         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
+# #         daily_df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
+# #                         'serious_var_2': [2, 2, 90],
+# #                         'serious_var_3': [100, 40, 7],
+# #                         'serious_var_4': [4, 2, 2],
+# #                         'COP_Boundary': [4.6, 2.7, -1]})
+# #         daily_df.index = timestamps
 
-#         # Call the function
-#         event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager, power_ratio_period_days=1)
+# #         # Call the function
+# #         event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager, power_ratio_period_days=1)
 
-#         # Check that all expected alarm types are present
-#         event_details = event_df['event_detail'].tolist()
+# #         # Check that all expected alarm types are present
+# #         event_details = event_df['event_detail'].tolist()
 
-#         # Check boundary alarms
-#         assert any('Boundary alarm for serious_var_1' in d for d in event_details)
-#         assert any('Boundary for my sweet dude' in d for d in event_details)
+# #         # Check boundary alarms
+# #         assert any('Boundary alarm for serious_var_1' in d for d in event_details)
+# #         assert any('Boundary for my sweet dude' in d for d in event_details)
 
-#         # Check power ratio alarms
-#         assert any('Power ratio alarm' in d and 'serious_var_1' in d for d in event_details)
-#         assert any('Power ratio alarm' in d and 'serious_var_3' in d for d in event_details)
-#         assert any('Power ratio alarm' in d and 'serious var 5' in d for d in event_details)
+# #         # Check power ratio alarms
+# #         assert any('Power ratio alarm' in d and 'serious_var_1' in d for d in event_details)
+# #         assert any('Power ratio alarm' in d and 'serious_var_3' in d for d in event_details)
+# #         assert any('Power ratio alarm' in d and 'serious var 5' in d for d in event_details)
 
-#         # Check COP alarms
-#         assert any('Unexpected COP Value detected' in d and '4.6' in d for d in event_details)
-#         assert any('Unexpected COP Value detected' in d and '-1.0' in d for d in event_details)
+# #         # Check COP alarms
+# #         assert any('Unexpected COP Value detected' in d and '4.6' in d for d in event_details)
+# #         assert any('Unexpected COP Value detected' in d and '-1.0' in d for d in event_details)
 
-#         # Check all events are SILENT_ALARM type
-#         assert all(event_df['alarm_type'] == 'SILENT_ALARM')
+# #         # Check all events are SILENT_ALARM type
+# #         assert all(event_df['alarm_type'] == 'SILENT_ALARM')
 
-#         # Check that boundary alarms have proper start/end times (not just day)
-#         boundary_alarms = event_df[event_df['event_detail'].str.contains('bound alarm')]
-#         for idx in boundary_alarms.index:
-#             # Index should include time component, not just date
-#             assert idx.hour > 0 or idx.minute > 0
+# #         # Check that boundary alarms have proper start/end times (not just day)
+# #         boundary_alarms = event_df[event_df['event_detail'].str.contains('bound alarm')]
+# #         for idx in boundary_alarms.index:
+# #             # Index should include time component, not just date
+# #             assert idx.hour > 0 or idx.minute > 0
 
 
-# @patch('ecopipeline.ConfigManager')
-# def test_central_alarm_function_with_ongoing_cop_data_loss(mock_config_manager, mocker):
-#     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
-#     mock_config_manager.get_table_name.return_value = "fake_daily_table"
-#     cursor_mock = MagicMock()
-#     con_mock = MagicMock()
+# # @patch('ecopipeline.ConfigManager')
+# # def test_central_alarm_function_with_ongoing_cop_data_loss(mock_config_manager, mocker):
+# #     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+# #     mock_config_manager.get_table_name.return_value = "fake_daily_table"
+# #     cursor_mock = MagicMock()
+# #     con_mock = MagicMock()
 
-#     # Patch the cursor.execute method with the mock
-#     mocker.patch.object(cursor_mock, 'execute')
-#     mocker.patch.object(con_mock, 'close')
-#     mocker.patch.object(con_mock, 'commit')
+# #     # Patch the cursor.execute method with the mock
+# #     mocker.patch.object(cursor_mock, 'execute')
+# #     mocker.patch.object(con_mock, 'close')
+# #     mocker.patch.object(con_mock, 'commit')
 
-#     # Set the desired response for cursor.execute - simulates ongoing COP data loss
-#     cursor_mock.fetchall.side_effect = [
-#         [(1,)]
-#     ]
-#     mock_config_manager.connect_db.side_effect = [(con_mock,cursor_mock)]
-#     with patch('pandas.read_csv') as mock_csv:
+# #     # Set the desired response for cursor.execute - simulates ongoing COP data loss
+# #     cursor_mock.fetchall.side_effect = [
+# #         [(1,)]
+# #     ]
+# #     mock_config_manager.connect_db.side_effect = [(con_mock,cursor_mock)]
+# #     with patch('pandas.read_csv') as mock_csv:
 
-#         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03','2022-01-01 01:04','2022-01-01 01:05',
-#                                      '2022-01-02 01:01','2022-01-02 01:02','2022-01-02 01:03','2022-01-02 01:04','2022-01-02 01:05',
-#                                      '2022-01-02 01:06','2022-01-02 01:07','2022-01-02 01:08','2022-01-02 01:09','2022-01-02 01:10',
-#                                      '2022-01-03 01:01','2022-01-03 01:02'])
-#         minute_df = pd.DataFrame({'serious_var_1': [float('inf'), float('inf'), float('inf'), float('inf'), float('inf'),
-#                                              -3, -6, -3, -6, 0,
-#                                              -3, -6, -3, -6, -3,
-#                                              90, 82],
-#                         'serious_var_2': [2, 90, 80, 90, 80,
-#                                           90, 90, 2, 7, -2,
-#                                           -2, -2, 3, 7, 7,
-#                                           4,4],})
-#         minute_df.index = minute_timestamps
+# #         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03','2022-01-01 01:04','2022-01-01 01:05',
+# #                                      '2022-01-02 01:01','2022-01-02 01:02','2022-01-02 01:03','2022-01-02 01:04','2022-01-02 01:05',
+# #                                      '2022-01-02 01:06','2022-01-02 01:07','2022-01-02 01:08','2022-01-02 01:09','2022-01-02 01:10',
+# #                                      '2022-01-03 01:01','2022-01-03 01:02'])
+# #         minute_df = pd.DataFrame({'serious_var_1': [float('inf'), float('inf'), float('inf'), float('inf'), float('inf'),
+# #                                              -3, -6, -3, -6, 0,
+# #                                              -3, -6, -3, -6, -3,
+# #                                              90, 82],
+# #                         'serious_var_2': [2, 90, 80, 90, 80,
+# #                                           90, 90, 2, 7, -2,
+# #                                           -2, -2, 3, 7, 7,
+# #                                           4,4],})
+# #         minute_df.index = minute_timestamps
 
-#         # Set the desired response for mock_connect.return_value
-#         csv_df = pd.DataFrame({
-#                         'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh','cop'],
-#                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5','COP_Boundary'],
-#                         'pretty_name': [None, 'my sweet dude', 'serious_var_3', 'serious_var_4','serious var 5','System COP (Boundary Method)'],
-#                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5,None],
-#                         'high_alarm': [1,2,None,None,76,None],
-#                         'fault_time': [3,3,3,None,3,None],
-#                         'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50",None]})
-#         mock_csv.return_value = csv_df
+# #         # Set the desired response for mock_connect.return_value
+# #         csv_df = pd.DataFrame({
+# #                         'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh','cop'],
+# #                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4','serious_var_5','COP_Boundary'],
+# #                         'pretty_name': [None, 'my sweet dude', 'serious_var_3', 'serious_var_4','serious var 5','System COP (Boundary Method)'],
+# #                         'low_alarm': [0, -1.7, 3,"what's a number?",12.5,None],
+# #                         'high_alarm': [1,2,None,None,76,None],
+# #                         'fault_time': [3,3,3,None,3,None],
+# #                         'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40;POWRRAT_Other:0-100",None,"POWRRAT_Other:20-50",None]})
+# #         mock_csv.return_value = csv_df
 
-#         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
-#         daily_df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
-#                         'serious_var_2': [2, 2, 90],
-#                         'serious_var_3': [100, 40, 7],
-#                         'serious_var_4': [4, 2, 2],
-#                         'COP_Boundary': [4.6, 2.7, -1]})
-#         daily_df.index = timestamps
+# #         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
+# #         daily_df = pd.DataFrame({'serious_var_1': [float('inf'), 60, 120],
+# #                         'serious_var_2': [2, 2, 90],
+# #                         'serious_var_3': [100, 40, 7],
+# #                         'serious_var_4': [4, 2, 2],
+# #                         'COP_Boundary': [4.6, 2.7, -1]})
+# #         daily_df.index = timestamps
 
-#         # Call the function
-#         event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager, power_ratio_period_days=1)
+# #         # Call the function
+# #         event_df = central_alarm_df_creator(minute_df, daily_df, mock_config_manager, power_ratio_period_days=1)
 
-#         # Check that all expected alarm types are present
-#         event_details = event_df['event_detail'].tolist()
+# #         # Check that all expected alarm types are present
+# #         event_details = event_df['event_detail'].tolist()
 
-#         # Check boundary alarms
-#         assert any('Boundary alarm for serious_var_1' in d for d in event_details)
-#         assert any('Boundary alarm for my sweet dude' in d for d in event_details)
+# #         # Check boundary alarms
+# #         assert any('Boundary alarm for serious_var_1' in d for d in event_details)
+# #         assert any('Boundary alarm for my sweet dude' in d for d in event_details)
 
-#         # Check power ratio alarms
-#         assert any('Power ratio alarm' in d and 'serious_var_1' in d for d in event_details)
-#         assert any('Power ratio alarm' in d and 'serious_var_3' in d for d in event_details)
-#         assert any('Power ratio alarm' in d and 'serious var 5' in d for d in event_details)
+# #         # Check power ratio alarms
+# #         assert any('Power ratio alarm' in d and 'serious_var_1' in d for d in event_details)
+# #         assert any('Power ratio alarm' in d and 'serious_var_3' in d for d in event_details)
+# #         assert any('Power ratio alarm' in d and 'serious var 5' in d for d in event_details)
 
-#         # With ongoing COP data loss, COP alarms should NOT be present
-#         assert not any('Unexpected COP Value detected' in d for d in event_details)
+# #         # With ongoing COP data loss, COP alarms should NOT be present
+# #         assert not any('Unexpected COP Value detected' in d for d in event_details)
 
-#         # Check all events are SILENT_ALARM type
-#         assert all(event_df['alarm_type'] == 'SILENT_ALARM')
+# #         # Check all events are SILENT_ALARM type
+# #         assert all(event_df['alarm_type'] == 'SILENT_ALARM')
         
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_null_values(mock_config_manager):
@@ -399,14 +399,14 @@ def test_power_ratio_alarm_all_null_values(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
-                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3'],
-                        'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40"]})
+                        'variable_name': ['PowerIn_HPWH1', 'serious_var_2', 'PowerIn_HPWH2'],
+                        'alarm_codes': ['POWRRAT:60-80', None, "POWRRAT:20-40"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
-        df = pd.DataFrame({'serious_var_1': [None, None, None],
+        df = pd.DataFrame({'PowerIn_HPWH1': [None, None, None],
                         'serious_var_2': [None, None, None],
-                        'serious_var_3': [None, None, None]})
+                        'PowerIn_HPWH2': [None, None, None]})
         df.index = timestamps
 
         # Should return empty dataframe since all energy values are null (division by zero protection)
@@ -421,14 +421,14 @@ def test_power_ratio_alarm_all_zero_values(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
-                        'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3'],
-                        'alarm_codes': ['POWRRAT_HPWH:60-80', None, "POWRRAT_HPWH:20-40"]})
+                        'variable_name': ['PowerIn_HPWH1', 'serious_var_2', 'PowerIn_HPWH2'],
+                        'alarm_codes': ['POWRRAT:60-80', None, "POWRRAT:20-40"]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
-        df = pd.DataFrame({'serious_var_1': [0, 0, 0],
+        df = pd.DataFrame({'PowerIn_HPWH1': [0, 0, 0],
                         'serious_var_2': [0, 0, 0],
-                        'serious_var_3': [0, 0, 0]})
+                        'PowerIn_HPWH2': [0, 0, 0]})
         df.index = timestamps
 
         # Should not raise division by zero error and return empty or acceptable result
@@ -685,17 +685,17 @@ def test_flag_high_tm_setpoint_no_TMNSTPT_codes(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'OTHER_CODE:100']
+            'variable_name': ['PowerIn_HPWH', 'var_2', 'var_3'],
+            'alarm_codes': ['POWRRAT:60-80', None, 'OTHER_CODE:100']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
-        minute_df = pd.DataFrame({'var_1': [100, 100, 100]})
+        minute_df = pd.DataFrame({'PowerIn_HPWH': [100, 100, 100]})
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'var_1': [1000]})
+        daily_df = pd.DataFrame({'PowerIn_HPWH': [1000]})
         daily_df.index = daily_timestamps
 
         # Should return empty dataframe when no TMNSTPT codes exist
@@ -709,21 +709,21 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1']
+            'variable_name': ['Temp_Tank', 'PowerIn_HP'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
                                            '2022-01-01 01:04','2022-01-01 01:05'])
         minute_df = pd.DataFrame({
-            'tank_temp': [135, 135, 135, 135, 135],
-            'tank_power': [5, 5, 5, 5, 5]
+            'Temp_Tank': [135, 135, 135, 135, 135],
+            'PowerIn_HP': [5, 5, 5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [135], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'Temp_Tank': [135], 'PowerIn_HP': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -731,7 +731,7 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
 
         assert len(event_df) == 1
         assert 'High TM Setpoint' in event_df.iloc[0]['event_detail']
-        assert 'tank_power' == event_df.iloc[0]['variable_name']
+        assert 'PowerIn_HP' == event_df.iloc[0]['variable_name']
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
@@ -739,20 +739,20 @@ def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1']
+            'variable_name': ['Temp_Tank', 'PowerIn_HP'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'tank_temp': [120, 120, 120],  # Below setpoint
-            'tank_power': [5, 5, 5]
+            'Temp_Tank': [120, 120, 120],  # Below setpoint
+            'PowerIn_HP': [5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [120], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'Temp_Tank': [120], 'PowerIn_HP': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -766,8 +766,8 @@ def test_flag_high_tm_setpoint_st_setpoint_altered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_setpoint'],
-            'alarm_codes': ['TMNSTPT_ST_1']
+            'variable_name': ['Setpoint_Tank'],
+            'alarm_codes': ['TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
@@ -776,12 +776,12 @@ def test_flag_high_tm_setpoint_st_setpoint_altered(mock_config_manager):
                                            '2022-01-01 01:07','2022-01-01 01:08','2022-01-01 01:09',
                                            '2022-01-01 01:10','2022-01-01 01:11','2022-01-01 01:12'])
         minute_df = pd.DataFrame({
-            'tank_setpoint': [140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]  # Altered from 130
+            'Setpoint_Tank': [140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]  # Altered from 130
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_setpoint': [140]})
+        daily_df = pd.DataFrame({'Setpoint_Tank': [140]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -789,7 +789,7 @@ def test_flag_high_tm_setpoint_st_setpoint_altered(mock_config_manager):
 
         assert len(event_df) == 1
         assert 'Setpoint altered' in event_df.iloc[0]['event_detail']
-        assert 'tank_setpoint' == event_df.iloc[0]['variable_name']
+        assert 'Setpoint_Tank' == event_df.iloc[0]['variable_name']
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_st_no_alteration(mock_config_manager):
@@ -797,19 +797,19 @@ def test_flag_high_tm_setpoint_st_no_alteration(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_setpoint'],
-            'alarm_codes': ['TMNSTPT_ST_1']
+            'variable_name': ['Setpoint_Tank'],
+            'alarm_codes': ['TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'tank_setpoint': [130, 130, 130]  # Matches default
+            'Setpoint_Tank': [130, 130, 130]  # Matches default
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_setpoint': [130]})
+        daily_df = pd.DataFrame({'Setpoint_Tank': [130]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -823,22 +823,22 @@ def test_flag_high_tm_setpoint_tp_and_sp_high_ratio(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_power', 'total_power'],
-            'alarm_codes': ['TMNSTPT_SP_1', 'TMNSTPT_TP_1']
+            'variable_name': ['PowerIn_ER', 'PowerIn_Total'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
         minute_df = pd.DataFrame({
-            'tank_power': [100, 100],
-            'total_power': [150, 150]
+            'PowerIn_ER': [100, 100],
+            'PowerIn_Total': [150, 150]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'tank_power': [500],  # 50% of total
-            'total_power': [1000]
+            'PowerIn_ER': [500],  # 50% of total
+            'PowerIn_Total': [1000]
         })
         daily_df.index = daily_timestamps
 
@@ -855,22 +855,22 @@ def test_flag_high_tm_setpoint_tp_and_sp_normal_ratio(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_power', 'total_power'],
-            'alarm_codes': ['TMNSTPT_SP_1', 'TMNSTPT_TP_1']
+            'variable_name': ['PowerIn_ER', 'PowerIn_Total'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
         minute_df = pd.DataFrame({
-            'tank_power': [100, 100],
-            'total_power': [150, 150]
+            'PowerIn_ER': [100, 100],
+            'PowerIn_Total': [150, 150]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'tank_power': [300],  # 30% of total
-            'total_power': [1000]
+            'PowerIn_ER': [300],  # 30% of total
+            'PowerIn_Total': [1000]
         })
         daily_df.index = daily_timestamps
 
@@ -885,20 +885,20 @@ def test_flag_high_tm_setpoint_multiple_TMNSTPT_codes(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power', 'other_var'],
-            'alarm_codes': ['TMNSTPT_T_1;POWRRAT_HPWH:60-80', 'TMNSTPT_SP_1', 'OTHER_CODE:100']
+            'variable_name': ['Temp_Tank', 'PowerIn_ER', 'other_var'],
+            'alarm_codes': ['TMNSTPT','POWRRAT:60-80;TMNSTPT', 'OTHER_CODE:100']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'tank_temp': [135, 135, 135],
-            'tank_power': [5, 5, 5]
+            'Temp_Tank': [135, 135, 135],
+            'PowerIn_ER': [5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [135], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'Temp_Tank': [135], 'PowerIn_ER': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
@@ -913,7 +913,7 @@ def test_flag_high_tm_setpoint_improper_format_no_underscore(mock_config_manager
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp'],
-            'alarm_codes': ['TMNSTPTT1']  # No underscore
+            'alarm_codes': ['TMNSTPT:T:1']
         })
         mock_csv.return_value = csv_df
 
@@ -928,31 +928,7 @@ def test_flag_high_tm_setpoint_improper_format_no_underscore(mock_config_manager
         with pytest.raises(Exception) as excinfo:
             flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
 
-        assert 'improper TMNSTPT alarm code format' in str(excinfo.value)
-
-@patch('ecopipeline.ConfigManager')
-def test_flag_high_tm_setpoint_improper_format_too_many_underscores(mock_config_manager):
-    """Test that improper TMNSTPT format (too many underscores) raises exception"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
-    with patch('pandas.read_csv') as mock_csv:
-        csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp'],
-            'alarm_codes': ['TMNSTPT_T_1_EXTRA']  # Too many underscores
-        })
-        mock_csv.return_value = csv_df
-
-        minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
-        minute_df = pd.DataFrame({'tank_temp': [135]})
-        minute_df.index = minute_timestamps
-
-        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [135]})
-        daily_df.index = daily_timestamps
-
-        with pytest.raises(Exception) as excinfo:
-            flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
-
-        assert 'improper TMNSTPT alarm code format' in str(excinfo.value)
+        assert 'Improperly formated alarm code' in str(excinfo.value)
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_multiple_t_codes_same_id(mock_config_manager):
@@ -960,17 +936,17 @@ def test_flag_high_tm_setpoint_multiple_t_codes_same_id(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp_1', 'tank_temp_2', 'tank_power'],
-            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_T_1', 'TMNSTPT_SP_1']  # Duplicate T with ID 1
+            'variable_name': ['Temp_Swing_Outlet', 'Temp_SwingOutlet', 'PowerIn_Swing'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT', 'TMNSTPT']  # Duplicate T with ID 1
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
-        minute_df = pd.DataFrame({'tank_temp_1': [135], 'tank_temp_2': [135], 'tank_power': [5]})
+        minute_df = pd.DataFrame({'Temp_Swing_Outlet': [135], 'Temp_SwingOutlet': [135], 'PowerIn_Swing': [5]})
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp_1': [135], 'tank_temp_2': [135], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'Temp_Swing_Outlet': [135], 'Temp_SwingOutlet': [135], 'PowerIn_Swing': [100]})
         daily_df.index = daily_timestamps
 
         with pytest.raises(Exception) as excinfo:
@@ -984,13 +960,13 @@ def test_flag_high_tm_setpoint_empty_dataframe(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp'],
-            'alarm_codes': ['TMNSTPT_T_1']
+            'variable_name': ['Temp_Swing_Outlet'],
+            'alarm_codes': ['TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
-        minute_df = pd.DataFrame({'tank_temp': []})
-        daily_df = pd.DataFrame({'tank_temp': []})
+        minute_df = pd.DataFrame({'Temp_Swing_Outlet': []})
+        daily_df = pd.DataFrame({'Temp_Swing_Outlet': []})
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
 
@@ -1021,8 +997,8 @@ def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power', 'total_power', 'tank_setpoint'],
-            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1', 'TMNSTPT_TP_1', 'TMNSTPT_ST_1']
+            'variable_name': ['Temp_Swing_Outlet', 'PowerIn_Swing', 'PowerIn_Total', 'Setpoint_swing'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT', 'TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
@@ -1034,19 +1010,19 @@ def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager
             '2022-01-02 01:10','2022-01-02 01:11'
         ])
         minute_df = pd.DataFrame({
-            'tank_temp': [135, 135, 135, 120, 120, 120, 120, 120, 120, 120, 120, 135, 135, 135],
-            'tank_power': [5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 5, 5, 5],
-            'total_power': [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
-            'tank_setpoint': [130, 130, 130, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]
+            'Temp_Swing_Outlet': [135, 135, 135, 120, 120, 120, 120, 120, 120, 120, 120, 135, 135, 135],
+            'PowerIn_Swing': [5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 5, 5, 5],
+            'PowerIn_Total': [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
+            'Setpoint_swing': [130, 130, 130, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00', '2022-01-02 00:00'])
         daily_df = pd.DataFrame({
-            'tank_temp': [135, 120],
-            'tank_power': [500, 600],
-            'total_power': [1000, 1000],
-            'tank_setpoint': [130, 140]
+            'Temp_Swing_Outlet': [135, 120],
+            'PowerIn_Swing': [500, 600],
+            'PowerIn_Total': [1000, 1000],
+            'Setpoint_swing': [130, 140]
         })
         daily_df.index = daily_timestamps
 
@@ -1063,20 +1039,20 @@ def test_flag_high_tm_setpoint_TMNSTPT_with_two_parts(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMNSTPT_T', 'TMNSTPT_SP']  # No ID (None)
+            'variable_name': ['Temp_Swing_Outlet', 'PowerIn_Swing'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'tank_temp': [135, 135, 135],
-            'tank_power': [5, 5, 5]
+            'Temp_Swing_Outlet': [135, 135, 135],
+            'PowerIn_Swing': [5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [135], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'Temp_Swing_Outlet': [135], 'PowerIn_Swing': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
@@ -1090,20 +1066,20 @@ def test_flag_high_tm_setpoint_custom_t_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMNSTPT_T_1:140', 'TMNSTPT_SP_1:2.0']  # Custom bounds: 140°F temp, 2.0 kW power
+            'variable_name': ['Temp_Swing_Outlet', 'PowerIn_Swing'],
+            'alarm_codes': ['TMNSTPT:140', 'TMNSTPT:2.0']  # Custom bounds: 140°F temp, 2.0 kW power
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'tank_temp': [142, 142, 142],  # Above custom 140 threshold
-            'tank_power': [5, 5, 5]  # Above custom 2.0 threshold
+            'Temp_Swing_Outlet': [142, 142, 142],  # Above custom 140 threshold
+            'PowerIn_Swing': [5, 5, 5]  # Above custom 2.0 threshold
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [142], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'tankTemp_Swing_Outlet_temp': [142], 'PowerIn_Swing': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
@@ -1118,8 +1094,8 @@ def test_flag_high_tm_setpoint_custom_st_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_setpoint'],
-            'alarm_codes': ['TMNSTPT_ST_1:125']  # Custom setpoint bound of 125
+            'variable_name': ['Setpoint_Swing'],
+            'alarm_codes': ['TMNSTPT:125']  # Custom setpoint bound of 125
         })
         mock_csv.return_value = csv_df
 
@@ -1128,12 +1104,12 @@ def test_flag_high_tm_setpoint_custom_st_bound(mock_config_manager):
                                            '2022-01-01 01:07','2022-01-01 01:08','2022-01-01 01:09',
                                            '2022-01-01 01:10','2022-01-01 01:11','2022-01-01 01:12'])
         minute_df = pd.DataFrame({
-            'tank_setpoint': [130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130]  # Not 125
+            'Setpoint_Swing': [130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130]  # Not 125
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_setpoint': [130]})
+        daily_df = pd.DataFrame({'Setpoint_Swing': [130]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
@@ -1148,22 +1124,22 @@ def test_flag_high_tm_setpoint_custom_tp_ratio_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_power', 'total_power'],
-            'alarm_codes': ['TMNSTPT_SP_1', 'TMNSTPT_TP_1:0.3']  # Custom ratio bound of 30%
+            'variable_name': ['PowerIn_Swing', 'PowerIn_Total'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT:0.3']  # Custom ratio bound of 30%
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
         minute_df = pd.DataFrame({
-            'tank_power': [100, 100],
-            'total_power': [150, 150]
+            'PowerIn_Swing': [100, 100],
+            'PowerIn_Total': [150, 150]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'tank_power': [400],  # 40% of total
-            'total_power': [1000]
+            'PowerIn_Swing': [400],  # 40% of total
+            'PowerIn_Total': [1000]
         })
         daily_df.index = daily_timestamps
 
@@ -1180,20 +1156,20 @@ def test_flag_high_tm_setpoint_no_custom_bound_uses_default(mock_config_manager)
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['tank_temp', 'tank_power'],
-            'alarm_codes': ['TMNSTPT_T_1', 'TMNSTPT_SP_1']  # No custom bounds
+            'variable_name': ['Temp_SwingOutlet', 'PowerIn_Swing'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT']  # No custom bounds
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'tank_temp': [132, 132, 132],  # Above default 130 but below 140
-            'tank_power': [5, 5, 5]
+            'Temp_SwingOutlet': [132, 132, 132],  # Above default 130 but below 140
+            'PowerIn_Swing': [5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'tank_temp': [132], 'tank_power': [100]})
+        daily_df = pd.DataFrame({'Temp_SwingOutlet': [132], 'PowerIn_Swing': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -1210,7 +1186,7 @@ def test_flag_recirc_balance_valve_no_BALVALV_codes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'TMNSTPT_T_1']
+            'alarm_codes': ['POWRRAT:60-80', None, 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
@@ -1229,16 +1205,16 @@ def test_flag_recirc_balance_valve_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'recirc_eq_2', 'heating_output'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_OUT_1']
+            'variable_name': ['PowerIn_SwingTank1', 'PowerIn_SwingTank2', 'HeatOut_TM'],
+            'alarm_codes': ['BALVALV', 'BALVALV', 'BALVALV']
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_eq_1': [500],
-            'recirc_eq_2': [500],
-            'heating_output': [900]
+            'PowerIn_SwingTank1': [500],
+            'PowerIn_SwingTank2': [500],
+            'HeatOut_TM': [900]
         })
         daily_df.index = daily_timestamps
 
@@ -1254,16 +1230,16 @@ def test_flag_recirc_balance_valve_no_alarm(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'recirc_eq_2', 'heating_output'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_OUT_1']
+            'variable_name': ['PowerIn_SwingTank1', 'PowerIn_SwingTank2', 'HeatOut_TM'],
+            'alarm_codes': ['BALVALV', 'BALVALV', 'BALVALV']
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_eq_1': [200],
-            'recirc_eq_2': [100],
-            'heating_output': [1000]  # ER sum (300) <= 1000 * 0.95 (950)
+            'PowerIn_SwingTank1': [200],
+            'PowerIn_SwingTank2': [100],
+            'HeatOut_TM': [1000]  # ER sum (300) <= 1000 * 0.95 (950)
         })
         daily_df.index = daily_timestamps
 
@@ -1277,15 +1253,15 @@ def test_flag_recirc_balance_valve_tp_custom_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'total_power'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_TP_1:0.3']  # Custom 30% threshold
+            'variable_name': ['PowerIn_SwingTank1', 'PowerIn_Total'],
+            'alarm_codes': ['BALVALV', 'BALVALV:0.3']  # Custom 30% threshold
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_eq_1': [350],
-            'total_power': [1000]  # ER sum (350) >= 1000 * 0.3 (300)
+            'PowerIn_SwingTank1': [350],
+            'PowerIn_Total': [1000]  # ER sum (350) >= 1000 * 0.3 (300)
         })
         daily_df.index = daily_timestamps
 
@@ -1300,15 +1276,15 @@ def test_flag_recirc_balance_valve_tp_default_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'total_power'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_TP_1']  # No custom bound, uses default
+            'variable_name': ['PowerIn_SwingTank1', 'PowerIn_Total'],
+            'alarm_codes': ['BALVALV', 'BALVALV']  # No custom bound, uses default
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_eq_1': [450],
-            'total_power': [1000]  # ER sum (450) >= 1000 * 0.4 (400) with default 40%
+            'PowerIn_SwingTank1': [450],
+            'PowerIn_Total': [1000]  # ER sum (450) >= 1000 * 0.4 (400) with default 40%
         })
         daily_df.index = daily_timestamps
 
@@ -1324,15 +1300,15 @@ def test_flag_recirc_balance_valve_multiple_days(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'heating_output'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_OUT_1']
+            'variable_name': ['PowerIn_SwingTank2', 'HeatOut_TM'],
+            'alarm_codes': ['BALVALV', 'BALVALV']
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00', '2022-01-02 00:00', '2022-01-03 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_eq_1': [960, 300, 980],
-            'heating_output': [800, 800, 800]  # Day 1 and 3 trigger
+            'PowerIn_SwingTank2': [960, 300, 980],
+            'HeatOut_TM': [800, 800, 800]  # Day 1 and 3 trigger
         })
         daily_df.index = daily_timestamps
 
@@ -1347,16 +1323,16 @@ def test_flag_recirc_balance_valve_multiple_out_codes(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'heating_out_1', 'heating_out_2'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_OUT_1', 'BALVALV_OUT_1']  # Multiple OUT codes
+            'variable_name': ['PowerIn_SwingTank2', 'HeatOut_TM1', 'HeatOut_TM2'],
+            'alarm_codes': ['BALVALV', 'BALVALV', 'BALVALV']  # Multiple OUT codes
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_eq_1': [1500],
-            'heating_out_1': [800],
-            'heating_out_2': [800]  # OUT sum = 1600, 1600 * 0.95 = 1520, ER (1500) <= 1520
+            'PowerIn_SwingTank2': [1500],
+            'HeatOut_TM1': [800],
+            'HeatOut_TM2': [800]  # OUT sum = 1600, 1600 * 0.95 = 1520, ER (1500) <= 1520
         })
         daily_df.index = daily_timestamps
 
@@ -1371,21 +1347,21 @@ def test_flag_recirc_balance_valve_no_er_codes_error(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['heating_output'],
-            'alarm_codes': ['BALVALV_OUT_1']  # No ER codes
+            'variable_name': ['HeatOut_TM'],
+            'alarm_codes': ['BALVALV']  # No ER codes
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'heating_output': [1000]
+            'HeatOut_TM': [1000]
         })
         daily_df.index = daily_timestamps
 
         with pytest.raises(Exception) as excinfo:
             flag_recirc_balance_valve(daily_df, mock_config_manager)
 
-        assert 'Improper alarm codes for balancing valve with id' in str(excinfo.value)
+        assert 'Improper alarm codes for balancing valve' in str(excinfo.value)
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_empty_dataframe(mock_config_manager):
@@ -1393,12 +1369,12 @@ def test_flag_recirc_balance_valve_empty_dataframe(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_eq_1', 'heating_output'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_OUT_1']
+            'variable_name': ['PowerIn_ER', 'HeatOut_TM'],
+            'alarm_codes': ['BALVALV', 'BALVALV']
         })
         mock_csv.return_value = csv_df
 
-        daily_df = pd.DataFrame({'recirc_eq_1': [], 'heating_output': []})
+        daily_df = pd.DataFrame({'PowerIn_ER': [], 'HeatOut_TM': []})
 
         event_df = flag_recirc_balance_valve(daily_df, mock_config_manager)
 
@@ -1425,17 +1401,17 @@ def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['recirc_1', 'recirc_2', 'recirc_3', 'heating_output'],
-            'alarm_codes': ['BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_ER_1', 'BALVALV_OUT_1']
+            'variable_name': ['PowerIn_ER1', 'PowerIn_ER2', 'PowerIn_ER3', 'HeatOut_TM'],
+            'alarm_codes': ['BALVALV', 'BALVALV', 'BALVALV', 'BALVALV']
         })
         mock_csv.return_value = csv_df
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'recirc_1': [400],
-            'recirc_2': [350],
-            'recirc_3': [250],
-            'heating_output': [600]
+            'PowerIn_ER1': [400],
+            'PowerIn_ER2': [350],
+            'PowerIn_ER3': [250],
+            'HeatOut_TM': [600]
         })
         daily_df.index = daily_timestamps
 
@@ -1451,7 +1427,7 @@ def test_flag_hp_inlet_temp_no_HPINLET_codes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'TMNSTPT_T_1']
+            'alarm_codes': ['POWRRAT:60-80', None, 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
@@ -1473,8 +1449,8 @@ def test_flag_hp_inlet_temp_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHinlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET'],
             'pretty_name': ['HP Power', 'HP Inlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -1484,8 +1460,8 @@ def test_flag_hp_inlet_temp_alarm_triggered(mock_config_manager):
             '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0
-            'hp_inlet_temp': [120, 120, 120, 120, 120, 120]  # Above 115
+            'PowerIn_HPWH': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0
+            'Temp_HPWHinlet': [120, 120, 120, 120, 120, 120]  # Above 115
         })
         minute_df.index = minute_timestamps
 
@@ -1505,8 +1481,8 @@ def test_flag_hp_inlet_temp_no_alarm_temp_low(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_inlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET']
         })
         mock_csv.return_value = csv_df
 
@@ -1515,8 +1491,8 @@ def test_flag_hp_inlet_temp_no_alarm_temp_low(mock_config_manager):
             '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0 threshold
-            'hp_inlet_temp': [110, 110, 110, 110, 110, 110]  # Below 115
+            'PowerIn_HPWH': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0 threshold
+            'Temp_HPWH_inlet': [110, 110, 110, 110, 110, 110]  # Below 115
         })
         minute_df.index = minute_timestamps
 
@@ -1534,8 +1510,8 @@ def test_flag_hp_inlet_temp_no_alarm_power_low(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_Inlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET']
         })
         mock_csv.return_value = csv_df
 
@@ -1544,8 +1520,8 @@ def test_flag_hp_inlet_temp_no_alarm_power_low(mock_config_manager):
             '2022-01-01 01:04','2022-01-01 01:05','2022-01-01 01:06'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],  # Below 1.0
-            'hp_inlet_temp': [120, 120, 120, 120, 120, 120]  # Above 115 threshold
+            'PowerIn_HPWH': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],  # Below 1.0
+            'Temp_HPWH_Inlet': [120, 120, 120, 120, 120, 120]  # Above 115 threshold
         })
         minute_df.index = minute_timestamps
 
@@ -1563,8 +1539,8 @@ def test_flag_hp_inlet_temp_custom_bounds(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1:1.0', 'HPINLET_T_1:130.0']  # Custom thresholds
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
+            'alarm_codes': ['HPINLET:1.0', 'HPINLET:130.0']  # Custom thresholds
         })
         mock_csv.return_value = csv_df
 
@@ -1575,8 +1551,8 @@ def test_flag_hp_inlet_temp_custom_bounds(mock_config_manager):
             '2022-01-01 01:10','2022-01-01 01:11'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0
-            'hp_inlet_temp': [135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135]  # Above 130
+            'PowerIn_HPWH': [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],  # Above 1.0
+            'Temp_HPWHInlet': [135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135]  # Above 130
         })
         minute_df.index = minute_timestamps
 
@@ -1595,8 +1571,8 @@ def test_flag_hp_inlet_temp_not_enough_consecutive_minutes(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET']
         })
         mock_csv.return_value = csv_df
 
@@ -1606,8 +1582,8 @@ def test_flag_hp_inlet_temp_not_enough_consecutive_minutes(mock_config_manager):
         ])
         # Only 4 consecutive minutes, need 5
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5, 1.5],
-            'hp_inlet_temp': [120, 120, 120, 120]
+            'PowerIn_HPWH': [1.5, 1.5, 1.5, 1.5],
+            'Temp_HPWHInlet': [120, 120, 120, 120]
         })
         minute_df.index = minute_timestamps
 
@@ -1625,16 +1601,16 @@ def test_flag_hp_inlet_temp_multiple_pow_codes_error(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power_1', 'hp_power_2', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_POW_1', 'HPINLET_T_1']  # Duplicate POW codes
+            'variable_name': ['PowerIn_HPWH', 'PowerIn_HPWH', 'Temp_HPWHInlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET', 'HPINLET']  # Duplicate POW codes
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
         minute_df = pd.DataFrame({
-            'hp_power_1': [1.5],
-            'hp_power_2': [1.5],
-            'hp_inlet_temp': [125]
+            'PowerIn_HPWH': [1.5],
+            'PowerIn_HPWH': [1.5],
+            'Temp_HPWHInlet': [125]
         })
         minute_df.index = minute_timestamps
 
@@ -1645,7 +1621,7 @@ def test_flag_hp_inlet_temp_multiple_pow_codes_error(mock_config_manager):
         with pytest.raises(Exception) as excinfo:
             flag_hp_inlet_temp(minute_df, daily_df, mock_config_manager)
 
-        assert 'Improper alarm codes for balancing valve with id' in str(excinfo.value)
+        assert 'Improper alarm codes for HPWH Inlet alarm for element with id' in str(excinfo.value)
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_empty_dataframe(mock_config_manager):
@@ -1653,12 +1629,12 @@ def test_flag_hp_inlet_temp_empty_dataframe(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET']
         })
         mock_csv.return_value = csv_df
 
-        minute_df = pd.DataFrame({'hp_power': [], 'hp_inlet_temp': []})
+        minute_df = pd.DataFrame({'PowerIn_HPWH': [], 'Temp_HPWHInlet': []})
 
         daily_df = pd.DataFrame({'dummy': []})
 
@@ -1691,8 +1667,8 @@ def test_flag_hp_inlet_temp_custom_fault_time(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET']
         })
         mock_csv.return_value = csv_df
 
@@ -1700,8 +1676,8 @@ def test_flag_hp_inlet_temp_custom_fault_time(mock_config_manager):
             '2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5],
-            'hp_inlet_temp': [120, 120, 120]
+            'PowerIn_HPWH': [1.5, 1.5, 1.5],
+            'Temp_HPWHInlet': [120, 120, 120]
         })
         minute_df.index = minute_timestamps
 
@@ -1720,8 +1696,8 @@ def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'hp_inlet_temp'],
-            'alarm_codes': ['HPINLET_POW_1', 'HPINLET_T_1']
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET']
         })
         mock_csv.return_value = csv_df
 
@@ -1731,8 +1707,8 @@ def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
         ])
         # Power drops in the middle, breaking consecutive streak
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 0.5, 1.5, 1.5, 1.5],  # Drops below 1.0 at minute 3
-            'hp_inlet_temp': [120, 120, 120, 120, 120, 120]
+            'PowerIn_HPWH': [1.5, 1.5, 0.5, 1.5, 1.5, 1.5],  # Drops below 1.0 at minute 3
+            'Temp_HPWHInlet': [120, 120, 120, 120, 120, 120]
         })
         minute_df.index = minute_timestamps
 
@@ -1752,7 +1728,7 @@ def test_flag_backup_use_no_IMBCKUP_codes(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
-            'alarm_codes': ['POWRRAT_HPWH:60-80', None, 'TMNSTPT_T_1']
+            'alarm_codes': ['POWRRAT:60-80', None, 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
@@ -1774,8 +1750,8 @@ def test_flag_backup_use_st_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['bu_setpoint'],
-            'alarm_codes': ['IMBCKUP_ST_1:130.0']
+            'variable_name': ['Setpoint_BU'],
+            'alarm_codes': ['IMBCKUP']
         })
         mock_csv.return_value = csv_df
 
@@ -1787,7 +1763,7 @@ def test_flag_backup_use_st_alarm_triggered(mock_config_manager):
         ])
         # Setpoint altered from 130 to 140 for 12 consecutive minutes
         minute_df = pd.DataFrame({
-            'bu_setpoint': [140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]
+            'Setpoint_BU': [140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140]
         })
         minute_df.index = minute_timestamps
 
@@ -1806,8 +1782,8 @@ def test_flag_backup_use_st_alarm_not_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['bu_setpoint'],
-            'alarm_codes': ['IMBCKUP_ST_1:130.0']
+            'variable_name': ['Setpoint_BU'],
+            'alarm_codes': ['IMBCKUP:130']
         })
         mock_csv.return_value = csv_df
 
@@ -1818,7 +1794,7 @@ def test_flag_backup_use_st_alarm_not_triggered(mock_config_manager):
         ])
         # Setpoint altered for only 9 minutes
         minute_df = pd.DataFrame({
-            'bu_setpoint': [140, 140, 140, 140, 140, 140, 140, 140, 140]
+            'Setpoint_BU': [140, 140, 140, 140, 140, 140, 140, 140, 140]
         })
         minute_df.index = minute_timestamps
 
@@ -1836,23 +1812,23 @@ def test_flag_backup_use_tp_pow_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['bu_power_1', 'total_power'],
-            'alarm_codes': ['IMBCKUP_POW_1', 'IMBCKUP_TP_1:0.1'],  # 10% ratio
+            'variable_name': ['PowerIn_BU1', 'PowerIn_Total'],
+            'alarm_codes': ['IMBCKUP', 'IMBCKUP:0.1'],  # 10% ratio
             'pretty_name': ['Backup Power 1', 'Total Power']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
         minute_df = pd.DataFrame({
-            'bu_power_1': [15.0],
-            'total_power': [100.0]
+            'PowerIn_BU1': [15.0],
+            'PowerIn_Total': [100.0]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01'])
         daily_df = pd.DataFrame({
-            'bu_power_1': [15.0],  # 15% of total power
-            'total_power': [100.0]
+            'PowerIn_BU1': [15.0],  # 15% of total power
+            'PowerIn_Total': [100.0]
         })
         daily_df.index = daily_timestamps
 
@@ -1868,7 +1844,7 @@ def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['element_power'],
+            'variable_name': ['PowerIn_Elem'],
             'alarm_codes': ['BLWNFSE:30'],  # Expected 30 kW when on
             'pretty_name': ['Element Power']
         })
@@ -1879,7 +1855,7 @@ def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
             '2022-01-01 01:04','2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'element_power': [5.0, 5.0, 5.0, 5.0, 5.0]  # On (>1.0) but below 28 (30-2)
+            'PowerIn_Elem': [5.0, 5.0, 5.0, 5.0, 5.0]  # On (>1.0) but below 28 (30-2)
         })
         minute_df.index = minute_timestamps
 
@@ -1891,7 +1867,7 @@ def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
 
         assert len(event_df) == 1
         assert 'Blown Fuse' in event_df.iloc[0]['event_detail']
-        assert 'element_power' in event_df.iloc[0]['event_detail']
+        assert 'PowerIn_Elem' in event_df.iloc[0]['event_detail']
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_blown_fuse_no_alarm_normal_power(mock_config_manager):
@@ -1899,7 +1875,7 @@ def test_flag_blown_fuse_no_alarm_normal_power(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['element_power'],
+            'variable_name': ['PowerIn_Elem'],
             'alarm_codes': ['BLWNFSE:30'],  # Expected 30 kW when on
             'pretty_name': ['Element Power']
         })
@@ -1910,7 +1886,7 @@ def test_flag_blown_fuse_no_alarm_normal_power(mock_config_manager):
             '2022-01-01 01:04','2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'element_power': [30.0, 30.0, 30.0, 30.0, 30.0]  # On and at expected power
+            'PowerIn_Elem': [30.0, 30.0, 30.0, 30.0, 30.0]  # On and at expected power
         })
         minute_df.index = minute_timestamps
 
@@ -1928,7 +1904,7 @@ def test_flag_blown_fuse_no_alarm_element_off(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['element_power'],
+            'variable_name': ['PowerIn_Elem'],
             'alarm_codes': ['BLWNFSE:30'],
             'pretty_name': ['Element Power']
         })
@@ -1939,7 +1915,7 @@ def test_flag_blown_fuse_no_alarm_element_off(mock_config_manager):
             '2022-01-01 01:04','2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'element_power': [0.5, 0.5, 0.5, 0.5, 0.5]  # Below 1.0 threshold, element off
+            'PowerIn_Elem': [0.5, 0.5, 0.5, 0.5, 0.5]  # Below 1.0 threshold, element off
         })
         minute_df.index = minute_timestamps
 
@@ -1958,8 +1934,8 @@ def test_flag_unexpected_soo_change_alarm_on_turn_on(mock_config_manager):
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp_1', 'tank_temp_2'],
-            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON:115', 'SOOCHNG_OFF:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_tank_1', 'Temp_tank_2'],
+            'alarm_codes': ['SOOCHNG', 'SOOCHNG_ON:115', 'SOOCHNG_OFF:140'],
             'pretty_name': ['HP Power', 'Tank Temperature', 'Tank Temperature']
         })
         mock_csv.return_value = csv_df
@@ -1969,9 +1945,9 @@ def test_flag_unexpected_soo_change_alarm_on_turn_on(mock_config_manager):
             '2022-01-01 01:04', '2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5, 1.5, 1.5, 1.5],  # Turns on at 01:03
-            'tank_temp_1': [130.0, 130.0, 130.0, 130.0, 130.0],  # Far from 115 threshold
-            'tank_temp_2': [-5, 400.9, 20, 7.0, 5000]  # Should not matter
+            'PowerIn_HPWH': [0.5, 0.5, 1.5, 1.5, 1.5],  # Turns on at 01:03
+            'Temp_tank_1': [130.0, 130.0, 130.0, 130.0, 130.0],  # Far from 115 threshold
+            'Temp_tank_2': [-5, 400.9, 20, 7.0, 5000]  # Should not matter
         })
         minute_df.index = minute_timestamps
 
@@ -1992,8 +1968,8 @@ def test_flag_unexpected_soo_change_no_alarm_temp_within_threshold(mock_config_m
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp'],
-            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_normal:115;SOOCHNG_OFF_normal:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank'],
+            'alarm_codes': ['SOOCHNG', 'SOOCHNG_ON_normal:115;SOOCHNG_OFF_normal:140'],
             'pretty_name': ['HP Power', 'Tank Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2003,8 +1979,8 @@ def test_flag_unexpected_soo_change_no_alarm_temp_within_threshold(mock_config_m
             '2022-01-01 01:04', '2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5, 1.5, 1.5, 1.5],  # Turns on at 01:03
-            'tank_temp': [116.0, 116.0, 116.0, 116.0, 116.0]  # Within 5.0 of 115
+            'PowerIn_HPWH': [0.5, 0.5, 1.5, 1.5, 1.5],  # Turns on at 01:03
+            'Temp_Tank': [116.0, 116.0, 116.0, 116.0, 116.0]  # Within 5.0 of 115
         })
         minute_df.index = minute_timestamps
 
@@ -2023,8 +1999,8 @@ def test_flag_unexpected_soo_change_off_threshold(mock_config_manager):
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp'],
-            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_normal:115;SOOCHNG_OFF_normal:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank'],
+            'alarm_codes': ['SOOCHNG', 'SOOCHNG_ON_normal:115;SOOCHNG_OFF_normal:140'],
             'pretty_name': ['HP Power', 'Tank Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2034,8 +2010,8 @@ def test_flag_unexpected_soo_change_off_threshold(mock_config_manager):
             '2022-01-01 01:04', '2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5, 0.5, 0.5],  # Turns on at 01:03
-            'tank_temp': [130.0, 131.0, 131.0, 131.0, 131.0]
+            'PowerIn_HPWH': [1.5, 1.5, 1.5, 0.5, 0.5],  # Turns on at 01:03
+            'Temp_Tank': [130.0, 131.0, 131.0, 131.0, 131.0]
         })
         minute_df.index = minute_timestamps
 
@@ -2056,8 +2032,8 @@ def test_flag_unexpected_soo_change_no_power_transition(mock_config_manager):
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp'],
-            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_1:115;SOOCHNG_OFF_1:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank'],
+            'alarm_codes': ['SOOCHNG', 'SOOCHNG_ON_1:115;SOOCHNG_OFF_1:140'],
             'pretty_name': ['HP Power', 'Tank Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2067,8 +2043,8 @@ def test_flag_unexpected_soo_change_no_power_transition(mock_config_manager):
             '2022-01-01 01:04', '2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5, 1.5, 1.5, 1.5, 1.5],  # Already on, no transition
-            'tank_temp': [130.0, 130.0, 130.0, 130.0, 130.0]  # Far from threshold but no transition
+            'PowerIn_HPWH': [1.5, 1.5, 1.5, 1.5, 1.5],  # Already on, no transition
+            'Temp_Tank': [130.0, 130.0, 130.0, 130.0, 130.0]  # Far from threshold but no transition
         })
         minute_df.index = minute_timestamps
 
@@ -2094,7 +2070,7 @@ def test_flag_unexpected_soo_change_ls_alarm_type_only_during_event(mock_config_
     with patch('pandas.read_csv') as mock_csv:
         # alarm_id is 'loadUp' (a load shifting type)
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp', 'tank_temp'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank', 'Temp_Tank'],
             'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_loadUp:115', 'SOOCHNG_OFF_loadUp:140'],
             'pretty_name': ['HP Power', 'Tank Temperature', 'Tank Temperature']
         })
@@ -2107,8 +2083,8 @@ def test_flag_unexpected_soo_change_ls_alarm_type_only_during_event(mock_config_
         ])
         minute_df = pd.DataFrame({
             # HP turns on at 01:03 (outside load shift) and again at 01:07 (inside load shift)
-            'hp_power': [0.5, 0.5, 1.5, 1.5, 0.5, 0.5, 1.5, 1.5, 1.5],
-            'tank_temp': [130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115
+            'PowerIn_HPWH': [0.5, 0.5, 1.5, 1.5, 0.5, 0.5, 1.5, 1.5, 1.5],
+            'Temp_Tank': [130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115
         })
         minute_df.index = minute_timestamps
 
@@ -2136,9 +2112,9 @@ def test_flag_unexpected_soo_change_ls_alarm_type_no_matching_events(mock_config
     with patch('pandas.read_csv') as mock_csv:
         # alarm_id is 'loadUp' but ls_df only has 'shed' events
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp', 'tank_temp'],
-            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_loadUp:115', 'SOOCHNG_OFF_loadUp:140'],
-            'pretty_name': ['HP Power', 'Tank Temperature', 'Tank Temperature']
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank'],
+            'alarm_codes': ['SOOCHNG', 'SOOCHNG_ON_loadUp:115;SOOCHNG_OFF_loadUp:140'],
+            'pretty_name': ['HP Power', 'Tank Temperature']
         })
         mock_csv.return_value = csv_df
 
@@ -2147,8 +2123,8 @@ def test_flag_unexpected_soo_change_ls_alarm_type_no_matching_events(mock_config
             '2022-01-01 01:04', '2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5, 1.5, 1.5, 1.5],  # Turns on at 01:03
-            'tank_temp': [130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115, would trigger alarm
+            'PowerIn_HPWH': [0.5, 0.5, 1.5, 1.5, 1.5],  # Turns on at 01:03
+            'Temp_Tank': [130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115, would trigger alarm
         })
         minute_df.index = minute_timestamps
 
@@ -2175,9 +2151,9 @@ def test_flag_unexpected_soo_change_non_ls_type_excludes_ls_periods(mock_config_
     with patch('pandas.read_csv') as mock_csv:
         # alarm_id is '1' (not a load shifting type)
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp', 'tank_temp'],
-            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_1:115', 'SOOCHNG_OFF_1:140'],
-            'pretty_name': ['HP Power', 'Tank Temperature', 'Tank Temperature']
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank'],
+            'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_1:115;SOOCHNG_OFF_1:140'],
+            'pretty_name': ['HP Power', 'Tank Temperature']
         })
         mock_csv.return_value = csv_df
 
@@ -2189,8 +2165,8 @@ def test_flag_unexpected_soo_change_non_ls_type_excludes_ls_periods(mock_config_
         minute_df = pd.DataFrame({
             # HP turns on at 01:03 (inside load shift, should be ignored)
             # HP stays on through load shift and beyond
-            'hp_power': [0.5, 0.5, 1.5, 1.5, 1.5, 0.5, 0.5, 0.5, 0.5],
-            'tank_temp': [130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115
+            'PowerIn_HPWH': [0.5, 0.5, 1.5, 1.5, 1.5, 0.5, 0.5, 0.5, 0.5],
+            'Temp_Tank': [130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115
         })
         minute_df.index = minute_timestamps
 
@@ -2218,7 +2194,7 @@ def test_flag_unexpected_soo_change_non_ls_type_alarm_outside_ls_period(mock_con
     with patch('pandas.read_csv') as mock_csv:
         # alarm_id is '1' (not a load shifting type)
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'tank_temp'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_Tank'],
             'alarm_codes': ['SOOCHNG_POW', 'SOOCHNG_ON_1:115;SOOCHNG_ON_shed:105;SOOCHNG_OFF_1:140;SOOCHNG_OFF_shed:110'],
             'pretty_name': ['HP Power', 'Tank Temperature']
         })
@@ -2231,8 +2207,8 @@ def test_flag_unexpected_soo_change_non_ls_type_alarm_outside_ls_period(mock_con
         ])
         minute_df = pd.DataFrame({
             # HP turns on at 01:05 (outside load shift, should trigger alarm)
-            'hp_power': [0.5, 1.5, 0.5, 0.5, 1.5, 1.5, 1.5, 1.5, 1.5],
-            'tank_temp': [130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115
+            'PowerIn_HPWH': [0.5, 1.5, 0.5, 0.5, 1.5, 1.5, 1.5, 1.5, 1.5],
+            'Temp_Tank': [130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0, 130.0]  # Far from 115
         })
         minute_df.index = minute_timestamps
 
@@ -2253,7 +2229,7 @@ def test_flag_shortcycle_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power'],
+            'variable_name': ['PowerIn_HP'],
             'alarm_codes': ['SHRTCYC:1.0'],
             'pretty_name': ['HP Power']
         })
@@ -2266,7 +2242,7 @@ def test_flag_shortcycle_alarm_triggered(mock_config_manager):
             '2022-01-01 01:07', '2022-01-01 01:08', '2022-01-01 01:09'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 0.5]  # On for 5 min
+            'PowerIn_HP': [0.5, 0.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 0.5]  # On for 5 min
         })
         minute_df.index = minute_timestamps
 
@@ -2286,7 +2262,7 @@ def test_flag_shortcycle_no_alarm_long_run(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power'],
+            'variable_name': ['PowerIn_HP'],
             'alarm_codes': ['SHRTCYC:1.0'],
             'pretty_name': ['HP Power']
         })
@@ -2295,7 +2271,7 @@ def test_flag_shortcycle_no_alarm_long_run(mock_config_manager):
         # HP turns on for 20 minutes
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 26)])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5] + [1.5] * 20 + [0.5, 0.5, 0.5]  # On for 20 min
+            'PowerIn_HP': [0.5, 0.5] + [1.5] * 20 + [0.5, 0.5, 0.5]  # On for 20 min
         })
         minute_df.index = minute_timestamps
 
@@ -2313,7 +2289,7 @@ def test_flag_shortcycle_no_alarm_hp_always_off(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power'],
+            'variable_name': ['PowerIn_HP'],
             'alarm_codes': ['SHRTCYC:1.0'],
             'pretty_name': ['HP Power']
         })
@@ -2324,7 +2300,7 @@ def test_flag_shortcycle_no_alarm_hp_always_off(mock_config_manager):
             '2022-01-01 01:04', '2022-01-01 01:05'
         ])
         minute_df = pd.DataFrame({
-            'hp_power': [0.5, 0.5, 0.5, 0.5, 0.5]  # Always off
+            'PowerIn_HP': [0.5, 0.5, 0.5, 0.5, 0.5]  # Always off
         })
         minute_df.index = minute_timestamps
 
@@ -2342,8 +2318,8 @@ def test_flag_hp_outlet_temp_alarm_after_warmup(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'outlet_temp'],
-            'alarm_codes': ['HPOUTLT_POW_1:1.0', 'HPOUTLT_T_1:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_Outlet'],
+            'alarm_codes': ['HPOUTLT:1.0', 'HPOUTLT:140'],
             'pretty_name': ['HP Power', 'Outlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2351,8 +2327,8 @@ def test_flag_hp_outlet_temp_alarm_after_warmup(mock_config_manager):
         # HP on for 20 minutes, temp low after warmup (minutes 11-20)
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 22)])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5] * 21,  # HP on entire time
-            'outlet_temp': [150.0] * 10 + [130.0] * 11  # Warm for 10 min, then low
+            'PowerIn_HPWH': [1.5] * 21,  # HP on entire time
+            'Temp_HPWH_Outlet': [150.0] * 10 + [130.0] * 11  # Warm for 10 min, then low
         })
         minute_df.index = minute_timestamps
 
@@ -2371,8 +2347,8 @@ def test_flag_hp_outlet_temp_no_alarm_during_warmup(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'outlet_temp'],
-            'alarm_codes': ['HPOUTLT_POW_1:1.0', 'HPOUTLT_T_1:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHOutlet'],
+            'alarm_codes': ['HPOUTLT:1.0', 'HPOUTLT:140'],
             'pretty_name': ['HP Power', 'Outlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2380,8 +2356,8 @@ def test_flag_hp_outlet_temp_no_alarm_during_warmup(mock_config_manager):
         # HP on for 15 minutes, temp low only during warmup (first 10 min), then normal
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 17)])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5] * 16,  # HP on entire time
-            'outlet_temp': [130.0] * 10 + [150.0] * 6  # Low during warmup, then warm
+            'PowerIn_HPWH': [1.5] * 16,  # HP on entire time
+            'Temp_HPWHOutlet': [130.0] * 10 + [150.0] * 6  # Low during warmup, then warm
         })
         minute_df.index = minute_timestamps
 
@@ -2399,8 +2375,8 @@ def test_flag_hp_outlet_temp_no_alarm_temp_above_threshold(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'outlet_temp'],
-            'alarm_codes': ['HPOUTLT_POW_1:1.0', 'HPOUTLT_T_1:140'],
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHOutlet'],
+            'alarm_codes': ['HPOUTLT:1.0', 'HPOUTLT:140'],
             'pretty_name': ['HP Power', 'Outlet Temperature']
         })
         mock_csv.return_value = csv_df
@@ -2408,8 +2384,8 @@ def test_flag_hp_outlet_temp_no_alarm_temp_above_threshold(mock_config_manager):
         # HP on for 20 minutes, temp always above threshold
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 22)])
         minute_df = pd.DataFrame({
-            'hp_power': [1.5] * 21,
-            'outlet_temp': [150.0] * 21  # Always above 140 threshold
+            'PowerIn_HPWH': [1.5] * 21,
+            'Temp_HPWHOutlet': [150.0] * 21  # Always above 140 threshold
         })
         minute_df.index = minute_timestamps
 
@@ -2422,27 +2398,61 @@ def test_flag_hp_outlet_temp_no_alarm_temp_above_threshold(mock_config_manager):
         assert event_df.empty
 
 @patch('ecopipeline.ConfigManager')
+def test_flag_hp_outlet_temp_two_hpwhs_tracked_separately(mock_config_manager):
+    """Test that two HPWHs are tracked independently — one alarms, one does not"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['PowerIn_HPWH1', 'Temp_HPWH1_Outlet', 'PowerIn_HPWH2', 'Temp_HPWH2_Outlet'],
+            'alarm_codes': ['HPOUTLT:1.0', 'HPOUTLT:140', 'HPOUTLT:1.0', 'HPOUTLT:140'],
+            'pretty_name': ['HP1 Power', 'HP1 Outlet Temperature', 'HP2 Power', 'HP2 Outlet Temperature']
+        })
+        mock_csv.return_value = csv_df
+
+        # Both HPs on for 20 minutes.
+        # HPWH1: temp drops below threshold after warmup -> should alarm
+        # HPWH2: temp always above threshold -> should not alarm
+        minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 22)])
+        minute_df = pd.DataFrame({
+            'PowerIn_HPWH1': [1.5] * 21,
+            'Temp_HPWH1_Outlet': [150.0] * 10 + [130.0] * 11,
+            'PowerIn_HPWH2': [1.5] * 21,
+            'Temp_HPWH2_Outlet': [150.0] * 21,
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01'])
+        daily_df = pd.DataFrame({'dummy': [0]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_hp_outlet_temp(minute_df, daily_df, mock_config_manager, fault_time=5)
+
+        assert len(event_df) == 1
+        assert 'HP1 Outlet Temperature' in event_df.iloc[0]['event_detail']
+        assert 'HP2 Outlet Temperature' not in event_df.iloc[0]['event_detail']
+
+@patch('ecopipeline.ConfigManager')
 def test_flag_HP_outage_alarm_triggered_low_power_ratio(mock_config_manager):
     """Test alarm when HP power ratio falls below threshold over rolling period"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv, \
          patch('ecopipeline.event_tracking.Alarm.Alarm._append_previous_days_to_df') as mock_append:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'total_power'],
-            'alarm_codes': ['HPOUTGE_POW_1:0.3', 'HPOUTGE_TP_1'],
+            'variable_name': ['PowerIn_HPWH', 'PowerIn_Total'],
+            'alarm_codes': ['HPOUTGE:0.3', 'HPOUTGE'],
             'pretty_name': ['HP Power', 'Total Power']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
-        minute_df = pd.DataFrame({'hp_power': [0], 'total_power': [100]})
+        minute_df = pd.DataFrame({'PowerIn_HPWH': [0], 'PowerIn_Total': [100]})
         minute_df.index = minute_timestamps
 
         # Create 7 days of daily data with low HP power ratio
         daily_timestamps = pd.to_datetime([f'2022-01-0{i}' for i in range(1, 8)])
         daily_df = pd.DataFrame({
-            'hp_power': [10, 10, 10, 10, 10, 10, 10],  # 10% of total (below 30% threshold)
-            'total_power': [100, 100, 100, 100, 100, 100, 100]
+            'PowerIn_HPWH': [10, 10, 10, 10, 10, 10, 10],  # 10% of total (below 30% threshold)
+            'PowerIn_Total': [100, 100, 100, 100, 100, 100, 100]
         })
         daily_df.index = daily_timestamps
 
@@ -2462,21 +2472,21 @@ def test_flag_HP_outage_no_alarm_normal_power_ratio(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv, \
          patch('ecopipeline.event_tracking.Alarm.Alarm._append_previous_days_to_df') as mock_append:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_power', 'total_power'],
-            'alarm_codes': ['HPOUTGE_POW_1:0.3', 'HPOUTGE_TP_1'],
+            'variable_name': ['PowerIn_HPWH', 'PowerIn_Total'],
+            'alarm_codes': ['HPOUTGE:0.3', 'HPOUTGE'],
             'pretty_name': ['HP Power', 'Total Power']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01'])
-        minute_df = pd.DataFrame({'hp_power': [50], 'total_power': [100]})
+        minute_df = pd.DataFrame({'PowerIn_HPWH': [50], 'PowerIn_Total': [100]})
         minute_df.index = minute_timestamps
 
         # Create 7 days of daily data with normal HP power ratio
         daily_timestamps = pd.to_datetime([f'2022-01-0{i}' for i in range(1, 8)])
         daily_df = pd.DataFrame({
-            'hp_power': [50, 50, 50, 50, 50, 50, 50],  # 50% of total (above 30% threshold)
-            'total_power': [100, 100, 100, 100, 100, 100, 100]
+            'PowerIn_HPWH': [50, 50, 50, 50, 50, 50, 50],  # 50% of total (above 30% threshold)
+            'PowerIn_Total': [100, 100, 100, 100, 100, 100, 100]
         })
         daily_df.index = daily_timestamps
 
@@ -2493,8 +2503,8 @@ def test_flag_HP_outage_alarm_triggered_nonzero_alrm(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_alarm'],
-            'alarm_codes': ['HPOUTGE_ALRM_1'],
+            'variable_name': ['Alarm_HPWH'],
+            'alarm_codes': ['HPOUTGE'],
             'pretty_name': ['HP Alarm']
         })
         mock_csv.return_value = csv_df
@@ -2503,7 +2513,7 @@ def test_flag_HP_outage_alarm_triggered_nonzero_alrm(mock_config_manager):
             '2022-01-01 01:01', '2022-01-01 01:02', '2022-01-01 01:03'
         ])
         minute_df = pd.DataFrame({
-            'hp_alarm': [0, 1, 0]  # Non-zero value at 01:02
+            'Alarm_HPWH': [0, 1, 0]  # Non-zero value at 01:02
         })
         minute_df.index = minute_timestamps
 
@@ -2523,8 +2533,8 @@ def test_flag_HP_outage_no_alarm_alrm_all_zero(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['hp_alarm'],
-            'alarm_codes': ['HPOUTGE_ALRM_1'],
+            'variable_name': ['Alarm_HPWH'],
+            'alarm_codes': ['HPOUTGE'],
             'pretty_name': ['HP Alarm']
         })
         mock_csv.return_value = csv_df
@@ -2533,7 +2543,7 @@ def test_flag_HP_outage_no_alarm_alrm_all_zero(mock_config_manager):
             '2022-01-01 01:01', '2022-01-01 01:02', '2022-01-01 01:03'
         ])
         minute_df = pd.DataFrame({
-            'hp_alarm': [0, 0, 0]  # All zeros
+            'Alarm_HPWH': [0, 0, 0]  # All zeros
         })
         minute_df.index = minute_timestamps
 
@@ -2552,7 +2562,7 @@ def test_flag_dhw_unexpected_temp_alarm_above_high_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['dhw_temp'],
+            'variable_name': ['Temp_DHW'],
             'alarm_codes': ['TMPRANG:110-130'],
             'pretty_name': ['DHW Temperature']
         })
@@ -2560,7 +2570,7 @@ def test_flag_dhw_unexpected_temp_alarm_above_high_bound(mock_config_manager):
 
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 16)])
         minute_df = pd.DataFrame({
-            'dhw_temp': [120, 120, 120] + [140] * 12  # Above high bound for 12 min
+            'Temp_DHW': [120, 120, 120] + [140] * 12  # Above high bound for 12 min
         })
         minute_df.index = minute_timestamps
 
@@ -2579,7 +2589,7 @@ def test_flag_dhw_unexpected_temp_alarm_below_low_bound(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['dhw_temp'],
+            'variable_name': ['Temp_DHW'],
             'alarm_codes': ['TMPRANG:110-130'],
             'pretty_name': ['DHW Temperature']
         })
@@ -2587,7 +2597,7 @@ def test_flag_dhw_unexpected_temp_alarm_below_low_bound(mock_config_manager):
 
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 16)])
         minute_df = pd.DataFrame({
-            'dhw_temp': [120, 120, 120] + [100] * 12  # Below low bound for 12 min
+            'Temp_DHW': [120, 120, 120] + [100] * 12  # Below low bound for 12 min
         })
         minute_df.index = minute_timestamps
 
@@ -2606,7 +2616,7 @@ def test_flag_dhw_unexpected_temp_no_alarm_within_range(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['dhw_temp'],
+            'variable_name': ['Temp_DHW'],
             'alarm_codes': ['TMPRANG:110-130'],
             'pretty_name': ['DHW Temperature']
         })
@@ -2614,7 +2624,7 @@ def test_flag_dhw_unexpected_temp_no_alarm_within_range(mock_config_manager):
 
         minute_timestamps = pd.to_datetime([f'2022-01-01 01:{i:02d}' for i in range(1, 16)])
         minute_df = pd.DataFrame({
-            'dhw_temp': [115, 120, 125, 118, 122, 119, 121, 124, 116, 120, 125, 118, 122, 119, 121]
+            'Temp_DHW': [115, 120, 125, 118, 122, 119, 121, 124, 116, 120, 125, 118, 122, 119, 121]
         })
         minute_df.index = minute_timestamps
 

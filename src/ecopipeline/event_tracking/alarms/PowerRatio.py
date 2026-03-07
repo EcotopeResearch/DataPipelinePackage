@@ -54,8 +54,18 @@ class PowerRatio(Alarm):
             for var in var_list:
                 if var not in blocks_df.columns:
                     blocks_df[var] = 0.0
+            if alarm_id == 'Total':
+                tp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn_Total']
+                if len(tp_codes) != 1:
+                    raise Exception(f"POWRRAT Error: There must be exactly one Total Power variable. Found {len(tp_codes)}")
+                if tp_codes.iloc[0]['variable_name'] in blocks_df.columns:
+                    blocks_df[alarm_id] = blocks_df[tp_codes.iloc[0]['variable_name']]
+                    var_list = var_list[var_list != tp_codes.iloc[0]['variable_name']]
+                else:
+                   raise Exception(f"POWRRAT Error: PowerIn_Total variable missing from total power ratio") 
+            else:
+                blocks_df[alarm_id] = blocks_df[var_list].sum(axis=1)
 
-            blocks_df[alarm_id] = blocks_df[var_list].sum(axis=1)
             for variable in var_list:
                 # Calculate ratio for each block
                 blocks_df[f"{variable}_{alarm_id}"] = (blocks_df[variable]/blocks_df[alarm_id]) * 100
@@ -109,3 +119,41 @@ class PowerRatio(Alarm):
             print(f"Block date range: {blocks_df.index.min()} to {blocks_df.index.max()}")
         
         return blocks_df
+    
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+        alarm_code_parts = []
+        seen_total_power = False
+        for idx, row in bounds_df.iterrows():
+            element_id = 'Total'
+            parts = row['variable_name'].split('_')
+            if len(parts) <= 1:
+                raise Exception(f"Improper variable name for '{row['variable_name']}', must be in form '[Unit Type]_[Element Identifier]' (e.g. 'Temp_HPWH' or 'PowerIn_SwingTank1').")
+            elif parts[0] != "PowerIn":
+                raise Exception(f"Error in POWRRAT: {row['variable_name']} is not designated as a power variable (must begin with 'PowerIn_').")
+            if parts[0] == "PowerIn" and parts[1] == "Total":
+                # total power is own catagory
+                if seen_total_power:
+                    raise Exception(f"Multiple instances of PowerIn_Total seen for alarm code {self.alarm_tag}. There may only be one variable that starts with 'PowerIn_Total'. This should be total system power.")
+                alarm_code_parts.append(["PowerIn_Total", element_id])
+                seen_total_power = True
+            else:
+                if "_HPWH" in row['variable_name']:
+                    element_id = "HPWH"
+                    
+                alarm_code_parts.append([parts[0], element_id])
+
+        if alarm_code_parts:
+            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
+
+            # Replace None bounds with appropriate defaults based on alarm_code_type
+            for idx, row in bounds_df.iterrows():
+                if pd.isna(row['bound']) or row['bound'] is None:
+                    if row['alarm_code_type'] in self.type_default_dict.keys():
+                        bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
+                        bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
+            # Coerce bound column to float
+            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+            if self.range_bounds:
+                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
+
+        return bounds_df

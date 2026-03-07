@@ -47,7 +47,7 @@ class SOOChange(Alarm):
                 'advLoadUp' : 'ADVANCED LOAD UP'
             }
         type_default_dict = {
-                'POW' : default_power_threshold,
+                'PowerIn' : default_power_threshold,
                 'ON' : default_on_temp,
                 'OFF' : default_off_temp
             }
@@ -55,12 +55,12 @@ class SOOChange(Alarm):
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         ls_df = config.get_ls_df()
-        pow_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'POW']
+        pow_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn']
         if len(pow_codes) != 1:
-            raise Exception(f"Improper alarm codes for SOO changes; must have 1 POW variable to indicate power to HPWH(s).")
+            raise Exception(f"Improper alarm codes for SOO changes; must have 1 power variable to indicate power to HPWH(s).")
         pow_var_name = pow_codes.iloc[0]['variable_name']
         pow_thresh = pow_codes.iloc[0]['bound']
-        non_pow_bounds_df = self.bounds_df[self.bounds_df['alarm_code_type'] != 'POW']
+        non_pow_bounds_df = self.bounds_df[self.bounds_df['alarm_code_type'] != 'PowerIn']
 
         for alarm_id in non_pow_bounds_df['alarm_code_id'].unique():
             ls_filtered_df = df.copy()
@@ -125,3 +125,41 @@ class SOOChange(Alarm):
                                 self._add_an_alarm(power_time, power_time, off_t_var_name,
                                     f"Unexpected SOO change: during {soo_mode_name}, HP turned off at {power_time} but {off_t_pretty_name} was {temp_at_turn_off:.1f} F (setpoint at {off_t_thresh} F).",
                                     certainty="med")
+                                
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+        alarm_code_parts = []
+        for idx, row in bounds_df.iterrows():
+            var_name_parts = row['variable_name'].split('_')
+            if len(var_name_parts) <= 1:
+                raise Exception(f"Improper variable name for '{row['variable_name']}', mustt be in form '[Unit Type]_[Element Identifier]' (e.g. 'Temp_HPWH' or 'PowerIn_SwingTank1').")
+            if var_name_parts[0] == "PowerIn":
+                alarm_code_parts.append(["PowerIn", "No ID"])
+            elif var_name_parts[0] == "Temp":
+                parts = row['alarm_codes'].split('_')
+                if len(parts) == 2:
+                    alarm_code_parts.append([parts[1], "No ID"])
+                elif len(parts) == 3:
+                    alarm_code_parts.append([parts[1], parts[2]])
+                else:
+                    raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
+            else:
+                raise Exception(f"{var_name_parts[0]} is not a proper unit type for SOOCHNG alarms.")
+                
+        if alarm_code_parts:
+            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
+
+            # Replace None bounds with appropriate defaults based on alarm_code_type
+            for idx, row in bounds_df.iterrows():
+                if pd.isna(row['bound']) or row['bound'] is None:
+                    if row['alarm_code_type'] in self.type_default_dict.keys():
+                        if self.range_bounds:
+                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
+                            bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
+                        else:
+                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
+            # Coerce bound column to float
+            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+            if self.range_bounds:
+                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
+
+        return bounds_df

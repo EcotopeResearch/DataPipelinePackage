@@ -29,7 +29,7 @@ class BlownFuse(Alarm):
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_power_range : float = 2.0, default_power_draw : float = 30, fault_time : int = 3):
         alarm_tag = 'BLWNFSE'
-        type_default_dict = {'default' : default_power_draw}
+        type_default_dict = {'PowerIn' : default_power_draw}
         self.default_power_threshold = default_power_threshold
         self.default_power_range = default_power_range
         self.fault_time = fault_time

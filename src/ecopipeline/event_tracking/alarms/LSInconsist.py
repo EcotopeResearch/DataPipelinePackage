@@ -112,3 +112,40 @@ class LSInconsist(Alarm):
 
                                 self._add_an_alarm(start_time, end_time, var_name,
                                     f"Load shift mode inconsistency: {pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} during {mode} event (expected {expected_value}).")
+                                
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+        alarm_code_parts = []
+        for idx, row in bounds_df.iterrows():
+            parts = row['alarm_codes'].split('_')
+            if self.two_part_tag:
+                if len(parts) == 2:
+                    alarm_code_parts.append([parts[1], "No ID"])
+                elif len(parts) == 3:
+                    alarm_code_parts.append([parts[1], parts[2]])
+                else:
+                    raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
+            else:
+                if len(parts) == 1:
+                    alarm_code_parts.append(["default", "No ID"])
+                elif len(parts) == 2:
+                    alarm_code_parts.append(["default", parts[1]])
+                else:
+                    raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
+        if alarm_code_parts:
+            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
+
+            # Replace None bounds with appropriate defaults based on alarm_code_type
+            for idx, row in bounds_df.iterrows():
+                if pd.isna(row['bound']) or row['bound'] is None:
+                    if row['alarm_code_type'] in self.type_default_dict.keys():
+                        if self.range_bounds:
+                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
+                            bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
+                        else:
+                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
+            # Coerce bound column to float
+            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+            if self.range_bounds:
+                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
+
+        return bounds_df

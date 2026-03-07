@@ -45,7 +45,7 @@ class TempRange(Alarm):
     """
     def __init__(self, bounds_df : pd.DataFrame, default_high_temp : float = 130, default_low_temp : float = 115, fault_time : int = 10):
         alarm_tag = 'TMPRANG'
-        type_default_dict = {'default': [default_low_temp, default_high_temp]}
+        type_default_dict = {'Temp': [default_low_temp, default_high_temp]}
         self.fault_time = fault_time
         super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, range_bounds=True, alarm_db_type='TEMP_RANGE')
 

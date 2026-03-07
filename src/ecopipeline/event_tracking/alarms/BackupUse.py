@@ -29,9 +29,9 @@ class BackupUse(Alarm):
     def __init__(self, bounds_df : pd.DataFrame, default_setpoint : float = 130.0, default_power_ratio : float = 0.1):
         alarm_tag = 'IMBCKUP'
         type_default_dict = {
-                'POW': None,
-                'TP': default_power_ratio,
-                'ST': default_setpoint
+                'PowerIn': None,
+                'PowerIn_Total': default_power_ratio,
+                'Setpoint': default_setpoint
             }
         super().__init__(bounds_df, alarm_tag, type_default_dict, alarm_db_type='BACKUP_USE')
 
@@ -43,9 +43,9 @@ class BackupUse(Alarm):
                 id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
 
                 # Get T and SP alarm codes for this ID
-                pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
-                tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
-                st_codes = id_group[id_group['alarm_code_type'] == 'ST']
+                pow_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
+                tp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn_Total']
+                st_codes = id_group[id_group['alarm_code_type'] == 'Setpoint']
 
                 # Check for multiple T or SP codes with same ID
                 if len(tp_codes) > 1:

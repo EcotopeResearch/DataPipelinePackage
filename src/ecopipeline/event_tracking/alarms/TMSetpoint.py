@@ -34,10 +34,10 @@ class TMSetpoint(Alarm):
                              default_power_ratio : float = 0.4):
         alarm_tag = 'TMNSTPT'
         self.default_fault_time = default_fault_time
-        type_default_dict = {'T' : default_setpoint,
-                 'SP': default_power_indication,
-                 'TP': default_power_ratio,
-                 'ST': default_setpoint}
+        type_default_dict = {'Temp' : default_setpoint,
+                 'PowerIn': default_power_indication,
+                 'PowerIn_Total': default_power_ratio,
+                 'Setpoint': default_setpoint}
         super().__init__(bounds_df, alarm_tag,type_default_dict, alarm_db_type='TM_SETPOINT')
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
@@ -48,10 +48,10 @@ class TMSetpoint(Alarm):
                 id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
 
                 # Get T and SP alarm codes for this ID
-                t_codes = id_group[id_group['alarm_code_type'] == 'T']
-                sp_codes = id_group[id_group['alarm_code_type'] == 'SP']
-                tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
-                st_codes = id_group[id_group['alarm_code_type'] == 'ST']
+                t_codes = id_group[id_group['alarm_code_type'] == 'Temp']
+                sp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
+                tp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn_Total']
+                st_codes = id_group[id_group['alarm_code_type'] == 'Setpoint']
 
                 # Check for multiple T or SP codes with same ID
                 if len(t_codes) > 1 or len(sp_codes) > 1 or len(tp_codes) > 1 or len(st_codes) > 1:

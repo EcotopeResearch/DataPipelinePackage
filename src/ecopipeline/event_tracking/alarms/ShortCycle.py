@@ -28,7 +28,7 @@ class ShortCycle(Alarm):
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, short_cycle_time : int = 15):
         alarm_tag = 'SHRTCYC'
-        type_default_dict = {'default' : default_power_threshold}
+        type_default_dict = {'PowerIn' : default_power_threshold}
         self.short_cycle_time = short_cycle_time
         super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, alarm_db_type='SHORT_CYCLE')
 

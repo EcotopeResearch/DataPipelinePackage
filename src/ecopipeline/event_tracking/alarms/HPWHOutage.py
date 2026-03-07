@@ -33,9 +33,9 @@ class HPWHOutage(Alarm):
                    ratio_period_days : int = 7):
         alarm_tag = 'HPOUTGE'
         type_default_dict = {
-                'POW': default_power_ratio,
-                'TP': None,
-                'ALRM': None
+                'PowerIn': default_power_ratio,
+                'PowerIn_Total': None,
+                'Alarm': None
             }
         self.day_table_name = day_table_name # TODO this could be a security issue. Swap it for config manager
         self.default_power_ratio = default_power_ratio
@@ -44,11 +44,12 @@ class HPWHOutage(Alarm):
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for alarm_id in self.bounds_df['alarm_code_id'].unique():
-            id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
+            alarm_triggered = False
+            id_group = self.bounds_df[(self.bounds_df['alarm_code_id'] == alarm_id) | (self.bounds_df['alarm_code_type'] == 'PowerIn_Total')]
             # Get T and SP alarm codes for this ID
-            pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
-            tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
-            alrm_codes = id_group[id_group['alarm_code_type'] == 'ALRM']
+            pow_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
+            tp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn_Total']
+            alrm_codes = id_group[id_group['alarm_code_type'] == 'Alarm']
             if len(alrm_codes) > 0:
                 for i in range(len(alrm_codes)):
                     alrm_var_name = alrm_codes.iloc[i]['variable_name']
@@ -74,9 +75,10 @@ class HPWHOutage(Alarm):
 
                                         self._add_an_alarm(start_time, end_time, alrm_var_name,
                                             f"Heat pump alarm triggered: {alrm_pretty_name} was {alarm_value} for {streak_length} minutes starting at {start_time}.")
+                                        alarm_triggered = True
             elif len(pow_codes) > 0 and len(tp_codes) != 1:
                 raise Exception(f"Improper alarm codes for heat pump outage with id {alarm_id}. Requires 1 total power (TP) variable.")
-            elif len(pow_codes) > 0 and len(tp_codes) == 1:
+            if len(pow_codes) > 0 and len(tp_codes) == 1 and not alarm_triggered:
                 if self.ratio_period_days <= 1:
                     print("HP Outage alarm period, ratio_period_days, must be more than 1")
                 else: 

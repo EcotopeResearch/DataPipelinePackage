@@ -33,17 +33,18 @@ class BalancingValve(Alarm):
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_ratio : float = 0.4):
         alarm_tag = 'BALVALV'
-        type_default_dict = {'TP' : default_power_ratio}
+        type_default_dict = {'PowerIn_Total' : default_power_ratio}
         super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='BALANCING_VALVE', daily_only=True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for alarm_id in self.bounds_df['alarm_code_id'].unique():
+            alarm_triggered = False
             id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
-            out_codes = id_group[id_group['alarm_code_type'] == 'OUT']
-            tp_codes = id_group[id_group['alarm_code_type'] == 'TP']
-            er_codes = id_group[id_group['alarm_code_type'] == 'ER']
+            out_codes = id_group[id_group['alarm_code_type'] == 'HeatOut']
+            tp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn_Total']
+            er_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
             if len(er_codes) < 1 or (len(out_codes) < 1 and len(tp_codes) != 1):
-                raise Exception(f"Improper alarm codes for balancing valve with id {alarm_id}")
+                raise Exception(f"Improper alarm codes for balancing valve. Requires at least one Power variable for electric resistance element and one heat output or total power variable.")
             er_var_names = er_codes['variable_name'].tolist()
             if len(tp_codes) == 1 and tp_codes.iloc[0]['variable_name']in daily_df.columns:
                 tp_var_name = tp_codes.iloc[0]['variable_name']
@@ -61,7 +62,8 @@ class BalancingValve(Alarm):
                             self._add_an_alarm(day, day + timedelta(1), tp_var_name, 
                                                f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(tp_bound * 100):.2f}% of total power.", 
                                                add_one_minute_to_end=False, certainty="low")
-            elif len(out_codes) >= 1:
+                            alarm_triggered = True
+            if len(out_codes) >= 1 and not alarm_triggered:
                 out_var_names = out_codes['variable_name'].tolist()
                 for day in daily_df.index:
 

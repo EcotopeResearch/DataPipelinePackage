@@ -33,11 +33,11 @@ class HPWHInlet(Alarm):
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_temp_threshold : float = 115.0, fault_time : int = 5):
         alarm_tag = 'HPINLET'
         type_default_dict = {
-                'POW' : default_power_threshold,
-                'T' : default_temp_threshold
+                'PowerIn' : default_power_threshold,
+                'Temp' : default_temp_threshold
             }
         self.fault_time = fault_time
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='HPWH_INLET')
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='HPWH_INLET', element_id_matching = True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for alarm_id in self.bounds_df['alarm_code_id'].unique():
@@ -45,15 +45,15 @@ class HPWHInlet(Alarm):
                 next_day = day + pd.Timedelta(days=1)
                 filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
                 id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
-                pow_codes = id_group[id_group['alarm_code_type'] == 'POW']
+                pow_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
                 pow_var_name = pow_codes.iloc[0]['variable_name']
                 pow_thresh = pow_codes.iloc[0]['bound']
-                t_codes = id_group[id_group['alarm_code_type'] == 'T']
+                t_codes = id_group[id_group['alarm_code_type'] == 'Temp']
                 t_var_name = t_codes.iloc[0]['variable_name']
                 t_pretty_name = t_codes.iloc[0]['pretty_name']
                 t_thresh = t_codes.iloc[0]['bound']
                 if len(t_codes) != 1 or len(pow_codes) != 1:
-                    raise Exception(f"Improper alarm codes for balancing valve with id {alarm_id}")
+                    raise Exception(f"Improper alarm codes for HPWH Inlet alarm for element with id {alarm_id}")
                 if pow_var_name in filtered_df.columns and t_var_name in filtered_df.columns:
                     # Check for consecutive minutes where both power and temp exceed thresholds
                     power_mask = filtered_df[pow_var_name] > pow_thresh
