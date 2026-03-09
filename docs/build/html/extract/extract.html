@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Extract Documentation &#8212; DataPipelinePackage 0.11.5 documentation</title>
+    <title>Extract Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.11.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>  
@@ -124,6 +124,11 @@ afterwards.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.excel_to_csv">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">excel_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.excel_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_files">
@@ -257,6 +262,11 @@ is local time from the data’s index.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.get_OAT_open_meteo">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_OAT_open_meteo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">long</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_noaa_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_OAT_open_meteo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.get_db_row_from_time">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_db_row_from_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_db_row_from_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extracts a row from the applicable minute table in the database for the given datetime or returns empty dataframe if none exists</p>
@@ -369,6 +379,38 @@ defaults to ‘US/Pacific’</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.licor_cloud_api_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">licor_cloud_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.licor_cloud_api_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects to the LI-COR Cloud API to pull sensor data and returns a dataframe.</p>
+<p>The function queries the LI-COR Cloud API for sensor data within the specified time range.
+Each sensor’s data is returned as a separate column in the dataframe, indexed by timestamp.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. The config manager
+must contain the api_token and api_device_id (device serial number) for authentication
+with the LI-COR Cloud API.</p>
+</dd>
+<dt><strong>startTime</strong><span class="classifier">datetime</span></dt><dd><p>The start time for data extraction. If None, defaults to 28 hours before endTime.</p>
+</dd>
+<dt><strong>endTime</strong><span class="classifier">datetime</span></dt><dd><p>The end time for data extraction. If None, defaults to the current time.</p>
+</dd>
+<dt><strong>create_csv</strong><span class="classifier">bool</span></dt><dd><p>If True, saves the extracted data to a CSV file in the data directory (default True).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas DataFrame with sensor serial numbers as column headers and timestamps as the index.
+The index is in UTC and may need to be converted to the appropriate timezone.
+Returns an empty DataFrame if the API call fails.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.msa_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">msa_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.msa_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data.</p>
@@ -394,7 +436,7 @@ defaults to ‘US/Pacific’</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.pull_egauge_data">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">pull_egauge_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_usr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_pw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.pull_egauge_data" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">pull_egauge_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_usr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_pw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.pull_egauge_data" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -407,6 +449,40 @@ defaults to ‘US/Pacific’</p>
 <dt><strong>csv_filenames: List[str]</strong></dt><dd><p>List of filenames to be processed into a single dataframe</p>
 </dd>
 <dt><strong>header_sequences_to_remove: List[str]</strong></dt><dd><p>List of special character sequences to remove from column headers</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.skycentrics_api_to_df">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">skycentrics_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.skycentrics_api_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function connects to the field manager api to pull data and returns a dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. The config manager
+must contain information to connect to the api, i.e. the api user name and password as well as
+the device id for the device the data is being pulled from.</p>
+</dd>
+<dt><strong>startTime: datetime</strong></dt><dd><p>The point in time for which we want to start the data extraction from. This
+is local time from the data’s index.</p>
+</dd>
+<dt><strong>endTime: datetime</strong></dt><dd><p>The point in time for which we want to end the data extraction. This
+is local time from the data’s index.</p>
+</dd>
+<dt><strong>create_csv</strong><span class="classifier">bool</span></dt><dd><p>create csv files as you process such that API need not be relied upon for reprocessing</p>
+</dd>
+<dt><strong>time_zone: str</strong></dt><dd><p>The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a
+time stamp by the pandas tz_localize() function <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html">https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html</a>
+defaults to ‘US/Pacific’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame:</dt><dd><p>Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull</p>
 </dd>
 </dl>
 </dd>
@@ -450,7 +526,7 @@ Appropriate varriables in your Variable_Names.csv must have a matching string to
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.tb_api_to_df">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">tb_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seperate_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.tb_api_to_df" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">tb_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seperate_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_id_overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.tb_api_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function connects to the things board manager api to pull data and returns a dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -468,6 +544,10 @@ is local time from the data’s index.</p>
 <dt><strong>create_csv</strong><span class="classifier">bool</span></dt><dd><p>create csv files as you process such that API need not be relied upon for reprocessing</p>
 </dd>
 <dt><strong>query_hours</strong><span class="classifier">float</span></dt><dd><p>number of hours to query at a time from ThingsBoard API</p>
+</dd>
+<dt><strong>device_id_overwrite</strong><span class="classifier">str</span></dt><dd><p>Overwrites device ID for API pull</p>
+</dd>
+<dt><strong>csv_prefix</strong><span class="classifier">str</span></dt><dd><p>prefix to add to the csv title</p>
 </dd>
 </dl>
 </dd>
@@ -497,18 +577,22 @@ Will return with index in UTC so needs to be converted after to appropriate time
 <li><a class="reference internal" href="#ecopipeline.extract.csv_to_df"><code class="docutils literal notranslate"><span class="pre">csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.dent_csv_to_df"><code class="docutils literal notranslate"><span class="pre">dent_csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.egauge_csv_to_df"><code class="docutils literal notranslate"><span class="pre">egauge_csv_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.excel_to_csv"><code class="docutils literal notranslate"><span class="pre">excel_to_csv()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.extract_files"><code class="docutils literal notranslate"><span class="pre">extract_files()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.extract_new"><code class="docutils literal notranslate"><span class="pre">extract_new()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.flow_csv_to_df"><code class="docutils literal notranslate"><span class="pre">flow_csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.fm_api_to_df"><code class="docutils literal notranslate"><span class="pre">fm_api_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.get_OAT_open_meteo"><code class="docutils literal notranslate"><span class="pre">get_OAT_open_meteo()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.get_db_row_from_time"><code class="docutils literal notranslate"><span class="pre">get_db_row_from_time()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.get_last_full_day_from_db"><code class="docutils literal notranslate"><span class="pre">get_last_full_day_from_db()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.get_noaa_data"><code class="docutils literal notranslate"><span class="pre">get_noaa_data()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.get_sub_dirs"><code class="docutils literal notranslate"><span class="pre">get_sub_dirs()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.json_to_df"><code class="docutils literal notranslate"><span class="pre">json_to_df()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.licor_cloud_api_to_df"><code class="docutils literal notranslate"><span class="pre">licor_cloud_api_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.msa_to_df"><code class="docutils literal notranslate"><span class="pre">msa_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.pull_egauge_data"><code class="docutils literal notranslate"><span class="pre">pull_egauge_data()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.remove_char_sequence_from_csv_header"><code class="docutils literal notranslate"><span class="pre">remove_char_sequence_from_csv_header()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.skycentrics_api_to_df"><code class="docutils literal notranslate"><span class="pre">skycentrics_api_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.small_planet_control_to_df"><code class="docutils literal notranslate"><span class="pre">small_planet_control_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.tb_api_to_df"><code class="docutils literal notranslate"><span class="pre">tb_api_to_df()</span></code></a></li>
 </ul>
@@ -562,7 +646,7 @@ Will return with index in UTC so needs to be converted after to appropriate time
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 0.11.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>

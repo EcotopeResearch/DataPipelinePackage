@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>EcoPipeline Documentation &#8212; DataPipelinePackage 0.11.5 documentation</title>
+    <title>EcoPipeline Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -28,7 +28,7 @@
         <li class="right" >
           <a href="utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 0.11.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">EcoPipeline Documentation</a></li> 
       </ul>
     </div>  
@@ -51,18 +51,22 @@
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.csv_to_df"><code class="docutils literal notranslate"><span class="pre">csv_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.dent_csv_to_df"><code class="docutils literal notranslate"><span class="pre">dent_csv_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.egauge_csv_to_df"><code class="docutils literal notranslate"><span class="pre">egauge_csv_to_df()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.excel_to_csv"><code class="docutils literal notranslate"><span class="pre">excel_to_csv()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.extract_files"><code class="docutils literal notranslate"><span class="pre">extract_files()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.extract_new"><code class="docutils literal notranslate"><span class="pre">extract_new()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.flow_csv_to_df"><code class="docutils literal notranslate"><span class="pre">flow_csv_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.fm_api_to_df"><code class="docutils literal notranslate"><span class="pre">fm_api_to_df()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.get_OAT_open_meteo"><code class="docutils literal notranslate"><span class="pre">get_OAT_open_meteo()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.get_db_row_from_time"><code class="docutils literal notranslate"><span class="pre">get_db_row_from_time()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.get_last_full_day_from_db"><code class="docutils literal notranslate"><span class="pre">get_last_full_day_from_db()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.get_noaa_data"><code class="docutils literal notranslate"><span class="pre">get_noaa_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.get_sub_dirs"><code class="docutils literal notranslate"><span class="pre">get_sub_dirs()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.json_to_df"><code class="docutils literal notranslate"><span class="pre">json_to_df()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.licor_cloud_api_to_df"><code class="docutils literal notranslate"><span class="pre">licor_cloud_api_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.msa_to_df"><code class="docutils literal notranslate"><span class="pre">msa_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.pull_egauge_data"><code class="docutils literal notranslate"><span class="pre">pull_egauge_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.remove_char_sequence_from_csv_header"><code class="docutils literal notranslate"><span class="pre">remove_char_sequence_from_csv_header()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.skycentrics_api_to_df"><code class="docutils literal notranslate"><span class="pre">skycentrics_api_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.small_planet_control_to_df"><code class="docutils literal notranslate"><span class="pre">small_planet_control_to_df()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract/extract.html#ecopipeline.extract.tb_api_to_df"><code class="docutils literal notranslate"><span class="pre">tb_api_to_df()</span></code></a></li>
 </ul>
@@ -84,6 +88,7 @@
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.convert_c_to_f"><code class="docutils literal notranslate"><span class="pre">convert_c_to_f()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.convert_l_to_g"><code class="docutils literal notranslate"><span class="pre">convert_l_to_g()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.convert_on_off_col_to_bool"><code class="docutils literal notranslate"><span class="pre">convert_on_off_col_to_bool()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.convert_temp_resistance_type"><code class="docutils literal notranslate"><span class="pre">convert_temp_resistance_type()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.convert_time_zone"><code class="docutils literal notranslate"><span class="pre">convert_time_zone()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.cop_method_1"><code class="docutils literal notranslate"><span class="pre">cop_method_1()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.cop_method_2"><code class="docutils literal notranslate"><span class="pre">cop_method_2()</span></code></a></li>
@@ -92,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.create_summary_tables"><code class="docutils literal notranslate"><span class="pre">create_summary_tables()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.delete_erroneous_from_time_pt"><code class="docutils literal notranslate"><span class="pre">delete_erroneous_from_time_pt()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.elev_correction"><code class="docutils literal notranslate"><span class="pre">elev_correction()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.estimate_power"><code class="docutils literal notranslate"><span class="pre">estimate_power()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.ffill_missing"><code class="docutils literal notranslate"><span class="pre">ffill_missing()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.flag_dhw_outage"><code class="docutils literal notranslate"><span class="pre">flag_dhw_outage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="transform/transform.html#ecopipeline.transform.gas_valve_diff"><code class="docutils literal notranslate"><span class="pre">gas_valve_diff()</span></code></a></li>
@@ -131,6 +137,7 @@
 <li class="toctree-l1"><a class="reference internal" href="load/load.html">Load Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="load/load.html#ecopipeline.load.check_table_exists"><code class="docutils literal notranslate"><span class="pre">check_table_exists()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="load/load.html#ecopipeline.load.create_new_table"><code class="docutils literal notranslate"><span class="pre">create_new_table()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="load/load.html#ecopipeline.load.load_alarms"><code class="docutils literal notranslate"><span class="pre">load_alarms()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="load/load.html#ecopipeline.load.load_data_statistics"><code class="docutils literal notranslate"><span class="pre">load_data_statistics()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="load/load.html#ecopipeline.load.load_event_table"><code class="docutils literal notranslate"><span class="pre">load_event_table()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="load/load.html#ecopipeline.load.load_overwrite_database"><code class="docutils literal notranslate"><span class="pre">load_overwrite_database()</span></code></a></li>
@@ -138,10 +145,53 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="event_tracking/event_tracking.html">Event Tracking Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.AbnormalCOP"><code class="docutils literal notranslate"><span class="pre">AbnormalCOP</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.Alarm"><code class="docutils literal notranslate"><span class="pre">Alarm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.BackupUse"><code class="docutils literal notranslate"><span class="pre">BackupUse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.BalancingValve"><code class="docutils literal notranslate"><span class="pre">BalancingValve</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.BlownFuse"><code class="docutils literal notranslate"><span class="pre">BlownFuse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.Boundary"><code class="docutils literal notranslate"><span class="pre">Boundary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.HPWHInlet"><code class="docutils literal notranslate"><span class="pre">HPWHInlet</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.HPWHOutage"><code class="docutils literal notranslate"><span class="pre">HPWHOutage</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.HPWHOutlet"><code class="docutils literal notranslate"><span class="pre">HPWHOutlet</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.LSInconsist"><code class="docutils literal notranslate"><span class="pre">LSInconsist</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.PowerRatio"><code class="docutils literal notranslate"><span class="pre">PowerRatio</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.SOOChange"><code class="docutils literal notranslate"><span class="pre">SOOChange</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.ShortCycle"><code class="docutils literal notranslate"><span class="pre">ShortCycle</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.TMSetpoint"><code class="docutils literal notranslate"><span class="pre">TMSetpoint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.TempRange"><code class="docutils literal notranslate"><span class="pre">TempRange</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.central_alarm_df_creator"><code class="docutils literal notranslate"><span class="pre">central_alarm_df_creator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_HP_outage"><code class="docutils literal notranslate"><span class="pre">flag_HP_outage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_abnormal_COP"><code class="docutils literal notranslate"><span class="pre">flag_abnormal_COP()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_backup_use"><code class="docutils literal notranslate"><span class="pre">flag_backup_use()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_blown_fuse"><code class="docutils literal notranslate"><span class="pre">flag_blown_fuse()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_boundary_alarms"><code class="docutils literal notranslate"><span class="pre">flag_boundary_alarms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_high_tm_setpoint"><code class="docutils literal notranslate"><span class="pre">flag_high_tm_setpoint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_hp_inlet_temp"><code class="docutils literal notranslate"><span class="pre">flag_hp_inlet_temp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_hp_outlet_temp"><code class="docutils literal notranslate"><span class="pre">flag_hp_outlet_temp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_ls_mode_inconsistancy"><code class="docutils literal notranslate"><span class="pre">flag_ls_mode_inconsistancy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_recirc_balance_valve"><code class="docutils literal notranslate"><span class="pre">flag_recirc_balance_valve()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_shortcycle"><code class="docutils literal notranslate"><span class="pre">flag_shortcycle()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_unexpected_soo_change"><code class="docutils literal notranslate"><span class="pre">flag_unexpected_soo_change()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.flag_unexpected_temp"><code class="docutils literal notranslate"><span class="pre">flag_unexpected_temp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="event_tracking/event_tracking.html#ecopipeline.event_tracking.power_ratio_alarm"><code class="docutils literal notranslate"><span class="pre">power_ratio_alarm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="event_tracking/alarms.html">Alarm Classes Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.AbnormalCOP.AbnormalCOP"><code class="docutils literal notranslate"><span class="pre">AbnormalCOP</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.BackupUse.BackupUse"><code class="docutils literal notranslate"><span class="pre">BackupUse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.BalancingValve.BalancingValve"><code class="docutils literal notranslate"><span class="pre">BalancingValve</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.BlownFuse.BlownFuse"><code class="docutils literal notranslate"><span class="pre">BlownFuse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.Boundary.Boundary"><code class="docutils literal notranslate"><span class="pre">Boundary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.HPWHInlet.HPWHInlet"><code class="docutils literal notranslate"><span class="pre">HPWHInlet</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.HPWHOutage.HPWHOutage"><code class="docutils literal notranslate"><span class="pre">HPWHOutage</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.HPWHOutlet.HPWHOutlet"><code class="docutils literal notranslate"><span class="pre">HPWHOutlet</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.LSInconsist.LSInconsist"><code class="docutils literal notranslate"><span class="pre">LSInconsist</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.PowerRatio.PowerRatio"><code class="docutils literal notranslate"><span class="pre">PowerRatio</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.ShortCycle.ShortCycle"><code class="docutils literal notranslate"><span class="pre">ShortCycle</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.SOOChange.SOOChange"><code class="docutils literal notranslate"><span class="pre">SOOChange</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.TempRange.TempRange"><code class="docutils literal notranslate"><span class="pre">TempRange</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="event_tracking/alarms.html#ecopipeline.event_tracking.alarms.TMSetpoint.TMSetpoint"><code class="docutils literal notranslate"><span class="pre">TMSetpoint</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -209,7 +259,7 @@
         <li class="right" >
           <a href="utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 0.11.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">EcoPipeline Documentation</a></li> 
       </ul>
     </div>
