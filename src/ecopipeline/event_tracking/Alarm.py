@@ -105,7 +105,6 @@ class Alarm:
         # TODO figure out what to do with event detail
         if alarm_df.empty:
             return alarm_df
-
         # Sort entire DataFrame by start_time_pt before processing
         alarm_df = alarm_df.sort_values('start_time_pt').reset_index(drop=True)
 
@@ -262,9 +261,28 @@ class Alarm:
         else:
             return pd.DataFrame()# no tagged alarms to look into
         
-        return self._organize_alarm_codes(bounds_df)
+        alarm_code_parts = self._organize_alarm_codes(bounds_df)
 
-    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+        if len(alarm_code_parts) > 0:
+            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
+
+            # Replace None bounds with appropriate defaults based on alarm_code_type
+            for idx, row in bounds_df.iterrows():
+                if pd.isna(row['bound']) or row['bound'] is None:
+                    if row['alarm_code_type'] in self.type_default_dict.keys():
+                        if self.range_bounds:
+                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
+                            bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
+                        else:
+                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
+            # Coerce bound column to float
+            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+            if self.range_bounds:
+                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
+
+        return bounds_df
+
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> list:
         alarm_code_parts = []
         seen_total_power = False
         for idx, row in bounds_df.iterrows():
@@ -289,61 +307,8 @@ class Alarm:
                     
                 alarm_code_parts.append([parts[0], element_id])
 
-        if alarm_code_parts:
-            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
-
-            # Replace None bounds with appropriate defaults based on alarm_code_type
-            for idx, row in bounds_df.iterrows():
-                if pd.isna(row['bound']) or row['bound'] is None:
-                    if row['alarm_code_type'] in self.type_default_dict.keys():
-                        if self.range_bounds:
-                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
-                            bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
-                        else:
-                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
-            # Coerce bound column to float
-            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-            if self.range_bounds:
-                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
-
-        return bounds_df
+        return alarm_code_parts
         
-    # def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
-    #     alarm_code_parts = []
-    #     for idx, row in bounds_df.iterrows():
-    #         parts = row['alarm_codes'].split('_')
-    #         if self.two_part_tag:
-    #             if len(parts) == 2:
-    #                 alarm_code_parts.append([parts[1], "No ID"])
-    #             elif len(parts) == 3:
-    #                 alarm_code_parts.append([parts[1], parts[2]])
-    #             else:
-    #                 raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
-    #         else:
-    #             if len(parts) == 1:
-    #                 alarm_code_parts.append(["default", "No ID"])
-    #             elif len(parts) == 2:
-    #                 alarm_code_parts.append(["default", parts[1]])
-    #             else:
-    #                 raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
-    #     if alarm_code_parts:
-    #         bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
-
-    #         # Replace None bounds with appropriate defaults based on alarm_code_type
-    #         for idx, row in bounds_df.iterrows():
-    #             if pd.isna(row['bound']) or row['bound'] is None:
-    #                 if row['alarm_code_type'] in self.type_default_dict.keys():
-    #                     if self.range_bounds:
-    #                         bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
-    #                         bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
-    #                     else:
-    #                         bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
-    #         # Coerce bound column to float
-    #         bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-    #         if self.range_bounds:
-    #             bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
-
-    #     return bounds_df
     
     def _append_previous_days_to_df(self, daily_df: pd.DataFrame, config : ConfigManager, ratio_period_days : int, day_table_name : str, primary_key : str = "time_pt") -> pd.DataFrame:
         db_connection, cursor = config.connect_db()

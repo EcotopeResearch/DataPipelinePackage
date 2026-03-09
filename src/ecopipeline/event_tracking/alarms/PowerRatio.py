@@ -9,14 +9,20 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class PowerRatio(Alarm):
     """
-    Detects when power variables fall outside their expected ratio of total power over a rolling period.
-    Variables are grouped by alarm ID, and each variable's ratio is checked against its expected low-high
-    range as a percentage of the group total.
+    Detects when power variables fall outside their expected ratio of a group total over a rolling period.
+    Variables are grouped by element ID derived from their variable_name, and each variable's contribution
+    is checked against its expected low-high percentage range.
 
-    VarNames syntax:
-    POWRRAT_[ID]:###-### - Power variable to track. [ID] groups variables together for ratio calculation.
-        ###-### is the expected low-high percentage range (e.g., PR_HPWH:60-80 means this variable
-        should account for 60-80% of the HPWH group total).
+    Variable_Names.csv configuration:
+      alarm_codes column: POWRRAT:low-high where low-high is the acceptable percentage range
+        (e.g., POWRRAT:60-80 means the variable should account for 60-80% of its group total).
+        Bounds (low-high) come from alarm_codes and are not part of the variable_name.
+      variable_name column: Must start with PowerIn_. Determines the grouping of variables:
+        PowerIn_Total - Total system power. Used as the denominator for the 'Total' group.
+        PowerIn_[name containing '_HPWH'] - Grouped under the 'HPWH' element ID. The sum of all HPWH
+            variables is the group denominator; each variable's ratio is checked against its range.
+        PowerIn_[other] - All other PowerIn variables are grouped under the 'Total' element ID and their
+            ratios are calculated against the PowerIn_Total variable.
 
     Parameters
     ----------
@@ -24,7 +30,7 @@ class PowerRatio(Alarm):
         Name of the site's daily aggregate value table in the database for fetching historical data.
     ratio_period_days : int
         Number of days to use for the rolling power ratio calculation (default 7). Each block sums
-        the values over this many days before calculating ratios.
+        values over this many days before calculating ratios.
     """
     def __init__(self, bounds_df : pd.DataFrame, day_table_name : str, ratio_period_days : int = 7):
         alarm_tag = 'POWRRAT'
@@ -120,7 +126,7 @@ class PowerRatio(Alarm):
         
         return blocks_df
     
-    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> list:
         alarm_code_parts = []
         seen_total_power = False
         for idx, row in bounds_df.iterrows():
@@ -142,18 +148,4 @@ class PowerRatio(Alarm):
                     
                 alarm_code_parts.append([parts[0], element_id])
 
-        if alarm_code_parts:
-            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
-
-            # Replace None bounds with appropriate defaults based on alarm_code_type
-            for idx, row in bounds_df.iterrows():
-                if pd.isna(row['bound']) or row['bound'] is None:
-                    if row['alarm_code_type'] in self.type_default_dict.keys():
-                        bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
-                        bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
-            # Coerce bound column to float
-            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-            if self.range_bounds:
-                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
-
-        return bounds_df
+        return alarm_code_parts

@@ -15,6 +15,7 @@ EcoPipeline Documentation
    transform/transform
    load/load
    event_tracking/event_tracking
+   event_tracking/alarms
 
 Indices and tables
 ==================

@@ -10,29 +10,32 @@ from ecopipeline.event_tracking.Alarm import Alarm
 class SOOChange(Alarm):
     """
     Detects unexpected state of operation (SOO) changes by checking if the heat pump turns on or off
-    when the temperature is not near the expected aquastat setpoint thresholds. An alarm is triggered
-    if the HP turns on/off and the corresponding temperature is more than 5.0 degrees away from the
-    expected threshold.
+    when the corresponding temperature is not near the expected aquastat setpoint threshold. An alarm
+    triggers if the HP turns on/off and the temperature differs by more than 5.0 degrees from expected.
 
-    VarNames syntax:
-    SOOCHNG_POW:### - Indicates a power variable for the heat pump system (should be total power across all primary heat pumps). ### is the power threshold (default 1.0) above which
-        the heat pump system is considered 'on'.
-    SOOCHNG_ON_[Mode ID]:### - Indicates the temperature variable at the ON aquastat fraction. ### is the temperature (default 115.0)
-        that should trigger the heat pump to turn ON. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
-    SOOCHNG_OFF_[Mode ID]:### - Indicates the temperature variable at the OFF aquastat fraction (can be same as ON aquastat). ### is the temperature (default 140.0)
-        that should trigger the heat pump to turn OFF. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
+    Variable_Names.csv configuration:
+      The role of each variable is determined by the first underscore-separated part of its variable_name,
+      while the alarm_codes column carries the tag, sub-type, and bound:
+        variable_name: PowerIn_[name], alarm_codes: SOOCHNG:### — HP system power variable (total power
+            across all primary HPs). Bound (###) from alarm_codes is the power threshold (default 1.0).
+        variable_name: Temp_[name], alarm_codes: SOOCHNG_ON_[Mode]:### — Temperature variable checked at
+            HP turn-on events. Bound (###) from alarm_codes is the expected ON temperature (default 115.0).
+        variable_name: Temp_[name], alarm_codes: SOOCHNG_OFF[Mode]:### — Temperature variable checked at
+            HP turn-off events. Bound (###) from alarm_codes is the expected OFF temperature (default 140.0).
+      [Mode] in alarm_codes is optional and must be one of: loadUp, shed, criticalPeak, gridEmergency, advLoadUp.
+        If omitted, the variable applies to normal (non-load-shifting) operation.
+      Each mode requires exactly one ON and one OFF temperature variable.
 
     Parameters
     ----------
     default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
+        Default power threshold for PowerIn variables when no bound is specified (default 1.0).
     default_on_temp : float
-        Default ON temperature threshold (default 115.0). When the HP turns on, an alarm triggers if the temperature
-        is more than 5.0 degrees away from this value.
+        Default ON temperature threshold (default 115.0). Alarm triggers if temperature differs by
+        more than 5.0 degrees from this value when the HP turns on.
     default_off_temp : float
-        Default OFF temperature threshold (default 140.0). When the HP turns off, an alarm triggers if the temperature
-        is more than 5.0 degrees away from this value.
+        Default OFF temperature threshold (default 140.0). Alarm triggers if temperature differs by
+        more than 5.0 degrees from this value when the HP turns off.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_on_temp : float = 115.0, default_off_temp : float = 140.0):
         alarm_tag = 'SOOCHNG'
@@ -126,7 +129,7 @@ class SOOChange(Alarm):
                                     f"Unexpected SOO change: during {soo_mode_name}, HP turned off at {power_time} but {off_t_pretty_name} was {temp_at_turn_off:.1f} F (setpoint at {off_t_thresh} F).",
                                     certainty="med")
                                 
-    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> list:
         alarm_code_parts = []
         for idx, row in bounds_df.iterrows():
             var_name_parts = row['variable_name'].split('_')
@@ -144,22 +147,5 @@ class SOOChange(Alarm):
                     raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
             else:
                 raise Exception(f"{var_name_parts[0]} is not a proper unit type for SOOCHNG alarms.")
-                
-        if alarm_code_parts:
-            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
 
-            # Replace None bounds with appropriate defaults based on alarm_code_type
-            for idx, row in bounds_df.iterrows():
-                if pd.isna(row['bound']) or row['bound'] is None:
-                    if row['alarm_code_type'] in self.type_default_dict.keys():
-                        if self.range_bounds:
-                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
-                            bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
-                        else:
-                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
-            # Coerce bound column to float
-            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-            if self.range_bounds:
-                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
-
-        return bounds_df
+        return alarm_code_parts

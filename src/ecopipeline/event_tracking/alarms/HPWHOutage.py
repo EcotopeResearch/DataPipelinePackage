@@ -13,19 +13,24 @@ class HPWHOutage(Alarm):
     an expected ratio of total system power over a rolling period, or by checking for non-zero values in
     a direct alarm variable from the heat pump controller.
 
-    VarNames syntax:
-    HPOUTGE_POW_[OPTIONAL ID]:### - Heat pump power variable. ### is the minimum expected ratio of HP power to total power
-        (default 0.3 for 30%). Must be in same power units as total system power.
-    HPOUTGE_TP_[OPTIONAL ID] - Total system power variable for ratio comparison. Required when using POW codes.
-    HPOUTGE_ALRM_[OPTIONAL ID] - Direct alarm variable from HP controller. Alarm triggers if any non-zero value is detected.
+    Variable_Names.csv configuration:
+      alarm_codes column: HPOUTGE or HPOUTGE:### where ### provides the bound for the variable (see types below).
+      variable_name column: determines the role of the variable by its first underscore-separated part:
+        PowerIn_[name] - HP power variable. Bound (###) from alarm_codes is the minimum expected ratio of HP
+            power to total system power over the rolling period (default 0.3 for 30%). Alarm triggers when
+            HP power falls below this ratio. Must be in the same units as the PowerIn_Total variable.
+        PowerIn_Total - Total system power variable. No bound needed in alarm_codes (use just HPOUTGE).
+            Required when using PowerIn variables.
+        Alarm_[name] - Direct alarm variable from HP controller. No bound needed in alarm_codes (use just HPOUTGE).
+            Alarm triggers on any non-zero value. If triggered, the ratio check is skipped.
 
     Parameters
     ----------
     day_table_name : str
-        Name of the site's daily agregate value table in the database
+        Name of the site's daily aggregate value table in the database for fetching historical data.
     default_power_ratio : float
-        Default minimum power ratio threshold (as decimal, e.g., 0.3 for 30%) for POW alarm codes when no custom bound is specified (default 0.3).
-        An alarm triggers if HP power falls below this ratio of total power over the rolling period.
+        Default minimum ratio threshold for PowerIn variables when no bound is specified (default 0.3).
+        Alarm triggers when HP power falls below this ratio of total power over the rolling period.
     ratio_period_days : int
         Number of days to use for the rolling power ratio calculation (default 7). Must be greater than 1.
     """

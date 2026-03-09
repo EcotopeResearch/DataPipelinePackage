@@ -9,30 +9,25 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class AbnormalCOP(Alarm):
     """
-    Detects unexpected state of operation (SOO) changes by checking if the heat pump turns on or off
-    when the temperature is not near the expected aquastat setpoint thresholds. An alarm is triggered
-    if the HP turns on/off and the corresponding temperature is more than 5.0 degrees away from the
-    expected threshold.
+    Detects abnormal COP (Coefficient of Performance) values by checking if any COP variable
+    falls outside its expected high/low bounds on a given day.
 
-    VarNames syntax:
-    SOOCHNG_POW:### - Indicates a power variable for the heat pump system (should be total power across all primary heat pumps). ### is the power threshold (default 1.0) above which
-        the heat pump system is considered 'on'.
-    SOOCHNG_ON_[Mode ID]:### - Indicates the temperature variable at the ON aquastat fraction. ### is the temperature (default 115.0)
-        that should trigger the heat pump to turn ON. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
-    SOOCHNG_OFF_[Mode ID]:### - Indicates the temperature variable at the OFF aquastat fraction (can be same as ON aquastat). ### is the temperature (default 140.0)
-        that should trigger the heat pump to turn OFF. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
+    Note: This alarm does not use the alarm_codes column. Variables are matched by their column name
+    pattern in daily_df (must start with 'COP' or 'SystemCOP'), and bounds are read directly from the
+    high_alarm and low_alarm columns in Variable_Names.csv.
+
+    Variable_Names.csv columns:
+    variable_name - Name of the COP variable to monitor (must match a column starting with 'COP' or 'SystemCOP' in daily_df).
+    high_alarm - Upper bound for acceptable COP. Alarm triggers if daily COP exceeds this value. Default: 4.5.
+    low_alarm - Lower bound for acceptable COP. Alarm triggers if daily COP falls below this value. Default: 0.
+    pretty_name - (Optional) Display name for the variable in alarm messages. Defaults to variable_name.
 
     Parameters
     ----------
-    default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
-    default_on_temp : float
-        Default ON temperature threshold (default 115.0). When the HP turns on, an alarm triggers if the temperature
-        is more than 5.0 degrees away from this value.
-    default_off_temp : float
-        Default OFF temperature threshold (default 140.0). When the HP turns off, an alarm triggers if the temperature
-        is more than 5.0 degrees away from this value.
+    default_high_bound : float
+        Default upper COP bound when no high_alarm value is specified (default 4.5).
+    default_low_bound : float
+        Default lower COP bound when no low_alarm value is specified (default 0).
     """
     def __init__(self, bounds_df : pd.DataFrame, default_high_bound : float = 4.5, default_low_bound : float = 0):
         self.default_high_bound = default_high_bound

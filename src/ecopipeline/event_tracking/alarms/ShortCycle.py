@@ -9,22 +9,23 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class ShortCycle(Alarm):
     """
-    Detects short cycling by identifying when the heat pump turns on for less than `short_cycle_time`
-    consecutive minutes before turning off again. Short cycling can indicate equipment issues or
+    Detects short cycling by identifying when a heat pump runs for fewer than short_cycle_time
+    consecutive minutes before turning off. Short cycling can indicate equipment issues or
     improper system sizing.
 
-    VarNames syntax:
-    SHRTCYC_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
-        the heat pump is considered 'on'.
+    Variable_Names.csv configuration:
+      alarm_codes column: SHRTCYC:### where ### is the power threshold above which the HP is considered 'on'.
+      variable_name column: Must start with PowerIn_ (e.g., PowerIn_HPWH1).
+        PowerIn_[name] - Heat pump power variable. Bound (###) from alarm_codes is the power threshold
+            (default 1.0). Alarm triggers if the HP runs for fewer than short_cycle_time consecutive minutes.
 
     Parameters
     ----------
     default_power_threshold : float
-        Default power threshold when no custom bound is specified in the alarm code (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
+        Default power threshold when no bound is specified in the alarm code (default 1.0).
     short_cycle_time : int
-        Minimum expected run time in minutes (default 15). An alarm triggers if the heat pump runs for fewer than this many
-        consecutive minutes before turning off.
+        Minimum expected run time in minutes (default 15). Alarm triggers if the HP runs for fewer than
+        this many consecutive minutes before turning off.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, short_cycle_time : int = 15):
         alarm_tag = 'SHRTCYC'

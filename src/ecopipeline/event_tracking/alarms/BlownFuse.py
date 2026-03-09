@@ -9,23 +9,26 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class BlownFuse(Alarm):
     """
-    Detects blown fuse alarms for heating elements by identifying when an element is drawing power
-    but significantly less than expected, which may indicate a blown fuse.
+    Detects blown fuse conditions for heating elements by identifying when an element is drawing power
+    but significantly less than its expected draw, suggesting a blown fuse.
 
-    VarNames syntax:
-    BLWNFSE_[OPTIONAL ID]:### - Indicates a blown fuse alarm for an element. ### is the expected kW input when the element is on.
+    Variable_Names.csv configuration:
+      alarm_codes column: BLWNFSE:### where ### is the expected kW draw when the element is fully on.
+      variable_name column: Must start with PowerIn_ (e.g., PowerIn_ERElement1).
+        PowerIn_[name] - Element power variable. Bound (###) from alarm_codes is the expected kW draw (default 30 kW).
+            Alarm triggers when element is on (power > default_power_threshold) but drawing less than
+            (expected_draw - default_power_range) for fault_time consecutive minutes.
 
     Parameters
     ----------
     default_power_threshold : float
-        Power threshold to determine if the element is "on" (default 1.0). Element is considered on when power exceeds this value.
+        Minimum power level (kW) to consider the element 'on' (default 1.0).
     default_power_range : float
-        Allowable variance below the expected power draw (default 2.0). An alarm triggers when the actual power draw is less than
-        (expected_power_draw - default_power_range) while the element is on.
+        Allowable variance below expected power draw (default 2.0). Alarm triggers when actual draw < (expected - range).
     default_power_draw : float
-        Default expected power draw in kW when no custom bound is specified in the alarm code (default 30).
+        Default expected power draw in kW when no bound is specified in the alarm code (default 30).
     fault_time : int
-        Number of consecutive minutes that the fault condition must persist before triggering an alarm (default 3).
+        Number of consecutive minutes the fault condition must persist before triggering an alarm (default 3).
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_power_range : float = 2.0, default_power_draw : float = 30, fault_time : int = 3):
         alarm_tag = 'BLWNFSE'

@@ -9,22 +9,27 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class BackupUse(Alarm):
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detects improper backup equipment use by monitoring whether backup power exceeds an expected
+    fraction of total system power, and whether setpoint variables have been altered from their
+    expected values.
 
-    VarNames syntax:
-    IMBCKUP_P_ID - Back Up Tank Power Varriable. Must be in same power units as total system power
-    IMBCKUP_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
-    IMBCKUP_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)
+    Variable_Names.csv configuration:
+      alarm_codes column: IMBCKUP or IMBCKUP:### where ### provides the bound for the variable (see types below).
+      variable_name column: determines the role of the variable by its first underscore-separated part:
+        PowerIn_[name] - Backup equipment power variable. Multiple allowed; daily values are summed.
+            No bound needed in alarm_codes (use just IMBCKUP).
+        PowerIn_Total[...] - Total system power variable. Bound (###) from alarm_codes is the ratio threshold
+            (default 0.1 for 10%). Alarm triggers when sum of backup power >= total power * threshold.
+        Setpoint_[name] - Setpoint variable that should remain constant. Bound (###) from alarm_codes is
+            the expected setpoint value (default 130.0). Alarm triggers if value differs for 10+ consecutive minutes.
 
     Parameters
     ----------
     default_setpoint : float
-        Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)
-    default_power_indication : float
-        Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)
+        Default expected setpoint value for Setpoint variables when no bound is specified (default 130.0).
     default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)
+        Default ratio threshold for PowerIn_Total variables when no bound is specified (default 0.1).
+        Alarm triggers when sum of backup power >= total power * threshold.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_setpoint : float = 130.0, default_power_ratio : float = 0.1):
         alarm_tag = 'IMBCKUP'

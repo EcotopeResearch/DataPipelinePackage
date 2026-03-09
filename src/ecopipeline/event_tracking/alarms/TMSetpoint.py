@@ -9,26 +9,36 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class TMSetpoint(Alarm):
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detects temperature maintenance (TM) equipment issues including setpoint alterations, overheating
+    while powered on, and excessive power consumption relative to total system power.
 
-    VarNames syntax:
-    TMNSTPT_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
-    TMNSTPT_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered 'on'. Defaults to 1.0
-    TMNSTPT_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
-    TMNSTPT_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)
+    Variable_Names.csv configuration:
+      alarm_codes column: TMNSTPT or TMNSTPT:### where ### provides the bound for the variable (see types below).
+      variable_name column: determines the role of the variable by its first underscore-separated part.
+        Variables with the same element ID (derived from the rest of the variable name, Inlet/Outlet stripped)
+        are grouped together:
+        Temp_[ID][Outlet] - TM equipment temperature variable. Bound (###) from alarm_codes is the maximum acceptable
+            temperature (default 130.0). Alarm triggers when equipment is on and temperature stays at or above
+            this for default_fault_time consecutive minutes.
+        PowerIn_[ID] - TM equipment power variable. Bound (###) from alarm_codes is the minimum power
+            (default 1.0) to consider the equipment 'on'. Used with Temp for overheating detection and with
+            PowerIn_Total for ratio comparison.
+        PowerIn_Total - Total system power variable. Bound (###) from alarm_codes is the ratio threshold
+            (default 0.4). Alarm triggers if sum of TM power / total power exceeds this on a given day.
+        Setpoint_[ID] - Setpoint variable that should remain constant. Bound (###) from alarm_codes is the
+            expected setpoint value (default 130.0). Alarm triggers if value differs for 10+ consecutive minutes.
 
     Parameters
     ----------
     default_fault_time : int
-        Number of consecutive minutes for T+SP alarms (default 3). T+SP alarms trigger when tank is powered and temperature exceeds
-        setpoint for this many consecutive minutes.
+        Number of consecutive minutes for Temp+PowerIn overheating alarms (default 3).
     default_setpoint : float
-        Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)
+        Default expected value for Temp and Setpoint variables when no bound is specified (default 130.0).
     default_power_indication : float
-        Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)
+        Default power threshold for PowerIn variables when no bound is specified (default 1.0).
     default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)
+        Default ratio threshold for PowerIn_Total variables when no bound is specified (default 0.4).
+        Alarm triggers when TM power / total power exceeds this threshold.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_fault_time : int = 3, default_setpoint : float = 130.0, default_power_indication : float = 1.0,
                              default_power_ratio : float = 0.4):
@@ -38,19 +48,20 @@ class TMSetpoint(Alarm):
                  'PowerIn': default_power_indication,
                  'PowerIn_Total': default_power_ratio,
                  'Setpoint': default_setpoint}
-        super().__init__(bounds_df, alarm_tag,type_default_dict, alarm_db_type='TM_SETPOINT')
+        super().__init__(bounds_df, alarm_tag,type_default_dict, alarm_db_type='TM_SETPOINT', element_id_matching = True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for day in daily_df.index:
             next_day = day + pd.Timedelta(days=1)
             filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
+            tp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn_Total']
+            all_sp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn']
             for alarm_id in self.bounds_df['alarm_code_id'].unique():
                 id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
 
                 # Get T and SP alarm codes for this ID
                 t_codes = id_group[id_group['alarm_code_type'] == 'Temp']
                 sp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
-                tp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn_Total']
                 st_codes = id_group[id_group['alarm_code_type'] == 'Setpoint']
 
                 # Check for multiple T or SP codes with same ID
@@ -110,18 +121,18 @@ class TMSetpoint(Alarm):
                                     f"High TM Setpoint: {sp_pretty_name} showed draw for {streak_length} minutes starting at {start_time} while {t_pretty_name} was {actual_temp:.1f} F (above {t_setpoint} F).",
                                     certainty="med")
 
-                if len(tp_codes) == 1 and len(sp_codes) == 1:
-                    tp_var_name = tp_codes.iloc[0]['variable_name']
-                    sp_var_name = sp_codes.iloc[0]['variable_name']
-                    sp_pretty_name = sp_codes.iloc[0]['pretty_name']
-                    tp_ratio = tp_codes.iloc[0]['bound']
-                    # Check if both variables exist in df
-                    if tp_var_name in daily_df.columns and sp_var_name in daily_df.columns:
-                        trigger_columns_condition_met = True
-                        # Check if swing tank power ratio exceeds threshold
-                        if day in daily_df.index and daily_df.loc[day, tp_var_name] != 0:
-                            power_ratio = daily_df.loc[day, sp_var_name] / daily_df.loc[day, tp_var_name]
-                            if power_ratio > tp_ratio:
-                                self._add_an_alarm(day, day + timedelta(1), sp_var_name,
-                                    f"High temperature maintenance power ratio: {sp_pretty_name} accounted for {power_ratio * 100:.1f}% of daily power (threshold {tp_ratio * 100}%).",
-                                    certainty="low")
+            if len(tp_codes) == 1 and len(all_sp_codes) >= 1:
+                tp_var_name = tp_codes.iloc[0]['variable_name']
+                sp_var_names = all_sp_codes['variable_name']
+                daily_df['PowerIn_all_TM'] = daily_df[sp_var_names].sum(axis=1)
+                tp_ratio = tp_codes.iloc[0]['bound']
+                # Check if both variables exist in df
+                if tp_var_name in daily_df.columns:
+                    trigger_columns_condition_met = True
+                    # Check if swing tank power ratio exceeds threshold
+                    if day in daily_df.index and daily_df.loc[day, tp_var_name] != 0:
+                        power_ratio = daily_df.loc[day, 'PowerIn_all_TM'] / daily_df.loc[day, tp_var_name]
+                        if power_ratio > tp_ratio:
+                            self._add_an_alarm(day, day + timedelta(1), tp_var_name,
+                                f"High temperature maintenance power ratio: TM heating accounted for {power_ratio * 100:.1f}% of daily power (threshold {tp_ratio * 100}%).",
+                                certainty="low", add_one_minute_to_end = False)

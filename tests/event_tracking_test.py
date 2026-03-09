@@ -709,7 +709,7 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['Temp_Tank', 'PowerIn_HP'],
+            'variable_name': ['Temp_SwingTankOutlet', 'PowerIn_SwingTank'],
             'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
@@ -717,13 +717,13 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03',
                                            '2022-01-01 01:04','2022-01-01 01:05'])
         minute_df = pd.DataFrame({
-            'Temp_Tank': [135, 135, 135, 135, 135],
-            'PowerIn_HP': [5, 5, 5, 5, 5]
+            'Temp_SwingTankOutlet': [135, 135, 135, 135, 135],
+            'PowerIn_SwingTank': [5, 5, 5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'Temp_Tank': [135], 'PowerIn_HP': [100]})
+        daily_df = pd.DataFrame({'Temp_SwingTankOutlet': [135], 'PowerIn_SwingTank': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -731,7 +731,7 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
 
         assert len(event_df) == 1
         assert 'High TM Setpoint' in event_df.iloc[0]['event_detail']
-        assert 'PowerIn_HP' == event_df.iloc[0]['variable_name']
+        assert 'PowerIn_SwingTank' == event_df.iloc[0]['variable_name']
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
@@ -739,20 +739,20 @@ def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['Temp_Tank', 'PowerIn_HP'],
+            'variable_name': ['Temp_SwingTankOutlet', 'PowerIn_SwingTank'],
             'alarm_codes': ['TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'Temp_Tank': [120, 120, 120],  # Below setpoint
-            'PowerIn_HP': [5, 5, 5]
+            'Temp_SwingTankOutlet': [120, 120, 120],  # Below setpoint
+            'PowerIn_SwingTank': [5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'Temp_Tank': [120], 'PowerIn_HP': [100]})
+        daily_df = pd.DataFrame({'Temp_SwingTankOutlet': [120], 'PowerIn_SwingTank': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager,
@@ -823,21 +823,23 @@ def test_flag_high_tm_setpoint_tp_and_sp_high_ratio(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['PowerIn_ER', 'PowerIn_Total'],
-            'alarm_codes': ['TMNSTPT', 'TMNSTPT']
+            'variable_name': ['PowerIn_ER1', 'PowerIn_ER2', 'PowerIn_Total'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT', 'TMNSTPT']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02'])
         minute_df = pd.DataFrame({
-            'PowerIn_ER': [100, 100],
+            'PowerIn_ER2': [100, 100],
+            'PowerIn_ER1': [100, 100],
             'PowerIn_Total': [150, 150]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
         daily_df = pd.DataFrame({
-            'PowerIn_ER': [500],  # 50% of total
+            'PowerIn_ER2': [300],
+            'PowerIn_ER1': [200],  # 50% of total
             'PowerIn_Total': [1000]
         })
         daily_df.index = daily_timestamps
@@ -885,20 +887,20 @@ def test_flag_high_tm_setpoint_multiple_TMNSTPT_codes(mock_config_manager):
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
-            'variable_name': ['Temp_Tank', 'PowerIn_ER', 'other_var'],
+            'variable_name': ['Temp_EROutlet', 'PowerIn_ER', 'other_var'],
             'alarm_codes': ['TMNSTPT','POWRRAT:60-80;TMNSTPT', 'OTHER_CODE:100']
         })
         mock_csv.return_value = csv_df
 
         minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
         minute_df = pd.DataFrame({
-            'Temp_Tank': [135, 135, 135],
+            'Temp_EROutlet': [135, 135, 135],
             'PowerIn_ER': [5, 5, 5]
         })
         minute_df.index = minute_timestamps
 
         daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
-        daily_df = pd.DataFrame({'Temp_Tank': [135], 'PowerIn_ER': [100]})
+        daily_df = pd.DataFrame({'Temp_EROutlet': [135], 'PowerIn_ER': [100]})
         daily_df.index = daily_timestamps
 
         event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
@@ -1030,7 +1032,7 @@ def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager
                                             default_power_ratio=0.4)
 
         # Should have alarms: Day 1 T+SP alarm, Day 2 T+SP alarm, Day 2 ST alarm
-        assert len(event_df) == 6
+        assert len(event_df) == 4
         assert any('High TM Setpoint' in detail for detail in event_df['event_detail'])
 
 @patch('ecopipeline.ConfigManager')
@@ -1059,6 +1061,35 @@ def test_flag_high_tm_setpoint_TMNSTPT_with_two_parts(mock_config_manager):
 
         # Should process correctly with None as ID
         assert len(event_df) == 1
+
+@patch('ecopipeline.ConfigManager')
+def test_flag_high_tm_setpoint_TMNSTPT_with_different_IDs(mock_config_manager):
+    """Test TMNSTPT code with only two parts (no ID)"""
+    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    with patch('pandas.read_csv') as mock_csv:
+        csv_df = pd.DataFrame({
+            'variable_name': ['Temp_Swing_1_Outlet', 'PowerIn_Swing_1','PowerIn_Swing_2', 'Temp_Swing_2_Outlet'],
+            'alarm_codes': ['TMNSTPT', 'TMNSTPT', 'TMNSTPT', 'TMNSTPT:140']
+        })
+        mock_csv.return_value = csv_df
+
+        minute_timestamps = pd.to_datetime(['2022-01-01 01:01','2022-01-01 01:02','2022-01-01 01:03'])
+        minute_df = pd.DataFrame({
+            'Temp_Swing_1_Outlet': [135, 135, 135],
+            'PowerIn_Swing_2': [5, 5, 5],
+            'PowerIn_Swing_1': [0,0,0],
+            'Temp_Swing_2_Outlet': [135, 135, 135],
+        })
+        minute_df.index = minute_timestamps
+
+        daily_timestamps = pd.to_datetime(['2022-01-01 00:00'])
+        daily_df = pd.DataFrame({'Temp_Swing_1_Outlet': [135], 'Temp_Swing_1_Outlet': [140], 'PowerIn_Swing_1': [100], 'PowerIn_Swing_1': [000]})
+        daily_df.index = daily_timestamps
+
+        event_df = flag_high_tm_setpoint(minute_df, daily_df, mock_config_manager)
+
+        # Should process correctly with None as ID
+        assert len(event_df) == 0
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_custom_t_bound(mock_config_manager):

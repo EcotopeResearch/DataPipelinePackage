@@ -9,26 +9,29 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class HPWHInlet(Alarm):
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detects high heat pump inlet temperature by checking if the inlet temperature exceeds a threshold
+    while the heat pump is running. An alarm triggers if the temperature stays above the threshold for
+    fault_time consecutive minutes while the HP is on.
 
-    VarNames syntax:
-    HPINLET_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
-        the heat pump is considered 'on'
-    HPINLET_T_[OPTIONAL ID]:### - Indicates heat pump inlet temperature variable. ### is the temperature threshold (default 120.0)
-        that should not be exceeded while the heat pump is on
+    Variable_Names.csv configuration:
+      alarm_codes column: HPINLET:### where ### provides the bound for the variable (see types below).
+      variable_name column: determines the role and element ID of the variable. The element ID is derived
+        by removing the leading unit type and any trailing 'Inlet'/'Outlet' suffix
+        (e.g., 'PowerIn_HPWH1' and 'Temp_HPWH1_Inlet' both yield element ID 'HPWH1' and are paired together).
+        PowerIn_[ID] - HP power variable. Bound (###) from alarm_codes is the power threshold (default 1.0)
+            above which the HP is considered 'on'.
+        Temp_[ID][Inlet] - HP inlet temperature variable. Bound (###) from alarm_codes is the maximum acceptable
+            temperature (default 115.0). Alarm triggers when temperature exceeds this while HP is on.
 
     Parameters
     ----------
     default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 0.4). Heat pump is considered 'on'
-        when power exceeds this value.
+        Default power threshold for PowerIn variables when no bound is specified (default 1.0).
     default_temp_threshold : float
-        Default temperature threshold for T alarm codes when no custom bound is specified (default 120.0). Alarm triggers when
-        temperature exceeds this value while heat pump is on.
+        Default temperature threshold for Temp variables when no bound is specified (default 115.0).
+        Alarm triggers when inlet temperature exceeds this value while the HP is on.
     fault_time : int
-        Number of consecutive minutes that both power and temperature must exceed their thresholds before triggering an alarm (default 10).
-
+        Number of consecutive minutes that both conditions must hold before triggering an alarm (default 5).
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_temp_threshold : float = 115.0, fault_time : int = 5):
         alarm_tag = 'HPINLET'

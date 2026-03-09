@@ -14,23 +14,25 @@ class HPWHOutlet(Alarm):
     period. An alarm triggers if the temperature stays below the threshold for `fault_time` consecutive
     minutes after the warmup period.
 
-    VarNames syntax:
-    HPOUTLT_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
-        the heat pump is considered 'on'.
-    HPOUTLT_T_[OPTIONAL ID]:### - Indicates heat pump outlet temperature variable. ### is the temperature threshold (default 140.0)
-        that should always be exceeded while the heat pump is on after the 10-minute warmup period.
+    Variable_Names.csv configuration:
+      alarm_codes column: HPOUTLT:### where ### provides the bound for the variable (see types below).
+      variable_name column: determines the role and element ID of the variable. The element ID is derived
+        by removing the leading unit type and any trailing 'Inlet'/'Outlet' suffix
+        (e.g., 'PowerIn_HPWH1' and 'Temp_HPWH1_Outlet' both yield element ID 'HPWH1' and are paired together).
+        PowerIn_[ID] - HP power variable. Bound (###) from alarm_codes is the power threshold (default 1.0)
+            above which the HP is considered 'on'.
+        Temp_[ID][Outlet] - HP outlet temperature variable. Bound (###) from alarm_codes is the minimum
+            acceptable temperature (default 140.0). Alarm triggers when temp falls below this after warmup.
 
     Parameters
     ----------
     default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
+        Default power threshold for PowerIn variables when no bound is specified (default 1.0).
     default_temp_threshold : float
-        Default temperature threshold for T alarm codes when no custom bound is specified (default 140.0). Alarm triggers when
-        temperature falls BELOW this value while heat pump is on (after warmup period).
+        Default temperature threshold for Temp variables when no bound is specified (default 140.0).
+        Alarm triggers when outlet temperature falls BELOW this value after the warmup period.
     fault_time : int
         Number of consecutive minutes that temperature must be below threshold (after warmup) before triggering an alarm (default 5).
-
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_temp_threshold : float = 140.0, fault_time : int = 5):
         alarm_tag = 'HPOUTLT'

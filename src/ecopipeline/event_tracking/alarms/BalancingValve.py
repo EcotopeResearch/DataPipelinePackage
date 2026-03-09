@@ -9,27 +9,28 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class BalancingValve(Alarm):
     """
-    Detects recirculation balance issues by comparing sum of ER (equipment recirculation) heater
-    power to either total power or heating output.
+    Detects recirculation balance issues by comparing the sum of electric recirculation (ER) heater
+    power to either total system power or heating output.
 
-    VarNames syntax:
-    BALVALV_ER_[OPTIONAL ID] - Indicates a power variable for an ER heater (equipment recirculation).
-        Multiple ER variables with the same ID will be summed together.
-    BALVALV_TP_[OPTIONAL ID]:### - Indicates the Total Power of the system. Optional ### for the percentage
-        threshold that should not be crossed by the ER elements (default 0.4 for 40%).
-        Alarm triggers when sum of ER >= total_power * threshold.
-    BALVALV_OUT_[OPTIONAL ID] - Indicates the heating output variable the ER heating contributes to.
-        Alarm triggers when sum of ER > sum of OUT * 0.95 (i.e., ER exceeds 95% of heating output).
-        Multiple OUT variables with the same ID will be summed together.
+    Variable_Names.csv configuration:
+      alarm_codes column: BALVALV or BALVALV:### where ### provides the bound for the variable (see types below).
+      variable_name column: determines the role of the variable by its first underscore-separated part:
+        PowerIn_[name] - Electric recirculation (ER) heater power variable. Multiple allowed; daily values are summed.
+            No bound needed in alarm_codes (use just BALVALV).
+        PowerIn_Total - Total system power variable. Bound (###) from alarm_codes is the fraction threshold
+            (default 0.4 for 40%). Alarm triggers when sum of ER >= total power * threshold. If present,
+            takes precedence over HeatOut variables.
+        HeatOut_[name] - Heating output variable. Multiple allowed; values are summed. Alarm triggers when
+            sum of ER power exceeds sum of heating output. Only used if no PowerIn_Total variable is configured.
+            No bound needed in alarm_codes (use just BALVALV).
 
-    Note: Each alarm ID requires at least one ER code AND either one TP code OR at least one OUT code.
-    If a TP code exists for an ID, it takes precedence over OUT codes.
+    Note: Requires at least one PowerIn variable AND either one PowerIn_Total or at least one HeatOut variable.
 
     Parameters
     ----------
     default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4).
-
+        Default ratio threshold for PowerIn_Total variables when no bound is specified (default 0.4).
+        Alarm triggers when sum of ER power >= total power * threshold.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_ratio : float = 0.4):
         alarm_tag = 'BALVALV'

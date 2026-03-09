@@ -9,39 +9,27 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class TempRange(Alarm):
     """
-    Detects when a temperature value falls outside an acceptable range for
-    too long. An alarm is triggered if the temperature is above the high bound or below the low bound
-    for `fault_time` consecutive minutes.
+    Detects when a temperature variable falls outside an acceptable range for a sustained period.
+    An alarm triggers when the value stays above the high bound or below the low bound for
+    fault_time consecutive minutes.
 
-    VarNames syntax:
-    TMPRANG_[OPTIONAL ID]:###-### - Indicates a temperature variable. ###-### is the acceptable temperature range
-        (e.g., TMPRANG:110-130 means temperature should stay between 110 and 130 degrees).
+    Variable_Names.csv configuration:
+      alarm_codes column: TMPRANG:low-high where low-high is the acceptable temperature range
+        (e.g., TMPRANG:110-130 means temperature should stay between 110 and 130 degrees F).
+      variable_name column: Must start with Temp_ (e.g., Temp_SwingTank1).
+        Temp_[name] - Temperature variable to monitor. Bounds (low-high) come from alarm_codes.
+            Alarm triggers if the temperature stays outside the [low, high] range for fault_time consecutive minutes.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data. Used for determining which days to process.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the DHW alarm codes (e.g., DHW:110-130, DHW_1:115-125).
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
     default_high_temp : float
-        Default high temperature bound when no custom range is specified in the alarm code (default 130). Temperature above this triggers alarm.
+        Default high temperature bound when no range is specified in the alarm code (default 130).
+        Temperature above this triggers an alarm.
     default_low_temp : float
-        Default low temperature bound when no custom range is specified in the alarm code (default 130). Temperature below this triggers alarm.
+        Default low temperature bound when no range is specified in the alarm code (default 115).
+        Temperature below this triggers an alarm.
     fault_time : int
-        Number of consecutive minutes that temperature must be outside the acceptable range before triggering an alarm (default 10).
-
-    Returns
-    -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+        Number of consecutive minutes that temperature must be outside the range before triggering an alarm (default 10).
     """
     def __init__(self, bounds_df : pd.DataFrame, default_high_temp : float = 130, default_low_temp : float = 115, fault_time : int = 10):
         alarm_tag = 'TMPRANG'

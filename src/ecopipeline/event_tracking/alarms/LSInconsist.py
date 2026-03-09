@@ -9,14 +9,14 @@ from ecopipeline.event_tracking.Alarm import Alarm
 
 class LSInconsist(Alarm):
     """
-    Detects when reported loadshift mode does not match its expected value during a load shifting event.
-    An alarm is triggered if the variable value does not equal the expected value during the
-    time periods defined in the load shifting schedule for that mode.
+    Detects when a variable's value does not match its expected value during a load shifting event
+    (or during normal operation). An alarm is triggered whenever the variable differs from the
+    expected value for the relevant time period.
 
-    VarNames syntax:
-    SOOSCHD_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.
-        [mode] can be: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp
-        ### is the expected value (e.g., SOOSCHD_loadUp:1 means the variable should be 1 during loadUp events)
+    Variable_Names.csv configuration:
+      alarm_codes column: SOOSCHD_[mode]:###
+        [mode] must be one of: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp.
+        Bound (###) from alarm_codes is the expected value of the variable during that mode.
     """
     def __init__(self, bounds_df : pd.DataFrame):
         alarm_tag = 'SOOSCHD'
@@ -113,7 +113,7 @@ class LSInconsist(Alarm):
                                 self._add_an_alarm(start_time, end_time, var_name,
                                     f"Load shift mode inconsistency: {pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} during {mode} event (expected {expected_value}).")
                                 
-    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> pd.DataFrame:
+    def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> list:
         alarm_code_parts = []
         for idx, row in bounds_df.iterrows():
             parts = row['alarm_codes'].split('_')
@@ -131,21 +131,4 @@ class LSInconsist(Alarm):
                     alarm_code_parts.append(["default", parts[1]])
                 else:
                     raise Exception(f"improper {self.alarm_tag} alarm code format for {row['variable_name']}")
-        if alarm_code_parts:
-            bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
-
-            # Replace None bounds with appropriate defaults based on alarm_code_type
-            for idx, row in bounds_df.iterrows():
-                if pd.isna(row['bound']) or row['bound'] is None:
-                    if row['alarm_code_type'] in self.type_default_dict.keys():
-                        if self.range_bounds:
-                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']][0]
-                            bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
-                        else:
-                            bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
-            # Coerce bound column to float
-            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-            if self.range_bounds:
-                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
-
-        return bounds_df
+        return alarm_code_parts
