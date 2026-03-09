@@ -127,8 +127,25 @@ afterwards.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.excel_to_csv">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">excel_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.excel_to_csv" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">excel_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excel_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%m/%d/%Y</span> <span class="pre">%I:%M:%S</span> <span class="pre">%p'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.excel_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combines all Excel files (.xlsx or .xls) in a folder into a single CSV file sorted by timestamp.
+The output CSV is named after the earliest timestamp found across all files.</p>
+<p>Expects each Excel file to contain a ‘Time stamp’ column in the format excel_date_format.
+All files are concatenated, sorted by ‘Time stamp’, and written to a single CSV in csv_folder_path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>excel_folder_path</strong><span class="classifier">str</span></dt><dd><p>Path to the folder containing the Excel files to combine.</p>
+</dd>
+<dt><strong>csv_folder_path</strong><span class="classifier">str</span></dt><dd><p>Path to the folder where the output CSV file will be written.
+The output filename is derived from the earliest timestamp (e.g., ‘20220101010000.csv’).</p>
+</dd>
+<dt><strong>excel_date_format</strong><span class="classifier">str</span></dt><dd><p>expected format of ‘Time stamp’ column in excel doc</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_files">

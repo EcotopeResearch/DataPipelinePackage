@@ -1115,7 +1115,24 @@ def get_sub_dirs(dir: str) -> List[str]:
         return
     return directories
 
-def excel_to_csv(excel_folder_path : str, csv_folder_path : str):
+def excel_to_csv(excel_folder_path : str, csv_folder_path : str, excel_date_format : str = '%m/%d/%Y %I:%M:%S %p'):
+    """
+    Combines all Excel files (.xlsx or .xls) in a folder into a single CSV file sorted by timestamp.
+    The output CSV is named after the earliest timestamp found across all files.
+
+    Expects each Excel file to contain a 'Time stamp' column in the format excel_date_format.
+    All files are concatenated, sorted by 'Time stamp', and written to a single CSV in csv_folder_path.
+
+    Parameters
+    ----------
+    excel_folder_path : str
+        Path to the folder containing the Excel files to combine.
+    csv_folder_path : str
+        Path to the folder where the output CSV file will be written.
+        The output filename is derived from the earliest timestamp (e.g., '20220101010000.csv').
+    excel_date_format : str
+        expected format of 'Time stamp' column in excel doc
+    """
     dfs = []
     for filename in os.listdir(excel_folder_path):
         if filename.endswith('.xlsx') or filename.endswith('.xls'):
@@ -1126,7 +1143,7 @@ def excel_to_csv(excel_folder_path : str, csv_folder_path : str):
         print(f"No Excel files found in {excel_folder_path}")
         return
     combined = pd.concat(dfs, ignore_index=True)
-    combined['Time stamp'] = pd.to_datetime(combined['Time stamp'], format='%m/%d/%Y %I:%M:%S %p')
+    combined['Time stamp'] = pd.to_datetime(combined['Time stamp'], format=excel_date_format)
     combined = combined.sort_values('Time stamp').reset_index(drop=True)
     startTime = combined['Time stamp'].min()
     output_filename = f"{startTime.strftime('%Y%m%d%H%M%S')}.csv"
