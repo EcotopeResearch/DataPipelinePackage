@@ -21,7 +21,7 @@ class LSInconsist(Alarm):
     def __init__(self, bounds_df : pd.DataFrame):
         alarm_tag = 'SOOSCHD'
         type_default_dict = {}
-        super().__init__(bounds_df, alarm_tag, type_default_dict, two_part_tag=True, alarm_db_type='LS_INCONSIST')
+        super().__init__(bounds_df, alarm_tag, type_default_dict, two_part_tag=True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         ls_df = config.get_ls_df()

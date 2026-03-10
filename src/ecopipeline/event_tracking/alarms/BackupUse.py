@@ -38,7 +38,7 @@ class BackupUse(Alarm):
                 'PowerIn_Total': default_power_ratio,
                 'Setpoint': default_setpoint
             }
-        super().__init__(bounds_df, alarm_tag, type_default_dict, alarm_db_type='BACKUP_USE')
+        super().__init__(bounds_df, alarm_tag, type_default_dict)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for day in daily_df.index:

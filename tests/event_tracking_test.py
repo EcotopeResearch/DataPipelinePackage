@@ -35,7 +35,7 @@ def test_flag_boundary_alarms(mock_config_manager):
         assert len(event_df) == 2
         assert 'serious_var_1' in event_df['variable_name'].values
         assert 'serious_var_3' in event_df['variable_name'].values
-        assert all(event_df['alarm_type'] == 'BOUNDARY')
+        assert all(event_df['alarm_type'] == 'BOUNDRY')
         assert all('Boundary alarm' in detail for detail in event_df['event_detail'])
 
 @patch('ecopipeline.ConfigManager')
@@ -67,7 +67,7 @@ def test_flag_boundary_alarms_with_fault_times(mock_config_manager):
         assert len(event_df) == 3
         assert 'serious_var_1' in event_df['variable_name'].values
         assert list(event_df['variable_name'].values).count('serious_var_2') == 2
-        assert all(event_df['alarm_type'] == 'BOUNDARY')
+        assert all(event_df['alarm_type'] == 'BOUNDRY')
         assert all('Boundary alarm' in detail for detail in event_df['event_detail'])
 
 @patch('ecopipeline.ConfigManager')
@@ -93,7 +93,7 @@ def test_flag_ratio_alarms(mock_config_manager):
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': end_event_time_pts,
-                        'alarm_type': ['POWER_RATIO']*4,
+                        'alarm_type': ['POWRRAT']*4,
                         'event_detail': [
                                         "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_HPWH2 accounted for 0.0% of HPWH energy use. 20.0-40.0% expected.",
                                         "Power ratio alarm (1-day block ending 2022-01-03): PowerIn_HPWH2 accounted for 5.5% of HPWH energy use. 20.0-40.0% expected.",
@@ -135,7 +135,7 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': event_time_pts_end,
-                        'alarm_type': ['POWER_RATIO'],
+                        'alarm_type': ['POWRRAT'],
                         'event_detail': [
                                         "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_Whatever accounted for 0.0% of Total energy use. 20.0-50.0% expected."
                                         ],
@@ -173,7 +173,7 @@ def test_flag_abnormal_COP(mock_config_manager):
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': event_time_pts_end,
-                        'alarm_type': ['ABNORMAL_COP']*4,
+                        'alarm_type': ['ABNRMCP']*4,
                         'event_detail': [
                                         "Unexpected COP Value detected: COP_Equipment = inf",
                                         "Unexpected COP Value detected: COP_Equipment = 120.0",

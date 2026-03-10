@@ -33,7 +33,7 @@ class AbnormalCOP(Alarm):
         self.default_high_bound = default_high_bound
         self.default_low_bound = default_low_bound
         
-        super().__init__(bounds_df, None, {}, alarm_db_type='ABNORMAL_COP', daily_only=True)
+        super().__init__(bounds_df, "ABNRMCP", {}, daily_only=True)
 
     def _process_bounds_df_alarm_codes(self, og_bounds_df : pd.DataFrame) -> pd.DataFrame:
         bounds_df = og_bounds_df.copy()

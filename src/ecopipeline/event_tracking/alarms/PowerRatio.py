@@ -37,7 +37,7 @@ class PowerRatio(Alarm):
         type_default_dict = {}
         self.ratio_period_days = ratio_period_days
         self.day_table_name = day_table_name # TODO this could be a security issue. Swap it for config manager
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, range_bounds=True, alarm_db_type='POWER_RATIO', daily_only=True)
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, range_bounds=True, daily_only=True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         daily_df_copy = daily_df.copy()

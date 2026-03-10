@@ -28,7 +28,7 @@ class Boundary(Alarm):
     """
     def __init__(self, bounds_df : pd.DataFrame, default_fault_time : int = 15):
         self.default_fault_time = default_fault_time
-        super().__init__(bounds_df, None,{}, alarm_db_type='BOUNDARY')
+        super().__init__(bounds_df, 'BOUNDRY',{})
 
     def _process_bounds_df_alarm_codes(self, og_bounds_df : pd.DataFrame) -> pd.DataFrame:
         bounds_df = og_bounds_df.copy()

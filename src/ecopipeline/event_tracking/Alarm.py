@@ -8,14 +8,13 @@ from datetime import timedelta
 
 class Alarm:
     def __init__(self, bounds_df : pd.DataFrame, alarm_tag : str = None, type_default_dict : dict = {},
-                 two_part_tag : bool = True, range_bounds : bool = False, alarm_db_type : str = 'SILENT_ALARM',
+                 two_part_tag : bool = True, range_bounds : bool = False,
                  daily_only : bool = False, element_id_matching : bool = False):
         self.daily_only = daily_only
         self.alarm_tag = alarm_tag
         self.two_part_tag = two_part_tag
         self.range_bounds = range_bounds
         self.type_default_dict = type_default_dict
-        self.alarm_db_type = alarm_db_type
         self.element_id_matching = element_id_matching
         self.triggered_alarms = {
                 'start_time_pt' : [],
@@ -75,7 +74,7 @@ class Alarm:
             end_time = end_time + timedelta(minutes=1)
         self.triggered_alarms['start_time_pt'].append(start_time)
         self.triggered_alarms['end_time_pt'].append(end_time)
-        self.triggered_alarms['alarm_type'].append(self.alarm_db_type)
+        self.triggered_alarms['alarm_type'].append(self.alarm_tag)
         self.triggered_alarms['event_detail'].append(alarm_string)
         self.triggered_alarms['variable_name'].append(var_name)
         self.triggered_alarms['certainty'].append(certainty)

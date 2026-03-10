@@ -36,7 +36,7 @@ class BlownFuse(Alarm):
         self.default_power_threshold = default_power_threshold
         self.default_power_range = default_power_range
         self.fault_time = fault_time
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, alarm_db_type='BLOWN_FUSE')
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for var_name in self.bounds_df['variable_name'].unique():

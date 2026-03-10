@@ -54,7 +54,7 @@ class SOOChange(Alarm):
                 'ON' : default_on_temp,
                 'OFF' : default_off_temp
             }
-        super().__init__(bounds_df, alarm_tag, type_default_dict, alarm_db_type='SOO_CHANGE')
+        super().__init__(bounds_df, alarm_tag, type_default_dict)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         ls_df = config.get_ls_df()

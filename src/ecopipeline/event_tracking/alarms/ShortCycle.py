@@ -31,7 +31,7 @@ class ShortCycle(Alarm):
         alarm_tag = 'SHRTCYC'
         type_default_dict = {'PowerIn' : default_power_threshold}
         self.short_cycle_time = short_cycle_time
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, alarm_db_type='SHORT_CYCLE')
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for var_name in self.bounds_df['variable_name'].unique():

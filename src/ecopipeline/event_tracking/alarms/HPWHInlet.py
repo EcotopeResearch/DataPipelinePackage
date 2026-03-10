@@ -40,7 +40,7 @@ class HPWHInlet(Alarm):
                 'Temp' : default_temp_threshold
             }
         self.fault_time = fault_time
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='HPWH_INLET', element_id_matching = True)
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, element_id_matching = True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for alarm_id in self.bounds_df['alarm_code_id'].unique():

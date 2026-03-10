@@ -48,7 +48,7 @@ class TMSetpoint(Alarm):
                  'PowerIn': default_power_indication,
                  'PowerIn_Total': default_power_ratio,
                  'Setpoint': default_setpoint}
-        super().__init__(bounds_df, alarm_tag,type_default_dict, alarm_db_type='TM_SETPOINT', element_id_matching = True)
+        super().__init__(bounds_df, alarm_tag,type_default_dict, element_id_matching = True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for day in daily_df.index:

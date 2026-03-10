@@ -35,7 +35,7 @@ class TempRange(Alarm):
         alarm_tag = 'TMPRANG'
         type_default_dict = {'Temp': [default_low_temp, default_high_temp]}
         self.fault_time = fault_time
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, range_bounds=True, alarm_db_type='TEMP_RANGE')
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = False, range_bounds=True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         # Process each unique alarm_code_id

@@ -45,7 +45,7 @@ class HPWHOutage(Alarm):
         self.day_table_name = day_table_name # TODO this could be a security issue. Swap it for config manager
         self.default_power_ratio = default_power_ratio
         self.ratio_period_days = ratio_period_days
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='HPWH_INLET')
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for alarm_id in self.bounds_df['alarm_code_id'].unique():

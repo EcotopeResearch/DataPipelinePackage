@@ -35,7 +35,7 @@ class BalancingValve(Alarm):
     def __init__(self, bounds_df : pd.DataFrame, default_power_ratio : float = 0.4):
         alarm_tag = 'BALVALV'
         type_default_dict = {'PowerIn_Total' : default_power_ratio}
-        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, alarm_db_type='BALANCING_VALVE', daily_only=True)
+        super().__init__(bounds_df, alarm_tag,type_default_dict, two_part_tag = True, daily_only=True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for alarm_id in self.bounds_df['alarm_code_id'].unique():
