@@ -620,6 +620,7 @@ def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = 
                     variable_name VARCHAR(70),
                     silenced BOOLEAN,
                     closing_event_id INT NULL,
+                    snooze_until DATETIME NULL,
                     FOREIGN KEY (closing_event_id) REFERENCES site_events(id),
                     UNIQUE INDEX unique_alarm (site_name, alarm_type, variable_name, start_time_pt, end_time_pt)
                 );
