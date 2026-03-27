@@ -40,6 +40,7 @@ class APIExtractor:
                 os.chdir(config.data_directory)
                 self.raw_df.to_csv(filename, index_label='time_pt')
                 os.chdir(original_directory)
+                print(f"Created raw data CSV file: {filename}")
         except Exception as e:
             print(f"API data extraction failed: {e}")
             raise e

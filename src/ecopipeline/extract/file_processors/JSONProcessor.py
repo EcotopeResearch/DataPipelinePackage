@@ -21,10 +21,6 @@ class JSONProcessor(FileProcessor):
 
         super().__init__(config, ext, start_time, end_time, raw_time_column, time_column_format, filename_date_format, 
                          file_prefix, data_sub_dir, date_string_start_idx, date_string_end_idx)
-        
-    def raw_files_to_df(self, filenames : list[str], create_time_pt_idx : bool = True) -> pd.DataFrame:
-        # no need to process time columns
-        return super().raw_files_to_df(filenames, False)
 
     def _read_file_into_df(self, file_name : str) -> pd.DataFrame:
         # TODO: how will this change if zip_files : bool = False

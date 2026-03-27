@@ -24,7 +24,7 @@ from .api_extractors.ThingsBoard import ThingsBoard
 def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, 
                  raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S", 
                  file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3, 
-                 mb_prefix : bool = False, mb_column_overwrite : bool = False, time_zone : str = 'US/Pacific', use_defaults : bool = True) -> pd.DataFrame:
+                 time_zone : str = 'US/Pacific', use_defaults : bool = True) -> pd.DataFrame:
     
     reprocess = True
     if start_time is None:
@@ -32,20 +32,24 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         reprocess = False
 
     raw_df = pd.DataFrame()
+    raw_time_column, time_column_format = _get_time_indicator_defaults(process_type, raw_time_column, time_column_format, use_defaults)
 
-    if process_type == "csv":
+    if "csv" in process_type:
+        csv_sub_type = None
+        if process_type == "csv_mb":
+            csv_sub_type = "modbus"
+        elif process_type == "csv_dent":
+            csv_sub_type = "dent"
         file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir, 
-                 date_string_start_idx, date_string_end_idx, mb_prefix, mb_column_overwrite)
+                 date_string_start_idx, date_string_end_idx, csv_sub_type)
         raw_df = file_processor.get_raw_data()
     elif process_type == "json":
-        if use_defaults:
-            raw_time_column = 'time'
         file_processor = JSONProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir, 
                  date_string_start_idx, date_string_end_idx, True, time_zone)
         raw_df = file_processor.get_raw_data()
     elif "api_" in process_type:
         if reprocess:
-            file_processor = CSVProcessor(config, start_time, end_time, 'time_pt', '%Y-%m-%d %H:%M:%S.%f', filename_date_format, file_prefix, data_sub_dir, 
+            file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir, 
                  -18, -4)
             raw_df = file_processor.get_raw_data()
         if process_type == "api_tb":
@@ -55,6 +59,23 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
     # if not raw_df.empty:
     return raw_df
 
+def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time_column_format : str, use_defaults : bool = True) -> list[str]:
+    """
+    Returns the default time column name and format for the file/api type.
+    """
+    if not use_defaults:
+        return [raw_time_column, time_column_format]
+    default_map = {
+        "csv" : ['DateTime', '%Y/%m/%d %H:%M:%S'],
+        "csv_mb" : ["time(UTC)", '%Y/%m/%d %H:%M:%S'], # I think
+        "json" : ['time', '%Y/%m/%d %H:%M:%S'],
+        "api_tb" : ['time_pt', '%Y-%m-%d %H:%M:%S.%f']
+    }
+    if process_type in default_map.keys():
+        return default_map[process_type]
+    else:
+        raise Exception(f"{process_type} is not a recognized method of extraction. Must be one of [{', '.join(default_map.keys())}]")
+    
 
 def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
     """

@@ -92,7 +92,7 @@ class FileProcessor:
         data = pd.read_csv(file_name)
         return data
 
-    def raw_files_to_df(self, filenames : list[str], create_time_pt_idx : bool = True) -> pd.DataFrame:
+    def raw_files_to_df(self, filenames : list[str]) -> pd.DataFrame:
         temp_dfs = []
         for file in filenames:
             try:
@@ -112,8 +112,8 @@ class FileProcessor:
         
         df = pd.concat(temp_dfs, ignore_index=False)
 
-        if create_time_pt_idx:
-            df['time_pt'] = pd.to_datetime(df[self.raw_time_column], format=self.time_column_format)
-            df.set_index('time_pt', inplace=True)
+        # if create_time_pt_idx:
+        #     df['time_pt'] = pd.to_datetime(df[self.raw_time_column], format=self.time_column_format)
+        #     df.set_index('time_pt', inplace=True)
 
         return df
