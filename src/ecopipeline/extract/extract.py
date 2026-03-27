@@ -17,7 +17,43 @@ import mysql.connector.errors as mysqlerrors
 import requests
 import subprocess
 import traceback
-import time
+from .file_processors.CSVProcessor import CSVProcessor
+from .file_processors.JSONProcessor import JSONProcessor
+from .api_extractors.ThingsBoard import ThingsBoard
+
+def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, 
+                 raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S", 
+                 file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3, 
+                 mb_prefix : bool = False, mb_column_overwrite : bool = False, time_zone : str = 'US/Pacific', use_defaults : bool = True) -> pd.DataFrame:
+    
+    reprocess = True
+    if start_time is None:
+        start_time = get_last_full_day_from_db(config)
+        reprocess = False
+
+    raw_df = pd.DataFrame()
+
+    if process_type == "csv":
+        file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir, 
+                 date_string_start_idx, date_string_end_idx, mb_prefix, mb_column_overwrite)
+        raw_df = file_processor.get_raw_data()
+    elif process_type == "json":
+        if use_defaults:
+            raw_time_column = 'time'
+        file_processor = JSONProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir, 
+                 date_string_start_idx, date_string_end_idx, True, time_zone)
+        raw_df = file_processor.get_raw_data()
+    elif "api_" in process_type:
+        if reprocess:
+            file_processor = CSVProcessor(config, start_time, end_time, 'time_pt', '%Y-%m-%d %H:%M:%S.%f', filename_date_format, file_prefix, data_sub_dir, 
+                 -18, -4)
+            raw_df = file_processor.get_raw_data()
+        if process_type == "api_tb":
+            api_extractor = ThingsBoard(config, start_time, end_time)
+            raw_df = api_extractor.get_raw_data()
+    print("Successfully pulled raw data")
+    # if not raw_df.empty:
+    return raw_df
 
 
 def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
