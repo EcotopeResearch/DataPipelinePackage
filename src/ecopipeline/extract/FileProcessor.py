@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 import os
 
 class FileProcessor:
-    def __init__(self, config : ConfigManager, extension: str, start_time: datetime = None, end_time: datetime = None, raw_time_column : str = 'DateTime', 
+    def __init__(self, config : ConfigManager, extension: str, start_time: datetime = None, end_time: datetime = None, raw_time_column : str = 'DateTime',
                  time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S", file_prefix : str = "", data_sub_dir : str = "",
-                 date_string_start_idx : int = -17, date_string_end_idx : int = -3):
+                 date_string_start_idx : int = -17, date_string_end_idx : int = -3, round_time_index : bool = False):
         """
         Parameters
         ----------  
@@ -45,6 +45,7 @@ class FileProcessor:
         self.date_string_end_idx = date_string_end_idx
         self.file_prefix = file_prefix
         self.data_sub_dir = data_sub_dir
+        self.round_time_index = round_time_index
         self.raw_df = pd.DataFrame()
         try:
             filenames = self.extract_files(config)
@@ -112,8 +113,9 @@ class FileProcessor:
         
         df = pd.concat(temp_dfs, ignore_index=False)
 
-        # if create_time_pt_idx:
-        #     df['time_pt'] = pd.to_datetime(df[self.raw_time_column], format=self.time_column_format)
-        #     df.set_index('time_pt', inplace=True)
+        if self.round_time_index:
+            df.index = df.index.floor('min')
+            df = df.groupby(df.index).mean(numeric_only=True)
+            df.sort_index(inplace=True)
 
         return df
