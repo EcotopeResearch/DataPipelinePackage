@@ -17,8 +17,122 @@ import mysql.connector.errors as mysqlerrors
 import requests
 import subprocess
 import traceback
-import time
+from .file_processors.CSVProcessor import CSVProcessor
+from .file_processors.JSONProcessor import JSONProcessor
+from .file_processors.ModbusCSVProcessor import ModbusCSVProcessor
+from .file_processors.DentCSVProcessor import DentCSVProcessor
+from .file_processors.FlowCSVProcessor import FlowCSVProcessor
+from .file_processors.MSACSVProcessor import MSACSVProcessor
+from .file_processors.EGaugeCSVProcessor import EGaugeCSVProcessor
+from .file_processors.SmallPlanetCSVProcessor import SmallPlanetCSVProcessor
+from .api_extractors.ThingsBoard import ThingsBoard
+from .api_extractors.Skycentrics import Skycentrics
+from .api_extractors.FieldManager import FieldManager
+from .api_extractors.LiCOR import LiCOR
 
+def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, use_defaults : bool = True,
+                 raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S",
+                 file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3,
+                 time_zone : str = "America/Los_Angeles", site : str = "", system : str = "") -> [pd.DataFrame, pd.DataFrame]:
+    print("++++++++++++ EXTRACT ++++++++++++")
+    reprocess = True
+    if start_time is None:
+        start_time = get_last_full_day_from_db(config)
+        reprocess = False
+    if end_time is None:
+        print(f"Attempting to extract data from {start_time.strftime('%Y/%m/%d %H:%M:%S')} to present.")
+    else:
+        print(f"Attempting to extract data from {start_time.strftime('%Y/%m/%d %H:%M:%S')} to {end_time.strftime('%Y/%m/%d %H:%M:%S')}.")
+
+    raw_df = pd.DataFrame()
+    weather_df = pd.DataFrame()
+    raw_time_column, time_column_format = _get_time_indicator_defaults(process_type, raw_time_column, time_column_format, use_defaults)
+
+    if process_type == "json" or "csv" in process_type:
+        if process_type == "csv":
+            file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx)
+        elif process_type == "csv_mb":
+            file_processor = ModbusCSVProcessor(config, start_time, end_time, raw_time_column, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx)
+        elif process_type == "csv_dent":
+            file_processor = DentCSVProcessor(config, start_time, end_time, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx)
+        elif process_type == "csv_flow":
+            file_processor = FlowCSVProcessor(config, start_time, end_time, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx)
+        elif process_type == "csv_msa":
+            file_processor = MSACSVProcessor(config, start_time, end_time, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx, time_zone=time_zone)
+        elif process_type == "csv_egauge":
+            file_processor = EGaugeCSVProcessor(config, start_time, end_time, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx, time_zone=time_zone)
+        elif process_type == "csv_small_planet":
+            file_processor = SmallPlanetCSVProcessor(config, start_time, end_time, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx, site=site, system=system, time_zone=time_zone)
+        elif process_type == "json":
+            file_processor = JSONProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx, True, time_zone)
+        else:
+            raise Exception(f"{process_type} is not a recognized extraction method.")
+        raw_df = file_processor.get_raw_data()
+    elif "api_" in process_type:
+        if reprocess:
+            file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
+                 -18, -4)
+            raw_df = file_processor.get_raw_data()
+        else:
+            if process_type == "api_tb":
+                api_extractor = ThingsBoard(config, start_time, end_time)
+            elif process_type == "api_skycentrics":
+                api_extractor = Skycentrics(config, start_time, end_time, time_zone=time_zone)
+            elif process_type == "api_fm":
+                api_extractor = FieldManager(config, start_time, end_time)
+            elif process_type == "api_licor":
+                api_extractor = LiCOR(config, start_time, end_time)
+            else:
+                raise Exception(f"{process_type} is not a recognized extraction method.")
+            raw_df = api_extractor.get_raw_data()
+    if not raw_df.empty:
+        print(f"Successfully pulled raw data. Index range: {raw_df.index.min().strftime('%Y/%m/%d %H:%M:%S')} to {raw_df.index.max().strftime('%Y/%m/%d %H:%M:%S')}")
+        print("Now extracting weather....")
+        lat, long = _get_lat_and_long(config)
+        weather_df = get_OAT_open_meteo(lat, long, raw_df.index.min(), raw_df.index.max(), time_zone)
+        if not weather_df.empty:
+            print(f"Successfully pulled weather data. Index range: {weather_df.index.min().strftime('%Y/%m/%d %H:%M:%S')} to {weather_df.index.max().strftime('%Y/%m/%d %H:%M:%S')}")
+        else:
+            print("No weather data collected.")
+    else:
+        print("No raw data available for time period.")
+    return raw_df, weather_df
+
+def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time_column_format : str, use_defaults : bool = True) -> list[str]:
+    """
+    Returns the default time column name and format for the file/api type.
+    """
+    if not use_defaults:
+        return [raw_time_column, time_column_format]
+    default_map = {
+        "csv" : ['DateTime', '%Y/%m/%d %H:%M:%S'],
+        "csv_mb" : ["time(UTC)", '%Y/%m/%d %H:%M:%S'],
+        # The following types handle time indexing internally in _read_file_into_df;
+        # raw_time_column / time_column_format are unused placeholders.
+        "csv_dent" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "csv_flow" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "csv_msa" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "csv_egauge" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "csv_small_planet" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "json" : ['time', '%Y/%m/%d %H:%M:%S'],
+        "api_tb" : ['time_pt', '%Y-%m-%d %H:%M:%S.%f'],
+        "api_skycentrics" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "api_fm" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "api_licor" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+    }
+    if process_type in default_map:
+        return default_map[process_type]
+    else:
+        raise Exception(f"{process_type} is not a recognized method of extraction. Must be one of [{', '.join(default_map.keys())}]")
+    
 
 def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
     """
@@ -142,8 +256,9 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
     List[str]: 
         Filtered list of filenames
     """
-    
-    if decihex: 
+    print("WARNING: extract_new() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
+
+    if decihex:
         base_date = datetime(1970, 1, 1)
         file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename.split("/")[-1]).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
         if timeZone == None:
@@ -187,8 +302,9 @@ def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = ""
     Returns
     ------- 
     List[str]: 
-        List of filenames 
+        List of filenames
     """
+    print("WARNING: extract_files() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     os.chdir(os.getcwd())
     filenames = []
     full_data_path = f"{config.data_directory}{data_sub_dir}"
@@ -218,6 +334,7 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     pd.DataFrame: 
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
     """
+    print("WARNING: json_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in json_filenames:
         try:
@@ -273,6 +390,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
         (with prepended modbus prefix if mb_prefix = True)
     """
+    print("WARNING: csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in csv_filenames:
         try:
@@ -369,6 +487,7 @@ def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
         (with prepended modbus prefix if mb_prefix = True)
     """
+    print("WARNING: dent_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in csv_filenames:
         try:
@@ -425,6 +544,7 @@ def flow_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
         (with prepended modbus prefix if mb_prefix = True)
     """
+    print("WARNING: flow_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in csv_filenames:
         try:
@@ -479,6 +599,7 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
     pd.DataFrame: 
         Pandas Dataframe containing data from all files
     """
+     print("WARNING: msa_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
      temp_dfs = []
      for file in csv_filenames:
         try:
@@ -544,6 +665,7 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
     pd.DataFrame: 
         Pandas Dataframe containing data from all files
     """
+    print("WARNING: small_planet_control_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     variable_names_path = config.get_var_names_path()
     try:
         variable_data = pd.read_csv(variable_names_path)
@@ -622,6 +744,7 @@ def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     pd.DataFrame: 
         Pandas Dataframe containing data from all files
     """
+    print("WARNING: egauge_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
 
     temp_dfs = []
     for file in csv_filenames:
@@ -692,6 +815,7 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
     pd.DataFrame: 
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
     """
+    print("WARNING: skycentrics_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     #temporary solution while no date range available
     
     try:
@@ -773,6 +897,7 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     pd.DataFrame: 
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
     """
+    print("WARNING: fm_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     api_token = config.get_fm_token()
     device_id = config.get_fm_device_id()
     url = f"https://www.fieldpop.io/rest/method/fieldpop-api/deviceDataLog?happn_token={api_token}&deviceID={device_id}"
@@ -848,6 +973,7 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         return None
     
 def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, eGauge_pw : str, num_days : int = 2):
+    print("WARNING: pull_egauge_data() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     original_directory = os.getcwd()
     os.chdir(config.data_directory)
     num_rows = 1400 * num_days
@@ -890,6 +1016,7 @@ def licor_cloud_api_to_df(config: ConfigManager, startTime: datetime = None, end
         The index is in UTC and may need to be converted to the appropriate timezone.
         Returns an empty DataFrame if the API call fails.
     """
+    print("WARNING: licor_cloud_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     df = pd.DataFrame()
     api_device_id = config.api_device_id
     if endTime is None:
@@ -980,6 +1107,7 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull.
         Will return with index in UTC so needs to be converted after to appropriate timezone
     """
+    print("WARNING: tb_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     df = pd.DataFrame()
     api_device_id = device_id_overwrite if not device_id_overwrite is None else config.api_device_id
     if len(sensor_keys) <= 0:
@@ -1103,7 +1231,7 @@ def get_sub_dirs(dir: str) -> List[str]:
     ------- 
     List[str]: 
         List of paths to subfolders.
-    """
+    """ 
     directories = []
     try:
         for name in os.listdir(dir):
@@ -1151,6 +1279,37 @@ def excel_to_csv(excel_folder_path : str, csv_folder_path : str, excel_date_form
     combined.to_csv(output_path, index=False)
     print(f"Saved combined CSV to {output_path}")
 
+def _get_lat_and_long(config : ConfigManager) -> [float, float]:
+    db_connection, db_cursor = config.connect_siteConfig_db()
+    table_config_dict = config.get_db_table_info(["minute"])
+    latitude, longitude = None, None
+    try:
+        db_cursor.execute(
+            f"SELECT zip_code FROM site WHERE site_name = '{table_config_dict['minute']['table_name']}' LIMIT 1;")
+        zip_code_data = pd.DataFrame(db_cursor.fetchall())
+        if len(zip_code_data.index) > 0:
+            zip_code = zip_code_data[0][0]
+            print(f"Zip code for site retrieved: {zip_code}")
+            csv_path = os.path.join(os.path.dirname(__file__), 'zip_to_lat_long.csv')
+            with open(csv_path, 'r') as csv_file:
+                reader = csv.DictReader(csv_file)
+                for row in reader:
+                    if int(row['zip']) == int(zip_code):
+                        latitude = float(row['lattitude'])
+                        longitude = float(row['longitude'])
+                        break
+            if latitude is None and longitude is None:
+                print(f"Zip code {zip_code} not found in datapipeline package zip code repository.")
+        else:
+            print(f"No available zipcode for {table_config_dict['minute']['table_name']}. Cannot retrieve OAT data")
+    except mysqlerrors.Error:
+        print("Unable to find zip code in database.")
+
+    db_cursor.close()
+    db_connection.close()
+
+    return latitude, longitude
+
 def get_OAT_open_meteo(lat: float, long: float, start_date: datetime, end_date: datetime = None, time_zone: str = "America/Los_Angeles",
                        use_noaa_names : bool = True) -> pd.DataFrame:
     if end_date is None:
@@ -1158,7 +1317,7 @@ def get_OAT_open_meteo(lat: float, long: float, start_date: datetime, end_date: 
     # datetime.today().date().strftime('%Y%m%d%H%M%S')
     start_date_str = start_date.date().strftime('%Y-%m-%d')
     end_date_str = end_date.date().strftime('%Y-%m-%d')
-    print(f"Getting Open Meteao data for {start_date_str} to {end_date_str}")
+    print(f"Getting Open Meteo data for {start_date_str} to {end_date_str}")
     try:
         openmeteo = openmeteo_requests.Client()
         
@@ -1224,6 +1383,7 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
     dict: 
         Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
+    print("WARNING: get_noaa_data() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     #TODO swap out for this if empty: https://open-meteo.com/en/docs/historical-weather-api?start_date=2025-12-29&latitude=47.6&longitude=-122.33&temperature_unit=fahrenheit&end_date=2026-01-04
     formatted_dfs = {}
     weather_directory = config.get_weather_dir_path()
