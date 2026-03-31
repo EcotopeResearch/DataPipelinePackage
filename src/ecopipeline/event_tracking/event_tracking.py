@@ -22,7 +22,7 @@ from .alarms.Boundary import Boundary
 
 def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "",
                              default_cop_high_bound : float = 4.5, default_cop_low_bound : float = 0,
-                             default_boundary_fault_time : int = 15, site_name : str = None, day_table_name_header : str = "day",
+                             default_boundary_fault_time : int = 15, day_table_name_header : str = "day",
                              power_ratio_period_days : int = 7) -> pd.DataFrame:
     """
     Run all available alarm detectors and return a combined alarm event DataFrame.
@@ -53,9 +53,6 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     default_boundary_fault_time : int, optional
         Consecutive minutes a sensor must be out of bounds before a boundary
         alarm triggers (default 15).
-    site_name : str, optional
-        Site identifier used for context in certain alarm checks.  Defaults to
-        ``None``.
     day_table_name_header : str, optional
         Key passed to ``config.get_table_name()`` to resolve the daily database
         table name (default ``"day"``).
@@ -90,8 +87,6 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
         if not 'system' in bounds_df.columns:
             raise Exception("system parameter is non null, however, system is not present in Variable_Names.csv")
         bounds_df = bounds_df.loc[bounds_df['system'] == system]
-    
-    day_list = daily_data.index.to_list()
     print('Checking for alarms...')
     alarm_df = _convert_silent_alarm_dict_to_df({})
     dict_of_alarms = {}
@@ -110,7 +105,7 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     dict_of_alarms['unexpected temperature'] = TempRange(bounds_df)
     dict_of_alarms['demand response inconsistency'] = LSInconsist(bounds_df)
 
-    ongoing_COP_exception = ['abnormal COP']
+    # ongoing_COP_exception = ['abnormal COP']
     for key, value in dict_of_alarms.items():
         # if key in ongoing_COP_exception and _check_if_during_ongoing_cop_alarm(daily_data, config, site_name):
         #     print("Ongoing DATA_LOSS_COP detected. ABNORMAL_COP events will be uploaded")

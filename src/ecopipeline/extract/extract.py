@@ -121,6 +121,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
     reprocess = True
     if start_time is None:
         start_time = get_last_full_day_from_db(config)
+        print(f"last full day in database found to be {start_time.strftime('%Y/%m/%d %H:%M:%S')}")
         reprocess = False
     if end_time is None:
         print(f"Attempting to extract data from {start_time.strftime('%Y/%m/%d %H:%M:%S')} to present.")
@@ -160,14 +161,23 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
             raise Exception(f"{process_type} is not a recognized extraction method.")
         raw_df = file_processor.get_raw_data()
     elif "api_" in process_type:
+        merge_process = False
         if reprocess:
+            last_db_day = get_last_full_day_from_db(config)
+            if end_time is None or end_time > last_db_day:
+                print("Time frame includes existing data and new data.")
+                merge_process = True
             file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
                  -18, -4)
             raw_df = file_processor.get_raw_data()
-        else:
+            if merge_process:
+                start_time = last_db_day
+        if not reprocess or merge_process:
             if process_type == "api_tb":
                 api_extractor = ThingsBoard(config, start_time, end_time)
             elif process_type == "api_skycentrics":
+                if time_zone is None or time_zone == 'America/Los_Angeles':
+                    time_zone = 'US/Pacific'
                 api_extractor = Skycentrics(config, start_time, end_time, time_zone=time_zone)
             elif process_type == "api_fm":
                 api_extractor = FieldManager(config, start_time, end_time)
@@ -175,7 +185,13 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                 api_extractor = LiCOR(config, start_time, end_time)
             else:
                 raise Exception(f"{process_type} is not a recognized extraction method.")
-            raw_df = api_extractor.get_raw_data()
+            if merge_process:
+                print("Merging existing data and new data...")
+                raw_df = pd.concat([raw_df, api_extractor.get_raw_data()])
+                print("data merged.")
+            else:
+                raw_df = api_extractor.get_raw_data()
+
     if not raw_df.empty:
         print(f"Successfully pulled raw data. Index range: {raw_df.index.min().strftime('%Y/%m/%d %H:%M:%S')} to {raw_df.index.max().strftime('%Y/%m/%d %H:%M:%S')}")
         print("Now extracting weather....")

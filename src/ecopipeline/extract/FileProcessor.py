@@ -114,7 +114,7 @@ class FileProcessor:
             if file.endswith(self.extension) and file.startswith(self.file_prefix):
                 full_filename = os.path.join(full_data_path, file)
                 filenames.append(full_filename)
-
+        
         if not self.start_time is None:
             filenames = self.extract_new(filenames)
 

@@ -21,7 +21,8 @@ data_map = {'int64':'float',
             'object':'varchar(25)',
             'bool': 'boolean'}
 
-def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df : pd.DataFrame, daily_df : pd.DataFrame, alarm_df : pd.DataFrame):
+def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df : pd.DataFrame, 
+                          daily_df : pd.DataFrame, alarm_df : pd.DataFrame, auto_log_data_loss : bool = False):
     """
     Dispatch all pipeline DataFrames to their respective database tables.
 
@@ -41,6 +42,8 @@ def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df :
         Daily-resolution sensor data. May be ``None``.
     alarm_df : pd.DataFrame
         Alarm records produced by the transform stage. May be ``None``.
+    auto_log_data_loss : bool, optional
+        Automatically logs a data loss event if there is no data seen for the last 3 days
     """
     print("++++++++++++ LOAD ++++++++++++")
     dbname = config.get_db_name()
@@ -52,17 +55,23 @@ def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df :
     if df is not None and not df.empty:
         minute_loader = Loader()
         minute_table = config.get_table_name("minute")
-        minute_loader.load_database(config, df, minute_table, dbname)
+        minute_loader.load_database(config, df, minute_table, dbname, auto_log_data_loss)
+    else:
+        print("No minute data to load into database.")
 
     if hourly_df is not None and not hourly_df.empty:
         hourly_loader = Loader()
         hourly_table = config.get_table_name("hour")
         hourly_loader.load_database(config, hourly_df, hourly_table, dbname)
+    else:
+        print("No hourly data to load into database.")
 
     if daily_df is not None and not daily_df.empty:
         daily_loader = Loader()
         daily_table = config.get_table_name("day")
         daily_loader.load_database(config, daily_df, daily_table, dbname)
+    else:
+        print("No daily data to load into database.")
 
 
 def check_table_exists(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, dbname: str) -> int:
