@@ -192,7 +192,7 @@ class ConfigManager:
 
         return configure.get(config_key, 'table_name')
     
-    def connect_db(self) -> (mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor):
+    def connect_db(self) -> [mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor]:
         """
         Create a connection with the mySQL server. 
 
@@ -324,3 +324,9 @@ class ConfigManager:
         else:
             print(f"The loadshift file '{full_ls_filename}' does not exist. Thus loadshifting will not be added to daily dataframe.")
             return pd.DataFrame()
+        
+    def get_ls_filename(self, ls_file_name : str = 'load_shift.csv') -> str:
+        full_ls_filename = f"{self.input_directory}{ls_file_name}" 
+        if ls_file_name != "" and os.path.exists(full_ls_filename):
+            return full_ls_filename
+        return ""

@@ -24,6 +24,7 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
                              default_cop_high_bound : float = 4.5, default_cop_low_bound : float = 0,
                              default_boundary_fault_time : int = 15, site_name : str = None, day_table_name_header : str = "day",
                              power_ratio_period_days : int = 7) -> pd.DataFrame:
+    print("++++++++++++ ALARM ++++++++++++")
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
@@ -43,34 +44,19 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     alarm_df = _convert_silent_alarm_dict_to_df({})
     dict_of_alarms = {}
     dict_of_alarms['boundary'] = Boundary(bounds_df, default_fault_time= default_boundary_fault_time)
-    # flag_boundary_alarms(df, config, full_days=day_list, system=system, default_fault_time= default_boundary_fault_time)
     dict_of_alarms['power ratio'] = PowerRatio(bounds_df, day_table_name = config.get_table_name(day_table_name_header), ratio_period_days=power_ratio_period_days)
-    # power_ratio_alarm(daily_data, config, day_table_name = config.get_table_name(day_table_name_header), system=system, ratio_period_days=power_ratio_period_days)
     dict_of_alarms['abnormal COP'] = AbnormalCOP(bounds_df, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
-    # flag_abnormal_COP(daily_data, config, system = system, default_high_bound=default_cop_high_bound, default_low_bound=default_cop_low_bound)
     dict_of_alarms['temperature maintenance setpoint'] = TMSetpoint(bounds_df)
-    # flag_high_tm_setpoint(df, daily_data, config, system=system)
     dict_of_alarms['recirculation loop balancing valve'] = BalancingValve(bounds_df)
-    # flag_recirc_balance_valve(daily_data, config, system=system)
     dict_of_alarms['HPWH inlet temperature'] = HPWHInlet(bounds_df)
-    # flag_hp_inlet_temp(df, daily_data, config, system)
     dict_of_alarms['HPWH outlet temperature'] = HPWHOutlet(bounds_df)
-    # flag_hp_outlet_temp(df, daily_data, config, system)
     dict_of_alarms['improper backup heating use'] = BackupUse(bounds_df)
-    # flag_backup_use(df, daily_data, config, system)
     dict_of_alarms['HPWH outage'] = HPWHOutage(bounds_df, day_table_name = config.get_table_name(day_table_name_header))
-    # flag_HP_outage(df, daily_data, config, day_table_name = config.get_table_name(day_table_name_header), system=system)
     dict_of_alarms['blown equipment fuse'] = BlownFuse(bounds_df)
-    # flag_blown_fuse(df, daily_data, config, system)
     dict_of_alarms['unexpected SOO change'] = SOOChange(bounds_df)
-    # flag_unexpected_soo_change(df, daily_data, config, system)
     dict_of_alarms['short cycle'] = ShortCycle(bounds_df)
-    # flag_shortcycle(df, daily_data, config, system)
     dict_of_alarms['unexpected temperature'] = TempRange(bounds_df)
-    # flag_unexpected_temp(df, daily_data, config, system)
     dict_of_alarms['demand response inconsistency'] = LSInconsist(bounds_df)
-    # flag_ls_mode_inconsistancy(df, daily_data, config, system)
-    # return alarm.find_alarms(df, daily_df, config)
 
     ongoing_COP_exception = ['abnormal COP']
     for key, value in dict_of_alarms.items():
@@ -82,15 +68,6 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
             alarm_df = pd.concat([alarm_df, specific_alarm_df])
         else:
             print(f"No {key} alarm(s) detected.")
-
-    # for key, value in dict_of_alarms.items():
-    #     if key in ongoing_COP_exception and _check_if_during_ongoing_cop_alarm(daily_data, config, site_name):
-    #         print("Ongoing DATA_LOSS_COP detected. No further DATA_LOSS_COP events will be uploaded")
-    #     elif len(value) > 0:
-    #         print(f"Detected {key} alarm(s). Adding to event df...")
-    #         alarm_df = pd.concat([alarm_df, value])
-    #     else:
-    #         print(f"No {key} alarm(s) detected.")
 
     return alarm_df
 

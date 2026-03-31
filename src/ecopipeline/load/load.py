@@ -8,6 +8,8 @@ import math
 pd.set_option('display.max_columns', None)
 import mysql.connector.errors as mysqlerrors
 from ecopipeline import ConfigManager
+from ecopipeline.load.Loader import Loader
+from ecopipeline.load.AlarmLoader import AlarmLoader
 from datetime import datetime, timedelta
 import numpy as np
 
@@ -18,6 +20,30 @@ data_map = {'int64':'float',
             'datetime64[ns]':'datetime',
             'object':'varchar(25)',
             'bool': 'boolean'}
+
+def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df : pd.DataFrame, daily_df : pd.DataFrame, alarm_df : pd.DataFrame):
+    print("++++++++++++ LOAD ++++++++++++")
+    dbname = config.get_db_name()
+
+    if alarm_df is not None and not alarm_df.empty:
+        alarm_loader = AlarmLoader()
+        alarm_loader.load_database(config, alarm_df, "alarm", dbname)
+
+    if df is not None and not df.empty:
+        minute_loader = Loader()
+        minute_table = config.get_table_name("minute")
+        minute_loader.load_database(config, df, minute_table, dbname)
+
+    if hourly_df is not None and not hourly_df.empty:
+        hourly_loader = Loader()
+        hourly_table = config.get_table_name("hour")
+        hourly_loader.load_database(config, hourly_df, hourly_table, dbname)
+
+    if daily_df is not None and not daily_df.empty:
+        daily_loader = Loader()
+        daily_table = config.get_table_name("day")
+        daily_loader.load_database(config, daily_df, daily_table, dbname)
+
 
 def check_table_exists(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, dbname: str) -> int:
     """

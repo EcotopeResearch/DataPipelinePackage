@@ -9,6 +9,86 @@ from ecopipeline import ConfigManager
 pd.set_option('display.max_columns', None)
 
 
+def central_transform_function(config : ConfigManager, df : pd.DataFrame, weather_df : pd.DataFrame = None, tz_convert_from: str = 'America/Los_Angeles',
+                               tz_convert_to: str = 'America/Los_Angeles', oat_column_name : str = "Temp_OAT",
+                               complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True,
+                               custom_function_1=None, custom_function_2=None) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Parameters
+    ----------
+    config : ecopipeline.ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+    df : pd.DataFrame
+        dataframe with raw time indexed (ideally minute interval) site data. Important column names should be
+        represented in the variable_alias column in the Variable_Names.csv file.
+    weather_df : pd.DataFrame
+        dataframe with time indexed (preferably hourly) weather data. Will be merged with hourly dataframe
+    tz_convert_from : str
+        String value of timezone data is currently in
+    tz_convert_to : str
+        String value of timezone data should be converted to
+    oat_column_name : str
+        Name that Outdoor Air Temperature column should have (default 'Temp_OAT')
+    complete_hour_threshold : float
+        Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8) 
+        Only applicable if remove_partial set to True
+    complete_day_threshold : float
+        Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8) 
+        Only applicable if remove_partial set to True
+    remove_partial : bool
+        Default to True. Removes parial days and hours from aggregated dfs 
+    custom_function_1 : callable, optional
+        A custom function called after minute-level processing and before aggregation.
+        Signature: custom_function_1(df: pd.DataFrame) -> pd.DataFrame
+    custom_function_2 : callable, optional
+        A custom function called after weather merging and before returning.
+        Signature: custom_function_2(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    """
+    print("++++++++++++ TRANSFORM ++++++++++++")
+    df = rename_sensors(df, config)
+    round_time(df)
+    df = ffill_missing(df, config)
+    if not tz_convert_to == tz_convert_from:
+        df = convert_time_zone(df, tz_convert_from, tz_convert_to)
+    df = avg_duplicate_times(df, None)
+
+    if custom_function_1 is not None:
+        if not callable(custom_function_1):
+            raise TypeError("custom_function_1 must be a callable that accepts (df: pd.DataFrame) and returns a pd.DataFrame.")
+        try:
+            result = custom_function_1(df)
+        except TypeError as e:
+            raise TypeError(f"custom_function_1 failed — ensure it accepts exactly one parameter (df: pd.DataFrame). Original error: {e}")
+        if not isinstance(result, pd.DataFrame):
+            raise TypeError(f"custom_function_1 must return a pd.DataFrame, but returned {type(result).__name__}.")
+        df = result
+
+    hourly_df, daily_df = aggregate_df(df, config.get_ls_filename(), complete_hour_threshold, complete_day_threshold, remove_partial)
+    # process ls
+    # df, hourly_df, daily_df = process_ls_signal(df, hourly_df, daily_df)
+
+    if not weather_df is None and not weather_df.empty:
+        weather_df = weather_df.rename(columns = {'airTemp_F':oat_column_name})
+        weather_df.index = weather_df.index.tz_localize(None)
+        hourly_df = join_to_hourly(hourly_df, weather_df, oat_column_name)
+
+        if len(daily_df.index) > 0 and oat_column_name in hourly_df.columns:
+            daily_df[oat_column_name] = hourly_df[oat_column_name].resample('D').mean(numeric_only=True)
+
+    if custom_function_2 is not None:
+        if not callable(custom_function_2):
+            raise TypeError("custom_function_2 must be a callable that accepts (df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame) and returns a tuple of three pd.DataFrames.")
+        try:
+            result = custom_function_2(df, hourly_df, daily_df)
+        except TypeError as e:
+            raise TypeError(f"custom_function_2 failed — ensure it accepts exactly three parameters (df, hourly_df, daily_df: pd.DataFrame). Original error: {e}")
+        if (not isinstance(result, tuple) or len(result) != 3
+                or not all(isinstance(r, pd.DataFrame) for r in result)):
+            raise TypeError(f"custom_function_2 must return a tuple of three pd.DataFrames (df, hourly_df, daily_df), but returned {type(result).__name__}.")
+        df, hourly_df, daily_df = result
+
+    return df, hourly_df, daily_df
+
 def concat_last_row(df: pd.DataFrame, last_row: pd.DataFrame) -> pd.DataFrame:
     """
     This function takes in a dataframe with new data and a second data frame meant to be the
@@ -1168,7 +1248,7 @@ def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float
     return hourly_df, daily_df
 
 
-def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame) -> pd.DataFrame:
+def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame, oat_column_name : str = 'OAT_NOAA') -> pd.DataFrame:
     """
     Function left-joins the weather data to the hourly dataframe.
 
@@ -1185,7 +1265,7 @@ def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame) -> pd.Dat
         A single, joined dataframe
     """
     #fixing pipelines for new years
-    if 'OAT_NOAA' in noaa_data.columns and not noaa_data['OAT_NOAA'].notnull().any():
+    if oat_column_name in noaa_data.columns and not noaa_data[oat_column_name].notnull().any():
         return hourly_data
     out_df = hourly_data.join(noaa_data)
     return out_df

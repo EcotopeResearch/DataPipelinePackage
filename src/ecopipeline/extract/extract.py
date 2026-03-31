@@ -256,8 +256,9 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
     List[str]: 
         Filtered list of filenames
     """
-    
-    if decihex: 
+    print("WARNING: extract_new() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
+
+    if decihex:
         base_date = datetime(1970, 1, 1)
         file_dates = [pd.Timestamp(base_date + timedelta(seconds = int(re.search(r'\.(.*?)_', filename.split("/")[-1]).group(1), 16))) for filename in filenames] #convert decihex to dates, these are in utc
         if timeZone == None:
@@ -301,8 +302,9 @@ def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = ""
     Returns
     ------- 
     List[str]: 
-        List of filenames 
+        List of filenames
     """
+    print("WARNING: extract_files() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     os.chdir(os.getcwd())
     filenames = []
     full_data_path = f"{config.data_directory}{data_sub_dir}"
@@ -332,6 +334,7 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     pd.DataFrame: 
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
     """
+    print("WARNING: json_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in json_filenames:
         try:
@@ -387,6 +390,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
         (with prepended modbus prefix if mb_prefix = True)
     """
+    print("WARNING: csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in csv_filenames:
         try:
@@ -483,6 +487,7 @@ def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
         (with prepended modbus prefix if mb_prefix = True)
     """
+    print("WARNING: dent_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in csv_filenames:
         try:
@@ -539,6 +544,7 @@ def flow_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
         Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
         (with prepended modbus prefix if mb_prefix = True)
     """
+    print("WARNING: flow_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     temp_dfs = []
     for file in csv_filenames:
         try:
@@ -593,6 +599,7 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
     pd.DataFrame: 
         Pandas Dataframe containing data from all files
     """
+     print("WARNING: msa_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
      temp_dfs = []
      for file in csv_filenames:
         try:
@@ -658,6 +665,7 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
     pd.DataFrame: 
         Pandas Dataframe containing data from all files
     """
+    print("WARNING: small_planet_control_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     variable_names_path = config.get_var_names_path()
     try:
         variable_data = pd.read_csv(variable_names_path)
@@ -736,6 +744,7 @@ def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     pd.DataFrame: 
         Pandas Dataframe containing data from all files
     """
+    print("WARNING: egauge_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
 
     temp_dfs = []
     for file in csv_filenames:
@@ -806,6 +815,7 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
     pd.DataFrame: 
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
     """
+    print("WARNING: skycentrics_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     #temporary solution while no date range available
     
     try:
@@ -887,6 +897,7 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     pd.DataFrame: 
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull
     """
+    print("WARNING: fm_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     api_token = config.get_fm_token()
     device_id = config.get_fm_device_id()
     url = f"https://www.fieldpop.io/rest/method/fieldpop-api/deviceDataLog?happn_token={api_token}&deviceID={device_id}"
@@ -962,6 +973,7 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         return None
     
 def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, eGauge_pw : str, num_days : int = 2):
+    print("WARNING: pull_egauge_data() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     original_directory = os.getcwd()
     os.chdir(config.data_directory)
     num_rows = 1400 * num_days
@@ -1004,6 +1016,7 @@ def licor_cloud_api_to_df(config: ConfigManager, startTime: datetime = None, end
         The index is in UTC and may need to be converted to the appropriate timezone.
         Returns an empty DataFrame if the API call fails.
     """
+    print("WARNING: licor_cloud_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     df = pd.DataFrame()
     api_device_id = config.api_device_id
     if endTime is None:
@@ -1094,6 +1107,7 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         Pandas Dataframe containing data from the API pull with column headers the same as the variable names in the data from the pull.
         Will return with index in UTC so needs to be converted after to appropriate timezone
     """
+    print("WARNING: tb_api_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     df = pd.DataFrame()
     api_device_id = device_id_overwrite if not device_id_overwrite is None else config.api_device_id
     if len(sensor_keys) <= 0:
@@ -1217,7 +1231,7 @@ def get_sub_dirs(dir: str) -> List[str]:
     ------- 
     List[str]: 
         List of paths to subfolders.
-    """
+    """ 
     directories = []
     try:
         for name in os.listdir(dir):
@@ -1369,6 +1383,7 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
     dict: 
         Dictionary with key as Station Name and Value as DF of Parsed Weather Data
     """
+    print("WARNING: get_noaa_data() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     #TODO swap out for this if empty: https://open-meteo.com/en/docs/historical-weather-api?start_date=2025-12-29&latitude=47.6&longitude=-122.33&temperature_unit=fahrenheit&end_date=2026-01-04
     formatted_dfs = {}
     weather_directory = config.get_weather_dir_path()
