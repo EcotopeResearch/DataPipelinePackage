@@ -11,6 +11,18 @@ from datetime import datetime, timedelta
 import numpy as np
 
 class Loader:
+    """
+    Base class for loading pandas DataFrames into a MySQL database.
+
+    Provides UPSERT-based loading, table creation, column management, and
+    data-loss reporting utilities used by all concrete loader subclasses.
+
+    Attributes
+    ----------
+    data_map : dict
+        Mapping from pandas dtype name strings to MySQL column type strings.
+    """
+
     def __init__(self):
         self.data_map = {
             'int64':'float',
@@ -24,34 +36,35 @@ class Loader:
 
     def load_database(self, config : ConfigManager, dataframe: pd.DataFrame, table_name: str, dbname : str, auto_log_data_loss : bool = False, primary_key : str = 'time_pt'):
         """
-        Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
-        Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
+        Load a pandas DataFrame into a MySQL table using an UPSERT strategy.
+
+        Existing rows are updated rather than replaced; NULL values in the
+        incoming DataFrame will not overwrite existing non-NULL values in the
+        database.
 
         Parameters
-        ----------  
-        config : ecopipeline.ConfigManager
+        ----------
+        config : ConfigManager
             The ConfigManager object that holds configuration data for the pipeline.
-        dataframe: pd.DataFrame
-            The pandas DataFrame to be written into the mySQL server.
-        config_info: dict
-            The dictionary containing the configuration information in the data upload. This can be aquired through the get_login_info() function in this package
-        primary_key : str
-            The name of the primary key in the database to upload to. Default as 'time_pt'
+        dataframe : pd.DataFrame
+            The pandas DataFrame to be written into the MySQL server. The index
+            must be the primary-key column (e.g. a datetime index named ``time_pt``).
         table_name : str
-            overwrites table name from config_info if needed
-        dbname : str = None
-            name of the database table
-        auto_log_data_loss : bool
-            if set to True, a data loss event will be reported if no data exits in the dataframe 
-            for the last two days from the current date OR if an error occurs
-        config_key : str 
-            The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.
-            
+            Name of the destination table in the database.
+        dbname : str
+            Name of the MySQL database that contains ``table_name``.
+        auto_log_data_loss : bool, optional
+            If ``True``, a DATA_LOSS_COP event is recorded when no data exists
+            in the DataFrame for the last three days, or when an exception
+            occurs. Defaults to ``False``.
+        primary_key : str, optional
+            Column name used as the primary key in the destination table.
+            Defaults to ``'time_pt'``.
 
         Returns
-        ------- 
-        bool: 
-            A boolean value indicating if the data was successfully written to the database. 
+        -------
+        bool
+            ``True`` if the data were successfully written; ``False`` otherwise.
         """
         # Database Connection
         db_connection, cursor = config.connect_db()
@@ -138,20 +151,25 @@ class Loader:
     
     def report_data_loss(self, config : ConfigManager, site_name : str = None):
         """
-        Logs data loss event in event database (assumes one exists) as a DATA_LOSS_COP event to 
-        note that COP calculations have been effected
+        Log a DATA_LOSS_COP event in the ``site_events`` table.
+
+        Records that COP calculations have been affected by a data loss
+        condition. If an open DATA_LOSS_COP event already exists for the
+        given site, no duplicate is inserted.
 
         Parameters
-        ----------  
-        config : ecopipeline.ConfigManager
+        ----------
+        config : ConfigManager
             The ConfigManager object that holds configuration data for the pipeline.
-        site_name : str
-            the name of the site to correspond the events with. If left blank will default to minute table name
+        site_name : str, optional
+            Name of the site to associate the event with. Defaults to the
+            site name returned by ``config.get_site_name()``.
 
         Returns
-        ------- 
-        bool: 
-            A boolean value indicating if the data was successfully written to the database. 
+        -------
+        bool
+            ``True`` if the event was logged (or already existed); ``False``
+            if the ``site_events`` table does not exist.
         """
         # Drop empty columns
 
@@ -204,22 +222,23 @@ class Loader:
 
     def check_table_exists(self, cursor : mysql.connector.cursor.MySQLCursor, table_name: str, dbname: str) -> int:
         """
-        Check if the given table name already exists in database.
+        Check whether a table exists in the database.
 
         Parameters
-        ---------- 
+        ----------
         cursor : mysql.connector.cursor.MySQLCursor
-            Database cursor object and the table name.
-        table_name : str 
-            Name of the table
+            An active database cursor.
+        table_name : str
+            Name of the table to check.
         dbname : str
-            Name of the database
+            Name of the database to search within.
 
         Returns
-        ------- 
-        int: 
-            The number of tables in the database with the given table name.
-            This can directly be used as a boolean!
+        -------
+        int
+            The count of tables matching ``table_name`` in ``dbname``.
+            Evaluates to ``True`` when non-zero, so it can be used directly
+            as a boolean.
         """
 
         cursor.execute(f"SELECT count(*) "
@@ -231,25 +250,36 @@ class Loader:
     
     def create_new_table(self, cursor : mysql.connector.cursor.MySQLCursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt", has_primary_key : bool = True) -> bool:
         """
-        Creates a new table in the mySQL database.
+        Create a new table in the MySQL database.
 
         Parameters
-        ---------- 
+        ----------
         cursor : mysql.connector.cursor.MySQLCursor
-            A cursor object and the name of the table to be created.
+            An active database cursor.
         table_name : str
-            Name of the table
+            Name of the table to create.
         table_column_names : list
-            list of columns names in the table must be passed.
-        primary_key: str
-            The name of the primary index of the table. Should be a datetime. If has_primary_key is set to False, this will just be a column not a key.
-        has_primary_key : bool
-            Set to False if the table should not establish a primary key. Defaults to True
+            Ordered list of column names (excluding the primary-key column).
+        table_column_types : list
+            Ordered list of MySQL type strings corresponding to
+            ``table_column_names``.  Must be the same length as
+            ``table_column_names``.
+        primary_key : str, optional
+            Name of the primary-key column. Defaults to ``'time_pt'``.
+        has_primary_key : bool, optional
+            If ``False``, the ``primary_key`` column is added as a plain
+            column rather than a PRIMARY KEY. Defaults to ``True``.
 
         Returns
-        ------- 
-        bool: 
-            A boolean value indicating if a table was sucessfully created. 
+        -------
+        bool
+            ``True`` if the table was successfully created.
+
+        Raises
+        ------
+        Exception
+            If ``table_column_names`` and ``table_column_types`` are different
+            lengths.
         """
         if(len(table_column_names) != len(table_column_types)):
             raise Exception("Cannot create table. Type list and Field Name list are different lengths.")
@@ -268,26 +298,28 @@ class Loader:
     
     def find_missing_columns(self, cursor : mysql.connector.cursor.MySQLCursor, dataframe: pd.DataFrame, dbname: str, table_name: str):
         """
-        Finds the column names which are not in the database table currently but are present
-        in the pandas DataFrame to be written to the database. If communication with database
-        is not possible, an empty list will be returned meaning no column will be added. 
+        Identify DataFrame columns that are absent from the database table.
+
+        If communication with the database fails, empty lists are returned so
+        that the caller can continue without adding any columns.
 
         Parameters
-        ---------- 
-        cursor : mysql.connector.cursor.MySQLCursor 
-            A cursor object and the name of the table to be created.
+        ----------
+        cursor : mysql.connector.cursor.MySQLCursor
+            An active database cursor.
         dataframe : pd.DataFrame
-            the pandas DataFrame to be written into the mySQL server. 
+            The DataFrame whose columns are compared against the table schema.
         dbname : str
-            Name of the database
-        data_type : str
-            the header name corresponding to the table you wish to write data to.  
+            Name of the database that contains ``table_name``.
+        table_name : str
+            Name of the table to inspect.
 
         Returns
-        ------- 
-        list: 
-            list of column names which must be added to the database table for the pandas 
-            DataFrame to be properly written into the database. 
+        -------
+        list
+            Column names present in ``dataframe`` but absent from the table.
+        list
+            Corresponding MySQL type strings for each missing column.
         """
 
         try:
@@ -312,24 +344,28 @@ class Loader:
 
     def create_new_columns(self, cursor : mysql.connector.cursor.MySQLCursor, table_name: str, new_columns: list, data_types: str):
         """
-        Create the new, necessary column in the database. Catches error if communication with mysql database
-        is not possible.
+        Add new columns to an existing database table.
+
+        Issues one ``ALTER TABLE … ADD COLUMN`` statement per column.
+        Stops and returns ``False`` on the first database error.
 
         Parameters
-        ----------  
+        ----------
         cursor : mysql.connector.cursor.MySQLCursor
-            A cursor object and the name of the table to be created.
-        config_info : dict
-            The dictionary containing the configuration information.
-        data_type : str
-            the header name corresponding to the table you wish to write data to.  
+            An active database cursor.
+        table_name : str
+            Name of the table to alter.
         new_columns : list
-            list of columns that must be added to the database table.
+            Ordered list of column names to add.
+        data_types : str
+            Ordered list of MySQL type strings corresponding to
+            ``new_columns``.
 
         Returns
-        ------- 
-        bool:
-            boolean indicating if the the column were successfully added to the database. 
+        -------
+        bool
+            ``True`` if all columns were added successfully; ``False`` if a
+            database error occurred.
         """
         alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} {data_type} DEFAULT NULL;" for column, data_type in zip(new_columns, data_types)]
 
@@ -343,6 +379,7 @@ class Loader:
         return True
     
     def _generate_mysql_update(self, row, index, table_name, primary_key):
+        """Build a parameterised MySQL UPDATE statement for a single DataFrame row."""
         statement = f"UPDATE {table_name} SET "
         statment_elems = []
         values = []

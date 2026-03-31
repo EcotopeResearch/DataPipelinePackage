@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Event Tracking Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
+    <title>Event Tracking Documentation &#8212; DataPipelinePackage 2.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../load/load.html" title="Load Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Event Tracking Documentation</a></li> 
       </ul>
     </div>  
@@ -46,7 +46,16 @@
 <h1>Event Tracking Documentation<a class="headerlink" href="#event-tracking-documentation" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<span class="target" id="module-ecopipeline.event_tracking"></span><dl class="py class">
+<span class="target" id="module-ecopipeline.event_tracking"></span><p>Event tracking and alarm detection utilities for the ecopipeline package.</p>
+<p>This module exposes all public alarm-detection functions and alarm classes
+used to identify fault conditions in heat-pump water-heater (HPWH) and
+associated building-energy systems.  Functions accept post-transformed
+minute and/or daily <code class="docutils literal notranslate"><span class="pre">pd.DataFrame</span></code> objects together with a
+<code class="docutils literal notranslate"><span class="pre">ConfigManager</span></code> instance and return a <code class="docutils literal notranslate"><span class="pre">pd.DataFrame</span></code> of detected alarm
+events.</p>
+<p>Alarm classes (e.g. <code class="docutils literal notranslate"><span class="pre">Boundary</span></code>, <code class="docutils literal notranslate"><span class="pre">ShortCycle</span></code>, <code class="docutils literal notranslate"><span class="pre">AbnormalCOP</span></code>) can also
+be imported directly from this module for lower-level use.</p>
+<dl class="py class">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.AbnormalCOP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">AbnormalCOP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_high_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_low_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.AbnormalCOP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ecopipeline.event_tracking.Alarm" title="ecopipeline.event_tracking.Alarm.Alarm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Alarm</span></code></a></p>
@@ -98,7 +107,7 @@ pretty_name - (Optional) Display name for the variable in alarm messages. Defaul
 
 <dl class="py class">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.Alarm">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">Alarm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_default_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">two_part_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_db_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'SILENT_ALARM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_id_matching</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.Alarm" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">Alarm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_default_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">two_part_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_id_matching</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.Alarm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
@@ -914,47 +923,112 @@ Temperature below this triggers an alarm.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.central_alarm_df_creator">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">central_alarm_df_creator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_cop_high_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_cop_low_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_boundary_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day_table_name_header</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'day'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power_ratio_period_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.central_alarm_df_creator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_HP_outage">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_HP_outage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day_table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio_period_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_HP_outage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects possible heat pump failures or outages by checking if heat pump power consumption falls below
-an expected ratio of total system power over a rolling period, or by checking for non-zero values in
-a direct alarm variable from the heat pump controller.</p>
-<p>VarNames syntax:
-HPOUT_POW_[OPTIONAL ID]:### - Heat pump power variable. ### is the minimum expected ratio of HP power to total power</p>
-<blockquote>
-<div><p>(default 0.3 for 30%). Must be in same power units as total system power.</p>
-</div></blockquote>
-<p>HPOUT_TP_[OPTIONAL ID] - Total system power variable for ratio comparison. Required when using POW codes.
-HPOUT_ALRM_[OPTIONAL ID] - Direct alarm variable from HP controller. Alarm triggers if any non-zero value is detected.</p>
+<dd><p>Run all available alarm detectors and return a combined alarm event DataFrame.</p>
+<p>Iterates over every alarm type (boundary, power ratio, abnormal COP, TM
+setpoint, balancing valve, HPWH inlet/outlet, backup use, HPWH outage,
+blown fuse, unexpected SOO change, short cycle, unexpected temperature, and
+demand-response inconsistency) and concatenates any detected events into a
+single result.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. Used for checking ALRM codes for non-zero values.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data. Used for checking power ratios over the rolling period.</p>
+<dt><strong>daily_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame with a datetime index.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the HPOUT alarm codes (e.g., HPOUT_POW_1:0.3, HPOUT_TP_1, HPOUT_ALRM_1).</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Used to locate <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>
+and to resolve database table names.</p>
 </dd>
-<dt><strong>day_table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the daily database table to fetch previous days’ data for the rolling period calculation.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>default_cop_high_bound</strong><span class="classifier">float, optional</span></dt><dd><p>Upper COP threshold for the abnormal-COP alarm (default 4.5).</p>
 </dd>
-<dt><strong>default_power_ratio</strong><span class="classifier">float</span></dt><dd><p>Default minimum power ratio threshold (as decimal, e.g., 0.3 for 30%) for POW alarm codes when no custom bound is specified (default 0.3).
-An alarm triggers if HP power falls below this ratio of total power over the rolling period.</p>
+<dt><strong>default_cop_low_bound</strong><span class="classifier">float, optional</span></dt><dd><p>Lower COP threshold for the abnormal-COP alarm (default 0).</p>
 </dd>
-<dt><strong>ratio_period_days</strong><span class="classifier">int</span></dt><dd><p>Number of days to use for the rolling power ratio calculation (default 7). Must be greater than 1.</p>
+<dt><strong>default_boundary_fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Consecutive minutes a sensor must be out of bounds before a boundary
+alarm triggers (default 15).</p>
+</dd>
+<dt><strong>site_name</strong><span class="classifier">str, optional</span></dt><dd><p>Site identifier used for context in certain alarm checks.  Defaults to
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>day_table_name_header</strong><span class="classifier">str, optional</span></dt><dd><p>Key passed to <code class="docutils literal notranslate"><span class="pre">config.get_table_name()</span></code> to resolve the daily database
+table name (default <code class="docutils literal notranslate"><span class="pre">&quot;day&quot;</span></code>).</p>
+</dd>
+<dt><strong>power_ratio_period_days</strong><span class="classifier">int, optional</span></dt><dd><p>Rolling window in days used by the power-ratio alarm (default 7).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events with columns <code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">alarm_type</span></code>,
+<code class="docutils literal notranslate"><span class="pre">alarm_detail</span></code>, and <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>, indexed by <code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code>.
+Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>
+cannot be found.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">system</span></code> is non-empty but the <code class="docutils literal notranslate"><span class="pre">system</span></code> column is absent from
+<code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_HP_outage">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_HP_outage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day_table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio_period_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_HP_outage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detect possible heat pump failures or outages.</p>
+<p>Checks whether heat pump power consumption falls below an expected ratio of
+total system power over a rolling period, or whether a direct alarm variable
+from the heat pump controller reports a non-zero value.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">HPOUT_POW_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Heat pump power variable.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is
+the minimum expected ratio of HP power to total power (default
+<code class="docutils literal notranslate"><span class="pre">default_power_ratio</span></code>).  Must use the same power units as total system
+power.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HPOUT_TP_[OPTIONAL</span> <span class="pre">ID]</span></code> — Total system power variable for ratio
+comparison.  Required when using POW codes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HPOUT_ALRM_[OPTIONAL</span> <span class="pre">ID]</span></code> — Direct alarm variable from the HP
+controller.  Alarm triggers if any non-zero value is detected.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Used for checking ALRM
+codes for non-zero values.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.  Used for checking power
+ratios over the rolling period.</p>
+</dd>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
+</dd>
+<dt><strong>day_table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the daily database table used to fetch previous days’ data for
+the rolling-period calculation.</p>
+</dd>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
+</dd>
+<dt><strong>default_power_ratio</strong><span class="classifier">float, optional</span></dt><dd><p>Minimum power-ratio threshold (e.g., 0.3 for 30 %) for POW alarm codes
+when no custom bound is provided (default 0.3).  An alarm triggers when
+HP power falls below this ratio of total power over the rolling period.</p>
+</dd>
+<dt><strong>ratio_period_days</strong><span class="classifier">int, optional</span></dt><dd><p>Number of days in the rolling power-ratio window (default 7).  Must be
+greater than 1.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -964,43 +1038,80 @@ An alarm triggers if HP power falls below this ratio of total power over the rol
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_abnormal_COP">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_abnormal_COP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_high_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_low_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_abnormal_COP" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_backup_use">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_backup_use</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_backup_use" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and location of alarm information in a csv,
-and create an dataframe with applicable alarm events</p>
-<p>VarNames syntax:
-BU_P_ID - Back Up Tank Power Variable. Must be in same power units as total system power
-BU_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
-BU_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)</p>
+<dd><p>Detect days with an abnormal coefficient of performance (COP) value.</p>
+<p>Reads alarm configuration from <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> via <code class="docutils literal notranslate"><span class="pre">config</span></code> and
+delegates detection to <a class="reference internal" href="#ecopipeline.event_tracking.AbnormalCOP" title="ecopipeline.event_tracking.AbnormalCOP"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbnormalCOP</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>daily_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame with a datetime index.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object used to locate <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the STS alarm codes (e.g., STS_T_1:140, STS_SP_1:2.0)</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.</p>
+<dt><strong>default_high_bound</strong><span class="classifier">float, optional</span></dt><dd><p>Upper COP threshold above which an alarm is triggered (default 4.5).</p>
 </dd>
-<dt><strong>default_setpoint</strong><span class="classifier">float</span></dt><dd><p>Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)</p>
-</dd>
-<dt><strong>default_power_indication</strong><span class="classifier">float</span></dt><dd><p>Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)</p>
-</dd>
-<dt><strong>default_power_ratio</strong><span class="classifier">float</span></dt><dd><p>Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)</p>
+<dt><strong>default_low_bound</strong><span class="classifier">float, optional</span></dt><dd><p>Lower COP threshold below which an alarm is triggered (default 0).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if
+<code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_backup_use">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_backup_use</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_backup_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detect improper backup heating use based on power consumption and setpoint checks.</p>
+<p>Triggers alarms when the backup tank consumes a disproportionate share of
+total system power or when the backup setpoint deviates from its expected
+value.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BU_P_ID</span></code> — Backup tank power variable.  Must use the same power units
+as total system power.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BU_TP_ID:###</span></code> — Total system power for ratio alarming.  Alarm triggers
+when backup power exceeds <code class="docutils literal notranslate"><span class="pre">###</span></code> fraction of total power (default
+<code class="docutils literal notranslate"><span class="pre">default_power_ratio</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BU_ST_ID:###</span></code> — Backup setpoint that must not deviate from <code class="docutils literal notranslate"><span class="pre">###</span></code>
+(default <code class="docutils literal notranslate"><span class="pre">default_setpoint</span></code>).</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.  Used for power-ratio checks
+and to determine which days to process.</p>
+</dd>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
+</dd>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
+</dd>
+<dt><strong>default_setpoint</strong><span class="classifier">float, optional</span></dt><dd><p>Default temperature setpoint in degrees F for ST alarm codes when no
+custom bound is provided (default 130.0).</p>
+</dd>
+<dt><strong>default_power_ratio</strong><span class="classifier">float, optional</span></dt><dd><p>Default power-ratio threshold (e.g., 0.1 for 10 %) for TP alarm codes
+when no custom bound is provided (default 0.1).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1010,39 +1121,48 @@ name of each variable in the dataframe that requires alarming and the STS alarm 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_blown_fuse">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_blown_fuse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_draw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_blown_fuse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects blown fuse alarms for heating elements by identifying when an element is drawing power
-but significantly less than expected, which may indicate a blown fuse.</p>
-<p>VarNames syntax:
-BF_[OPTIONAL ID]:### - Indicates a blown fuse alarm for an element. ### is the expected kW input when the element is on.</p>
+<dd><p>Detect blown fuse conditions on heating elements.</p>
+<p>Identifies when a heating element is drawing power but significantly less
+than expected, which may indicate a blown fuse.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BF_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Blown fuse alarm for an element.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is
+the expected kW draw when the element is on.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the BF alarm codes (e.g., BF:30, BF_1:25).</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_power_threshold</strong><span class="classifier">float</span></dt><dd><p>Power threshold to determine if the element is “on” (default 1.0). Element is considered on when power exceeds this value.</p>
+<dt><strong>default_power_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Power threshold in kW used to determine whether the element is <em>on</em>
+(default 1.0).  Element is considered on when power exceeds this value.</p>
 </dd>
-<dt><strong>default_power_range</strong><span class="classifier">float</span></dt><dd><p>Allowable variance below the expected power draw (default 2.0). An alarm triggers when the actual power draw is less than
-(expected_power_draw - default_power_range) while the element is on.</p>
+<dt><strong>default_power_range</strong><span class="classifier">float, optional</span></dt><dd><p>Allowable variance below the expected power draw in kW (default 2.0).
+An alarm triggers when actual power is less than
+<code class="docutils literal notranslate"><span class="pre">expected_power_draw</span> <span class="pre">-</span> <span class="pre">default_power_range</span></code> while the element is on.</p>
 </dd>
-<dt><strong>default_power_draw</strong><span class="classifier">float</span></dt><dd><p>Default expected power draw in kW when no custom bound is specified in the alarm code (default 30).</p>
+<dt><strong>default_power_draw</strong><span class="classifier">float, optional</span></dt><dd><p>Default expected power draw in kW when no custom bound is specified in
+the alarm code (default 30).</p>
 </dd>
-<dt><strong>fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes that the fault condition must persist before triggering an alarm (default 3).</p>
+<dt><strong>fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Consecutive minutes the fault condition must persist before an alarm is
+triggered (default 3).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1052,32 +1172,36 @@ name of each variable in the dataframe that requires alarming and the BF alarm c
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_boundary_alarms">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_boundary_alarms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_boundary_alarms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and location of alarm information in a csv,
-and create an dataframe with applicable alarm events</p>
+<dd><p>Flag out-of-bounds sensor readings and return alarm events.</p>
+<p>Reads acceptable sensor ranges from <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> via <code class="docutils literal notranslate"><span class="pre">config</span></code>
+and triggers an alarm whenever a sensor stays outside its bounds for
+<code class="docutils literal notranslate"><span class="pre">default_fault_time</span></code> consecutive minutes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least three columns which must be titled “variable_name”, “low_alarm”, and “high_alarm” which should contain the
-name of each variable in the dataframe that requires the alarming, the lower bound for acceptable data, and the upper bound for
-acceptable data respectively</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>, <code class="docutils literal notranslate"><span class="pre">low_alarm</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">high_alarm</span></code>.</p>
 </dd>
-<dt><strong>default_fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes that a sensor must be out of bounds for to trigger an alarm. Can be customized for each variable with
-the fault_time column in Variable_Names.csv</p>
+<dt><strong>default_fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Number of consecutive minutes a sensor must be out of bounds before an
+alarm is triggered (default 15).  Can be overridden per variable using
+a <code class="docutils literal notranslate"><span class="pre">fault_time</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>full_days</strong><span class="classifier">list</span></dt><dd><p>list of pd.Datetimes that should be considered full days here. If set to none, will take any day at all present in df</p>
+<dt><strong>full_days</strong><span class="classifier">list, optional</span></dt><dd><p>List of <code class="docutils literal notranslate"><span class="pre">pd.Timestamp</span></code> objects representing complete days to consider.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), every day present in <code class="docutils literal notranslate"><span class="pre">df</span></code> is used.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1087,42 +1211,57 @@ the fault_time column in Variable_Names.csv</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_high_tm_setpoint">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_high_tm_setpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_indication</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_high_tm_setpoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and location of alarm information in a csv,
-and create an dataframe with applicable alarm events</p>
-<p>VarNames syntax:
-TMSTPT_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
-TMSTPT_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered ‘on’. Defaults to 1.0
-TMSTPT_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
-TMSTPT_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)</p>
+<dd><p>Detect temperature-maintenance (TM) setpoint violations on swing-tank equipment.</p>
+<p>Triggers alarms when the swing tank outlet temperature exceeds the setpoint
+while the tank is powered, or when the swing tank consumes a disproportionate
+share of total system power.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TMSTPT_T_ID:###</span></code> — Swing Tank Outlet Temperature.  Alarm triggers if
+temperature exceeds <code class="docutils literal notranslate"><span class="pre">###</span></code> (default <code class="docutils literal notranslate"><span class="pre">default_setpoint</span></code>) for
+<code class="docutils literal notranslate"><span class="pre">default_fault_time</span></code> consecutive minutes with power on.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TMSTPT_SP_ID:###</span></code> — Swing Tank Power.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is the minimum power (kW)
+for the tank to be considered <em>on</em> (default <code class="docutils literal notranslate"><span class="pre">default_power_indication</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TMSTPT_TP_ID:###</span></code> — Total System Power for ratio alarming.  Alarm triggers
+when swing-tank power exceeds <code class="docutils literal notranslate"><span class="pre">###</span></code> fraction (default
+<code class="docutils literal notranslate"><span class="pre">default_power_ratio</span></code>) of total power.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TMSTPT_ST_ID:###</span></code> — Swing Tank Setpoint that must remain equal to <code class="docutils literal notranslate"><span class="pre">###</span></code>
+(default <code class="docutils literal notranslate"><span class="pre">default_setpoint</span></code>).</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.  Used for power-ratio checks
+and to determine which days to process.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the TMSTPT alarm codes (e.g., TMSTPT_T_1:140, TMSTPT_SP_1:2.0)</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>default_fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes for T+SP alarms (default 3). T+SP alarms trigger when tank is powered and temperature exceeds
-setpoint for this many consecutive minutes.</p>
+<dt><strong>default_fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Consecutive minutes the T+SP fault condition must persist before
+triggering (default 3).</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_setpoint</strong><span class="classifier">float</span></dt><dd><p>Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)</p>
+<dt><strong>default_setpoint</strong><span class="classifier">float, optional</span></dt><dd><p>Default temperature setpoint in degrees F for T and ST alarm codes when
+no custom bound is provided (default 130.0).</p>
 </dd>
-<dt><strong>default_power_indication</strong><span class="classifier">float</span></dt><dd><p>Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)</p>
+<dt><strong>default_power_indication</strong><span class="classifier">float, optional</span></dt><dd><p>Default power threshold in kW for SP alarm codes when no custom bound is
+provided (default 1.0).</p>
 </dd>
-<dt><strong>default_power_ratio</strong><span class="classifier">float</span></dt><dd><p>Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)</p>
+<dt><strong>default_power_ratio</strong><span class="classifier">float, optional</span></dt><dd><p>Default power-ratio threshold (e.g., 0.4 for 40 %) for TP alarm codes
+when no custom bound is provided (default 0.4).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1132,45 +1271,50 @@ setpoint for this many consecutive minutes.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_hp_inlet_temp">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_hp_inlet_temp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_temp_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">115.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_hp_inlet_temp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and location of alarm information in a csv,
-and create an dataframe with applicable alarm events</p>
-<p>VarNames syntax:
-HPI_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which</p>
-<blockquote>
-<div><p>the heat pump is considered ‘on’</p>
-</div></blockquote>
-<dl class="simple">
-<dt>HPI_T_[OPTIONAL ID]:### - Indicates heat pump inlet temperature variable. ### is the temperature threshold (default 120.0)</dt><dd><p>that should not be exceeded while the heat pump is on</p>
-</dd>
-</dl>
+<dd><p>Detect high heat pump inlet temperature while the heat pump is running.</p>
+<p>Triggers an alarm when the heat pump is on and its inlet temperature exceeds
+the threshold for <code class="docutils literal notranslate"><span class="pre">fault_time</span></code> consecutive minutes.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">HPI_POW_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Heat pump power variable.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is the
+power threshold (default <code class="docutils literal notranslate"><span class="pre">default_power_threshold</span></code>) above which the heat
+pump is considered <em>on</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HPI_T_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Heat pump inlet temperature variable.
+<code class="docutils literal notranslate"><span class="pre">###</span></code> is the temperature threshold (default <code class="docutils literal notranslate"><span class="pre">default_temp_threshold</span></code>)
+that must not be exceeded while the heat pump is on.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for daily data.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the HPI alarm codes (e.g., HPI_POW_1:0.5, HPI_T_1:125.0)</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_power_threshold</strong><span class="classifier">float</span></dt><dd><p>Default power threshold for POW alarm codes when no custom bound is specified (default 0.4). Heat pump is considered ‘on’
-when power exceeds this value.</p>
+<dt><strong>default_power_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Default power threshold in kW for POW alarm codes when no custom bound
+is provided (default 1.0).  Heat pump is considered <em>on</em> when power
+exceeds this value.</p>
 </dd>
-<dt><strong>default_temp_threshold</strong><span class="classifier">float</span></dt><dd><p>Default temperature threshold for T alarm codes when no custom bound is specified (default 120.0). Alarm triggers when
-temperature exceeds this value while heat pump is on.</p>
+<dt><strong>default_temp_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Default temperature threshold in degrees F for T alarm codes when no
+custom bound is provided (default 115.0).  Alarm triggers when
+temperature exceeds this value while the heat pump is on.</p>
 </dd>
-<dt><strong>fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes that both power and temperature must exceed their thresholds before triggering an alarm (default 10).</p>
+<dt><strong>fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Consecutive minutes that both power and temperature must exceed their
+thresholds before an alarm is triggered (default 5).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1180,47 +1324,53 @@ temperature exceeds this value while heat pump is on.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_hp_outlet_temp">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_hp_outlet_temp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_temp_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">140.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_hp_outlet_temp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects low heat pump outlet temperature by checking if the outlet temperature falls below a threshold
-while the heat pump is running. The first 10 minutes after each HP turn-on are excluded as a warmup
-period. An alarm triggers if the temperature stays below the threshold for <cite>fault_time</cite> consecutive
-minutes after the warmup period.</p>
-<p>VarNames syntax:
-HPO_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which</p>
-<blockquote>
-<div><p>the heat pump is considered ‘on’.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>HPO_T_[OPTIONAL ID]:### - Indicates heat pump outlet temperature variable. ### is the temperature threshold (default 140.0)</dt><dd><p>that should always be exceeded while the heat pump is on after the 10-minute warmup period.</p>
-</dd>
-</dl>
+<dd><p>Detect low heat pump outlet temperature while the heat pump is running.</p>
+<p>The first 10 minutes after each HP turn-on are excluded as a warm-up period.
+An alarm triggers if the outlet temperature stays below the threshold for
+<code class="docutils literal notranslate"><span class="pre">fault_time</span></code> consecutive minutes after the warm-up period.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">HPO_POW_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Heat pump power variable.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is the
+power threshold (default <code class="docutils literal notranslate"><span class="pre">default_power_threshold</span></code>) above which the heat
+pump is considered <em>on</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HPO_T_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Heat pump outlet temperature variable.
+<code class="docutils literal notranslate"><span class="pre">###</span></code> is the temperature threshold (default <code class="docutils literal notranslate"><span class="pre">default_temp_threshold</span></code>)
+that must be exceeded while the heat pump is on after the 10-minute
+warm-up period.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the HPO alarm codes (e.g., HPO_POW_1:1.0, HPO_T_1:140.0).</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_power_threshold</strong><span class="classifier">float</span></dt><dd><p>Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered ‘on’
-when power exceeds this value.</p>
+<dt><strong>default_power_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Default power threshold in kW for POW alarm codes when no custom bound
+is provided (default 1.0).  Heat pump is considered <em>on</em> when power
+exceeds this value.</p>
 </dd>
-<dt><strong>default_temp_threshold</strong><span class="classifier">float</span></dt><dd><p>Default temperature threshold for T alarm codes when no custom bound is specified (default 140.0). Alarm triggers when
-temperature falls BELOW this value while heat pump is on (after warmup period).</p>
+<dt><strong>default_temp_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Default temperature threshold in degrees F for T alarm codes when no
+custom bound is provided (default 140.0).  Alarm triggers when
+temperature falls below this value while the heat pump is on (after
+warm-up period).</p>
 </dd>
-<dt><strong>fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes that temperature must be below threshold (after warmup) before triggering an alarm (default 5).</p>
+<dt><strong>fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Consecutive minutes that temperature must remain below threshold (after
+warm-up) before an alarm is triggered (default 5).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1230,32 +1380,36 @@ temperature falls BELOW this value while heat pump is on (after warmup period).<
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_ls_mode_inconsistancy">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_ls_mode_inconsistancy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_ls_mode_inconsistancy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects when reported loadshift mode does not match its expected value during a load shifting event.
-An alarm is triggered if the variable value does not equal the expected value during the
-time periods defined in the load shifting schedule for that mode.</p>
-<p>VarNames syntax:
-SOO_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.</p>
-<blockquote>
-<div><p>[mode] can be: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp
-### is the expected value (e.g., SOO_loadUp:1 means the variable should be 1 during loadUp events)</p>
-</div></blockquote>
+<dd><p>Detect load-shift mode inconsistencies.</p>
+<p>Triggers an alarm when a reported load-shift mode variable does not match
+its expected value during a scheduled load-shifting event.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SOO_[mode]:###</span></code> — Variable that must equal <code class="docutils literal notranslate"><span class="pre">###</span></code> during <code class="docutils literal notranslate"><span class="pre">[mode]</span></code>
+load-shifting events.  <code class="docutils literal notranslate"><span class="pre">[mode]</span></code> can be <code class="docutils literal notranslate"><span class="pre">normal</span></code>, <code class="docutils literal notranslate"><span class="pre">loadUp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">shed</span></code>, <code class="docutils literal notranslate"><span class="pre">criticalPeak</span></code>, <code class="docutils literal notranslate"><span class="pre">gridEmergency</span></code>, or <code class="docutils literal notranslate"><span class="pre">advLoadUp</span></code>.
+For example, <code class="docutils literal notranslate"><span class="pre">SOO_loadUp:1</span></code> means the variable should be 1 during
+loadUp events.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. It should be noted that this function expects consecutive,
-in order minutes. If minutes are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe with daily data. This dataframe should have a datetime index.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame with a datetime index.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object used to locate <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1265,43 +1419,45 @@ in order minutes. If minutes are out of order or have gaps, the function may ret
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_recirc_balance_valve">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_recirc_balance_valve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_recirc_balance_valve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects recirculation balance issues by comparing sum of ER (equipment recirculation) heater
-power to either total power or heating output.</p>
-<p>VarNames syntax:
-BV_ER_[OPTIONAL ID] - Indicates a power variable for an ER heater (equipment recirculation).</p>
-<blockquote>
-<div><p>Multiple ER variables with the same ID will be summed together.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>BV_TP_[OPTIONAL ID]:### - Indicates the Total Power of the system. Optional ### for the percentage</dt><dd><p>threshold that should not be crossed by the ER elements (default 0.4 for 40%).
-Alarm triggers when sum of ER &gt;= total_power * threshold.</p>
-</dd>
-<dt>BV_OUT_[OPTIONAL ID] - Indicates the heating output variable the ER heating contributes to.</dt><dd><p>Alarm triggers when sum of ER &gt; sum of OUT * 0.95 (i.e., ER exceeds 95% of heating output).
-Multiple OUT variables with the same ID will be summed together.</p>
-</dd>
-</dl>
-<p>Note: Each alarm ID requires at least one ER code AND either one TP code OR at least one OUT code.
-If a TP code exists for an ID, it takes precedence over OUT codes.</p>
+<dd><p>Detect recirculation loop balancing valve issues.</p>
+<p>Compares the sum of equipment-recirculation (ER) heater power to either
+total system power or heating output to identify imbalance.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BV_ER_[OPTIONAL</span> <span class="pre">ID]</span></code> — Power variable for an ER heater.  Multiple ER
+variables sharing the same ID are summed together.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BV_TP_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Total system power.  Optional <code class="docutils literal notranslate"><span class="pre">###</span></code> sets
+the ratio threshold (default <code class="docutils literal notranslate"><span class="pre">default_power_ratio</span></code>).  Alarm triggers
+when sum of ER &gt;= total_power * threshold.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BV_OUT_[OPTIONAL</span> <span class="pre">ID]</span></code> — Heating output variable that ER heating
+contributes to.  Alarm triggers when sum of ER &gt; sum of OUT * 0.95.
+Multiple OUT variables sharing the same ID are summed together.</p></li>
+</ul>
+<p>Each alarm ID requires at least one ER code and either one TP code or at
+least one OUT code.  When a TP code is present it takes precedence over OUT
+codes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data. Used for checking recirculation balance by comparing sum of ER equipment
-power to total power or heating output power.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.  Used to compare ER
+equipment power against total power or heating output.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the BV alarm codes (e.g., BV_ER_1, BV_TP_1:0.3)</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_power_ratio</strong><span class="classifier">float</span></dt><dd><p>Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4).</p>
+<dt><strong>default_power_ratio</strong><span class="classifier">float, optional</span></dt><dd><p>Default power-ratio threshold (e.g., 0.4 for 40 %) for TP alarm codes
+when no custom bound is provided (default 0.4).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if
+<code class="docutils literal notranslate"><span class="pre">daily_df</span></code> is empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1311,40 +1467,45 @@ name of each variable in the dataframe that requires alarming and the BV alarm c
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_shortcycle">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_shortcycle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">short_cycle_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_shortcycle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects short cycling by identifying when the heat pump turns on for less than <cite>short_cycle_time</cite>
-consecutive minutes before turning off again. Short cycling can indicate equipment issues or
-improper system sizing.</p>
-<p>VarNames syntax:
-SHRTCYC_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which</p>
-<blockquote>
-<div><p>the heat pump is considered ‘on’.</p>
-</div></blockquote>
+<dd><p>Detect heat pump short-cycling events.</p>
+<p>Identifies when the heat pump turns on for fewer than <code class="docutils literal notranslate"><span class="pre">short_cycle_time</span></code>
+consecutive minutes before turning off again.  Short cycling can indicate
+equipment issues or improper system sizing.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SHRTCYC_[OPTIONAL</span> <span class="pre">ID]:###</span></code> — Heat pump power variable.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is
+the power threshold (default <code class="docutils literal notranslate"><span class="pre">default_power_threshold</span></code>) above which
+the heat pump is considered <em>on</em>.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the SHRTCYC alarm codes (e.g., SHRTCYC:1.0, SHRTCYC_1:0.5).</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_power_threshold</strong><span class="classifier">float</span></dt><dd><p>Default power threshold when no custom bound is specified in the alarm code (default 1.0). Heat pump is considered ‘on’
-when power exceeds this value.</p>
+<dt><strong>default_power_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Default power threshold in kW when no custom bound is provided in the
+alarm code (default 1.0).  Heat pump is considered <em>on</em> when power
+exceeds this value.</p>
 </dd>
-<dt><strong>short_cycle_time</strong><span class="classifier">int</span></dt><dd><p>Minimum expected run time in minutes (default 15). An alarm triggers if the heat pump runs for fewer than this many
-consecutive minutes before turning off.</p>
+<dt><strong>short_cycle_time</strong><span class="classifier">int, optional</span></dt><dd><p>Minimum expected run time in minutes (default 15).  An alarm triggers
+when the heat pump runs for fewer than this many consecutive minutes
+before turning off.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1354,50 +1515,58 @@ consecutive minutes before turning off.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_unexpected_soo_change">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_unexpected_soo_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_on_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">115.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_off_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">140.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_unexpected_soo_change" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects unexpected state of operation (SOO) changes by checking if the heat pump turns on or off
-when the temperature is not near the expected aquastat setpoint thresholds. An alarm is triggered
-if the HP turns on/off and the corresponding temperature is more than 5.0 degrees away from the
-expected threshold.</p>
-<p>VarNames syntax:
-SOOCHNG_POW:### - Indicates a power variable for the heat pump system (should be total power across all primary heat pumps). ### is the power threshold (default 1.0) above which</p>
-<blockquote>
-<div><p>the heat pump system is considered ‘on’.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>SOOCHNG_ON_[Mode ID]:### - Indicates the temperature variable at the ON aquastat fraction. ### is the temperature (default 115.0)</dt><dd><p>that should trigger the heat pump to turn ON. Mode ID should be the load up mode from [‘loadUp’,’shed’,’criticalPeak’,’gridEmergency’,’advLoadUp’,’normal’] or left blank for normal mode</p>
-</dd>
-<dt>SOOCHNG_OFF_[Mode ID]:### - Indicates the temperature variable at the OFF aquastat fraction (can be same as ON aquastat). ### is the temperature (default 140.0)</dt><dd><p>that should trigger the heat pump to turn OFF. Mode ID should be the load up mode from [‘loadUp’,’shed’,’criticalPeak’,’gridEmergency’,’advLoadUp’,’normal’] or left blank for normal mode</p>
-</dd>
-</dl>
+<dd><p>Detect unexpected state-of-operation (SOO) changes.</p>
+<p>Triggers an alarm when the heat pump turns on or off at a temperature that
+is more than 5.0 degrees away from the expected aquastat setpoint threshold
+for the current load-shifting mode.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SOOCHNG_POW:###</span></code> — Total power variable across all primary heat pumps.
+<code class="docutils literal notranslate"><span class="pre">###</span></code> is the power threshold (default <code class="docutils literal notranslate"><span class="pre">default_power_threshold</span></code>) above
+which the HP system is considered <em>on</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SOOCHNG_ON_[Mode</span> <span class="pre">ID]:###</span></code> — Temperature variable at the ON aquastat
+setpoint.  <code class="docutils literal notranslate"><span class="pre">###</span></code> is the temperature (default <code class="docutils literal notranslate"><span class="pre">default_on_temp</span></code>) that
+triggers the HP to turn ON.  Mode ID should be one of
+<code class="docutils literal notranslate"><span class="pre">loadUp</span></code>, <code class="docutils literal notranslate"><span class="pre">shed</span></code>, <code class="docutils literal notranslate"><span class="pre">criticalPeak</span></code>, <code class="docutils literal notranslate"><span class="pre">gridEmergency</span></code>,
+<code class="docutils literal notranslate"><span class="pre">advLoadUp</span></code>, or <code class="docutils literal notranslate"><span class="pre">normal</span></code> (or left blank for normal mode).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SOOCHNG_OFF_[Mode</span> <span class="pre">ID]:###</span></code> — Temperature variable at the OFF aquastat
+setpoint (may be the same as the ON variable).  <code class="docutils literal notranslate"><span class="pre">###</span></code> is the temperature
+(default <code class="docutils literal notranslate"><span class="pre">default_off_temp</span></code>) that triggers the HP to turn OFF.  Same
+Mode ID options as above.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the SOOCHNG alarm codes (e.g., SOOCHNG_POW_normal:1.0, SOOCHNG_ON_normal:115.0, SOOCHNG_OFF_normal:140.0).</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_power_threshold</strong><span class="classifier">float</span></dt><dd><p>Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered ‘on’
-when power exceeds this value.</p>
+<dt><strong>default_power_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Default power threshold in kW for POW alarm codes when no custom bound
+is provided (default 1.0).  Heat pump is considered <em>on</em> when power
+exceeds this value.</p>
 </dd>
-<dt><strong>default_on_temp</strong><span class="classifier">float</span></dt><dd><p>Default ON temperature threshold (default 115.0). When the HP turns on, an alarm triggers if the temperature
-is more than 5.0 degrees away from this value.</p>
+<dt><strong>default_on_temp</strong><span class="classifier">float, optional</span></dt><dd><p>Default ON temperature threshold in degrees F (default 115.0).  An alarm
+triggers when the HP turns on and the temperature is more than 5.0
+degrees from this value.</p>
 </dd>
-<dt><strong>default_off_temp</strong><span class="classifier">float</span></dt><dd><p>Default OFF temperature threshold (default 140.0). When the HP turns off, an alarm triggers if the temperature
-is more than 5.0 degrees away from this value.</p>
+<dt><strong>default_off_temp</strong><span class="classifier">float, optional</span></dt><dd><p>Default OFF temperature threshold in degrees F (default 140.0).  An alarm
+triggers when the HP turns off and the temperature is more than 5.0
+degrees from this value.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1407,40 +1576,49 @@ is more than 5.0 degrees away from this value.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.flag_unexpected_temp">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">flag_unexpected_temp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_high_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_low_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">115</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.flag_unexpected_temp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detects when a temperature value falls outside an acceptable range for
-too long. An alarm is triggered if the temperature is above the high bound or below the low bound
-for <cite>fault_time</cite> consecutive minutes.</p>
-<p>VarNames syntax:
-TMPRNG_[OPTIONAL ID]:###-### - Indicates a temperature variable. ###-### is the acceptable temperature range</p>
-<blockquote>
-<div><p>(e.g., TMPRNG:110-130 means temperature should stay between 110 and 130 degrees).</p>
-</div></blockquote>
+<dd><p>Detect temperatures outside an acceptable range.</p>
+<p>Triggers an alarm when a temperature variable stays above the high bound or
+below the low bound for <code class="docutils literal notranslate"><span class="pre">fault_time</span></code> consecutive minutes.</p>
+<p>VarNames syntax (<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code> column in <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TMPRNG_[OPTIONAL</span> <span class="pre">ID]:###-###</span></code> — Temperature variable with acceptable
+range.  The <code class="docutils literal notranslate"><span class="pre">###-###</span></code> portion defines the low and high bounds
+(e.g., <code class="docutils literal notranslate"><span class="pre">TMPRNG:110-130</span></code> means temperature must stay between 110 and
+130 degrees).</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed minute-level data DataFrame.  Must contain consecutive,
+in-order minutes; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Post-transformed dataframe for daily data. Used for determining which days to process.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.  Used to determine which
+days to process.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name” and “alarm_codes” which should contain the
-name of each variable in the dataframe that requires alarming and the DHW alarm codes (e.g., DHW:110-130, DHW_1:115-125).</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
 </dd>
-<dt><strong>default_high_temp</strong><span class="classifier">float</span></dt><dd><p>Default high temperature bound when no custom range is specified in the alarm code (default 130). Temperature above this triggers alarm.</p>
+<dt><strong>default_high_temp</strong><span class="classifier">float, optional</span></dt><dd><p>Default upper temperature bound in degrees F when no custom range is
+provided in the alarm code (default 130).  Temperature above this value
+triggers an alarm.</p>
 </dd>
-<dt><strong>default_low_temp</strong><span class="classifier">float</span></dt><dd><p>Default low temperature bound when no custom range is specified in the alarm code (default 130). Temperature below this triggers alarm.</p>
+<dt><strong>default_low_temp</strong><span class="classifier">float, optional</span></dt><dd><p>Default lower temperature bound in degrees F when no custom range is
+provided in the alarm code (default 115).  Temperature below this value
+triggers an alarm.</p>
 </dd>
-<dt><strong>fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes that temperature must be outside the acceptable range before triggering an alarm (default 10).</p>
+<dt><strong>fault_time</strong><span class="classifier">int, optional</span></dt><dd><p>Consecutive minutes temperature must be outside the acceptable range
+before an alarm is triggered (default 10).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if <code class="docutils literal notranslate"><span class="pre">df</span></code> is
+empty or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1450,28 +1628,38 @@ name of each variable in the dataframe that requires alarming and the DHW alarm 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.power_ratio_alarm">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.</span></span><span class="sig-name descname"><span class="pre">power_ratio_alarm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day_table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio_period_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.event_tracking.power_ratio_alarm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe of daily data and location of alarm information in a csv,
-and create an dataframe with applicable alarm events</p>
+<dd><p>Detect power-ratio anomalies using daily energy data.</p>
+<p>Reads power-ratio alarm configuration from <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> via
+<code class="docutils literal notranslate"><span class="pre">config</span></code> and triggers alarms when the ratio of one power variable to
+another falls outside the defined bounds over a rolling window.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>post-transformed dataframe for daily data. It should be noted that this function expects consecutive, in order days. If days
-are out of order or have gaps, the function may return erroneous alarms.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Post-transformed daily-level data DataFrame.  Must contain consecutive,
+in-order days; out-of-order rows or gaps may produce erroneous alarms.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Variable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least two columns which must be titled “variable_name”, “alarm_codes” which should contain the
-name of each variable in the dataframe that requires the alarming and the ratio alarm code in the form “PR_{Power Ratio Name}:{low percentage}-{high percentage}</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Pipeline configuration object.  Points to a <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file
+that must contain at least the columns <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alarm_codes</span></code>.  Ratio alarm codes take the form
+<code class="docutils literal notranslate"><span class="pre">PR_{Power</span> <span class="pre">Ratio</span> <span class="pre">Name}:{low</span> <span class="pre">percentage}-{high</span> <span class="pre">percentage}</span></code>.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.</p>
+<dt><strong>day_table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the daily database table used to fetch historical data for the
+rolling-period calculation.</p>
 </dd>
-<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><p>add print statements in power ratio</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the system to filter on when <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> contains
+multiple systems.  Pass an empty string (default) if not applicable.</p>
+</dd>
+<dt><strong>verbose</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, emit additional print statements during processing
+(default <code class="docutils literal notranslate"><span class="pre">False</span></code>).</p>
+</dd>
+<dt><strong>ratio_period_days</strong><span class="classifier">int, optional</span></dt><dd><p>Number of days in the rolling power-ratio window (default 7).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with alarm events, empty if no alarms triggered</p>
+<dt>pd.DataFrame</dt><dd><p>DataFrame of alarm events.  Returns an empty DataFrame if no alarms
+are triggered or <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> cannot be found.</p>
 </dd>
 </dl>
 </dd>
@@ -1618,7 +1806,7 @@ name of each variable in the dataframe that requires the alarming and the ratio 
         <li class="right" >
           <a href="../load/load.html" title="Load Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Event Tracking Documentation</a></li> 
       </ul>
     </div>

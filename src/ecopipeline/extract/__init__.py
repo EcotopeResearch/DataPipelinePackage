@@ -1,3 +1,41 @@
+"""Extract layer for the ecopipeline data pipeline.
+
+This package exposes all classes and functions needed to ingest raw data from
+files (CSV, JSON, Excel) and remote APIs into :class:`pandas.DataFrame` objects
+ready for downstream transform and load steps.
+
+Classes
+-------
+FileProcessor
+    Abstract base class for file-based data processors.
+APIExtractor
+    Abstract base class for API-based data extractors.
+CSVProcessor
+    Generic CSV file processor.
+JSONProcessor
+    Generic JSON file processor.
+ModbusCSVProcessor
+    CSV processor for Modbus-format files.
+DentCSVProcessor
+    CSV processor for Dent meter files.
+FlowCSVProcessor
+    CSV processor for flow-meter CSV files.
+MSACSVProcessor
+    CSV processor for MSA-format files.
+EGaugeCSVProcessor
+    CSV processor for eGauge meter CSV exports.
+SmallPlanetCSVProcessor
+    CSV processor for Small Planet Controls files.
+ThingsBoard
+    API extractor for the ThingsBoard IoT platform.
+Skycentrics
+    API extractor for the Skycentrics solar-monitoring API.
+FieldManager
+    API extractor for the FieldPop / Field Manager API.
+LiCOR
+    API extractor for the LI-COR Cloud sensor API.
+"""
+
 from .FileProcessor import FileProcessor
 from .APIExtractor import APIExtractor
 from .file_processors.CSVProcessor import CSVProcessor

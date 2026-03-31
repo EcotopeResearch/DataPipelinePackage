@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Load Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
+    <title>Load Documentation &#8212; DataPipelinePackage 2.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>  
@@ -46,25 +46,430 @@
 <h1>Load Documentation<a class="headerlink" href="#load-documentation" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<span class="target" id="module-ecopipeline.load"></span><dl class="py function">
-<dt class="sig sig-object py" id="ecopipeline.load.check_table_exists">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">check_table_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#ecopipeline.load.check_table_exists" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if the given table name already exists in database.</p>
+<span class="target" id="module-ecopipeline.load"></span><dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.load.AlarmLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">AlarmLoader</span></span><a class="headerlink" href="#ecopipeline.load.AlarmLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.load.Loader" title="ecopipeline.load.Loader.Loader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loader</span></code></a></p>
+<p>Loader subclass for writing alarm data to the <code class="docutils literal notranslate"><span class="pre">alarm</span></code> and <code class="docutils literal notranslate"><span class="pre">alarm_inst</span></code>
+MySQL tables.</p>
+<p>Overrides <a class="reference internal" href="#ecopipeline.load.Loader" title="ecopipeline.load.Loader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loader</span></code></a> table-existence checks and table-creation logic
+so that the paired <code class="docutils literal notranslate"><span class="pre">alarm</span></code> / <code class="docutils literal notranslate"><span class="pre">alarm_inst</span></code> tables are always created and
+validated together.</p>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.load.check_table_exists" title="ecopipeline.load.check_table_exists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_table_exists</span></code></a>(cursor, table_name, dbname)</p></td>
+<td><p>Check whether a table exists in the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ecopipeline.load.create_new_table" title="ecopipeline.load.create_new_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_new_table</span></code></a>(cursor, table_name, ...[, ...])</p></td>
+<td><p>Create a new table in the MySQL database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.load.report_data_loss" title="ecopipeline.load.report_data_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">report_data_loss</span></code></a>(config[, site_name])</p></td>
+<td><p>Log a DATA_LOSS_COP event in the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.AlarmLoader.check_table_exists">
+<span class="sig-name descname"><span class="pre">check_table_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.AlarmLoader.check_table_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> only when both the alarm table and its <code class="docutils literal notranslate"><span class="pre">_inst</span></code> companion exist.</p>
+<p>Both tables must be present before loading can proceed; if either is
+missing they should both be (re)created together.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>Database cursor object and the table name.</p>
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
 </dd>
-<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table</p>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Base name of the alarm table (e.g. <code class="docutils literal notranslate"><span class="pre">'alarm'</span></code>).</p>
 </dd>
-<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the database</p>
+<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the database to search within.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>int:</dt><dd><p>The number of tables in the database with the given table name.
-This can directly be used as a boolean!</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if both <code class="docutils literal notranslate"><span class="pre">table_name</span></code> and <code class="docutils literal notranslate"><span class="pre">{table_name}_inst</span></code> exist;
+<code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.AlarmLoader.create_new_table">
+<span class="sig-name descname"><span class="pre">create_new_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.AlarmLoader.create_new_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create both the alarm table and its <code class="docutils literal notranslate"><span class="pre">_inst</span></code> companion table.</p>
+<p>Uses <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">TABLE</span> <span class="pre">IF</span> <span class="pre">NOT</span> <span class="pre">EXISTS</span></code> so the method is safe to call even
+when only one of the two tables is missing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Base name for the alarm table. The instance table is derived as
+<code class="docutils literal notranslate"><span class="pre">{table_name}_inst</span></code>.</p>
+</dd>
+<dt><strong>table_column_names</strong><span class="classifier">list, optional</span></dt><dd><p>Ignored; the alarm schema is fixed. Retained for interface
+compatibility with the parent class.</p>
+</dd>
+<dt><strong>table_column_types</strong><span class="classifier">list, optional</span></dt><dd><p>Ignored; the alarm schema is fixed. Retained for interface
+compatibility with the parent class.</p>
+</dd>
+<dt><strong>primary_key</strong><span class="classifier">str, optional</span></dt><dd><p>Ignored; the alarm schema uses a fixed auto-increment <code class="docutils literal notranslate"><span class="pre">id</span></code>.
+Retained for interface compatibility with the parent class.</p>
+</dd>
+<dt><strong>has_primary_key</strong><span class="classifier">bool, optional</span></dt><dd><p>Ignored; the alarm schema always defines a primary key. Retained
+for interface compatibility with the parent class.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p>Always returns <code class="docutils literal notranslate"><span class="pre">True</span></code> after executing the DDL statements.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.AlarmLoader.load_database">
+<span class="sig-name descname"><span class="pre">load_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_log_data_loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.AlarmLoader.load_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load alarm data into the alarm and alarm_inst tables.</p>
+<p>For each alarm instance in the DataFrame the method:</p>
+<ol class="arabic simple">
+<li><p>Checks whether a matching alarm record (same <code class="docutils literal notranslate"><span class="pre">site_name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">alarm_type</span></code>, <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>) already exists within a
+three-day gap tolerance.</p></li>
+<li><p>Creates a new alarm record if none is found, or extends the
+date range of the nearest existing record.</p></li>
+<li><p>Inserts alarm instances into <code class="docutils literal notranslate"><span class="pre">{table_name}_inst</span></code> using
+certainty-based overlap resolution:</p>
+<ul class="simple">
+<li><p><strong>Higher certainty</strong> new alarm: the existing instance is split
+around the new one so each segment retains the highest available
+certainty.</p></li>
+<li><p><strong>Lower certainty</strong> new alarm: only the non-overlapping portions
+of the new alarm are inserted.</p></li>
+<li><p><strong>Same certainty</strong>: the existing instance is extended to
+encompass both time periods.</p></li>
+</ul>
+</li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the
+pipeline.</p>
+</dd>
+<dt><strong>alarm_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame of alarms to load. Required columns: <code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code>,
+<code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">alarm_type</span></code>, <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>. Optional
+column: <code class="docutils literal notranslate"><span class="pre">certainty</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code> if absent).
+Certainty scale: <code class="docutils literal notranslate"><span class="pre">3</span></code> = high, <code class="docutils literal notranslate"><span class="pre">2</span></code> = medium, <code class="docutils literal notranslate"><span class="pre">1</span></code> = low.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Base name of the alarm table. The companion instance table is
+derived as <code class="docutils literal notranslate"><span class="pre">{table_name}_inst</span></code>.</p>
+</dd>
+<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the MySQL database.</p>
+</dd>
+<dt><strong>auto_log_data_loss</strong><span class="classifier">bool, optional</span></dt><dd><p>Unused in this subclass; retained for interface compatibility.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>primary_key</strong><span class="classifier">str, optional</span></dt><dd><p>Unused in this subclass; retained for interface compatibility.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'time_pt'</span></code>.</p>
+</dd>
+<dt><strong>site_name</strong><span class="classifier">str, optional</span></dt><dd><p>Site name to associate alarms with. Defaults to
+<code class="docutils literal notranslate"><span class="pre">config.get_site_name()</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if all alarms were loaded successfully; <code class="docutils literal notranslate"><span class="pre">False</span></code> if an
+exception occurred (transaction is rolled back).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">alarm_df</span></code> is missing any of the required columns.</p>
+</dd>
+<dt>Exception</dt><dd><p>If an alarm ID cannot be retrieved after insertion.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">Loader</span></span><a class="headerlink" href="#ecopipeline.load.Loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for loading pandas DataFrames into a MySQL database.</p>
+<p>Provides UPSERT-based loading, table creation, column management, and
+data-loss reporting utilities used by all concrete loader subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data_map</strong><span class="classifier">dict</span></dt><dd><p>Mapping from pandas dtype name strings to MySQL column type strings.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.load.check_table_exists" title="ecopipeline.load.check_table_exists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_table_exists</span></code></a>(cursor, table_name, dbname)</p></td>
+<td><p>Check whether a table exists in the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ecopipeline.load.create_new_table" title="ecopipeline.load.create_new_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_new_table</span></code></a>(cursor, table_name, ...[, ...])</p></td>
+<td><p>Create a new table in the MySQL database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.load.report_data_loss" title="ecopipeline.load.report_data_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">report_data_loss</span></code></a>(config[, site_name])</p></td>
+<td><p>Log a DATA_LOSS_COP event in the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader.check_table_exists">
+<span class="sig-name descname"><span class="pre">check_table_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#ecopipeline.load.Loader.check_table_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether a table exists in the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table to check.</p>
+</dd>
+<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the database to search within.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>int</dt><dd><p>The count of tables matching <code class="docutils literal notranslate"><span class="pre">table_name</span></code> in <code class="docutils literal notranslate"><span class="pre">dbname</span></code>.
+Evaluates to <code class="docutils literal notranslate"><span class="pre">True</span></code> when non-zero, so it can be used directly
+as a boolean.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader.create_new_columns">
+<span class="sig-name descname"><span class="pre">create_new_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.Loader.create_new_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add new columns to an existing database table.</p>
+<p>Issues one <code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span> <span class="pre">…</span> <span class="pre">ADD</span> <span class="pre">COLUMN</span></code> statement per column.
+Stops and returns <code class="docutils literal notranslate"><span class="pre">False</span></code> on the first database error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table to alter.</p>
+</dd>
+<dt><strong>new_columns</strong><span class="classifier">list</span></dt><dd><p>Ordered list of column names to add.</p>
+</dd>
+<dt><strong>data_types</strong><span class="classifier">str</span></dt><dd><p>Ordered list of MySQL type strings corresponding to
+<code class="docutils literal notranslate"><span class="pre">new_columns</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if all columns were added successfully; <code class="docutils literal notranslate"><span class="pre">False</span></code> if a
+database error occurred.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader.create_new_table">
+<span class="sig-name descname"><span class="pre">create_new_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.Loader.create_new_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new table in the MySQL database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table to create.</p>
+</dd>
+<dt><strong>table_column_names</strong><span class="classifier">list</span></dt><dd><p>Ordered list of column names (excluding the primary-key column).</p>
+</dd>
+<dt><strong>table_column_types</strong><span class="classifier">list</span></dt><dd><p>Ordered list of MySQL type strings corresponding to
+<code class="docutils literal notranslate"><span class="pre">table_column_names</span></code>.  Must be the same length as
+<code class="docutils literal notranslate"><span class="pre">table_column_names</span></code>.</p>
+</dd>
+<dt><strong>primary_key</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the primary-key column. Defaults to <code class="docutils literal notranslate"><span class="pre">'time_pt'</span></code>.</p>
+</dd>
+<dt><strong>has_primary_key</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> column is added as a plain
+column rather than a PRIMARY KEY. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the table was successfully created.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">table_column_names</span></code> and <code class="docutils literal notranslate"><span class="pre">table_column_types</span></code> are different
+lengths.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader.find_missing_columns">
+<span class="sig-name descname"><span class="pre">find_missing_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.Loader.find_missing_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify DataFrame columns that are absent from the database table.</p>
+<p>If communication with the database fails, empty lists are returned so
+that the caller can continue without adding any columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
+</dd>
+<dt><strong>dataframe</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>The DataFrame whose columns are compared against the table schema.</p>
+</dd>
+<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the database that contains <code class="docutils literal notranslate"><span class="pre">table_name</span></code>.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table to inspect.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list</dt><dd><p>Column names present in <code class="docutils literal notranslate"><span class="pre">dataframe</span></code> but absent from the table.</p>
+</dd>
+<dt>list</dt><dd><p>Corresponding MySQL type strings for each missing column.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader.load_database">
+<span class="sig-name descname"><span class="pre">load_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_log_data_loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.Loader.load_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas DataFrame into a MySQL table using an UPSERT strategy.</p>
+<p>Existing rows are updated rather than replaced; NULL values in the
+incoming DataFrame will not overwrite existing non-NULL values in the
+database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>dataframe</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>The pandas DataFrame to be written into the MySQL server. The index
+must be the primary-key column (e.g. a datetime index named <code class="docutils literal notranslate"><span class="pre">time_pt</span></code>).</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the destination table in the database.</p>
+</dd>
+<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the MySQL database that contains <code class="docutils literal notranslate"><span class="pre">table_name</span></code>.</p>
+</dd>
+<dt><strong>auto_log_data_loss</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, a DATA_LOSS_COP event is recorded when no data exists
+in the DataFrame for the last three days, or when an exception
+occurs. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>primary_key</strong><span class="classifier">str, optional</span></dt><dd><p>Column name used as the primary key in the destination table.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'time_pt'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the data were successfully written; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.load.Loader.report_data_loss">
+<span class="sig-name descname"><span class="pre">report_data_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.Loader.report_data_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a DATA_LOSS_COP event in the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table.</p>
+<p>Records that COP calculations have been affected by a data loss
+condition. If an open DATA_LOSS_COP event already exists for the
+given site, no duplicate is inserted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>site_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the site to associate the event with. Defaults to the
+site name returned by <code class="docutils literal notranslate"><span class="pre">config.get_site_name()</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the event was logged (or already existed); <code class="docutils literal notranslate"><span class="pre">False</span></code>
+if the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table does not exist.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.load.central_load_function">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">central_load_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hourly_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.central_load_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch all pipeline DataFrames to their respective database tables.</p>
+<p>Loads minute, hourly, and daily sensor data using <a class="reference internal" href="#ecopipeline.load.Loader" title="ecopipeline.load.Loader.Loader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loader</span></code></a>,
+and alarm data using <a class="reference internal" href="#ecopipeline.load.AlarmLoader" title="ecopipeline.load.AlarmLoader.AlarmLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlarmLoader</span></code></a>.
+Each DataFrame is only written when it is non-<code class="docutils literal notranslate"><span class="pre">None</span></code> and non-empty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Minute-resolution sensor data. May be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Hourly-resolution sensor data. May be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Daily-resolution sensor data. May be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>alarm_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Alarm records produced by the transform stage. May be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.load.check_table_exists">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">check_table_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#ecopipeline.load.check_table_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether a table exists in the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
+</dd>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table to check.</p>
+</dd>
+<dt><strong>dbname</strong><span class="classifier">str</span></dt><dd><p>Name of the database to search within.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>int</dt><dd><p>The count of tables matching <code class="docutils literal notranslate"><span class="pre">table_name</span></code> in <code class="docutils literal notranslate"><span class="pre">dbname</span></code>.
+Evaluates to <code class="docutils literal notranslate"><span class="pre">True</span></code> when non-zero, so it can be used directly
+as a boolean.</p>
 </dd>
 </dl>
 </dd>
@@ -74,25 +479,37 @@ This can directly be used as a boolean!</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.create_new_table">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">create_new_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MySQLCursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_column_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.create_new_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a new table in the mySQL database.</p>
+<dd><p>Create a new table in the MySQL database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>A cursor object and the name of the table to be created.</p>
+<dt><strong>cursor</strong><span class="classifier">mysql.connector.cursor.MySQLCursor</span></dt><dd><p>An active database cursor.</p>
 </dd>
-<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table</p>
+<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>Name of the table to create.</p>
 </dd>
-<dt><strong>table_column_names</strong><span class="classifier">list</span></dt><dd><p>list of columns names in the table must be passed.</p>
+<dt><strong>table_column_names</strong><span class="classifier">list</span></dt><dd><p>Ordered list of column names (excluding the primary-key column).</p>
 </dd>
-<dt><strong>primary_key: str</strong></dt><dd><p>The name of the primary index of the table. Should be a datetime. If has_primary_key is set to False, this will just be a column not a key.</p>
+<dt><strong>table_column_types</strong><span class="classifier">list</span></dt><dd><p>Ordered list of MySQL type strings corresponding to
+<code class="docutils literal notranslate"><span class="pre">table_column_names</span></code>. Must be the same length as
+<code class="docutils literal notranslate"><span class="pre">table_column_names</span></code>.</p>
 </dd>
-<dt><strong>has_primary_key</strong><span class="classifier">bool</span></dt><dd><p>Set to False if the table should not establish a primary key. Defaults to True</p>
+<dt><strong>primary_key</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the primary-key column. Defaults to <code class="docutils literal notranslate"><span class="pre">'time_pt'</span></code>.</p>
+</dd>
+<dt><strong>has_primary_key</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> column is added as a plain column
+rather than a PRIMARY KEY. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool:</dt><dd><p>A boolean value indicating if a table was sucessfully created.</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the table was successfully created.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">table_column_names</span></code> and <code class="docutils literal notranslate"><span class="pre">table_column_types</span></code> are different
+lengths.</p>
 </dd>
 </dl>
 </dd>
@@ -102,37 +519,54 @@ This can directly be used as a boolean!</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.load_alarms">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_alarms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ecopipeline.load.load_alarms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads alarm data from central_alarm_df_creator() output into the alarm and alarm_inst tables.</p>
-<p>For each alarm instance in the DataFrame:
-- Checks if a matching alarm record exists (same site_name, alarm_type, variable_name)
-- If no matching alarm exists, creates a new record in the alarm table
-- Inserts the alarm instance (with start/end times and certainty) into the alarm_inst table</p>
-<p>Certainty-based overlap handling for alarm instances:
-- If new alarm has higher certainty than existing overlapping instance: existing is split</p>
-<blockquote>
-<div><p>around the new alarm so each time segment has the highest certainty available</p>
-</div></blockquote>
+<dd><p>Load alarm data into the <code class="docutils literal notranslate"><span class="pre">alarm</span></code> and <code class="docutils literal notranslate"><span class="pre">alarm_inst</span></code> tables.</p>
+<p>Processes the output of <code class="docutils literal notranslate"><span class="pre">central_alarm_df_creator()</span></code>. For each alarm
+instance in the DataFrame the function:</p>
+<ol class="arabic simple">
+<li><p>Checks whether a matching alarm record (same <code class="docutils literal notranslate"><span class="pre">site_name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">alarm_type</span></code>, <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>) already exists within a three-day
+gap tolerance.</p></li>
+<li><p>Creates a new alarm record if none is found, or extends the date range
+of the nearest existing record.</p></li>
+<li><p>Inserts alarm instances into <code class="docutils literal notranslate"><span class="pre">alarm_inst</span></code> using certainty-based
+overlap resolution:</p>
 <ul class="simple">
-<li><p>If new alarm has lower certainty than existing: only non-overlapping portions of new
-alarm are inserted</p></li>
-<li><p>If same certainty: existing instance is extended to encompass both time periods</p></li>
+<li><p><strong>Higher certainty</strong> new alarm: the existing instance is split around
+the new one so each segment retains the highest available certainty.</p></li>
+<li><p><strong>Lower certainty</strong> new alarm: only the non-overlapping portions of
+the new alarm are inserted.</p></li>
+<li><p><strong>Same certainty</strong>: the existing instance is extended to encompass
+both time periods.</p></li>
 </ul>
+</li>
+</ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
 </dd>
-<dt><strong>alarm_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>The pandas DataFrame output from central_alarm_df_creator(). Must have columns:
-start_time_pt, end_time_pt, alarm_type, variable_name. Optional column: certainty
-(defaults to 3 if not present). Certainty values: 3=high, 2=med, 1=low.</p>
+<dt><strong>alarm_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame output from <code class="docutils literal notranslate"><span class="pre">central_alarm_df_creator()</span></code>. Required columns:
+<code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">alarm_type</span></code>, <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>.
+Optional column: <code class="docutils literal notranslate"><span class="pre">certainty</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code> if absent).
+Certainty scale: <code class="docutils literal notranslate"><span class="pre">3</span></code> = high, <code class="docutils literal notranslate"><span class="pre">2</span></code> = medium, <code class="docutils literal notranslate"><span class="pre">1</span></code> = low.</p>
 </dd>
-<dt><strong>site_name</strong><span class="classifier">str</span></dt><dd><p>The name of the site to associate alarms with. If None, defaults to config.get_site_name()</p>
+<dt><strong>site_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the site to associate alarms with. Defaults to
+<code class="docutils literal notranslate"><span class="pre">config.get_site_name()</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if all alarms were loaded successfully; <code class="docutils literal notranslate"><span class="pre">False</span></code> if an
+exception occurred (transaction is rolled back).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">alarm_df</span></code> is missing any of the required columns.</p>
+</dd>
+<dt>Exception</dt><dd><p>If an alarm ID cannot be retrieved after insertion.</p>
 </dd>
 </dl>
 </dd>
@@ -142,24 +576,30 @@ start_time_pt, end_time_pt, alarm_type, variable_name. Optional column: certaint
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.load_data_statistics">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_data_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_stats_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_daily_indicator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'day'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_data_statistics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Logs data statistics for the site in a table with name “{daily table name}_stats”</p>
+<dd><p>Write daily data-quality statistics to the database.</p>
+<p>The destination table is named <code class="docutils literal notranslate"><span class="pre">{daily_table_name}_stats</span></code> unless
+<code class="docutils literal notranslate"><span class="pre">custom_table_name</span></code> is provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
 </dd>
-<dt><strong>daily_stats_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>dataframe created by the create_data_statistics_df() function in ecopipeline.transform</p>
+<dt><strong>daily_stats_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame produced by <code class="docutils literal notranslate"><span class="pre">create_data_statistics_df()</span></code> in
+<code class="docutils literal notranslate"><span class="pre">ecopipeline.transform</span></code>.</p>
 </dd>
-<dt><strong>config_daily_indicator</strong><span class="classifier">str</span></dt><dd><p>the indicator of the daily_table name in the config.ini file of the data pipeline</p>
+<dt><strong>config_daily_indicator</strong><span class="classifier">str, optional</span></dt><dd><p>Key used to look up the daily table name in <code class="docutils literal notranslate"><span class="pre">config.ini</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'day'</span></code>.</p>
 </dd>
-<dt><strong>custom_table_name</strong><span class="classifier">str</span></dt><dd><p>custom table name for data statistics. Overwrites the name “{daily table name}_stats” to your custom name.
-In this sense config_daily_indicator’s pointer is no longer used.</p>
+<dt><strong>custom_table_name</strong><span class="classifier">str, optional</span></dt><dd><p>Overrides the auto-generated <code class="docutils literal notranslate"><span class="pre">{daily_table_name}_stats</span></code> destination
+table name. When provided, <code class="docutils literal notranslate"><span class="pre">config_daily_indicator</span></code> is only used to
+supply <code class="docutils literal notranslate"><span class="pre">config_info</span></code>; it no longer determines the table name.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the data were successfully written; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 </dd>
 </dl>
 </dd>
@@ -169,22 +609,36 @@ In this sense config_daily_indicator’s pointer is no longer used.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.load_event_table">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_event_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_event_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
-Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database</p>
+<dd><p>Load event records into the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> MySQL table.</p>
+<p>Uses an UPSERT strategy so that existing automatically-uploaded rows can
+be updated while manually modified rows are left unchanged. If the
+DataFrame contains an <code class="docutils literal notranslate"><span class="pre">alarm_type</span></code> column the call is transparently
+redirected to <a class="reference internal" href="#ecopipeline.load.load_alarms" title="ecopipeline.load.load_alarms"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_alarms()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
 </dd>
-<dt><strong>event_df: pd.DataFrame</strong></dt><dd><p>The pandas DataFrame to be written into the mySQL server. Must have columns event_type and event_detail</p>
+<dt><strong>event_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame of events to load. The index must be <code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code>.
+Required columns: <code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">event_type</span></code>, <code class="docutils literal notranslate"><span class="pre">event_detail</span></code>.
+Optional column: <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>.</p>
 </dd>
-<dt><strong>site_name</strong><span class="classifier">str</span></dt><dd><p>the name of the site to correspond the events with. If left blank will default to minute table name</p>
+<dt><strong>site_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the site to associate events with. Defaults to
+<code class="docutils literal notranslate"><span class="pre">config.get_site_name()</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the data were successfully written; <code class="docutils literal notranslate"><span class="pre">False</span></code> if the
+table could not be created.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">event_df</span></code> is missing any of the required columns
+(<code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">event_type</span></code>, <code class="docutils literal notranslate"><span class="pre">event_detail</span></code>).</p>
 </dd>
 </dl>
 </dd>
@@ -194,33 +648,43 @@ Note: will not overwrite values with NULL. Must have a new value to overwrite ex
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.load_overwrite_database">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">load_overwrite_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time_pt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_log_data_loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minute'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.load_overwrite_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
-Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database</p>
+<dd><p>Load a pandas DataFrame into a MySQL table using an UPSERT strategy.</p>
+<p>Existing rows are updated rather than replaced; NULL values in the
+incoming DataFrame will not overwrite existing non-NULL values in the
+database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
 </dd>
-<dt><strong>dataframe: pd.DataFrame</strong></dt><dd><p>The pandas DataFrame to be written into the mySQL server.</p>
+<dt><strong>dataframe</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>The DataFrame to be written into the MySQL server. The index must be
+the primary-key column (e.g. a datetime index named <code class="docutils literal notranslate"><span class="pre">time_pt</span></code>).</p>
 </dd>
-<dt><strong>config_info: dict</strong></dt><dd><p>The dictionary containing the configuration information in the data upload. This can be aquired through the get_login_info() function in this package</p>
+<dt><strong>config_info</strong><span class="classifier">dict</span></dt><dd><p>Configuration dictionary for the upload, obtainable via
+<code class="docutils literal notranslate"><span class="pre">get_login_info()</span></code>. Must contain a <code class="docutils literal notranslate"><span class="pre">'database'</span></code> key and a nested
+dict keyed by <code class="docutils literal notranslate"><span class="pre">data_type</span></code> with a <code class="docutils literal notranslate"><span class="pre">'table_name'</span></code> entry (used when
+<code class="docutils literal notranslate"><span class="pre">table_name</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>).</p>
 </dd>
-<dt><strong>data_type: str</strong></dt><dd><p>The header name corresponding to the table you wish to write data to.</p>
+<dt><strong>data_type</strong><span class="classifier">str</span></dt><dd><p>Key within <code class="docutils literal notranslate"><span class="pre">config_info</span></code> that identifies the target table section.</p>
 </dd>
-<dt><strong>primary_key</strong><span class="classifier">str</span></dt><dd><p>The name of the primary key in the database to upload to. Default as ‘time_pt’</p>
+<dt><strong>primary_key</strong><span class="classifier">str, optional</span></dt><dd><p>Column name used as the primary key. Defaults to <code class="docutils literal notranslate"><span class="pre">'time_pt'</span></code>.</p>
 </dd>
-<dt><strong>table_name</strong><span class="classifier">str</span></dt><dd><p>overwrites table name from config_info if needed</p>
+<dt><strong>table_name</strong><span class="classifier">str, optional</span></dt><dd><p>Overrides the table name derived from <code class="docutils literal notranslate"><span class="pre">config_info[data_type]</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
-<dt><strong>auto_log_data_loss</strong><span class="classifier">bool</span></dt><dd><p>if set to True, a data loss event will be reported if no data exits in the dataframe
-for the last two days from the current date OR if an error occurs</p>
+<dt><strong>auto_log_data_loss</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, a DATA_LOSS_COP event is recorded when no data exists
+in the DataFrame for the last three days, or when an exception
+occurs. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
-<dt><strong>config_key</strong><span class="classifier">str</span></dt><dd><p>The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.</p>
+<dt><strong>config_key</strong><span class="classifier">str, optional</span></dt><dd><p>Key in <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> that points to the minute-table data for the
+site; also used as the site name when reporting data loss. Defaults
+to <code class="docutils literal notranslate"><span class="pre">'minute'</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the data were successfully written; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 </dd>
 </dl>
 </dd>
@@ -230,20 +694,24 @@ for the last two days from the current date OR if an error occurs</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.load.report_data_loss">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.load.</span></span><span class="sig-name descname"><span class="pre">report_data_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.load.report_data_loss" title="Permalink to this definition">¶</a></dt>
-<dd><p>Logs data loss event in event database (assumes one exists) as a DATA_LOSS_COP event to
-note that COP calculations have been effected</p>
+<dd><p>Log a DATA_LOSS_COP event in the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table.</p>
+<p>Records that COP calculations have been affected by a data loss
+condition. If an open DATA_LOSS_COP event already exists for the
+given site, no duplicate is inserted.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
 </dd>
-<dt><strong>site_name</strong><span class="classifier">str</span></dt><dd><p>the name of the site to correspond the events with. If left blank will default to minute table name</p>
+<dt><strong>site_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the site to associate the event with. Defaults to the
+site name returned by <code class="docutils literal notranslate"><span class="pre">config.get_site_name()</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool:</dt><dd><p>A boolean value indicating if the data was successfully written to the database.</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the event was logged (or already existed); <code class="docutils literal notranslate"><span class="pre">False</span></code>
+if the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table does not exist.</p>
 </dd>
 </dl>
 </dd>
@@ -263,6 +731,22 @@ note that COP calculations have been effected</p>
     <h3><a href="../index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Load Documentation</a><ul>
+<li><a class="reference internal" href="#ecopipeline.load.AlarmLoader"><code class="docutils literal notranslate"><span class="pre">AlarmLoader</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.load.AlarmLoader.check_table_exists"><code class="docutils literal notranslate"><span class="pre">AlarmLoader.check_table_exists()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.AlarmLoader.create_new_table"><code class="docutils literal notranslate"><span class="pre">AlarmLoader.create_new_table()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.AlarmLoader.load_database"><code class="docutils literal notranslate"><span class="pre">AlarmLoader.load_database()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.load.Loader"><code class="docutils literal notranslate"><span class="pre">Loader</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.load.Loader.check_table_exists"><code class="docutils literal notranslate"><span class="pre">Loader.check_table_exists()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.Loader.create_new_columns"><code class="docutils literal notranslate"><span class="pre">Loader.create_new_columns()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.Loader.create_new_table"><code class="docutils literal notranslate"><span class="pre">Loader.create_new_table()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.Loader.find_missing_columns"><code class="docutils literal notranslate"><span class="pre">Loader.find_missing_columns()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.Loader.load_database"><code class="docutils literal notranslate"><span class="pre">Loader.load_database()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.load.Loader.report_data_loss"><code class="docutils literal notranslate"><span class="pre">Loader.report_data_loss()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.load.central_load_function"><code class="docutils literal notranslate"><span class="pre">central_load_function()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.check_table_exists"><code class="docutils literal notranslate"><span class="pre">check_table_exists()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.create_new_table"><code class="docutils literal notranslate"><span class="pre">create_new_table()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.load.load_alarms"><code class="docutils literal notranslate"><span class="pre">load_alarms()</span></code></a></li>
@@ -321,7 +805,7 @@ note that COP calculations have been effected</p>
         <li class="right" >
           <a href="../transform/transform.html" title="Transform Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Load Documentation</a></li> 
       </ul>
     </div>

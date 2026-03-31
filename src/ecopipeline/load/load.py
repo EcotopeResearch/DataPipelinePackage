@@ -22,6 +22,26 @@ data_map = {'int64':'float',
             'bool': 'boolean'}
 
 def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df : pd.DataFrame, daily_df : pd.DataFrame, alarm_df : pd.DataFrame):
+    """
+    Dispatch all pipeline DataFrames to their respective database tables.
+
+    Loads minute, hourly, and daily sensor data using :class:`~ecopipeline.load.Loader.Loader`,
+    and alarm data using :class:`~ecopipeline.load.AlarmLoader.AlarmLoader`.
+    Each DataFrame is only written when it is non-``None`` and non-empty.
+
+    Parameters
+    ----------
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+    df : pd.DataFrame
+        Minute-resolution sensor data. May be ``None``.
+    hourly_df : pd.DataFrame
+        Hourly-resolution sensor data. May be ``None``.
+    daily_df : pd.DataFrame
+        Daily-resolution sensor data. May be ``None``.
+    alarm_df : pd.DataFrame
+        Alarm records produced by the transform stage. May be ``None``.
+    """
     print("++++++++++++ LOAD ++++++++++++")
     dbname = config.get_db_name()
 
@@ -47,22 +67,23 @@ def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df :
 
 def check_table_exists(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, dbname: str) -> int:
     """
-    Check if the given table name already exists in database.
+    Check whether a table exists in the database.
 
     Parameters
-    ---------- 
+    ----------
     cursor : mysql.connector.cursor.MySQLCursor
-        Database cursor object and the table name.
-    table_name : str 
-        Name of the table
+        An active database cursor.
+    table_name : str
+        Name of the table to check.
     dbname : str
-        Name of the database
+        Name of the database to search within.
 
     Returns
-    ------- 
-    int: 
-        The number of tables in the database with the given table name.
-        This can directly be used as a boolean!
+    -------
+    int
+        The count of tables matching ``table_name`` in ``dbname``.
+        Evaluates to ``True`` when non-zero, so it can be used directly
+        as a boolean.
     """
 
     cursor.execute(f"SELECT count(*) "
@@ -75,25 +96,36 @@ def check_table_exists(cursor : mysql.connector.cursor.MySQLCursor, table_name: 
 
 def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, table_column_names: list, table_column_types: list, primary_key: str = "time_pt", has_primary_key : bool = True) -> bool:
     """
-    Creates a new table in the mySQL database.
+    Create a new table in the MySQL database.
 
     Parameters
-    ---------- 
+    ----------
     cursor : mysql.connector.cursor.MySQLCursor
-        A cursor object and the name of the table to be created.
+        An active database cursor.
     table_name : str
-        Name of the table
+        Name of the table to create.
     table_column_names : list
-        list of columns names in the table must be passed.
-    primary_key: str
-        The name of the primary index of the table. Should be a datetime. If has_primary_key is set to False, this will just be a column not a key.
-    has_primary_key : bool
-        Set to False if the table should not establish a primary key. Defaults to True
+        Ordered list of column names (excluding the primary-key column).
+    table_column_types : list
+        Ordered list of MySQL type strings corresponding to
+        ``table_column_names``. Must be the same length as
+        ``table_column_names``.
+    primary_key : str, optional
+        Name of the primary-key column. Defaults to ``'time_pt'``.
+    has_primary_key : bool, optional
+        If ``False``, the ``primary_key`` column is added as a plain column
+        rather than a PRIMARY KEY. Defaults to ``True``.
 
     Returns
-    ------- 
-    bool: 
-        A boolean value indicating if a table was sucessfully created. 
+    -------
+    bool
+        ``True`` if the table was successfully created.
+
+    Raises
+    ------
+    Exception
+        If ``table_column_names`` and ``table_column_types`` are different
+        lengths.
     """
     if(len(table_column_names) != len(table_column_types)):
         raise Exception("Cannot create table. Type list and Field Name list are different lengths.")
@@ -113,26 +145,29 @@ def create_new_table(cursor : mysql.connector.cursor.MySQLCursor, table_name: st
 
 def find_missing_columns(cursor : mysql.connector.cursor.MySQLCursor, dataframe: pd.DataFrame, config_dict: dict, table_name: str):
     """
-    Finds the column names which are not in the database table currently but are present
-    in the pandas DataFrame to be written to the database. If communication with database
-    is not possible, an empty list will be returned meaning no column will be added. 
+    Identify DataFrame columns that are absent from the database table.
+
+    If communication with the database fails, empty lists are returned so
+    that the caller can continue without adding any columns.
 
     Parameters
-    ---------- 
-    cursor : mysql.connector.cursor.MySQLCursor 
-        A cursor object and the name of the table to be created.
+    ----------
+    cursor : mysql.connector.cursor.MySQLCursor
+        An active database cursor.
     dataframe : pd.DataFrame
-        the pandas DataFrame to be written into the mySQL server. 
-    config_info : dict
-        The dictionary containing the configuration information 
-    data_type : str
-        the header name corresponding to the table you wish to write data to.  
+        The DataFrame whose columns are compared against the table schema.
+    config_dict : dict
+        Configuration dictionary containing at least a ``'database'`` key
+        with the name of the MySQL database.
+    table_name : str
+        Name of the table to inspect.
 
     Returns
-    ------- 
-    list: 
-        list of column names which must be added to the database table for the pandas 
-        DataFrame to be properly written into the database. 
+    -------
+    list
+        Column names present in ``dataframe`` but absent from the table.
+    list
+        Corresponding MySQL type strings for each missing column.
     """
 
     try:
@@ -157,24 +192,27 @@ def find_missing_columns(cursor : mysql.connector.cursor.MySQLCursor, dataframe:
 
 def create_new_columns(cursor : mysql.connector.cursor.MySQLCursor, table_name: str, new_columns: list, data_types: str):
     """
-    Create the new, necessary column in the database. Catches error if communication with mysql database
-    is not possible.
+    Add new columns to an existing database table.
+
+    Issues one ``ALTER TABLE … ADD COLUMN`` statement per column.
+    Stops and returns ``False`` on the first database error.
 
     Parameters
-    ----------  
+    ----------
     cursor : mysql.connector.cursor.MySQLCursor
-        A cursor object and the name of the table to be created.
-    config_info : dict
-        The dictionary containing the configuration information.
-    data_type : str
-        the header name corresponding to the table you wish to write data to.  
+        An active database cursor.
+    table_name : str
+        Name of the table to alter.
     new_columns : list
-        list of columns that must be added to the database table.
+        Ordered list of column names to add.
+    data_types : str
+        Ordered list of MySQL type strings corresponding to ``new_columns``.
 
     Returns
-    ------- 
-    bool:
-        boolean indicating if the the column were successfully added to the database. 
+    -------
+    bool
+        ``True`` if all columns were added successfully; ``False`` if a
+        database error occurred.
     """
     alter_table_statements = [f"ALTER TABLE {table_name} ADD COLUMN {column} {data_type} DEFAULT NULL;" for column, data_type in zip(new_columns, data_types)]
 
@@ -187,38 +225,48 @@ def create_new_columns(cursor : mysql.connector.cursor.MySQLCursor, table_name: 
 
     return True
 
-def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, config_info: dict, data_type: str, 
+def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, config_info: dict, data_type: str,
                             primary_key: str = "time_pt", table_name: str = None, auto_log_data_loss : bool = False,
                             config_key : str = "minute"):
     """
-    Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
-    Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
+    Load a pandas DataFrame into a MySQL table using an UPSERT strategy.
+
+    Existing rows are updated rather than replaced; NULL values in the
+    incoming DataFrame will not overwrite existing non-NULL values in the
+    database.
 
     Parameters
-    ----------  
-    config : ecopipeline.ConfigManager
+    ----------
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
-    dataframe: pd.DataFrame
-        The pandas DataFrame to be written into the mySQL server.
-    config_info: dict
-        The dictionary containing the configuration information in the data upload. This can be aquired through the get_login_info() function in this package
-    data_type: str
-        The header name corresponding to the table you wish to write data to. 
-    primary_key : str
-        The name of the primary key in the database to upload to. Default as 'time_pt'
-    table_name : str
-        overwrites table name from config_info if needed
-    auto_log_data_loss : bool
-        if set to True, a data loss event will be reported if no data exits in the dataframe 
-        for the last two days from the current date OR if an error occurs
-    config_key : str 
-        The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.
-        
+    dataframe : pd.DataFrame
+        The DataFrame to be written into the MySQL server. The index must be
+        the primary-key column (e.g. a datetime index named ``time_pt``).
+    config_info : dict
+        Configuration dictionary for the upload, obtainable via
+        ``get_login_info()``. Must contain a ``'database'`` key and a nested
+        dict keyed by ``data_type`` with a ``'table_name'`` entry (used when
+        ``table_name`` is ``None``).
+    data_type : str
+        Key within ``config_info`` that identifies the target table section.
+    primary_key : str, optional
+        Column name used as the primary key. Defaults to ``'time_pt'``.
+    table_name : str, optional
+        Overrides the table name derived from ``config_info[data_type]``.
+        Defaults to ``None``.
+    auto_log_data_loss : bool, optional
+        If ``True``, a DATA_LOSS_COP event is recorded when no data exists
+        in the DataFrame for the last three days, or when an exception
+        occurs. Defaults to ``False``.
+    config_key : str, optional
+        Key in ``config.ini`` that points to the minute-table data for the
+        site; also used as the site name when reporting data loss. Defaults
+        to ``'minute'``.
 
     Returns
-    ------- 
-    bool: 
-        A boolean value indicating if the data was successfully written to the database. 
+    -------
+    bool
+        ``True`` if the data were successfully written; ``False`` otherwise.
     """
     # Database Connection
     db_connection, cursor = config.connect_db()
@@ -311,22 +359,36 @@ def load_overwrite_database(config : ConfigManager, dataframe: pd.DataFrame, con
 
 def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name : str = None):
     """
-    Loads given pandas DataFrame into a MySQL table overwriting any conflicting data. Uses an UPSERT strategy to ensure any gaps in data are filled.
-    Note: will not overwrite values with NULL. Must have a new value to overwrite existing values in database
+    Load event records into the ``site_events`` MySQL table.
+
+    Uses an UPSERT strategy so that existing automatically-uploaded rows can
+    be updated while manually modified rows are left unchanged. If the
+    DataFrame contains an ``alarm_type`` column the call is transparently
+    redirected to :func:`load_alarms`.
 
     Parameters
-    ----------  
-    config : ecopipeline.ConfigManager
+    ----------
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
-    event_df: pd.DataFrame
-        The pandas DataFrame to be written into the mySQL server. Must have columns event_type and event_detail 
-    site_name : str
-        the name of the site to correspond the events with. If left blank will default to minute table name
+    event_df : pd.DataFrame
+        DataFrame of events to load. The index must be ``start_time_pt``.
+        Required columns: ``end_time_pt``, ``event_type``, ``event_detail``.
+        Optional column: ``variable_name``.
+    site_name : str, optional
+        Name of the site to associate events with. Defaults to
+        ``config.get_site_name()``.
 
     Returns
-    ------- 
-    bool: 
-        A boolean value indicating if the data was successfully written to the database. 
+    -------
+    bool
+        ``True`` if the data were successfully written; ``False`` if the
+        table could not be created.
+
+    Raises
+    ------
+    Exception
+        If ``event_df`` is missing any of the required columns
+        (``end_time_pt``, ``event_type``, ``event_detail``).
     """
     if event_df.empty:
         print("No events to load. DataFrame is empty.")
@@ -451,20 +513,25 @@ def load_event_table(config : ConfigManager, event_df: pd.DataFrame, site_name :
 
 def report_data_loss(config : ConfigManager, site_name : str = None):
     """
-    Logs data loss event in event database (assumes one exists) as a DATA_LOSS_COP event to 
-    note that COP calculations have been effected
+    Log a DATA_LOSS_COP event in the ``site_events`` table.
+
+    Records that COP calculations have been affected by a data loss
+    condition. If an open DATA_LOSS_COP event already exists for the
+    given site, no duplicate is inserted.
 
     Parameters
-    ----------  
-    config : ecopipeline.ConfigManager
+    ----------
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
-    site_name : str
-        the name of the site to correspond the events with. If left blank will default to minute table name
+    site_name : str, optional
+        Name of the site to associate the event with. Defaults to the
+        site name returned by ``config.get_site_name()``.
 
     Returns
-    ------- 
-    bool: 
-        A boolean value indicating if the data was successfully written to the database. 
+    -------
+    bool
+        ``True`` if the event was logged (or already existed); ``False``
+        if the ``site_events`` table does not exist.
     """
     # Drop empty columns
 
@@ -517,24 +584,31 @@ def report_data_loss(config : ConfigManager, site_name : str = None):
 
 def load_data_statistics(config : ConfigManager, daily_stats_df : pd.DataFrame, config_daily_indicator : str = "day", custom_table_name : str = None):
     """
-    Logs data statistics for the site in a table with name "{daily table name}_stats"
+    Write daily data-quality statistics to the database.
+
+    The destination table is named ``{daily_table_name}_stats`` unless
+    ``custom_table_name`` is provided.
 
     Parameters
-    ----------  
-    config : ecopipeline.ConfigManager
+    ----------
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
     daily_stats_df : pd.DataFrame
-        dataframe created by the create_data_statistics_df() function in ecopipeline.transform
-    config_daily_indicator : str
-        the indicator of the daily_table name in the config.ini file of the data pipeline
-    custom_table_name : str
-        custom table name for data statistics. Overwrites the name "{daily table name}_stats" to your custom name. 
-        In this sense config_daily_indicator's pointer is no longer used. 
+        DataFrame produced by ``create_data_statistics_df()`` in
+        ``ecopipeline.transform``.
+    config_daily_indicator : str, optional
+        Key used to look up the daily table name in ``config.ini``.
+        Defaults to ``'day'``.
+    custom_table_name : str, optional
+        Overrides the auto-generated ``{daily_table_name}_stats`` destination
+        table name. When provided, ``config_daily_indicator`` is only used to
+        supply ``config_info``; it no longer determines the table name.
+        Defaults to ``None``.
 
     Returns
-    ------- 
-    bool: 
-        A boolean value indicating if the data was successfully written to the database. 
+    -------
+    bool
+        ``True`` if the data were successfully written; ``False`` otherwise.
     """
     table_name = custom_table_name
     if table_name is None:
@@ -542,6 +616,7 @@ def load_data_statistics(config : ConfigManager, daily_stats_df : pd.DataFrame, 
     return load_overwrite_database(config, daily_stats_df, config.get_db_table_info([]), config_daily_indicator, table_name=table_name)
 
 def _generate_mysql_update_event_table(row, id):
+    """Build a parameterised MySQL UPDATE statement for a single ``site_events`` row."""
     statement = f"UPDATE site_events SET "
     statment_elems = []
     values = []
@@ -561,6 +636,7 @@ def _generate_mysql_update_event_table(row, id):
     return statement, values
 
 def _generate_mysql_update(row, index, table_name, primary_key):
+    """Build a parameterised MySQL UPDATE statement for a single DataFrame row."""
     statement = f"UPDATE {table_name} SET "
     statment_elems = []
     values = []
@@ -580,35 +656,51 @@ def _generate_mysql_update(row, index, table_name, primary_key):
 
 def load_alarms(config: ConfigManager, alarm_df: pd.DataFrame, site_name: str = None) -> bool:
     """
-    Loads alarm data from central_alarm_df_creator() output into the alarm and alarm_inst tables.
+    Load alarm data into the ``alarm`` and ``alarm_inst`` tables.
 
-    For each alarm instance in the DataFrame:
-    - Checks if a matching alarm record exists (same site_name, alarm_type, variable_name)
-    - If no matching alarm exists, creates a new record in the alarm table
-    - Inserts the alarm instance (with start/end times and certainty) into the alarm_inst table
+    Processes the output of ``central_alarm_df_creator()``. For each alarm
+    instance in the DataFrame the function:
 
-    Certainty-based overlap handling for alarm instances:
-    - If new alarm has higher certainty than existing overlapping instance: existing is split
-      around the new alarm so each time segment has the highest certainty available
-    - If new alarm has lower certainty than existing: only non-overlapping portions of new
-      alarm are inserted
-    - If same certainty: existing instance is extended to encompass both time periods
+    1. Checks whether a matching alarm record (same ``site_name``,
+       ``alarm_type``, ``variable_name``) already exists within a three-day
+       gap tolerance.
+    2. Creates a new alarm record if none is found, or extends the date range
+       of the nearest existing record.
+    3. Inserts alarm instances into ``alarm_inst`` using certainty-based
+       overlap resolution:
+
+       - **Higher certainty** new alarm: the existing instance is split around
+         the new one so each segment retains the highest available certainty.
+       - **Lower certainty** new alarm: only the non-overlapping portions of
+         the new alarm are inserted.
+       - **Same certainty**: the existing instance is extended to encompass
+         both time periods.
 
     Parameters
     ----------
-    config : ecopipeline.ConfigManager
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
     alarm_df : pd.DataFrame
-        The pandas DataFrame output from central_alarm_df_creator(). Must have columns:
-        start_time_pt, end_time_pt, alarm_type, variable_name. Optional column: certainty
-        (defaults to 3 if not present). Certainty values: 3=high, 2=med, 1=low.
-    site_name : str
-        The name of the site to associate alarms with. If None, defaults to config.get_site_name()
+        DataFrame output from ``central_alarm_df_creator()``. Required columns:
+        ``start_time_pt``, ``end_time_pt``, ``alarm_type``, ``variable_name``.
+        Optional column: ``certainty`` (defaults to ``3`` if absent).
+        Certainty scale: ``3`` = high, ``2`` = medium, ``1`` = low.
+    site_name : str, optional
+        Name of the site to associate alarms with. Defaults to
+        ``config.get_site_name()``.
 
     Returns
     -------
-    bool:
-        A boolean value indicating if the data was successfully written to the database.
+    bool
+        ``True`` if all alarms were loaded successfully; ``False`` if an
+        exception occurred (transaction is rolled back).
+
+    Raises
+    ------
+    Exception
+        If ``alarm_df`` is missing any of the required columns.
+    Exception
+        If an alarm ID cannot be retrieved after insertion.
     """
     if alarm_df.empty:
         print("No alarms to load. DataFrame is empty.")

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Transform Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
+    <title>Transform Documentation &#8212; DataPipelinePackage 2.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>  
@@ -72,23 +72,27 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.add_relative_humidity">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">add_relative_humidity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'airTemp_F'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dew_point_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'dewPoint_F'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree_f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.add_relative_humidity" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a column for relative humidity to the DataFrame.</p>
+<dd><p>Add a <code class="docutils literal notranslate"><span class="pre">'relative_humidity'</span></code> column to the dataframe.</p>
+<p>Computes relative humidity from air temperature and dew-point temperature
+using the August-Roche-Magnus approximation. Clips the result to [0, 100].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame containing air temperature and dew point temperature.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing air temperature and dew-point temperature columns.</p>
 </dd>
-<dt><strong>temp_col</strong><span class="classifier">str</span></dt><dd><p>Column name for air temperature.</p>
+<dt><strong>temp_col</strong><span class="classifier">str, optional</span></dt><dd><p>Column name for air temperature. Defaults to <code class="docutils literal notranslate"><span class="pre">'airTemp_F'</span></code>.</p>
 </dd>
-<dt><strong>dew_point_col</strong><span class="classifier">str</span></dt><dd><p>Column name for dew point temperature.</p>
+<dt><strong>dew_point_col</strong><span class="classifier">str, optional</span></dt><dd><p>Column name for dew-point temperature. Defaults to <code class="docutils literal notranslate"><span class="pre">'dewPoint_F'</span></code>.</p>
 </dd>
-<dt><strong>degree_f</strong><span class="classifier">bool</span></dt><dd><p>True if temperature columns are in °F, false if in °C</p>
+<dt><strong>degree_f</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, temperature columns are assumed to be in °F and are
+internally converted to °C for the calculation. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, columns
+are assumed to already be in °C. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>DataFrame with an added column for relative humidity.</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with an added <code class="docutils literal notranslate"><span class="pre">'relative_humidity'</span></code> column (percent, 0–100).</p>
 </dd>
 </dl>
 </dd>
@@ -98,36 +102,40 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.aggregate_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">aggregate_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_filename:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_hour_threshold:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_day_threshold:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_partial:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.aggregate_df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily
-dataframes, appends ‘load_shift_day’ column onto the daily_df and the ‘system_state’ column to
-hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
-The function will only trim the returned dataframes such that only averages from complete hours and
-complete days are returned rather than agregated data from partial datasets.</p>
+<dd><p>Aggregate minute-level data into hourly and daily dataframes.</p>
+<p>Energy columns (matching <code class="docutils literal notranslate"><span class="pre">.*Energy.*</span></code> but not <code class="docutils literal notranslate"><span class="pre">EnergyRate</span></code> or BTU
+suffixes) are summed; all other numeric columns are averaged. Optionally
+appends load-shift schedule data and removes partial hours/days.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of minute-by-minute sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of minute-by-minute sensor data.</p>
 </dd>
-<dt><strong>ls_filename</strong><span class="classifier">str</span></dt><dd><p>Path to csv file containing load shift schedule (e.g. “full/path/to/pipeline/input/loadshift_matrix.csv”),
-There should be at least four columns in this csv: ‘date’, ‘startTime’, ‘endTime’, and ‘event’</p>
+<dt><strong>ls_filename</strong><span class="classifier">str, optional</span></dt><dd><p>Path to the load-shift schedule CSV file (e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/input/loadshift_matrix.csv&quot;</span></code>). The CSV must
+have at least four columns: <code class="docutils literal notranslate"><span class="pre">date</span></code>, <code class="docutils literal notranslate"><span class="pre">startTime</span></code>, <code class="docutils literal notranslate"><span class="pre">endTime</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">event</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
 </dd>
-<dt><strong>complete_hour_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)
-Only applicable if remove_partial set to True</p>
+<dt><strong>complete_hour_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Fraction of minutes in an hour required to count as a complete hour,
+expressed as a float (e.g. 80% = 0.8). Defaults to 0.8. Only
+applicable when <code class="docutils literal notranslate"><span class="pre">remove_partial</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
-<dt><strong>complete_day_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)
-Only applicable if remove_partial set to True</p>
+<dt><strong>complete_day_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Fraction of hours in a day required to count as a complete day,
+expressed as a float (e.g. 80% = 0.8). Defaults to 1.0. Only
+applicable when <code class="docutils literal notranslate"><span class="pre">remove_partial</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
-<dt><strong>remove_partial</strong><span class="classifier">bool</span></dt><dd><p>Default to True. Removes parial days and hours from aggregated dfs</p>
+<dt><strong>remove_partial</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, removes partial hours and days from the aggregated
+dataframes. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>agregated daily dataframe that contains all daily information as well as the ‘load_shift_day’ column if
-relevant to the data set.</p>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Aggregated hourly dataframe, including a <code class="docutils literal notranslate"><span class="pre">'system_state'</span></code> column if
+a valid load-shift file was provided.</p>
 </dd>
-<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>agregated hourly dataframe that contains all hourly information as well as the ‘system_state’ column if
-relevant to the data set.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Aggregated daily dataframe, including a <code class="docutils literal notranslate"><span class="pre">'load_shift_day'</span></code> column if
+a valid load-shift file was provided.</p>
 </dd>
 </dl>
 </dd>
@@ -159,27 +167,37 @@ relevant to the data set.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.apply_equipment_cop_derate">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">apply_equipment_cop_derate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equip_cop_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.apply_equipment_cop_derate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function derates equipment method system COP based on R value
-R12 - R16 : 12 %
-R16 - R20 : 10%
-R20 - R24 : 8%
-R24 - R28 : 6%
-R28 - R32 : 4%
-&gt; R32 : 2%</p>
+<dd><p>Derate equipment-method system COP based on building R-value.</p>
+<p>Derate percentages applied:</p>
+<ul class="simple">
+<li><p>R12–R16: 12%</p></li>
+<li><p>R16–R20: 10%</p></li>
+<li><p>R20–R24: 8%</p></li>
+<li><p>R24–R28: 6%</p></li>
+<li><p>R28–R32: 4%</p></li>
+<li><p>&gt; R32: 2%</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>dataframe</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the equipment COP column to derate.</p>
 </dd>
-<dt><strong>equip_cop_col</strong><span class="classifier">str</span></dt><dd><p>name of COP column to derate</p>
+<dt><strong>equip_cop_col</strong><span class="classifier">str</span></dt><dd><p>Name of the COP column to derate.</p>
 </dd>
-<dt><strong>r_val</strong><span class="classifier">int</span></dt><dd><p>R value, defaults to 16</p>
+<dt><strong>r_val</strong><span class="classifier">int, optional</span></dt><dd><p>Building R-value used to determine the derate factor. Defaults to 16.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame</dt><dd><p>df with equip_cop_col derated</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with <code class="docutils literal notranslate"><span class="pre">equip_cop_col</span></code> multiplied by the appropriate derate
+factor.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">r_val</span></code> is less than 12.</p>
 </dd>
 </dl>
 </dd>
@@ -240,22 +258,26 @@ Prereq:</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.avg_duplicate_times">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">avg_duplicate_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timezone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.avg_duplicate_times" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take in a dataframe and look for duplicate timestamps (ususally due to daylight savings or rounding).
-The dataframe will be altered to just have one line for the timestamp, takes the average values between the duplicate timestamps
-for the columns of the line.</p>
+<dd><p>Collapse duplicate timestamps by averaging numeric values and taking the first non-numeric value.</p>
+<p>Looks for duplicate timestamps (typically caused by daylight-saving time
+transitions or timestamp rounding) and reduces each group of duplicates to a
+single row, averaging numeric columns and keeping the first value for
+non-numeric columns.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe to be altered</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe to be altered.</p>
 </dd>
-<dt><strong>timezone: str</strong></dt><dd><p>The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a
-time stamp by the pandas tz_localize() function <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html">https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html</a></p>
+<dt><strong>timezone</strong><span class="classifier">str</span></dt><dd><p>Timezone string to apply to the output index. Must be a string
+recognised by <code class="docutils literal notranslate"><span class="pre">pandas.Series.tz_localize</span></code>. See
+<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html">https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html</a>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with all duplicate timestamps compressed into one, averegaing data values</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with all duplicate timestamps collapsed into one row,
+averaging numeric data values.</p>
 </dd>
 </dl>
 </dd>
@@ -280,6 +302,72 @@ time stamp by the pandas tz_localize() function <a class="reference external" hr
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>pd.DataFrame:</dt><dd><p>Pandas DataFrame with the added COP columns.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.central_transform_function">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">central_transform_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weather_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oat_column_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Temp_OAT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_hour_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_day_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_partial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_aggregation_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_aggregation_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">[&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;]</span></span></span><a class="headerlink" href="#ecopipeline.transform.central_transform_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the full central transform pipeline on raw minute-level site data.</p>
+<p>Renames sensors, rounds timestamps, forward-fills missing values, optionally
+converts timezones, averages duplicate timestamps, aggregates to hourly and
+daily dataframes, and optionally merges weather data. Supports optional
+pre- and post-aggregation hooks for custom processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with raw time-indexed (ideally minute-interval) site data.
+Important column names should be represented in the <code class="docutils literal notranslate"><span class="pre">variable_alias</span></code>
+column in the Variable_Names.csv file.</p>
+</dd>
+<dt><strong>weather_df</strong><span class="classifier">pd.DataFrame, optional</span></dt><dd><p>Dataframe with time-indexed (preferably hourly) weather data. Will be
+merged with the hourly dataframe.</p>
+</dd>
+<dt><strong>tz_convert_from</strong><span class="classifier">str, optional</span></dt><dd><p>String value of the timezone the data is currently in.</p>
+</dd>
+<dt><strong>tz_convert_to</strong><span class="classifier">str, optional</span></dt><dd><p>String value of the timezone the data should be converted to.</p>
+</dd>
+<dt><strong>oat_column_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name that the Outdoor Air Temperature column should have. Defaults to
+<code class="docutils literal notranslate"><span class="pre">'Temp_OAT'</span></code>.</p>
+</dd>
+<dt><strong>complete_hour_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Percent of minutes in an hour needed to count as a complete hour,
+expressed as a float (e.g. 80% = 0.8). Defaults to 0.8. Only
+applicable if <code class="docutils literal notranslate"><span class="pre">remove_partial</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>complete_day_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Percent of hours in a day needed to count as a complete day, expressed
+as a float (e.g. 80% = 0.8). Defaults to 1.0. Only applicable if
+<code class="docutils literal notranslate"><span class="pre">remove_partial</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>remove_partial</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, removes partial days and hours from aggregated dataframes.
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>pre_aggregation_func</strong><span class="classifier">callable, optional</span></dt><dd><p>A custom function called after minute-level processing and before
+aggregation. Signature:
+<code class="docutils literal notranslate"><span class="pre">pre_aggregation_func(df:</span> <span class="pre">pd.DataFrame)</span> <span class="pre">-&gt;</span> <span class="pre">pd.DataFrame</span></code>.</p>
+</dd>
+<dt><strong>post_aggregation_func</strong><span class="classifier">callable, optional</span></dt><dd><p>A custom function called after weather merging and before returning.
+Signature:
+<code class="docutils literal notranslate"><span class="pre">post_aggregation_func(df,</span> <span class="pre">hourly_df,</span> <span class="pre">daily_df)</span> <span class="pre">-&gt;</span> <span class="pre">tuple[pd.DataFrame,</span> <span class="pre">pd.DataFrame,</span> <span class="pre">pd.DataFrame]</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>tuple of pd.DataFrame</dt><dd><p>A three-element tuple <code class="docutils literal notranslate"><span class="pre">(df,</span> <span class="pre">hourly_df,</span> <span class="pre">daily_df)</span></code> containing the
+processed minute-level, hourly, and daily dataframes respectively.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>TypeError</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">pre_aggregation_func</span></code> or <code class="docutils literal notranslate"><span class="pre">post_aggregation_func</span></code> is not
+callable, does not accept the expected parameters, or does not return
+the expected type.</p>
 </dd>
 </dl>
 </dd>
@@ -312,20 +400,29 @@ a unique event_ID value whenever the system changes state.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.column_name_change">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">column_name_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_old_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.column_name_change" title="Permalink to this definition">¶</a></dt>
-<dd><p>Overwrites values in <cite>new_column</cite> with values from <cite>old_column</cite>
-for all rows before <cite>dt</cite>, if <cite>dt</cite> is within the index range.</p>
+<dd><p>Back-fill <code class="docutils literal notranslate"><span class="pre">new_column</span></code> with values from <code class="docutils literal notranslate"><span class="pre">old_column</span></code> for rows before a name-change timestamp.</p>
+<p>Overwrites values in <code class="docutils literal notranslate"><span class="pre">new_column</span></code> with values from <code class="docutils literal notranslate"><span class="pre">old_column</span></code> for all
+rows with an index earlier than <code class="docutils literal notranslate"><span class="pre">dt</span></code>, provided <code class="docutils literal notranslate"><span class="pre">dt</span></code> is within the index
+range. Optionally removes <code class="docutils literal notranslate"><span class="pre">old_column</span></code> afterwards.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe with minute-to-minute data</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe with minute-to-minute data.</p>
 </dd>
-<dt><strong>dt: pd.Timestamp</strong></dt><dd><p>timestamp of the varriable name change</p>
+<dt><strong>dt</strong><span class="classifier">pd.Timestamp</span></dt><dd><p>Timestamp of the variable name change.</p>
 </dd>
-<dt><strong>new_column: str</strong></dt><dd><p>column to be overwritten</p>
+<dt><strong>new_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column to be overwritten for rows before <code class="docutils literal notranslate"><span class="pre">dt</span></code>.</p>
 </dd>
-<dt><strong>old_column: str</strong></dt><dd><p>column to copy from</p>
+<dt><strong>old_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column to copy values from.</p>
 </dd>
-<dt><strong>remove_old_column</strong><span class="classifier">bool</span></dt><dd><p>remove old column when done</p>
+<dt><strong>remove_old_column</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, drops <code class="docutils literal notranslate"><span class="pre">old_column</span></code> from the dataframe after the copy.
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Dataframe with <code class="docutils literal notranslate"><span class="pre">new_column</span></code> updated for pre-change rows.</p>
 </dd>
 </dl>
 </dd>
@@ -335,21 +432,23 @@ for all rows before <cite>dt</cite>, if <cite>dt</cite> is within the index rang
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.concat_last_row">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">concat_last_row</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.concat_last_row" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function takes in a dataframe with new data and a second data frame meant to be the
-last row from the database the new data is being processed for. The two dataframes are then concatenated
-such that the new data can later be forward filled from the info the last row</p>
+<dd><p>Concatenate the last database row onto a new-data dataframe to enable forward filling.</p>
+<p>Takes a dataframe with new data and a second dataframe representing the last
+row of the destination database, concatenates them so that subsequent forward
+filling can use information from the last row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>dataframe with new data that needs to be forward filled from data in the last row of a database</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with new data that needs to be forward filled from data in the
+last row of a database.</p>
 </dd>
-<dt><strong>last_row</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>last row of the database to forward fill from in a pandas dataframe</p>
+<dt><strong>last_row</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Last row of the database to forward fill from.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with last row concatenated</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the last row concatenated and sorted by index.</p>
 </dd>
 </dl>
 </dd>
@@ -383,19 +482,22 @@ such that the new data can later be forward filled from the info the last row</p
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.convert_c_to_f">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_c_to_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_c_to_f" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes in a pandas dataframe of data and a list of column names to convert from degrees Celsius to Farenhiet.</p>
+<dd><p>Convert specified columns from degrees Celsius to Fahrenheit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data.</p>
 </dd>
-<dt><strong>column_names</strong><span class="classifier">list of stings</span></dt><dd><p>list of columns with data currently in Celsius that need to be converted to Farenhiet</p>
+<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>List of column names whose values are currently in Celsius and need to
+be converted to Fahrenheit.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.</dt><dd></dd>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the specified columns converted from Celsius to
+Fahrenheit.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -404,19 +506,21 @@ such that the new data can later be forward filled from the info the last row</p
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.convert_l_to_g">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_l_to_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_l_to_g" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes in a pandas dataframe of data and a list of column names to convert from Liters to Gallons.</p>
+<dd><p>Convert specified columns from liters to gallons.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data.</p>
 </dd>
-<dt><strong>column_names</strong><span class="classifier">list of stings</span></dt><dd><p>list of columns with data currently in Liters that need to be converted to Gallons</p>
+<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>List of column names whose values are currently in liters and need to
+be converted to gallons.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame: Dataframe with specified columns converted from Liters to Gallons.</dt><dd></dd>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the specified columns converted from liters to gallons.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -425,20 +529,21 @@ such that the new data can later be forward filled from the info the last row</p
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.convert_on_off_col_to_bool">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_on_off_col_to_bool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_on_off_col_to_bool" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes in a pandas dataframe of data and a list of column names to convert from the strings
-“ON” and “OFF” to boolean values True and False resperctively.</p>
+<dd><p>Convert “ON”/”OFF” string values to boolean <code class="docutils literal notranslate"><span class="pre">True</span></code>/<code class="docutils literal notranslate"><span class="pre">False</span></code> in specified columns.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data.</p>
 </dd>
-<dt><strong>column_names</strong><span class="classifier">list of stings</span></dt><dd><p>list of columns with data currently in strings “ON” and “OFF” that need to be converted to boolean values</p>
+<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>List of column names containing <code class="docutils literal notranslate"><span class="pre">&quot;ON&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;OFF&quot;</span></code> (or <code class="docutils literal notranslate"><span class="pre">&quot;On&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;Off&quot;</span></code>)
+strings to be converted to boolean values.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.</dt><dd></dd>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the specified columns converted to boolean values.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -447,27 +552,56 @@ such that the new data can later be forward filled from the info the last row</p
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.convert_temp_resistance_type">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_temp_resistance_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'veris'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_temp_resistance_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert temperature in Fahrenheit to resistance in Ohms for 10k Type 2 thermistor.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="ecopipeline.transform.convert_time_zone">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_time_zone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'UTC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_time_zone" title="Permalink to this definition">¶</a></dt>
-<dd><p>converts a dataframe’s indexed timezone from tz_convert_from to tz_convert_to.</p>
+<dd><p>Convert temperature resistance readings using a 10k Type 2 thermistor model.</p>
+<p>Applies a two-stage pickle-model conversion (temperature-to-resistance, then
+resistance-to-temperature) to correct sensor readings in the specified column.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Timestamp-indexed Pandas dataframe of minute-by-minute values.</p>
 </dd>
-<dt><strong>tz_convert_from</strong><span class="classifier">str</span></dt><dd><p>String value of timezone data is currently in</p>
+<dt><strong>column_name</strong><span class="classifier">str</span></dt><dd><p>Name of the column containing resistance conversion Type 2 data.</p>
 </dd>
-<dt><strong>tz_convert_to</strong><span class="classifier">str</span></dt><dd><p>String value of timezone data should be converted to</p>
+<dt><strong>sensor_model</strong><span class="classifier">str, optional</span></dt><dd><p>Sensor model to use. Supported values: <code class="docutils literal notranslate"><span class="pre">'veris'</span></code>, <code class="docutils literal notranslate"><span class="pre">'tasseron'</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'veris'</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>The dataframe with it’s index converted to the appropriate timezone.</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the specified column corrected via the thermistor model.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">sensor_model</span></code> is not a supported value.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.transform.convert_time_zone">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">convert_time_zone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'UTC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_convert_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.convert_time_zone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a dataframe’s DatetimeIndex from one timezone to another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data whose index should be timezone-converted.</p>
+</dd>
+<dt><strong>tz_convert_from</strong><span class="classifier">str, optional</span></dt><dd><p>Timezone string the index is currently in. Defaults to <code class="docutils literal notranslate"><span class="pre">'UTC'</span></code>.</p>
+</dd>
+<dt><strong>tz_convert_to</strong><span class="classifier">str, optional</span></dt><dd><p>Timezone string the index should be converted to. Defaults to
+<code class="docutils literal notranslate"><span class="pre">'America/Los_Angeles'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Dataframe with its index converted to the target timezone (stored
+without timezone info as a naive datetime index).</p>
 </dd>
 </dl>
 </dd>
@@ -477,26 +611,31 @@ such that the new data can later be forward filled from the info the last row</p
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.cop_method_1">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">cop_method_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recircLosses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatout_primary_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'HeatOut_Primary'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_input_power_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PowerIn_Total'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.cop_method_1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs COP calculation method 1 (original AWS method).</p>
+<dd><p>Perform COP calculation method 1 (original AWS method).</p>
+<p>Computes <code class="docutils literal notranslate"><span class="pre">COP_DHWSys_1</span> <span class="pre">=</span> <span class="pre">(HeatOut_Primary</span> <span class="pre">+</span> <span class="pre">recircLosses)</span> <span class="pre">/</span> <span class="pre">PowerIn_Total</span></code>
+and adds the result as a new column to the dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.Dataframe</strong></dt><dd><p>Pandas dataframe representing daily averaged values from datastream to add COP columns to. Adds column called ‘COP_DHWSys_1’ to the dataframe in place
-The dataframe needs to already have two columns, ‘HeatOut_Primary’ and ‘PowerIn_Total’ to calculate COP_DHWSys_1</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of daily averaged values. Must already contain
+<code class="docutils literal notranslate"><span class="pre">heatout_primary_column</span></code> and <code class="docutils literal notranslate"><span class="pre">total_input_power_column</span></code>.</p>
 </dd>
-<dt><strong>recircLosses: float or pd.Series</strong></dt><dd><p>If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
-If reciculation losses measurements are in datastream, this should be a column of df.
-Units should be in kW.</p>
+<dt><strong>recircLosses</strong><span class="classifier">float or pd.Series</span></dt><dd><p>Recirculation losses in kW. Pass a <code class="docutils literal notranslate"><span class="pre">float</span></code> for a fixed spot-measured
+value, or a <code class="docutils literal notranslate"><span class="pre">pd.Series</span></code> (aligned with <code class="docutils literal notranslate"><span class="pre">df</span></code>) if measurements are
+available in the datastream.</p>
 </dd>
-<dt><strong>heatout_primary_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column that contains the output power of the primary system in kW. Defaults to ‘HeatOut_Primary’</p>
+<dt><strong>heatout_primary_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the column containing primary system output power in kW.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'HeatOut_Primary'</span></code>.</p>
 </dd>
-<dt><strong>total_input_power_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column that contains the total input power of the system in kW. Defaults to ‘PowerIn_Total’</p>
+<dt><strong>total_input_power_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the column containing total system input power in kW.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'PowerIn_Total'</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_1</dt><dd></dd>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with an added <code class="docutils literal notranslate"><span class="pre">'COP_DHWSys_1'</span></code> column.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -505,25 +644,32 @@ Units should be in kW.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.cop_method_2">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">cop_method_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cop_tm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cop_primary_column_name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.cop_method_2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs COP calculation method 2 as defined by Scott’s whiteboard image
-COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)</p>
+<dd><p>Perform COP calculation method 2.</p>
+<p>Formula:
+<code class="docutils literal notranslate"><span class="pre">COP</span> <span class="pre">=</span> <span class="pre">COP_primary</span> <span class="pre">*</span> <span class="pre">(ELEC_primary</span> <span class="pre">/</span> <span class="pre">ELEC_total)</span> <span class="pre">+</span> <span class="pre">COP_tm</span> <span class="pre">*</span> <span class="pre">(ELEC_tm</span> <span class="pre">/</span> <span class="pre">ELEC_total)</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Pandas DataFrame to add COP columns to. The dataframe needs to have a column for the COP of the primary system (see cop_primary_column_name)
-as well as a column called ‘PowerIn_Total’ for the total system power and columns prefixed with ‘PowerIn_HPWH’ or ‘PowerIn_SecLoopPump’ for
-power readings taken for HPWHs/primary systems and columns prefixed with ‘PowerIn_SwingTank’ or ‘PowerIn_ERTank’ for power readings taken for
-Temperature Maintenance systems</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe to add the COP column to. Must contain:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cop_primary_column_name</span></code>: primary system COP values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'PowerIn_Total'</span></code>: total system power.</p></li>
+<li><p>Columns prefixed with <code class="docutils literal notranslate"><span class="pre">'PowerIn_HPWH'</span></code> or equal to
+<code class="docutils literal notranslate"><span class="pre">'PowerIn_SecLoopPump'</span></code> (primary system power).</p></li>
+<li><p>Columns prefixed with <code class="docutils literal notranslate"><span class="pre">'PowerIn_SwingTank'</span></code> or
+<code class="docutils literal notranslate"><span class="pre">'PowerIn_ERTank'</span></code> (temperature-maintenance system power).</p></li>
+</ul>
 </dd>
-<dt><strong>cop_tm: float</strong></dt><dd><p>fixed COP value for temputure Maintenece system</p>
+<dt><strong>cop_tm</strong><span class="classifier">float</span></dt><dd><p>Fixed COP value for the temperature-maintenance system.</p>
 </dd>
-<dt><strong>cop_primary_column_name: str</strong></dt><dd><p>Name of the column used for COP_Primary values</p>
+<dt><strong>cop_primary_column_name</strong><span class="classifier">str</span></dt><dd><p>Name of the column containing primary-system COP values.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_2</dt><dd></dd>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with an added <code class="docutils literal notranslate"><span class="pre">'COP_DHWSys_2'</span></code> column.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -532,22 +678,30 @@ Temperature Maintenance systems</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.create_data_statistics_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">create_data_statistics_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.create_data_statistics_df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function must be called on the raw minute data df after the rename_varriables() and before the ffill_missing() function has been called.
-The function returns a dataframe indexed by day. Each column will expanded to 3 columns, appended with ‘_missing_mins’, ‘_avg_gap’, and
-‘_max_gap’ respectively. the columns will carry the following statisctics:
-_missing_mins -&gt; the number of minutes in the day that have no reported data value for the column
-_avg_gap -&gt; the average gap (in minutes) between collected data values that day
-_max_gap -&gt; the maximum gap (in minutes) between collected data values that day</p>
+<dd><p>Compute per-column data-gap statistics aggregated by day.</p>
+<p>Must be called on the raw minute-level dataframe after <code class="docutils literal notranslate"><span class="pre">rename_sensors()</span></code>
+and before <code class="docutils literal notranslate"><span class="pre">ffill_missing()</span></code>. Each original column is expanded into three
+derived columns:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;col&gt;_missing_mins</span></code>: number of minutes in the day with no reported
+value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;col&gt;_avg_gap</span></code>: average consecutive gap length (in minutes) for that
+day.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;col&gt;_max_gap</span></code>: maximum consecutive gap length (in minutes) for that
+day.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>minute data df after the rename_varriables() and before the ffill_missing() function has been called</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Minute-level dataframe after <code class="docutils literal notranslate"><span class="pre">rename_sensors()</span></code> and before
+<code class="docutils literal notranslate"><span class="pre">ffill_missing()</span></code> has been called.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>daily_data_stats</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>new dataframe with the columns descriped in the function’s description</p>
+<dt>pd.DataFrame</dt><dd><p>Day-indexed dataframe containing the three gap-statistic columns for
+each original column.</p>
 </dd>
 </dl>
 </dd>
@@ -579,17 +733,19 @@ _max_gap -&gt; the maximum gap (in minutes) between collected data values that d
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.create_summary_tables">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">create_summary_tables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.create_summary_tables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Revamped version of “aggregate_data” function. Creates hourly and daily summary tables.</p>
+<dd><p>Create hourly and daily summary tables from minute-by-minute data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of minute-by-minute sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of minute-by-minute sensor data.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data.</p>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Hourly mean aggregation of the input data, with partial hours removed.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Daily mean aggregation of the input data, with partial days removed.</p>
 </dd>
 </dl>
 </dd>
@@ -599,23 +755,25 @@ _max_gap -&gt; the maximum gap (in minutes) between collected data values that d
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.delete_erroneous_from_time_pt">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">delete_erroneous_from_time_pt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.delete_erroneous_from_time_pt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and delete specified erroneous values at a specified time point.</p>
+<dd><p>Replace erroneous values at a specific timestamp with a given replacement value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Timestamp indexed Pandas dataframe that needs to have an erroneous value removed</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Timestamp-indexed Pandas dataframe that contains the erroneous value.</p>
 </dd>
-<dt><strong>time_point</strong><span class="classifier">pd.Timestamp</span></dt><dd><p>The timepoint index the erroneous value takes place in</p>
+<dt><strong>time_point</strong><span class="classifier">pd.Timestamp</span></dt><dd><p>The index timestamp at which the erroneous values occur.</p>
 </dd>
-<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>list of column names as strings that contain erroneous values at this time stamp</p>
+<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>List of column name strings that contain erroneous values at this
+timestamp.</p>
 </dd>
-<dt><strong>new_value</strong><span class="classifier">any</span></dt><dd><p>new value to populate the erroneous columns at this timestamp with. If set to None, will replace value with NaN</p>
+<dt><strong>new_value</strong><span class="classifier">any, optional</span></dt><dd><p>Replacement value to write into the erroneous cells. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the cells are replaced with NaN. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with error values replaced with new value</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the erroneous values replaced by <code class="docutils literal notranslate"><span class="pre">new_value</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -648,26 +806,31 @@ and the corrected elevation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.estimate_power">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">estimate_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_power_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_a_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_b_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_c_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assumed_voltage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">208</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.estimate_power" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>df: pd.DataFrame</dt><dd><p>Pandas dataframe with minute-to-minute data</p>
+<dd><p>Estimate three-phase power from per-phase current readings.</p>
+<p>Calculates power as the average phase current multiplied by the assumed
+voltage, power factor, and sqrt(3), then converts from watts to kilowatts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe with minute-to-minute data.</p>
 </dd>
-<dt>new_power_column<span class="classifier">str</span></dt><dd><p>The column name of the power varriable for the calculation. Units of the column should be kW</p>
+<dt><strong>new_power_column</strong><span class="classifier">str</span></dt><dd><p>Column name to store the estimated power. Units will be kW.</p>
 </dd>
-<dt>current_a_column<span class="classifier">str</span></dt><dd><p>The column name of the Current A varriable for the calculation. Units of the column should be amps</p>
+<dt><strong>current_a_column</strong><span class="classifier">str</span></dt><dd><p>Column name of the Phase A current. Units should be amps.</p>
 </dd>
-<dt>current_b_column<span class="classifier">str</span></dt><dd><p>The column name of the Current B varriable for the calculation. Units of the column should be amps</p>
+<dt><strong>current_b_column</strong><span class="classifier">str</span></dt><dd><p>Column name of the Phase B current. Units should be amps.</p>
 </dd>
-<dt>current_c_column<span class="classifier">str</span></dt><dd><p>The column name of the Current C varriable for the calculation. Units of the column should be amps</p>
+<dt><strong>current_c_column</strong><span class="classifier">str</span></dt><dd><p>Column name of the Phase C current. Units should be amps.</p>
 </dd>
-<dt>assumed_voltage<span class="classifier">float</span></dt><dd><p>The assumed voltage (default 208)</p>
+<dt><strong>assumed_voltage</strong><span class="classifier">float, optional</span></dt><dd><p>Assumed line voltage in volts. Defaults to 208.</p>
 </dd>
-<dt>power_factor<span class="classifier">float</span></dt><dd><p>The power factor (default 1)</p>
+<dt><strong>power_factor</strong><span class="classifier">float, optional</span></dt><dd><p>Power factor to apply. Defaults to 1.</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with new estimated power column of specified name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Dataframe with a new estimated power column of the specified name.</p>
 </dd>
 </dl>
 </dd>
@@ -677,32 +840,34 @@ and the corrected elevation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.ffill_missing">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">ffill_missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_fill</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.ffill_missing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and forward fill select variables with no entry.</p>
-<dl class="field-list">
+<dd><p>Forward-fill selected columns of a dataframe according to rules in Variable_Names.csv.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe that needs to be forward filled</p>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>original_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe that needs to be forward-filled.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Varriable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-There should be at least three columns in this csv: “variable_name”, “changepoint”, “ffill_length”.
-The variable_name column should contain the name of each variable in the dataframe that requires forward filling.
-The changepoint column should contain one of three values:</p>
-<blockquote>
-<div><p>“0” if the variable should be forward filled to a certain length (see ffill_length).
-“1” if the varrible should be forward filled completely until the next change point.
-null if the variable should not be forward filled.</p>
-</div></blockquote>
-<p>The ffill_length contains the number of rows which should be forward filled if the value in the changepoint is “0”</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.
+Points to a file called Variable_Names.csv in the pipeline’s input folder.
+The CSV must have at least three columns:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">variable_name</span></code>: name of each variable to forward-fill.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">changepoint</span></code>: <code class="docutils literal notranslate"><span class="pre">1</span></code> to forward-fill unconditionally until the next
+change point, <code class="docutils literal notranslate"><span class="pre">0</span></code> to forward-fill up to <code class="docutils literal notranslate"><span class="pre">ffill_length</span></code> rows, or
+null to skip forward-filling for that variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ffill_length</span></code>: number of rows to forward-fill when <code class="docutils literal notranslate"><span class="pre">changepoint</span></code>
+is <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+</ul>
 </dd>
-<dt><strong>previous_fill: pd.DataFrame (default None)</strong></dt><dd><p>A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
-into the destination database). The values of this will be used to forward fill into the new set of data if applicable.</p>
+<dt><strong>previous_fill</strong><span class="classifier">pd.DataFrame, optional</span></dt><dd><p>Dataframe with the same index type and at least some of the same columns
+as <code class="docutils literal notranslate"><span class="pre">original_df</span></code> (typically the last row from the destination database).
+Its values are used to seed forward-filling into the new data.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe that has been forward-filled per the specifications in the
+Variable_Names.csv file.</p>
 </dd>
 </dl>
 </dd>
@@ -712,24 +877,31 @@ into the destination database). The values of this will be used to forward fill 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.flag_dhw_outage">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">flag_dhw_outage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dhw_outlet_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supply_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">110</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consecutive_minutes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.flag_dhw_outage" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Detect DHW outage events and return an alarm event dataframe.</p>
+<p>Identifies periods where DHW outlet temperature falls below <code class="docutils literal notranslate"><span class="pre">supply_temp</span></code>
+for at least <code class="docutils literal notranslate"><span class="pre">consecutive_minutes</span></code> consecutive minutes, then records an
+ALARM event for each affected day.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data on minute intervals.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data on minute intervals.</p>
 </dd>
-<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data on daily intervals.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data on daily intervals.</p>
 </dd>
-<dt><strong>dhw_outlet_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column in df and daily_df that contains temperature of DHW supplied to building occupants</p>
+<dt><strong>dhw_outlet_column</strong><span class="classifier">str</span></dt><dd><p>Name of the column in <code class="docutils literal notranslate"><span class="pre">df</span></code> that contains the DHW temperature supplied
+to building occupants.</p>
 </dd>
-<dt><strong>supply_temp</strong><span class="classifier">int</span></dt><dd><p>the minimum DHW temperature acceptable to supply to building occupants</p>
+<dt><strong>supply_temp</strong><span class="classifier">int, optional</span></dt><dd><p>Minimum acceptable DHW supply temperature in °F. Defaults to 110.</p>
 </dd>
-<dt><strong>consecutive_minutes</strong><span class="classifier">int</span></dt><dd><p>the number of minutes in a row that DHW is not delivered to tenants to qualify as a DHW Outage</p>
+<dt><strong>consecutive_minutes</strong><span class="classifier">int, optional</span></dt><dd><p>Number of consecutive minutes below <code class="docutils literal notranslate"><span class="pre">supply_temp</span></code> required to qualify
+as a DHW outage. Defaults to 15.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>event_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with ‘ALARM’ events on the days in which there was a DHW Outage.</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe indexed by <code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code> containing <code class="docutils literal notranslate"><span class="pre">'ALARM'</span></code> events
+for each day on which a DHW outage occurred.</p>
 </dd>
 </dl>
 </dd>
@@ -787,13 +959,20 @@ that contains time_utc, &lt;site&gt;_ODT, and &lt;site&gt;_ODRH for the site.</p
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.generate_event_log_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">generate_event_log_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.generate_event_log_df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an event log df based on user submitted events in an event log csv
-:param config: The ConfigManager object that holds configuration data for the pipeline.
-:type config: ecopipeline.ConfigManager</p>
+<dd><p>Create an event log dataframe from a user-submitted Event_log.csv file.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>event_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe formatted from events in Event_log.csv for pipeline.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.
+Points to the Event_log.csv file via <code class="docutils literal notranslate"><span class="pre">config.get_event_log_path()</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Dataframe indexed by <code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code> and formatted from the events in
+Event_log.csv. Returns an empty dataframe with the expected columns if
+the file cannot be read.</p>
 </dd>
 </dl>
 </dd>
@@ -955,27 +1134,30 @@ for this function to work, naming conventions for each parrallel tank must inclu
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.heat_output_calc">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">heat_output_calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow_var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hot_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cold_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat_out_col_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_as_kw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.heat_output_calc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a flow varriable and two temperature inputs to calculate heat output</p>
+<dd><p>Calculate heat output from flow rate and supply/return temperatures.</p>
+<p>Uses the formula <code class="docutils literal notranslate"><span class="pre">Heat</span> <span class="pre">(BTU/hr)</span> <span class="pre">=</span> <span class="pre">500</span> <span class="pre">*</span> <span class="pre">flow</span> <span class="pre">(gal/min)</span> <span class="pre">*</span> <span class="pre">delta_T</span> <span class="pre">(°F)</span></code>
+and clips negative values to zero. Optionally converts the result to kW.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe with minute-to-minute data</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe with minute-to-minute data.</p>
 </dd>
-<dt><strong>flow_var</strong><span class="classifier">str</span></dt><dd><p>The column name of the flow varriable for the calculation. Units of the column should be gal/min</p>
+<dt><strong>flow_var</strong><span class="classifier">str</span></dt><dd><p>Column name of the flow variable. Units must be gal/min.</p>
 </dd>
-<dt><strong>hot_temp</strong><span class="classifier">str</span></dt><dd><p>The column name of the hot temperature varriable for the calculation. Units of the column should be degrees F</p>
+<dt><strong>hot_temp</strong><span class="classifier">str</span></dt><dd><p>Column name of the hot (supply) temperature variable. Units must be °F.</p>
 </dd>
-<dt><strong>cold_temp</strong><span class="classifier">str</span></dt><dd><p>The column name of the cold temperature varriable for the calculation. Units of the column should be degrees F</p>
+<dt><strong>cold_temp</strong><span class="classifier">str</span></dt><dd><p>Column name of the cold (return) temperature variable. Units must be °F.</p>
 </dd>
-<dt><strong>heat_out_col_name</strong><span class="classifier">str</span></dt><dd><p>The new column name for the heat output calculated from the varriables</p>
+<dt><strong>heat_out_col_name</strong><span class="classifier">str</span></dt><dd><p>Name for the new heat output column added to the dataframe.</p>
 </dd>
-<dt><strong>return_as_kw</strong><span class="classifier">bool</span></dt><dd><p>Set to true for new heat out column to have kW units. Set to false to return column as BTU/hr</p>
+<dt><strong>return_as_kw</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the new column will be in kW. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, it will be in
+BTU/hr. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with new heat output column of specified name.</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the new heat output column of the specified name.</p>
 </dd>
 </dl>
 </dd>
@@ -985,19 +1167,19 @@ for this function to work, naming conventions for each parrallel tank must inclu
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.join_to_daily">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">join_to_daily</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cop_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.join_to_daily" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function left-joins the the daily data and COP data.</p>
+<dd><p>Left-join COP data onto the daily dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>daily_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Daily dataframe</p>
+<dt><strong>daily_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Daily sensor dataframe.</p>
 </dd>
-<dt><strong>cop_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>cop_values dataframe</p>
+<dt><strong>cop_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>COP values dataframe to join.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame</dt><dd><p>A single, joined dataframe</p>
+<dt>pd.DataFrame</dt><dd><p>Daily dataframe left-joined with the COP dataframe.</p>
 </dd>
 </dl>
 </dd>
@@ -1006,20 +1188,25 @@ for this function to work, naming conventions for each parrallel tank must inclu
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.join_to_hourly">
-<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">join_to_hourly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hourly_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noaa_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.join_to_hourly" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function left-joins the weather data to the hourly dataframe.</p>
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">join_to_hourly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hourly_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noaa_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oat_column_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'OAT_NOAA'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.join_to_hourly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Left-join weather data onto the hourly dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>hourly_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Hourly dataframe</p>
+<dt><strong>hourly_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Hourly sensor dataframe.</p>
 </dd>
-<dt><strong>noaa_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>noaa dataframe</p>
+<dt><strong>noaa_data</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Weather (e.g. NOAA) dataframe to join.</p>
+</dd>
+<dt><strong>oat_column_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the outdoor air temperature column in <code class="docutils literal notranslate"><span class="pre">noaa_data</span></code>. Defaults
+to <code class="docutils literal notranslate"><span class="pre">'OAT_NOAA'</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>A single, joined dataframe</p>
+<dt>pd.DataFrame</dt><dd><p>Hourly dataframe left-joined with the weather dataframe. Returns
+<code class="docutils literal notranslate"><span class="pre">hourly_data</span></code> unchanged if the OAT column in <code class="docutils literal notranslate"><span class="pre">noaa_data</span></code> contains
+no non-null values.</p>
 </dd>
 </dl>
 </dd>
@@ -1108,23 +1295,26 @@ timestamps to the nearest minute.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.nullify_erroneous">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">nullify_erroneous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.nullify_erroneous" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and make erroneous values NaN.</p>
+<dd><p>Replace known error-sentinel values in a dataframe with NaN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe that needs to be filtered for error values</p>
+<dt><strong>original_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe that needs to be filtered for error values.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Varriable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-There should be at least two columns in this csv: “variable_name” and “error_value”
-The variable_name should contain the names of all columns in the dataframe that need to have there erroneous values removed
-The error_value column should contain the error value of each variable_name, or null if there isn’t an error value for that variable</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.
+Points to a file called Variable_Names.csv in the pipeline’s input folder.
+The CSV must have at least two columns:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">variable_name</span></code>: names of columns that may contain error values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">error_value</span></code>: the sentinel error value for each variable, or null
+if no error value applies.</p></li>
+</ul>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with error values replaced with NaNs</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with known error-sentinel values replaced by NaN.</p>
 </dd>
 </dl>
 </dd>
@@ -1134,35 +1324,39 @@ The error_value column should contain the error value of each variable_name, or 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.process_ls_signal">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">process_ls_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hourly_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{1:</span> <span class="pre">'normal',</span> <span class="pre">2:</span> <span class="pre">'loadUp',</span> <span class="pre">3:</span> <span class="pre">'shed'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ls'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_ls_from_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.process_ls_signal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes aggregated dfs and adds loadshift signals to hourly df and loadshift days to daily_df</p>
+<dd><p>Add load-shift signals to hourly and daily aggregated dataframes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Timestamp indexed Pandas dataframe of minute by minute values</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Timestamp-indexed Pandas dataframe of minute-by-minute values.</p>
 </dd>
-<dt><strong>hourly_df: pd.DataFrame</strong></dt><dd><p>Timestamp indexed Pandas dataframe of hourly average values</p>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Timestamp-indexed Pandas dataframe of hourly average values.</p>
 </dd>
-<dt><strong>daily_df: pd.DataFrame</strong></dt><dd><p>Timestamp indexed Pandas dataframe of daily average values</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Timestamp-indexed Pandas dataframe of daily average values.</p>
 </dd>
-<dt><strong>load_dict: dict</strong></dt><dd><p>dictionary of what loadshift signal is indicated by a value of the ls_column column in df</p>
+<dt><strong>load_dict</strong><span class="classifier">dict, optional</span></dt><dd><p>Mapping from integer load-shift signal values to descriptive string
+labels. Defaults to <code class="docutils literal notranslate"><span class="pre">{1:</span> <span class="pre">&quot;normal&quot;,</span> <span class="pre">2:</span> <span class="pre">&quot;loadUp&quot;,</span> <span class="pre">3:</span> <span class="pre">&quot;shed&quot;}</span></code>.</p>
 </dd>
-<dt><strong>ls_column: str</strong></dt><dd><p>the name of the loadshift column in df</p>
+<dt><strong>ls_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the load-shift column in <code class="docutils literal notranslate"><span class="pre">df</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">'ls'</span></code>.</p>
 </dd>
-<dt><strong>drop_ls_from_df: bool</strong></dt><dd><p>Set to true to drop ls_column from df after processing</p>
+<dt><strong>drop_ls_from_df</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, drops <code class="docutils literal notranslate"><span class="pre">ls_column</span></code> from <code class="docutils literal notranslate"><span class="pre">df</span></code> after processing.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>df: pd.DataFrame</dt><dd><p>Timestamp indexed Pandas dataframe of minute by minute values with ls_column removed if drop_ls_from_df = True</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Minute-by-minute dataframe with <code class="docutils literal notranslate"><span class="pre">ls_column</span></code> removed if
+<code class="docutils literal notranslate"><span class="pre">drop_ls_from_df</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
-<dt>hourly_df: pd.DataFrame</dt><dd><p>Timestamp indexed Pandas dataframe of hourly average values with added column ‘system_state’ which contains the
-loadshift command value from load_dict from the average (rounded to the nearest integer) key for all indexes in
-df within that load_dict key. If the integer is not a key in load_dict, the loadshift command value will be null</p>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Hourly dataframe with an added <code class="docutils literal notranslate"><span class="pre">'system_state'</span></code> column containing
+the load-shift command label from <code class="docutils literal notranslate"><span class="pre">load_dict</span></code> for each hour. Values
+are mapped from the rounded mean of <code class="docutils literal notranslate"><span class="pre">ls_column</span></code> within each hour;
+hours whose rounded mean is not a key in <code class="docutils literal notranslate"><span class="pre">load_dict</span></code> will be null.</p>
 </dd>
-<dt>daily_df: pd.DataFrame</dt><dd><p>Timestamp indexed Pandas dataframe of daily average values with added boolean column ‘load_shift_day’ which holds
-the value True on days which contains hours in hourly_df in which there are loadshift commands other than normal
-and Fals on days where the only command in normal unknown</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Daily dataframe with an added boolean <code class="docutils literal notranslate"><span class="pre">'load_shift_day'</span></code> column that
+is <code class="docutils literal notranslate"><span class="pre">True</span></code> on days containing at least one non-normal load-shift
+command in <code class="docutils literal notranslate"><span class="pre">hourly_df</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -1172,27 +1366,27 @@ and Fals on days where the only command in normal unknown</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.remove_outliers">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.remove_outliers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take a pandas dataframe and location of bounds information in a csv,
-store the bounds data in a dataframe, then remove outliers above or below bounds as
-designated by the csv. Function then returns the resulting dataframe.</p>
+<dd><p>Remove outliers from a dataframe by replacing out-of-bounds values with NaN.</p>
+<p>Reads bound information from Variable_Names.csv via <code class="docutils literal notranslate"><span class="pre">config</span></code> and sets any
+values outside the defined <code class="docutils literal notranslate"><span class="pre">lower_bound</span></code>/<code class="docutils literal notranslate"><span class="pre">upper_bound</span></code> range to NaN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>Pandas dataframe for which outliers need to be removed</p>
+<dt><strong>original_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe for which outliers need to be removed.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Varriable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”).
-The file must have at least three columns which must be titled “variable_name”, “lower_bound”, and “upper_bound” which should contain the
-name of each variable in the dataframe that requires the removal of outliers, the lower bound for acceptable data, and the upper bound for
-acceptable data respectively</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.
+Points to a file called Variable_Names.csv in the pipeline’s input folder.
+The CSV must have at least three columns: <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">lower_bound</span></code>, and <code class="docutils literal notranslate"><span class="pre">upper_bound</span></code>.</p>
 </dd>
-<dt><strong>site: str</strong></dt><dd><p>string of site name if processing a particular site in a Variable_Names.csv file with multiple sites. Leave as an empty string if not aplicable.</p>
+<dt><strong>site</strong><span class="classifier">str, optional</span></dt><dd><p>Site name to filter bounds data by. Leave as an empty string if not
+applicable.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Pandas dataframe with outliers removed and replaced with nans</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with outliers replaced by NaN.</p>
 </dd>
 </dl>
 </dd>
@@ -1202,21 +1396,40 @@ acceptable data respectively</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.remove_partial_days">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">remove_partial_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hourly_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_hour_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complete_day_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_day_removal_exclusion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.remove_partial_days" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper function for removing daily and hourly values that are calculated from incomplete data.</p>
+<dd><p>Remove hourly and daily rows that are derived from insufficient minute-level data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of minute-by-minute sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of minute-by-minute sensor data.</p>
 </dd>
-<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>agregated daily dataframe that contains all daily information.</p>
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Aggregated hourly dataframe.</p>
 </dd>
-<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>agregated hourly dataframe that contains all hourly information.</p>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Aggregated daily dataframe.</p>
 </dd>
-<dt><strong>complete_hour_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)</p>
+<dt><strong>complete_hour_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Fraction of minutes in an hour required to count as a complete hour,
+expressed as a float (e.g. 80% = 0.8). Defaults to 0.8.</p>
 </dd>
-<dt><strong>complete_day_threshold</strong><span class="classifier">float</span></dt><dd><p>Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)</p>
+<dt><strong>complete_day_threshold</strong><span class="classifier">float, optional</span></dt><dd><p>Fraction of hours in a day required to count as a complete day,
+expressed as a float (e.g. 80% = 0.8). Defaults to 1.0.</p>
 </dd>
-<dt><strong>partial_day_removal_exclusion</strong><span class="classifier">list[str]</span></dt><dd><p>List of column names to ignore when searching through columns to remove sections without enough data</p>
+<dt><strong>partial_day_removal_exclusion</strong><span class="classifier">list, optional</span></dt><dd><p>Column names to skip when evaluating completeness. Defaults to <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>hourly_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Hourly dataframe with incomplete hours removed and sparse columns
+nullified.</p>
+</dd>
+<dt><strong>daily_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Daily dataframe with incomplete days removed and sparse columns
+nullified.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">complete_hour_threshold</span></code> or <code class="docutils literal notranslate"><span class="pre">complete_day_threshold</span></code> is not
+between 0 and 1.</p>
 </dd>
 </dl>
 </dd>
@@ -1226,32 +1439,42 @@ acceptable data respectively</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.rename_sensors">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">rename_sensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.rename_sensors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function will take in a dataframe and a string representation of a file path and renames
-sensors from their alias to their true name. Also filters the dataframe by site and system if specified.</p>
+<dd><p>Rename sensor columns from their raw aliases to their true names.</p>
+<p>Reads the Variable_Names.csv file via <code class="docutils literal notranslate"><span class="pre">config</span></code>, renames columns from
+<code class="docutils literal notranslate"><span class="pre">variable_alias</span></code> to <code class="docutils literal notranslate"><span class="pre">variable_name</span></code>, drops columns with no matching
+true name, and optionally filters by site and/or system.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>original_df: pd.DataFrame</strong></dt><dd><p>A dataframe that contains data labeled by the raw varriable names to be renamed.</p>
+<dt><strong>original_df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>A dataframe containing data labeled by raw variable names to be renamed.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called Varriable_Names.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/Variable_Names.csv”)
-The csv this points to should have at least 2 columns called “variable_alias” (the raw name to be changed from) and “variable_name”
-(the name to be changed to). All columns without a cooresponding variable_name will be dropped from the dataframe.</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.
+Points to a file called Variable_Names.csv in the pipeline’s input folder.
+The CSV must have at least two columns: <code class="docutils literal notranslate"><span class="pre">variable_alias</span></code> (the raw name
+to change from) and <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> (the name to change to). Columns
+without a corresponding <code class="docutils literal notranslate"><span class="pre">variable_name</span></code> are dropped.</p>
 </dd>
-<dt><strong>site: str</strong></dt><dd><p>If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that
-need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe.
-Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called “site”.</p>
+<dt><strong>site</strong><span class="classifier">str, optional</span></dt><dd><p>Site name to filter by. If provided, only rows whose <code class="docutils literal notranslate"><span class="pre">site</span></code> column
+matches this value are retained. Leave as an empty string if not
+applicable.</p>
 </dd>
-<dt><strong>system: str</strong></dt><dd><p>If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that
-need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe.
-Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called “system”</p>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>System name to filter by. If provided, only rows whose <code class="docutils literal notranslate"><span class="pre">system</span></code> column
+contains this string are retained. Leave as an empty string if not
+applicable.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>df: pd.DataFrame</dt><dd><p>Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
-Variable_Names.csv.</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe filtered by site and system (if applicable) with column names
+matching those specified in Variable_Names.csv.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If the Variable_Names.csv file is not found at the path provided by
+<code class="docutils literal notranslate"><span class="pre">config</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -1287,17 +1510,19 @@ Variable_Names.csv.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.round_time">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">round_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.round_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes in a dataframe and rounds dataTime index down to the nearest minute. Works in place</p>
+<dd><p>Round a dataframe’s DatetimeIndex down to the nearest minute, in place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>a dataframe indexed by datetimes. These date times will all be rounded down to the nearest minute.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>A dataframe indexed by datetimes. All timestamps will be floored to the
+nearest minute.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>boolean</dt><dd><p>Returns True if the indexes have been rounded down. Returns False if the fuinction failed (e.g. if df was empty)</p>
+<dt>bool</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the index has been rounded down, <code class="docutils literal notranslate"><span class="pre">False</span></code> if the operation
+failed (e.g. if <code class="docutils literal notranslate"><span class="pre">df</span></code> was empty).</p>
 </dd>
 </dl>
 </dd>
@@ -1307,20 +1532,25 @@ Variable_Names.csv.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.sensor_adjustment">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">sensor_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.transform.sensor_adjustment" title="Permalink to this definition">¶</a></dt>
-<dd><p>TO BE DEPRICATED – Reads in input/adjustments.csv and applies necessary adjustments to the dataframe</p>
+<dd><p>Apply sensor adjustments from adjustments.csv to the dataframe.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version This: </span>function is scheduled for removal. Use a more explicit adjustment
+approach instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame to be adjusted</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe to be adjusted.</p>
 </dd>
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-called adjustments.csv in the input folder of the pipeline (e.g. “full/path/to/pipeline/input/adjustments.csv”)</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.
+Points to a file called <code class="docutils literal notranslate"><span class="pre">adjustments.csv</span></code> in the pipeline’s input
+folder (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/input/adjustments.csv&quot;</span></code>).</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>Adjusted Dataframe</p>
+<dt>pd.DataFrame</dt><dd><p>Adjusted dataframe.</p>
 </dd>
 </dl>
 </dd>
@@ -1330,19 +1560,22 @@ called adjustments.csv in the input folder of the pipeline (e.g. “full/path/to
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.transform.shift_accumulative_columns">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.transform.</span></span><span class="sig-name descname"><span class="pre">shift_accumulative_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.transform.shift_accumulative_columns" title="Permalink to this definition">¶</a></dt>
-<dd><p>converts a dataframe’s accumulative columns to non accumulative difference values.</p>
+<dd><p>Convert accumulative columns to period-difference (non-cumulative) values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Single pandas dataframe of sensor data.</p>
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Pandas dataframe of sensor data.</p>
 </dd>
-<dt><strong>column_names</strong><span class="classifier">list</span></dt><dd><p>The names of columns that need to be changed from accumulative sum data to non-accumulative data. Will do this to all columns if set to an empty list</p>
+<dt><strong>column_names</strong><span class="classifier">list, optional</span></dt><dd><p>Names of columns to convert from cumulative-sum data to
+non-cumulative difference data. If an empty list is provided, all
+columns are converted. Defaults to <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>pd.DataFrame:</dt><dd><p>The dataframe with aappropriate columns changed from accumulative sum data to non-accumulative data.</p>
+<dt>pd.DataFrame</dt><dd><p>Dataframe with the specified columns (or all columns) converted from
+cumulative to period-difference values.</p>
 </dd>
 </dl>
 </dd>
@@ -1420,6 +1653,7 @@ rows with conflicting power and energy variables.</p>
 <li><a class="reference internal" href="#ecopipeline.transform.aqsuite_prep_time"><code class="docutils literal notranslate"><span class="pre">aqsuite_prep_time()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.avg_duplicate_times"><code class="docutils literal notranslate"><span class="pre">avg_duplicate_times()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.calculate_cop_values"><code class="docutils literal notranslate"><span class="pre">calculate_cop_values()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.transform.central_transform_function"><code class="docutils literal notranslate"><span class="pre">central_transform_function()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.change_ID_to_HVAC"><code class="docutils literal notranslate"><span class="pre">change_ID_to_HVAC()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.column_name_change"><code class="docutils literal notranslate"><span class="pre">column_name_change()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.transform.concat_last_row"><code class="docutils literal notranslate"><span class="pre">concat_last_row()</span></code></a></li>
@@ -1522,7 +1756,7 @@ rows with conflicting power and energy variables.</p>
         <li class="right" >
           <a href="../extract/extract.html" title="Extract Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Transform Documentation</a></li> 
       </ul>
     </div>

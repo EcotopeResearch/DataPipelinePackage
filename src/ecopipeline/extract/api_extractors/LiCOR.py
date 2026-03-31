@@ -9,8 +9,28 @@ from datetime import datetime, timedelta
 class LiCOR(APIExtractor):
     """APIExtractor for the LI-COR Cloud API.
 
-    Queries sensor data for the configured device between start_time and end_time.
-    Returns a DataFrame indexed by UTC timestamp with sensor serial numbers as columns.
+    Queries sensor data for the configured device between ``start_time`` and
+    ``end_time``.  Returns a DataFrame indexed by UTC timestamp with sensor
+    serial numbers as columns.
+
+    Parameters
+    ----------
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the
+        pipeline, including the LI-COR API token (``config.api_token``) and
+        the device serial number (``config.api_device_id``).
+    start_time : datetime, optional
+        The start of the data extraction window. Defaults to 28 hours before
+        ``end_time`` if not provided.
+    end_time : datetime, optional
+        The end of the data extraction window. Defaults to ``datetime.now()``
+        if not provided.
+    create_csv : bool, optional
+        If ``True``, writes the raw DataFrame to a CSV file in the configured
+        data directory after a successful pull. Default is ``True``.
+    csv_prefix : str, optional
+        A string prefix prepended to the generated CSV filename. Default is
+        an empty string.
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None,
@@ -18,6 +38,33 @@ class LiCOR(APIExtractor):
         super().__init__(config, start_time, end_time, create_csv, csv_prefix)
 
     def raw_data_to_df(self, config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
+        """Fetch sensor data from the LI-COR Cloud API and return it as a DataFrame.
+
+        Calls the ``/v2/data`` endpoint, iterates over each sensor returned in
+        the response, and assembles a wide-format DataFrame keyed by
+        millisecond-precision UTC timestamps.
+
+        Parameters
+        ----------
+        config : ConfigManager
+            The ConfigManager object used to retrieve ``config.api_token`` for
+            the Bearer authorisation header and ``config.api_device_id`` for
+            the device serial number query parameter.
+        startTime : datetime, optional
+            Start of the query window. Defaults to 28 hours before
+            ``endTime`` if not provided.
+        endTime : datetime, optional
+            End of the query window. Defaults to ``datetime.now()`` if not
+            provided.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame indexed by UTC ``datetime`` (millisecond precision)
+            with one column per sensor serial number.  Non-numeric values are
+            coerced to ``None`` via :py:meth:`_get_float_value`.  Returns an
+            empty DataFrame if the request fails or an error occurs.
+        """
         if endTime is None:
             endTime = datetime.now()
         if startTime is None:

@@ -1,3 +1,16 @@
+"""
+Event tracking and alarm detection utilities for the ecopipeline package.
+
+This module exposes all public alarm-detection functions and alarm classes
+used to identify fault conditions in heat-pump water-heater (HPWH) and
+associated building-energy systems.  Functions accept post-transformed
+minute and/or daily ``pd.DataFrame`` objects together with a
+``ConfigManager`` instance and return a ``pd.DataFrame`` of detected alarm
+events.
+
+Alarm classes (e.g. ``Boundary``, ``ShortCycle``, ``AbnormalCOP``) can also
+be imported directly from this module for lower-level use.
+"""
 from .event_tracking import *
 from .Alarm import Alarm
 from .alarms.ShortCycle import ShortCycle

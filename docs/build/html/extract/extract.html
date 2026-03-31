@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Extract Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
+    <title>Extract Documentation &#8212; DataPipelinePackage 2.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>  
@@ -46,10 +46,1099 @@
 <h1>Extract Documentation<a class="headerlink" href="#extract-documentation" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<span class="target" id="module-ecopipeline.extract"></span><dl class="py function">
+<span class="target" id="module-ecopipeline.extract"></span><p>Extract layer for the ecopipeline data pipeline.</p>
+<p>This package exposes all classes and functions needed to ingest raw data from
+files (CSV, JSON, Excel) and remote APIs into <code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> objects
+ready for downstream transform and load steps.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>FileProcessor</dt><dd><p>Abstract base class for file-based data processors.</p>
+</dd>
+<dt>APIExtractor</dt><dd><p>Abstract base class for API-based data extractors.</p>
+</dd>
+<dt>CSVProcessor</dt><dd><p>Generic CSV file processor.</p>
+</dd>
+<dt>JSONProcessor</dt><dd><p>Generic JSON file processor.</p>
+</dd>
+<dt>ModbusCSVProcessor</dt><dd><p>CSV processor for Modbus-format files.</p>
+</dd>
+<dt>DentCSVProcessor</dt><dd><p>CSV processor for Dent meter files.</p>
+</dd>
+<dt>FlowCSVProcessor</dt><dd><p>CSV processor for flow-meter CSV files.</p>
+</dd>
+<dt>MSACSVProcessor</dt><dd><p>CSV processor for MSA-format files.</p>
+</dd>
+<dt>EGaugeCSVProcessor</dt><dd><p>CSV processor for eGauge meter CSV exports.</p>
+</dd>
+<dt>SmallPlanetCSVProcessor</dt><dd><p>CSV processor for Small Planet Controls files.</p>
+</dd>
+<dt>ThingsBoard</dt><dd><p>API extractor for the ThingsBoard IoT platform.</p>
+</dd>
+<dt>Skycentrics</dt><dd><p>API extractor for the Skycentrics solar-monitoring API.</p>
+</dd>
+<dt>FieldManager</dt><dd><p>API extractor for the FieldPop / Field Manager API.</p>
+</dd>
+<dt>LiCOR</dt><dd><p>API extractor for the LI-COR Cloud sensor API.</p>
+</dd>
+</dl>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.APIExtractor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">APIExtractor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.APIExtractor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p class="rubric">Methods</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get_raw_data</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>raw_data_to_df</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.APIExtractor.get_raw_data">
+<span class="sig-name descname"><span class="pre">get_raw_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.APIExtractor.get_raw_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.APIExtractor.raw_data_to_df">
+<span class="sig-name descname"><span class="pre">raw_data_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.APIExtractor.raw_data_to_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.CSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">CSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'DateTime'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.CSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for generic CSV files with a named timestamp column.</p>
+<p>Reads <code class="docutils literal notranslate"><span class="pre">.csv</span></code> files and converts the column identified by
+<code class="docutils literal notranslate"><span class="pre">raw_time_column</span></code> into a <code class="docutils literal notranslate"><span class="pre">time_pt</span></code> datetime index using
+<code class="docutils literal notranslate"><span class="pre">time_column_format</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest filename-encoded timestamp to include.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest filename-encoded timestamp to include (exclusive).</p>
+</dd>
+<dt><strong>raw_time_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the column containing timestamp strings.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'DateTime'</span></code>.</p>
+</dd>
+<dt><strong>time_column_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strptime()</span></code> format used to parse <code class="docutils literal notranslate"><span class="pre">raw_time_column</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></code>.</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format for filename date comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the files.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.DentCSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">DentCSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.DentCSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for DENT CSV files.</p>
+<p>DENT files have 12 header rows to skip.  The first data column is a
+throwaway index, and columns 2 and 3 are date and time strings that are
+combined into a <code class="docutils literal notranslate"><span class="pre">time_pt</span></code> datetime index.  The index is floored to the
+minute and duplicate timestamps are averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest filename-encoded timestamp to include.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest filename-encoded timestamp to include (exclusive).</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format for filename date comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the files.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.EGaugeCSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">EGaugeCSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.EGaugeCSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for eGauge CSV files.</p>
+<p>eGauge files contain a <code class="docutils literal notranslate"><span class="pre">'Date</span> <span class="pre">&amp;</span> <span class="pre">Time'</span></code> Unix-epoch column (seconds).
+Column names are prefixed with the filename stem so data from multiple
+devices can be merged without collisions.  After concatenation the
+cumulative register values are differenced to produce per-interval deltas.
+The index is floored to the minute and duplicate timestamps are averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest filename-encoded timestamp to include.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest filename-encoded timestamp to include (exclusive).</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format for filename date comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the files.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+<dt><strong>time_zone</strong><span class="classifier">str, optional</span></dt><dd><p>Timezone name used to convert UTC epoch timestamps to local time.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'US/Pacific'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ecopipeline.extract.EGaugeCSVProcessor.raw_files_to_df" title="ecopipeline.extract.EGaugeCSVProcessor.raw_files_to_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code></a>(filenames)</p></td>
+<td><p>Concatenate files and difference cumulative register values.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.EGaugeCSVProcessor.raw_files_to_df">
+<span class="sig-name descname"><span class="pre">raw_files_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.EGaugeCSVProcessor.raw_files_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate files and difference cumulative register values.</p>
+<p>Calls the parent implementation to concatenate all files, then
+computes row-wise differences so cumulative register values are
+converted into per-interval deltas.  The first row is set to <code class="docutils literal notranslate"><span class="pre">NaN</span></code>
+because its delta cannot be computed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>filenames</strong><span class="classifier">list of str</span></dt><dd><p>Absolute file paths to read and concatenate.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Differenced DataFrame of interval deltas.  Returns an empty
+DataFrame when no files could be read.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.FieldManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">FieldManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.FieldManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.APIExtractor" title="ecopipeline.extract.APIExtractor.APIExtractor"><code class="xref py py-class docutils literal notranslate"><span class="pre">APIExtractor</span></code></a></p>
+<p>APIExtractor for the FieldPop / Field Manager API.</p>
+<p>Recursively splits the time range in half whenever the server returns a 500
+‘log size too large’ response, down to a minimum of 30-minute windows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline,
+including the FieldPop API token and device ID.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>The start of the data extraction window. Defaults to
+<code class="docutils literal notranslate"><span class="pre">datetime(2000,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">0)</span></code> if not provided.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>The end of the data extraction window. Defaults to
+<code class="docutils literal notranslate"><span class="pre">datetime.now()</span></code> if not provided.</p>
+</dd>
+<dt><strong>create_csv</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, writes the raw DataFrame to a CSV file in the configured
+data directory after a successful pull. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>csv_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>A string prefix prepended to the generated CSV filename. Default is
+an empty string.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.extract.FieldManager.raw_data_to_df" title="ecopipeline.extract.FieldManager.raw_data_to_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_data_to_df</span></code></a>(config[, startTime, endTime])</p></td>
+<td><p>Fetch sensor data from the FieldPop API and return it as a DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get_raw_data</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.FieldManager.raw_data_to_df">
+<span class="sig-name descname"><span class="pre">raw_data_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.FieldManager.raw_data_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch sensor data from the FieldPop API and return it as a DataFrame.</p>
+<p>Queries the <code class="docutils literal notranslate"><span class="pre">fieldpop-api/deviceDataLog</span></code> endpoint for the given time
+range.  If the server responds with a 500 error indicating that the log
+size is too large, the method recursively bisects the time window until
+each sub-window is no smaller than 30 minutes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object used to retrieve the FieldPop API token
+(<code class="docutils literal notranslate"><span class="pre">get_fm_token</span></code>) and device ID (<code class="docutils literal notranslate"><span class="pre">get_fm_device_id</span></code>).</p>
+</dd>
+<dt><strong>startTime</strong><span class="classifier">datetime, optional</span></dt><dd><p>Start of the query window. Defaults to
+<code class="docutils literal notranslate"><span class="pre">datetime(2000,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">0)</span></code> if not provided.</p>
+</dd>
+<dt><strong>endTime</strong><span class="classifier">datetime, optional</span></dt><dd><p>End of the query window. Defaults to <code class="docutils literal notranslate"><span class="pre">datetime.now()</span></code> if not
+provided.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>A DataFrame indexed by <code class="docutils literal notranslate"><span class="pre">time_pt</span></code> (UTC timestamps converted to
+<code class="docutils literal notranslate"><span class="pre">datetime</span></code>) with one column per sensor, values aggregated by
+mean when multiple readings share the same timestamp.  Returns an
+empty DataFrame if the request fails or an error occurs.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.FileProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">FileProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'DateTime'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.FileProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for reading raw data files into a pandas DataFrame.</p>
+<p>On instantiation the processor collects matching files from the configured
+data directory, optionally filters them by date range, and concatenates them
+into a single DataFrame accessible via <a class="reference internal" href="#ecopipeline.extract.FileProcessor.get_raw_data" title="ecopipeline.extract.FileProcessor.get_raw_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_raw_data()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>extension</strong><span class="classifier">str</span></dt><dd><p>File extension of raw data files (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;.csv&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;.gz&quot;</span></code>).</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest timestamp (inclusive) used to filter files by the date encoded
+in their filename.  Uses local time matching the data index.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest timestamp (exclusive) used to filter files by the date encoded in
+their filename.  Uses local time matching the data index.</p>
+</dd>
+<dt><strong>raw_time_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the column in the raw file that contains timestamp strings.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'DateTime'</span></code>.</p>
+</dd>
+<dt><strong>time_column_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strptime()</span></code> format string used to parse <code class="docutils literal notranslate"><span class="pre">raw_time_column</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></code>.</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format string used to convert <code class="docutils literal notranslate"><span class="pre">start_time</span></code>
+and <code class="docutils literal notranslate"><span class="pre">end_time</span></code> to integers for filename comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only files whose names begin with this prefix are processed.
+Defaults to an empty string (all files).</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory appended to the configured data directory when locating
+files.  For example, if files live in <code class="docutils literal notranslate"><span class="pre">'path/to/data/DENT/'</span></code> and the
+configured data directory is <code class="docutils literal notranslate"><span class="pre">'path/to/data/'</span></code>, pass <code class="docutils literal notranslate"><span class="pre">'DENT/'</span></code>.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring within each filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring within each filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+<dt><strong>round_time_index</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, floor the datetime index to the minute and average any
+duplicate timestamps after concatenation.  Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.extract.extract_files" title="ecopipeline.extract.extract_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code></a>(extension, config[, ...])</p></td>
+<td><p>Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ecopipeline.extract.extract_new" title="ecopipeline.extract.extract_new"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code></a>(startTime, filenames[, decihex, ...])</p></td>
+<td><p>Function filters the filenames to only those equal to or newer than the date specified startTime.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.FileProcessor.extract_files">
+<span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.FileProcessor.extract_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect the full paths of files that match the processor’s criteria.</p>
+<p>Scans the configured data directory (plus any <code class="docutils literal notranslate"><span class="pre">data_sub_dir</span></code>) for
+files whose names end with the configured extension and begin with the
+configured prefix.  When <code class="docutils literal notranslate"><span class="pre">start_time</span></code> is set the list is further
+filtered by <a class="reference internal" href="#ecopipeline.extract.extract_new" title="ecopipeline.extract.extract_new"><code class="xref py py-meth docutils literal notranslate"><span class="pre">extract_new()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that provides the base data directory path.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list of str</dt><dd><p>Absolute file paths for all files that satisfy the criteria.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.FileProcessor.extract_new">
+<span class="sig-name descname"><span class="pre">extract_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.FileProcessor.extract_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter a list of filenames to those whose encoded date falls in range.</p>
+<p>The date is extracted from each filename using <code class="docutils literal notranslate"><span class="pre">date_string_start_idx</span></code>
+and <code class="docutils literal notranslate"><span class="pre">date_string_end_idx</span></code>, then compared as an integer against the
+integer representations of <code class="docutils literal notranslate"><span class="pre">start_time</span></code> and <code class="docutils literal notranslate"><span class="pre">end_time</span></code> (formatted
+with <code class="docutils literal notranslate"><span class="pre">filename_date_format</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>filenames</strong><span class="classifier">list of str</span></dt><dd><p>Candidate file paths to filter.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list of str</dt><dd><p>Only the file paths whose encoded date satisfies
+<code class="docutils literal notranslate"><span class="pre">start_time</span> <span class="pre">&lt;=</span> <span class="pre">date</span> <span class="pre">&lt;</span> <span class="pre">end_time</span></code> (<code class="docutils literal notranslate"><span class="pre">end_time</span></code> bound is omitted
+when <code class="docutils literal notranslate"><span class="pre">end_time</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.FileProcessor.get_raw_data">
+<span class="sig-name descname"><span class="pre">get_raw_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.FileProcessor.get_raw_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the concatenated raw DataFrame produced during initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>DataFrame containing all raw data read from the matching files.
+Returns an empty DataFrame when no files were found or all reads
+failed.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.FileProcessor.raw_files_to_df">
+<span class="sig-name descname"><span class="pre">raw_files_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.FileProcessor.raw_files_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate multiple raw files into a single DataFrame.</p>
+<p>Calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">_read_file_into_df()</span></code> for each path in <code class="docutils literal notranslate"><span class="pre">filenames</span></code>,
+ignores files that are not found or raise read errors, and
+concatenates the results.  When <code class="docutils literal notranslate"><span class="pre">round_time_index</span></code> is enabled the
+index is floored to the minute and duplicate timestamps are averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>filenames</strong><span class="classifier">list of str</span></dt><dd><p>Absolute file paths to read and concatenate.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Concatenated DataFrame for all successfully read files.  Returns
+an empty DataFrame when no files could be read.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.FlowCSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">FlowCSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.FlowCSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for flow meter CSV files.</p>
+<p>Flow meter files have 6 header rows to skip.  The timestamp is
+reconstructed from individual <code class="docutils literal notranslate"><span class="pre">Year</span></code>, <code class="docutils literal notranslate"><span class="pre">Month</span></code>, <code class="docutils literal notranslate"><span class="pre">Day</span></code>, <code class="docutils literal notranslate"><span class="pre">Hour</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Minute</span></code>, and <code class="docutils literal notranslate"><span class="pre">Second</span></code> columns into a <code class="docutils literal notranslate"><span class="pre">time_pt</span></code> datetime index.
+The index is floored to the minute and duplicate timestamps are averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest filename-encoded timestamp to include.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest filename-encoded timestamp to include (exclusive).</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format for filename date comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the files.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.JSONProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">JSONProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zip_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.JSONProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.LiCOR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">LiCOR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.LiCOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.APIExtractor" title="ecopipeline.extract.APIExtractor.APIExtractor"><code class="xref py py-class docutils literal notranslate"><span class="pre">APIExtractor</span></code></a></p>
+<p>APIExtractor for the LI-COR Cloud API.</p>
+<p>Queries sensor data for the configured device between <code class="docutils literal notranslate"><span class="pre">start_time</span></code> and
+<code class="docutils literal notranslate"><span class="pre">end_time</span></code>.  Returns a DataFrame indexed by UTC timestamp with sensor
+serial numbers as columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the
+pipeline, including the LI-COR API token (<code class="docutils literal notranslate"><span class="pre">config.api_token</span></code>) and
+the device serial number (<code class="docutils literal notranslate"><span class="pre">config.api_device_id</span></code>).</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>The start of the data extraction window. Defaults to 28 hours before
+<code class="docutils literal notranslate"><span class="pre">end_time</span></code> if not provided.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>The end of the data extraction window. Defaults to <code class="docutils literal notranslate"><span class="pre">datetime.now()</span></code>
+if not provided.</p>
+</dd>
+<dt><strong>create_csv</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, writes the raw DataFrame to a CSV file in the configured
+data directory after a successful pull. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>csv_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>A string prefix prepended to the generated CSV filename. Default is
+an empty string.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.extract.LiCOR.raw_data_to_df" title="ecopipeline.extract.LiCOR.raw_data_to_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_data_to_df</span></code></a>(config[, startTime, endTime])</p></td>
+<td><p>Fetch sensor data from the LI-COR Cloud API and return it as a DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get_raw_data</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.LiCOR.raw_data_to_df">
+<span class="sig-name descname"><span class="pre">raw_data_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.LiCOR.raw_data_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch sensor data from the LI-COR Cloud API and return it as a DataFrame.</p>
+<p>Calls the <code class="docutils literal notranslate"><span class="pre">/v2/data</span></code> endpoint, iterates over each sensor returned in
+the response, and assembles a wide-format DataFrame keyed by
+millisecond-precision UTC timestamps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object used to retrieve <code class="docutils literal notranslate"><span class="pre">config.api_token</span></code> for
+the Bearer authorisation header and <code class="docutils literal notranslate"><span class="pre">config.api_device_id</span></code> for
+the device serial number query parameter.</p>
+</dd>
+<dt><strong>startTime</strong><span class="classifier">datetime, optional</span></dt><dd><p>Start of the query window. Defaults to 28 hours before
+<code class="docutils literal notranslate"><span class="pre">endTime</span></code> if not provided.</p>
+</dd>
+<dt><strong>endTime</strong><span class="classifier">datetime, optional</span></dt><dd><p>End of the query window. Defaults to <code class="docutils literal notranslate"><span class="pre">datetime.now()</span></code> if not
+provided.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>A DataFrame indexed by UTC <code class="docutils literal notranslate"><span class="pre">datetime</span></code> (millisecond precision)
+with one column per sensor serial number.  Non-numeric values are
+coerced to <code class="docutils literal notranslate"><span class="pre">None</span></code> via <code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_float_value()</span></code>.  Returns an
+empty DataFrame if the request fails or an error occurs.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.MSACSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">MSACSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.MSACSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for MSA CSV files.</p>
+<p>MSA files contain a <code class="docutils literal notranslate"><span class="pre">'DateEpoch(secs)'</span></code> Unix-epoch column that is
+converted from UTC to the configured timezone.  When <code class="docutils literal notranslate"><span class="pre">mb_prefix</span></code> is
+<code class="docutils literal notranslate"><span class="pre">True</span></code>, all data columns are prefixed with the filename stem so that
+data from multiple devices can be merged without column collisions.
+The index is floored to the minute and duplicate timestamps are averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest filename-encoded timestamp to include.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest filename-encoded timestamp to include (exclusive).</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format for filename date comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the files.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+<dt><strong>mb_prefix</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, prefix every column name with the filename stem.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>time_zone</strong><span class="classifier">str, optional</span></dt><dd><p>Timezone name used to convert UTC epoch timestamps to local time.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'US/Pacific'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.ModbusCSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">ModbusCSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time(UTC)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.ModbusCSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for Modbus CSV files (e.g. Acquisuite).</p>
+<p>Reads standard CSV files whose first column is a <code class="docutils literal notranslate"><span class="pre">time(UTC)</span></code> timestamp
+string.  All data columns are prefixed with the filename stem so that data
+from multiple Modbus devices can be merged without column name collisions.
+The index is floored to the minute and duplicate timestamps are averaged
+after concatenation.</p>
+<p>Acquisuite filenames encode the file start time as a hexadecimal Unix
+timestamp in the filename, so <a class="reference internal" href="#ecopipeline.extract.extract_new" title="ecopipeline.extract.extract_new"><code class="xref py py-meth docutils literal notranslate"><span class="pre">extract_new()</span></code></a> overrides the default
+date-substring comparison with a hex-to-datetime conversion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest local timestamp to include (compared against the hex date
+embedded in the filename).</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest local timestamp to include, exclusive (compared against the hex
+date embedded in the filename).</p>
+</dd>
+<dt><strong>raw_time_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the timestamp column in each CSV file.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'time(UTC)'</span></code>.</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format used when comparing non-hex filenames.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the files.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ecopipeline.extract.ModbusCSVProcessor.extract_new" title="ecopipeline.extract.ModbusCSVProcessor.extract_new"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code></a>(filenames)</p></td>
+<td><p>Filter filenames using the hexadecimal Unix timestamp in the filename.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.ModbusCSVProcessor.extract_new">
+<span class="sig-name descname"><span class="pre">extract_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.ModbusCSVProcessor.extract_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter filenames using the hexadecimal Unix timestamp in the filename.</p>
+<p>Acquisuite filenames embed the file start time as a hexadecimal number
+between the first <code class="docutils literal notranslate"><span class="pre">.</span></code> and the first <code class="docutils literal notranslate"><span class="pre">_</span></code> in the basename.  This
+method decodes those hex timestamps to UTC datetimes, strips timezone
+awareness, and keeps only the files whose decoded time falls within
+<code class="docutils literal notranslate"><span class="pre">[start_time,</span> <span class="pre">end_time)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>filenames</strong><span class="classifier">list of str</span></dt><dd><p>Candidate file paths to filter.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list of str</dt><dd><p>Only the file paths whose decoded hex timestamp satisfies
+<code class="docutils literal notranslate"><span class="pre">start_time</span> <span class="pre">&lt;</span> <span class="pre">local_time</span></code> and, when <code class="docutils literal notranslate"><span class="pre">end_time</span></code> is set,
+<code class="docutils literal notranslate"><span class="pre">local_time</span> <span class="pre">&lt;</span> <span class="pre">end_time</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.Skycentrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">Skycentrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.Skycentrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.APIExtractor" title="ecopipeline.extract.APIExtractor.APIExtractor"><code class="xref py py-class docutils literal notranslate"><span class="pre">APIExtractor</span></code></a></p>
+<p>APIExtractor for the Skycentrics API.</p>
+<p>Pulls data day-by-day between <code class="docutils literal notranslate"><span class="pre">start_time</span></code> and <code class="docutils literal notranslate"><span class="pre">end_time</span></code>, normalises
+the JSON sensor records into a pivot table, and rounds 59:59 timestamps up
+to the next minute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the
+pipeline, including the Skycentrics API token
+(<code class="docutils literal notranslate"><span class="pre">config.get_skycentrics_token</span></code>) and device ID
+(<code class="docutils literal notranslate"><span class="pre">config.api_device_id</span></code>).</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>The start of the data extraction window. Defaults to one day before
+<code class="docutils literal notranslate"><span class="pre">end_time</span></code> if not provided.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>The end of the data extraction window. Defaults to
+<code class="docutils literal notranslate"><span class="pre">datetime.utcnow()</span></code> if not provided.</p>
+</dd>
+<dt><strong>create_csv</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, writes the raw DataFrame to a CSV file in the configured
+data directory after a successful pull. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>csv_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>A string prefix prepended to the generated CSV filename. Default is
+an empty string.</p>
+</dd>
+<dt><strong>time_zone</strong><span class="classifier">str, optional</span></dt><dd><p>The timezone string used to localise timestamps after converting from
+UTC. Default is <code class="docutils literal notranslate"><span class="pre">'US/Pacific'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ecopipeline.extract.Skycentrics.raw_data_to_df" title="ecopipeline.extract.Skycentrics.raw_data_to_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_data_to_df</span></code></a>(config[, startTime, endTime])</p></td>
+<td><p>Fetch sensor data from the Skycentrics API and return it as a DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get_raw_data</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.Skycentrics.raw_data_to_df">
+<span class="sig-name descname"><span class="pre">raw_data_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.Skycentrics.raw_data_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch sensor data from the Skycentrics API and return it as a DataFrame.</p>
+<p>Iterates day-by-day from <code class="docutils literal notranslate"><span class="pre">startTime</span></code> to <code class="docutils literal notranslate"><span class="pre">endTime</span></code>, issuing one
+authenticated GET request per day.  Each gzip-compressed JSON response
+is decompressed, normalised with <code class="xref py py-func docutils literal notranslate"><span class="pre">pandas.json_normalize()</span></code>, and
+pivoted so that sensor IDs become columns.  Timestamps that fall at
+second 59:59 of a minute are nudged forward by one second to align with
+the top of the next minute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object used to retrieve the per-request
+Skycentrics HMAC token via <code class="docutils literal notranslate"><span class="pre">config.get_skycentrics_token</span></code> and
+the device ID via <code class="docutils literal notranslate"><span class="pre">config.api_device_id</span></code>.</p>
+</dd>
+<dt><strong>startTime</strong><span class="classifier">datetime, optional</span></dt><dd><p>Start of the query window (UTC). Defaults to one day before
+<code class="docutils literal notranslate"><span class="pre">endTime</span></code> if not provided.</p>
+</dd>
+<dt><strong>endTime</strong><span class="classifier">datetime, optional</span></dt><dd><p>End of the query window (UTC). Defaults to <code class="docutils literal notranslate"><span class="pre">datetime.utcnow()</span></code>
+if not provided.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>A DataFrame indexed by <code class="docutils literal notranslate"><span class="pre">time_pt</span></code> (timezone-aware timestamps
+converted to <code class="docutils literal notranslate"><span class="pre">self.time_zone</span></code>) with one column per sensor ID.
+Returns an empty DataFrame if no data is retrieved for the
+requested time frame.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.SmallPlanetCSVProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">SmallPlanetCSVProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.SmallPlanetCSVProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.FileProcessor" title="ecopipeline.extract.FileProcessor.FileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileProcessor</span></code></a></p>
+<p>FileProcessor for Small Planet Controls CSV files.</p>
+<p>Similar to <a class="reference internal" href="#ecopipeline.extract.MSACSVProcessor" title="ecopipeline.extract.MSACSVProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">MSACSVProcessor</span></code></a> but applies variable-name mapping
+from <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> at read time: column names are first prefixed
+with the filename stem, then renamed through the alias-to-true-name
+mapping, and finally any columns that still carry an alias name or are
+absent from the true-name list are dropped.  Only-NaN rows are also
+removed.  The index is floored to the minute and duplicate timestamps are
+averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the
+pipeline.  Must provide a path to <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">get_var_names_path()</span></code>.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Earliest filename-encoded timestamp to include.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Latest filename-encoded timestamp to include (exclusive).</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">datetime.strftime()</span></code> format for filename date comparison.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'%Y%m%d%H%M%S'</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Only process files whose names begin with this prefix.
+Defaults to an empty string.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory under the configured data directory containing the
+files.  Defaults to an empty string.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Start index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>End index (from the end) of the date substring in the filename.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+<dt><strong>site</strong><span class="classifier">str, optional</span></dt><dd><p>If non-empty, only variable-name rows whose <code class="docutils literal notranslate"><span class="pre">site</span></code> column matches
+this value are used for column mapping.  Defaults to an empty string.</p>
+</dd>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>If non-empty, only variable-name rows whose <code class="docutils literal notranslate"><span class="pre">system</span></code> column contains
+this substring are used for column mapping.  Defaults to an empty
+string.</p>
+</dd>
+<dt><strong>time_zone</strong><span class="classifier">str, optional</span></dt><dd><p>Timezone name used to convert UTC epoch timestamps to local time.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'US/Pacific'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Exception</dt><dd><p>If the <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file cannot be found at the path
+returned by <code class="docutils literal notranslate"><span class="pre">config.get_var_names_path()</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_files</span></code>(config)</p></td>
+<td><p>Collect the full paths of files that match the processor's criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_new</span></code>(filenames)</p></td>
+<td><p>Filter a list of filenames to those whose encoded date falls in range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_data</span></code>()</p></td>
+<td><p>Return the concatenated raw DataFrame produced during initialisation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_files_to_df</span></code>(filenames)</p></td>
+<td><p>Concatenate multiple raw files into a single DataFrame.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ecopipeline.extract.ThingsBoard">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">ThingsBoard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.ThingsBoard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ecopipeline.extract.APIExtractor" title="ecopipeline.extract.APIExtractor.APIExtractor"><code class="xref py py-class docutils literal notranslate"><span class="pre">APIExtractor</span></code></a></p>
+<p class="rubric">Methods</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get_raw_data</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>raw_data_to_df</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="ecopipeline.extract.ThingsBoard.raw_data_to_df">
+<span class="sig-name descname"><span class="pre">raw_data_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.ThingsBoard.raw_data_to_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ecopipeline.extract.central_extract_function">
+<span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">central_extract_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_defaults</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'DateTime'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_string_end_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'America/Los_Angeles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">[&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'pandas.core.frame.DataFrame'&gt;]</span></span></span><a class="headerlink" href="#ecopipeline.extract.central_extract_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary entry point for the extract stage of the data pipeline.</p>
+<p>Dispatches to the appropriate file-based or API-based extractor based on
+<code class="docutils literal notranslate"><span class="pre">process_type</span></code>, reads raw sensor data into a DataFrame, and then fetches
+matching outdoor air temperature (OAT) weather data from Open Meteo for
+the same time window.  When <code class="docutils literal notranslate"><span class="pre">start_time</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> the function queries
+the database for the timestamp of the last available minute record and
+extracts only data newer than that point (normal run mode).  When
+<code class="docutils literal notranslate"><span class="pre">start_time</span></code> is provided explicitly the function performs a reprocess run,
+reading from already-saved CSV files for API-based process types instead of
+hitting the remote API again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Configuration object that stores database credentials, directory paths,
+API tokens, and site metadata used throughout the pipeline.</p>
+</dd>
+<dt><strong>process_type</strong><span class="classifier">str</span></dt><dd><p>Identifier for the extraction method.  Accepted values are <code class="docutils literal notranslate"><span class="pre">&quot;csv&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;csv_mb&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;csv_dent&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;csv_flow&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;csv_msa&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;csv_egauge&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;csv_small_planet&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;json&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;api_tb&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;api_skycentrics&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;api_fm&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;api_licor&quot;</span></code>.</p>
+</dd>
+<dt><strong>start_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Inclusive start of the extraction window in local time.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>
+the start time is derived from <a class="reference internal" href="#ecopipeline.extract.get_last_full_day_from_db" title="ecopipeline.extract.get_last_full_day_from_db"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_last_full_day_from_db()</span></code></a>.</p>
+</dd>
+<dt><strong>end_time</strong><span class="classifier">datetime, optional</span></dt><dd><p>Exclusive end of the extraction window in local time.  If <code class="docutils literal notranslate"><span class="pre">None</span></code> data
+is extracted up to the most recent available record.</p>
+</dd>
+<dt><strong>use_defaults</strong><span class="classifier">bool, optional</span></dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default) the function overwrites <code class="docutils literal notranslate"><span class="pre">raw_time_column</span></code> and
+<code class="docutils literal notranslate"><span class="pre">time_column_format</span></code> with the standard defaults for <code class="docutils literal notranslate"><span class="pre">process_type</span></code>
+via <code class="xref py py-func docutils literal notranslate"><span class="pre">_get_time_indicator_defaults()</span></code>.</p>
+</dd>
+<dt><strong>raw_time_column</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the timestamp column in raw data files.  Default is
+<code class="docutils literal notranslate"><span class="pre">'DateTime'</span></code>.  Ignored when <code class="docutils literal notranslate"><span class="pre">use_defaults</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>time_column_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">strptime</span></code>-compatible format string for parsing <code class="docutils literal notranslate"><span class="pre">raw_time_column</span></code>.
+Default is <code class="docutils literal notranslate"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></code>.  Ignored when <code class="docutils literal notranslate"><span class="pre">use_defaults</span></code> is
+<code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt><strong>filename_date_format</strong><span class="classifier">str, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">strftime</span></code>-compatible format string used to parse dates embedded in
+raw data filenames.  Default is <code class="docutils literal notranslate"><span class="pre">&quot;%Y%m%d%H%M%S&quot;</span></code>.</p>
+</dd>
+<dt><strong>file_prefix</strong><span class="classifier">str, optional</span></dt><dd><p>Optional prefix used to filter which files in the data directory are
+ingested.  Default is <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+<dt><strong>data_sub_dir</strong><span class="classifier">str, optional</span></dt><dd><p>Sub-directory path appended to the configured data directory when
+locating raw data files (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;DENT/&quot;</span></code>).  Default is <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+<dt><strong>date_string_start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Character index marking the start of the date substring within each
+filename.  Default is <code class="docutils literal notranslate"><span class="pre">-17</span></code>.</p>
+</dd>
+<dt><strong>date_string_end_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Character index marking the end of the date substring within each
+filename.  Default is <code class="docutils literal notranslate"><span class="pre">-3</span></code>.</p>
+</dd>
+<dt><strong>time_zone</strong><span class="classifier">str, optional</span></dt><dd><p>IANA time-zone name used to localise timestamps in the returned
+DataFrames (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;America/Los_Angeles&quot;</span></code>).  Default is
+<code class="docutils literal notranslate"><span class="pre">&quot;America/Los_Angeles&quot;</span></code>.</p>
+</dd>
+<dt><strong>site</strong><span class="classifier">str, optional</span></dt><dd><p>Site identifier passed to <code class="docutils literal notranslate"><span class="pre">SmallPlanetCSVProcessor</span></code> to filter data
+to a single site when a file contains data for multiple sites.
+Default is <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+<dt><strong>system</strong><span class="classifier">str, optional</span></dt><dd><p>System identifier passed to <code class="docutils literal notranslate"><span class="pre">SmallPlanetCSVProcessor</span></code> to filter data
+to a single system.  Default is <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>Raw sensor data indexed by timestamp.  Empty if no data was found for
+the requested time window.</p>
+</dd>
+<dt>pd.DataFrame</dt><dd><p>Hourly outdoor air temperature data from Open Meteo indexed by
+timestamp, covering the same time window as the raw data.  Empty if
+the raw DataFrame is empty or if the weather request fails.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">process_type</span></code> is not one of the recognised extraction method
+strings.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.csv_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_time_pt_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_time_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'DateTime'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y/%m/%d</span> <span class="pre">%H:%M:%S'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.csv_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -82,6 +1171,9 @@ defaults to false.</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.dent_csv_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">dent_csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.dent_csv_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -106,8 +1198,11 @@ Defaults to True.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.egauge_csv_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">egauge_csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.egauge_csv_to_df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
-This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
+<p>This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
 afterwards.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -151,6 +1246,9 @@ The output filename is derived from the earliest timestamp (e.g., ‘20220101010
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_files">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -177,8 +1275,11 @@ e.g. if the data files you want to extract are in “path/to/data/DENT/” and y
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.extract_new">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">extract_new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decihex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeZone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateStringStartIdx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-17</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateStringEndIdx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dateFormat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'%Y%m%d%H%M%S'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochFormat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ecopipeline.extract.extract_new" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function filters the filenames to only those equal to or newer than the date specified startTime.
-If filenames are in deciheximal, The function can still handel it. Note that for some projects,
+<dd><p>Function filters the filenames to only those equal to or newer than the date specified startTime.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
+<p>If filenames are in deciheximal, The function can still handel it. Note that for some projects,
 files are dropped at irregular intervals so data cannot be filtered by exact date.</p>
 <p>Currently, this function expects file names to be in one of three formats:</p>
 <ol class="arabic simple">
@@ -227,6 +1328,9 @@ defaults to None</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.flow_csv_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">flow_csv_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.flow_csv_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -252,6 +1356,9 @@ Defaults to True.</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.fm_api_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">fm_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.fm_api_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function connects to the field manager api to pull data and returns a dataframe.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -308,20 +1415,28 @@ is local time from the data’s index.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.get_last_full_day_from_db">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">get_last_full_day_from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_identifier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minute'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">datetime</span></span></span><a class="headerlink" href="#ecopipeline.extract.get_last_full_day_from_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function retrieves the last line from the database with the most recent datetime
-in local time.</p>
+<dd><p>Retrieve the timestamp of the last fully recorded minute from the database.</p>
+<p>Queries the table identified by <code class="docutils literal notranslate"><span class="pre">table_identifier</span></code> in the pipeline
+database and returns the most recent timestamp.  If the most recent row
+does not fall exactly at 23:59, the function assumes the day is incomplete
+and rolls back to the previous day at 23:59:00.  If the table is empty or
+the query fails, a default datetime of 2000-01-09 23:59:00 US/Pacific is
+returned.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config</strong><span class="classifier">ecopipeline.ConfigManager</span></dt><dd><p>The ConfigManager object that holds configuration data for the pipeline</p>
+<dt><strong>config</strong><span class="classifier">ConfigManager</span></dt><dd><p>Configuration object that provides database connection details and
+table metadata for the pipeline.</p>
 </dd>
-<dt><strong>table_identifier</strong><span class="classifier">str</span></dt><dd><p>Table identifier in config.ini with minute data. Default: “minute”</p>
+<dt><strong>table_identifier</strong><span class="classifier">str, optional</span></dt><dd><p>Key used to look up the target table name in the pipeline config.
+Default is <code class="docutils literal notranslate"><span class="pre">&quot;minute&quot;</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>datetime:</dt><dd><p>end of last full day populated in database or default past time if no data found</p>
+<dt>datetime</dt><dd><p>End of the last fully populated day found in the database, or a
+default past datetime if no data is available.</p>
 </dd>
 </dl>
 </dd>
@@ -375,6 +1490,9 @@ This is used when multiple sites are being ran in same pipeline.</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.json_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">json_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.json_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of gz/json filenames and reads all files into a singular dataframe.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -399,6 +1517,9 @@ defaults to ‘US/Pacific’</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.licor_cloud_api_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">licor_cloud_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.licor_cloud_api_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Connects to the LI-COR Cloud API to pull sensor data and returns a dataframe.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <p>The function queries the LI-COR Cloud API for sensor data within the specified time range.
 Each sensor’s data is returned as a separate column in the dataframe, indexed by timestamp.</p>
 <dl class="field-list simple">
@@ -431,6 +1552,9 @@ Returns an empty DataFrame if the API call fails.</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.msa_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">msa_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mb_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.msa_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -454,7 +1578,11 @@ Returns an empty DataFrame if the API call fails.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.pull_egauge_data">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">pull_egauge_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_usr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eGauge_pw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.pull_egauge_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Download raw eGauge data files from eGauge devices via wget.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.remove_char_sequence_from_csv_header">
@@ -476,6 +1604,9 @@ Returns an empty DataFrame if the API call fails.</p>
 <dt class="sig sig-object py" id="ecopipeline.extract.skycentrics_api_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">skycentrics_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'US/Pacific'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.skycentrics_api_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function connects to the field manager api to pull data and returns a dataframe.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -509,8 +1640,11 @@ defaults to ‘US/Pacific’</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ecopipeline.extract.small_planet_control_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">small_planet_control_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#ecopipeline.extract.small_planet_control_to_df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
-This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
+<dd><p>Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
+<p>This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
 afterwards.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -545,6 +1679,9 @@ Appropriate varriables in your Variable_Names.csv must have a matching string to
 <dt class="sig sig-object py" id="ecopipeline.extract.tb_api_to_df">
 <span class="sig-prename descclassname"><span class="pre">ecopipeline.extract.</span></span><span class="sig-name descname"><span class="pre">tb_api_to_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_csv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seperate_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_id_overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.extract.tb_api_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function connects to the things board manager api to pull data and returns a dataframe.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Use: </span><a class="reference internal" href="#ecopipeline.extract.central_extract_function" title="ecopipeline.extract.central_extract_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -591,6 +1728,50 @@ Will return with index in UTC so needs to be converted after to appropriate time
     <h3><a href="../index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Extract Documentation</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.APIExtractor"><code class="docutils literal notranslate"><span class="pre">APIExtractor</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.APIExtractor.get_raw_data"><code class="docutils literal notranslate"><span class="pre">APIExtractor.get_raw_data()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.APIExtractor.raw_data_to_df"><code class="docutils literal notranslate"><span class="pre">APIExtractor.raw_data_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.CSVProcessor"><code class="docutils literal notranslate"><span class="pre">CSVProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.DentCSVProcessor"><code class="docutils literal notranslate"><span class="pre">DentCSVProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.EGaugeCSVProcessor"><code class="docutils literal notranslate"><span class="pre">EGaugeCSVProcessor</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.EGaugeCSVProcessor.raw_files_to_df"><code class="docutils literal notranslate"><span class="pre">EGaugeCSVProcessor.raw_files_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.FieldManager"><code class="docutils literal notranslate"><span class="pre">FieldManager</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.FieldManager.raw_data_to_df"><code class="docutils literal notranslate"><span class="pre">FieldManager.raw_data_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.FileProcessor"><code class="docutils literal notranslate"><span class="pre">FileProcessor</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.FileProcessor.extract_files"><code class="docutils literal notranslate"><span class="pre">FileProcessor.extract_files()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.FileProcessor.extract_new"><code class="docutils literal notranslate"><span class="pre">FileProcessor.extract_new()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.FileProcessor.get_raw_data"><code class="docutils literal notranslate"><span class="pre">FileProcessor.get_raw_data()</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.FileProcessor.raw_files_to_df"><code class="docutils literal notranslate"><span class="pre">FileProcessor.raw_files_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.FlowCSVProcessor"><code class="docutils literal notranslate"><span class="pre">FlowCSVProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.JSONProcessor"><code class="docutils literal notranslate"><span class="pre">JSONProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.LiCOR"><code class="docutils literal notranslate"><span class="pre">LiCOR</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.LiCOR.raw_data_to_df"><code class="docutils literal notranslate"><span class="pre">LiCOR.raw_data_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.MSACSVProcessor"><code class="docutils literal notranslate"><span class="pre">MSACSVProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.ModbusCSVProcessor"><code class="docutils literal notranslate"><span class="pre">ModbusCSVProcessor</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.ModbusCSVProcessor.extract_new"><code class="docutils literal notranslate"><span class="pre">ModbusCSVProcessor.extract_new()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.Skycentrics"><code class="docutils literal notranslate"><span class="pre">Skycentrics</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.Skycentrics.raw_data_to_df"><code class="docutils literal notranslate"><span class="pre">Skycentrics.raw_data_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.SmallPlanetCSVProcessor"><code class="docutils literal notranslate"><span class="pre">SmallPlanetCSVProcessor</span></code></a></li>
+<li><a class="reference internal" href="#ecopipeline.extract.ThingsBoard"><code class="docutils literal notranslate"><span class="pre">ThingsBoard</span></code></a><ul>
+<li><a class="reference internal" href="#ecopipeline.extract.ThingsBoard.raw_data_to_df"><code class="docutils literal notranslate"><span class="pre">ThingsBoard.raw_data_to_df()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ecopipeline.extract.central_extract_function"><code class="docutils literal notranslate"><span class="pre">central_extract_function()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.csv_to_df"><code class="docutils literal notranslate"><span class="pre">csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.dent_csv_to_df"><code class="docutils literal notranslate"><span class="pre">dent_csv_to_df()</span></code></a></li>
 <li><a class="reference internal" href="#ecopipeline.extract.egauge_csv_to_df"><code class="docutils literal notranslate"><span class="pre">egauge_csv_to_df()</span></code></a></li>
@@ -663,7 +1844,7 @@ Will return with index in UTC so needs to be converted after to appropriate time
         <li class="right" >
           <a href="../utils/ConfigManager.html" title="Pipeline Configuration Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Extract Documentation</a></li> 
       </ul>
     </div>

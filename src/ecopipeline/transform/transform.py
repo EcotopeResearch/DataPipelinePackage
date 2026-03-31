@@ -12,37 +12,65 @@ pd.set_option('display.max_columns', None)
 def central_transform_function(config : ConfigManager, df : pd.DataFrame, weather_df : pd.DataFrame = None, tz_convert_from: str = 'America/Los_Angeles',
                                tz_convert_to: str = 'America/Los_Angeles', oat_column_name : str = "Temp_OAT",
                                complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True,
-                               custom_function_1=None, custom_function_2=None) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                               pre_aggregation_func=None, post_aggregation_func=None) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
+    Run the full central transform pipeline on raw minute-level site data.
+
+    Renames sensors, rounds timestamps, forward-fills missing values, optionally
+    converts timezones, averages duplicate timestamps, aggregates to hourly and
+    daily dataframes, and optionally merges weather data. Supports optional
+    pre- and post-aggregation hooks for custom processing.
+
     Parameters
     ----------
-    config : ecopipeline.ConfigManager
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
     df : pd.DataFrame
-        dataframe with raw time indexed (ideally minute interval) site data. Important column names should be
-        represented in the variable_alias column in the Variable_Names.csv file.
-    weather_df : pd.DataFrame
-        dataframe with time indexed (preferably hourly) weather data. Will be merged with hourly dataframe
-    tz_convert_from : str
-        String value of timezone data is currently in
-    tz_convert_to : str
-        String value of timezone data should be converted to
-    oat_column_name : str
-        Name that Outdoor Air Temperature column should have (default 'Temp_OAT')
-    complete_hour_threshold : float
-        Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8) 
-        Only applicable if remove_partial set to True
-    complete_day_threshold : float
-        Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8) 
-        Only applicable if remove_partial set to True
-    remove_partial : bool
-        Default to True. Removes parial days and hours from aggregated dfs 
-    custom_function_1 : callable, optional
-        A custom function called after minute-level processing and before aggregation.
-        Signature: custom_function_1(df: pd.DataFrame) -> pd.DataFrame
-    custom_function_2 : callable, optional
+        Dataframe with raw time-indexed (ideally minute-interval) site data.
+        Important column names should be represented in the ``variable_alias``
+        column in the Variable_Names.csv file.
+    weather_df : pd.DataFrame, optional
+        Dataframe with time-indexed (preferably hourly) weather data. Will be
+        merged with the hourly dataframe.
+    tz_convert_from : str, optional
+        String value of the timezone the data is currently in.
+    tz_convert_to : str, optional
+        String value of the timezone the data should be converted to.
+    oat_column_name : str, optional
+        Name that the Outdoor Air Temperature column should have. Defaults to
+        ``'Temp_OAT'``.
+    complete_hour_threshold : float, optional
+        Percent of minutes in an hour needed to count as a complete hour,
+        expressed as a float (e.g. 80% = 0.8). Defaults to 0.8. Only
+        applicable if ``remove_partial`` is ``True``.
+    complete_day_threshold : float, optional
+        Percent of hours in a day needed to count as a complete day, expressed
+        as a float (e.g. 80% = 0.8). Defaults to 1.0. Only applicable if
+        ``remove_partial`` is ``True``.
+    remove_partial : bool, optional
+        If ``True``, removes partial days and hours from aggregated dataframes.
+        Defaults to ``True``.
+    pre_aggregation_func : callable, optional
+        A custom function called after minute-level processing and before
+        aggregation. Signature:
+        ``pre_aggregation_func(df: pd.DataFrame) -> pd.DataFrame``.
+    post_aggregation_func : callable, optional
         A custom function called after weather merging and before returning.
-        Signature: custom_function_2(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+        Signature:
+        ``post_aggregation_func(df, hourly_df, daily_df) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]``.
+
+    Returns
+    -------
+    tuple of pd.DataFrame
+        A three-element tuple ``(df, hourly_df, daily_df)`` containing the
+        processed minute-level, hourly, and daily dataframes respectively.
+
+    Raises
+    ------
+    TypeError
+        If ``pre_aggregation_func`` or ``post_aggregation_func`` is not
+        callable, does not accept the expected parameters, or does not return
+        the expected type.
     """
     print("++++++++++++ TRANSFORM ++++++++++++")
     df = rename_sensors(df, config)
@@ -52,15 +80,15 @@ def central_transform_function(config : ConfigManager, df : pd.DataFrame, weathe
         df = convert_time_zone(df, tz_convert_from, tz_convert_to)
     df = avg_duplicate_times(df, None)
 
-    if custom_function_1 is not None:
-        if not callable(custom_function_1):
-            raise TypeError("custom_function_1 must be a callable that accepts (df: pd.DataFrame) and returns a pd.DataFrame.")
+    if pre_aggregation_func is not None:
+        if not callable(pre_aggregation_func):
+            raise TypeError("pre_aggregation_func must be a callable that accepts (df: pd.DataFrame) and returns a pd.DataFrame.")
         try:
-            result = custom_function_1(df)
+            result = pre_aggregation_func(df)
         except TypeError as e:
-            raise TypeError(f"custom_function_1 failed — ensure it accepts exactly one parameter (df: pd.DataFrame). Original error: {e}")
+            raise TypeError(f"pre_aggregation_func failed — ensure it accepts exactly one parameter (df: pd.DataFrame). Original error: {e}")
         if not isinstance(result, pd.DataFrame):
-            raise TypeError(f"custom_function_1 must return a pd.DataFrame, but returned {type(result).__name__}.")
+            raise TypeError(f"pre_aggregation_func must return a pd.DataFrame, but returned {type(result).__name__}.")
         df = result
 
     hourly_df, daily_df = aggregate_df(df, config.get_ls_filename(), complete_hour_threshold, complete_day_threshold, remove_partial)
@@ -75,37 +103,40 @@ def central_transform_function(config : ConfigManager, df : pd.DataFrame, weathe
         if len(daily_df.index) > 0 and oat_column_name in hourly_df.columns:
             daily_df[oat_column_name] = hourly_df[oat_column_name].resample('D').mean(numeric_only=True)
 
-    if custom_function_2 is not None:
-        if not callable(custom_function_2):
-            raise TypeError("custom_function_2 must be a callable that accepts (df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame) and returns a tuple of three pd.DataFrames.")
+    if post_aggregation_func is not None:
+        if not callable(post_aggregation_func):
+            raise TypeError("post_aggregation_func must be a callable that accepts (df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame) and returns a tuple of three pd.DataFrames.")
         try:
-            result = custom_function_2(df, hourly_df, daily_df)
+            result = post_aggregation_func(df, hourly_df, daily_df)
         except TypeError as e:
-            raise TypeError(f"custom_function_2 failed — ensure it accepts exactly three parameters (df, hourly_df, daily_df: pd.DataFrame). Original error: {e}")
+            raise TypeError(f"post_aggregation_func failed — ensure it accepts exactly three parameters (df, hourly_df, daily_df: pd.DataFrame). Original error: {e}")
         if (not isinstance(result, tuple) or len(result) != 3
                 or not all(isinstance(r, pd.DataFrame) for r in result)):
-            raise TypeError(f"custom_function_2 must return a tuple of three pd.DataFrames (df, hourly_df, daily_df), but returned {type(result).__name__}.")
+            raise TypeError(f"post_aggregation_func must return a tuple of three pd.DataFrames (df, hourly_df, daily_df), but returned {type(result).__name__}.")
         df, hourly_df, daily_df = result
 
     return df, hourly_df, daily_df
 
 def concat_last_row(df: pd.DataFrame, last_row: pd.DataFrame) -> pd.DataFrame:
     """
-    This function takes in a dataframe with new data and a second data frame meant to be the
-    last row from the database the new data is being processed for. The two dataframes are then concatenated 
-    such that the new data can later be forward filled from the info the last row
+    Concatenate the last database row onto a new-data dataframe to enable forward filling.
+
+    Takes a dataframe with new data and a second dataframe representing the last
+    row of the destination database, concatenates them so that subsequent forward
+    filling can use information from the last row.
 
     Parameters
     ----------
     df : pd.DataFrame
-        dataframe with new data that needs to be forward filled from data in the last row of a database
-    last_row : pd.DataFrame 
-        last row of the database to forward fill from in a pandas dataframe
-    
+        Dataframe with new data that needs to be forward filled from data in the
+        last row of a database.
+    last_row : pd.DataFrame
+        Last row of the database to forward fill from.
+
     Returns
     -------
-    pd.DataFrame: 
-        Pandas dataframe with last row concatenated
+    pd.DataFrame
+        Dataframe with the last row concatenated and sorted by index.
     """
     df = pd.concat([last_row, df], join="inner")
     df = df.sort_index()
@@ -114,17 +145,19 @@ def concat_last_row(df: pd.DataFrame, last_row: pd.DataFrame) -> pd.DataFrame:
 
 def round_time(df: pd.DataFrame):
     """
-    Function takes in a dataframe and rounds dataTime index down to the nearest minute. Works in place
+    Round a dataframe's DatetimeIndex down to the nearest minute, in place.
 
     Parameters
     ----------
     df : pd.DataFrame
-        a dataframe indexed by datetimes. These date times will all be rounded down to the nearest minute.
+        A dataframe indexed by datetimes. All timestamps will be floored to the
+        nearest minute.
 
     Returns
     -------
-    boolean
-        Returns True if the indexes have been rounded down. Returns False if the fuinction failed (e.g. if df was empty)
+    bool
+        ``True`` if the index has been rounded down, ``False`` if the operation
+        failed (e.g. if ``df`` was empty).
     """
     if (df.empty):
         return False
@@ -140,32 +173,42 @@ def round_time(df: pd.DataFrame):
 
 def rename_sensors(original_df: pd.DataFrame, config : ConfigManager, site: str = "", system: str = ""):
     """
-    Function will take in a dataframe and a string representation of a file path and renames
-    sensors from their alias to their true name. Also filters the dataframe by site and system if specified.
+    Rename sensor columns from their raw aliases to their true names.
+
+    Reads the Variable_Names.csv file via ``config``, renames columns from
+    ``variable_alias`` to ``variable_name``, drops columns with no matching
+    true name, and optionally filters by site and/or system.
 
     Parameters
-    ---------- 
-    original_df: pd.DataFrame
-        A dataframe that contains data labeled by the raw varriable names to be renamed.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
-        The csv this points to should have at least 2 columns called "variable_alias" (the raw name to be changed from) and "variable_name"
-        (the name to be changed to). All columns without a cooresponding variable_name will be dropped from the dataframe.
-    site: str
-        If the pipeline is processing data for a particular site with a dataframe that contains data from multiple sites that 
-        need to be prossessed seperatly, fill in this optional varriable to drop data from all other sites in the returned dataframe. 
-        Appropriate varriables in your Variable_Names.csv must have a matching substring to this varriable in a column called "site".
-    system: str
-        If the pipeline is processing data for a particular system with a dataframe that contains data from multiple systems that 
-        need to be prossessed seperatly, fill in this optional varriable to drop data from all other systems in the returned dataframe. 
-        Appropriate varriables in your Variable_Names.csv must have a matching string to this varriable in a column called "system"
-    
+    ----------
+    original_df : pd.DataFrame
+        A dataframe containing data labeled by raw variable names to be renamed.
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+        Points to a file called Variable_Names.csv in the pipeline's input folder.
+        The CSV must have at least two columns: ``variable_alias`` (the raw name
+        to change from) and ``variable_name`` (the name to change to). Columns
+        without a corresponding ``variable_name`` are dropped.
+    site : str, optional
+        Site name to filter by. If provided, only rows whose ``site`` column
+        matches this value are retained. Leave as an empty string if not
+        applicable.
+    system : str, optional
+        System name to filter by. If provided, only rows whose ``system`` column
+        contains this string are retained. Leave as an empty string if not
+        applicable.
+
     Returns
-    -------  
-    df: pd.DataFrame 
-        Pandas dataframe that has been filtered by site and system (if either are applicable) with column names that match those specified in
-        Variable_Names.csv.
+    -------
+    pd.DataFrame
+        Dataframe filtered by site and system (if applicable) with column names
+        matching those specified in Variable_Names.csv.
+
+    Raises
+    ------
+    Exception
+        If the Variable_Names.csv file is not found at the path provided by
+        ``config``.
     """
     variable_names_path = config.get_var_names_path()
     try:
@@ -200,22 +243,27 @@ def rename_sensors(original_df: pd.DataFrame, config : ConfigManager, site: str 
 
 def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
     """
-    Function will take in a dataframe and look for duplicate timestamps (ususally due to daylight savings or rounding). 
-    The dataframe will be altered to just have one line for the timestamp, takes the average values between the duplicate timestamps
-    for the columns of the line.
+    Collapse duplicate timestamps by averaging numeric values and taking the first non-numeric value.
+
+    Looks for duplicate timestamps (typically caused by daylight-saving time
+    transitions or timestamp rounding) and reduces each group of duplicates to a
+    single row, averaging numeric columns and keeping the first value for
+    non-numeric columns.
 
     Parameters
     ----------
-    df: pd.DataFrame 
-        Pandas dataframe to be altered
-    timezone: str 
-        The timezone for the indexes in the output dataframe as a string. Must be a string recognized as a 
-        time stamp by the pandas tz_localize() function https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html
-    
+    df : pd.DataFrame
+        Pandas dataframe to be altered.
+    timezone : str
+        Timezone string to apply to the output index. Must be a string
+        recognised by ``pandas.Series.tz_localize``. See
+        https://pandas.pydata.org/docs/reference/api/pandas.Series.tz_localize.html.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas dataframe with all duplicate timestamps compressed into one, averegaing data values 
+    -------
+    pd.DataFrame
+        Dataframe with all duplicate timestamps collapsed into one row,
+        averaging numeric data values.
     """
     df.index = pd.DatetimeIndex(df.index).tz_localize(None)
     # get rid of time stamp 0 values
@@ -235,18 +283,15 @@ def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
 
 def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
     """
-    Function will take in a pandas series and bounds information
-    stored in a dataframe, then check each element of that column and set it to nan
-    if it is outside the given bounds.
+    Set values outside the specified bounds to NaN for a single pandas Series.
 
-    Args:
-        col: pd.Series
-            Pandas dataframe column from data being processed
-        bounds_df: pd.DataFrame
-            Pandas dataframe indexed by the names of the columns from the dataframe that col came from. There should be at least
-            two columns in this dataframe, lower_bound and upper_bound, for use in removing outliers
-    Returns:
-        None
+    Parameters
+    ----------
+    col : pd.Series
+        Pandas Series (dataframe column) from the data being processed.
+    bounds_df : pd.DataFrame
+        Dataframe indexed by column names from the parent dataframe. Must
+        contain at least two columns: ``lower_bound`` and ``upper_bound``.
     """
     if (col.name in bounds_df.index):
         c_lower = bounds_df.loc[col.name]["lower_bound"]
@@ -265,27 +310,28 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
 def remove_outliers(original_df: pd.DataFrame, config : ConfigManager, site: str = "") -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and location of bounds information in a csv,
-    store the bounds data in a dataframe, then remove outliers above or below bounds as 
-    designated by the csv. Function then returns the resulting dataframe. 
+    Remove outliers from a dataframe by replacing out-of-bounds values with NaN.
+
+    Reads bound information from Variable_Names.csv via ``config`` and sets any
+    values outside the defined ``lower_bound``/``upper_bound`` range to NaN.
 
     Parameters
     ----------
-    original_df: pd.DataFrame
-        Pandas dataframe for which outliers need to be removed
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least three columns which must be titled "variable_name", "lower_bound", and "upper_bound" which should contain the
-        name of each variable in the dataframe that requires the removal of outliers, the lower bound for acceptable data, and the upper bound for
-        acceptable data respectively
-    site: str
-        string of site name if processing a particular site in a Variable_Names.csv file with multiple sites. Leave as an empty string if not aplicable.
+    original_df : pd.DataFrame
+        Pandas dataframe for which outliers need to be removed.
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+        Points to a file called Variable_Names.csv in the pipeline's input folder.
+        The CSV must have at least three columns: ``variable_name``,
+        ``lower_bound``, and ``upper_bound``.
+    site : str, optional
+        Site name to filter bounds data by. Leave as an empty string if not
+        applicable.
 
     Returns
-    ------- 
-    pd.DataFrame:
-        Pandas dataframe with outliers removed and replaced with nans
+    -------
+    pd.DataFrame
+        Dataframe with outliers replaced by NaN.
     """
     df = original_df.copy()
     variable_names_path = config.get_var_names_path()
@@ -310,15 +356,18 @@ def remove_outliers(original_df: pd.DataFrame, config : ConfigManager, site: str
 
 def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper function for ffill_missing
     """
-    Function will take in a pandas series and ffill information from a pandas dataframe,
-    then for each entry in the series, either forward fill unconditionally or up to the 
-    provided limit based on the information in provided dataframe. 
+    Forward-fill a single pandas Series according to per-column rules in ``ffill_df``.
 
-    Args: 
-        col (pd.Series): Pandas series
-        ffill_df (pd.DataFrame): Pandas dataframe
-    Returns: 
-        None (df is modified, not returned)
+    Parameters
+    ----------
+    col : pd.Series
+        Pandas Series to forward-fill.
+    ffill_df : pd.DataFrame
+        Dataframe indexed by variable name containing ``changepoint`` and
+        ``ffill_length`` columns that control fill behaviour.
+    previous_fill : pd.DataFrame, optional
+        Dataframe used to seed the initial fill value for the first row of
+        ``col`` when it is NaN.
     """
     if (col.name in ffill_df.index):
         #set initial fill value where needed for first row
@@ -336,30 +385,33 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
 
 def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and forward fill select variables with no entry. 
-    
+    Forward-fill selected columns of a dataframe according to rules in Variable_Names.csv.
+
     Parameters
     ----------
-    original_df: pd.DataFrame
-        Pandas dataframe that needs to be forward filled
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        There should be at least three columns in this csv: "variable_name", "changepoint", "ffill_length".
-        The variable_name column should contain the name of each variable in the dataframe that requires forward filling.
-        The changepoint column should contain one of three values: 
-            "0" if the variable should be forward filled to a certain length (see ffill_length).
-            "1" if the varrible should be forward filled completely until the next change point.
-            null if the variable should not be forward filled.
-        The ffill_length contains the number of rows which should be forward filled if the value in the changepoint is "0"
-    previous_fill: pd.DataFrame (default None)
-        A pandas dataframe with the same index type and at least some of the same columns as original_df (usually taken as the last entry from the pipeline that has been put
-        into the destination database). The values of this will be used to forward fill into the new set of data if applicable.
-    
+    original_df : pd.DataFrame
+        Pandas dataframe that needs to be forward-filled.
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+        Points to a file called Variable_Names.csv in the pipeline's input folder.
+        The CSV must have at least three columns:
+
+        - ``variable_name``: name of each variable to forward-fill.
+        - ``changepoint``: ``1`` to forward-fill unconditionally until the next
+          change point, ``0`` to forward-fill up to ``ffill_length`` rows, or
+          null to skip forward-filling for that variable.
+        - ``ffill_length``: number of rows to forward-fill when ``changepoint``
+          is ``0``.
+    previous_fill : pd.DataFrame, optional
+        Dataframe with the same index type and at least some of the same columns
+        as ``original_df`` (typically the last row from the destination database).
+        Its values are used to seed forward-filling into the new data.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas dataframe that has been forward filled to the specifications detailed in the vars_filename csv
+    -------
+    pd.DataFrame
+        Dataframe that has been forward-filled per the specifications in the
+        Variable_Names.csv file.
     """
     df = original_df.copy()
     df = df.sort_index()
@@ -396,20 +448,30 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
 
 def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_model = 'veris') -> pd.DataFrame:
     """
-    Convert temperature in Fahrenheit to resistance in Ohms for 10k Type 2 thermistor.
-    
-    Parameters:
-    -----------
-    df: pd.DataFrame
-        Timestamp indexed Pandas dataframe of minute by minute values
+    Convert temperature resistance readings using a 10k Type 2 thermistor model.
+
+    Applies a two-stage pickle-model conversion (temperature-to-resistance, then
+    resistance-to-temperature) to correct sensor readings in the specified column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Timestamp-indexed Pandas dataframe of minute-by-minute values.
     column_name : str
-        Name of column with resistance conversion type 2 data
-    sensor_model : str
-        possible strings: veris, tasseron
-    
-    Returns:
-    --------
-    df: pd.DataFrame 
+        Name of the column containing resistance conversion Type 2 data.
+    sensor_model : str, optional
+        Sensor model to use. Supported values: ``'veris'``, ``'tasseron'``.
+        Defaults to ``'veris'``.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe with the specified column corrected via the thermistor model.
+
+    Raises
+    ------
+    Exception
+        If ``sensor_model`` is not a supported value.
     """
     model_path_t_to_r = '../utils/pkls/'
     model_path_r_to_t = '../utils/pkls/'
@@ -434,25 +496,32 @@ def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_mo
 def estimate_power(df : pd.DataFrame, new_power_column : str, current_a_column : str, current_b_column : str, current_c_column : str,
                  assumed_voltage : float = 208, power_factor : float = 1) -> pd.DataFrame:
     """
-    df: pd.DataFrame
-        Pandas dataframe with minute-to-minute data
+    Estimate three-phase power from per-phase current readings.
+
+    Calculates power as the average phase current multiplied by the assumed
+    voltage, power factor, and sqrt(3), then converts from watts to kilowatts.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Pandas dataframe with minute-to-minute data.
     new_power_column : str
-        The column name of the power varriable for the calculation. Units of the column should be kW
+        Column name to store the estimated power. Units will be kW.
     current_a_column : str
-        The column name of the Current A varriable for the calculation. Units of the column should be amps
+        Column name of the Phase A current. Units should be amps.
     current_b_column : str
-        The column name of the Current B varriable for the calculation. Units of the column should be amps
+        Column name of the Phase B current. Units should be amps.
     current_c_column : str
-        The column name of the Current C varriable for the calculation. Units of the column should be amps
-    assumed_voltage : float
-        The assumed voltage (default 208)
-    power_factor : float
-        The power factor (default 1)
-        
+        Column name of the Phase C current. Units should be amps.
+    assumed_voltage : float, optional
+        Assumed line voltage in volts. Defaults to 208.
+    power_factor : float, optional
+        Power factor to apply. Defaults to 1.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas dataframe with new estimated power column of specified name.
+    -------
+    pd.DataFrame
+        Dataframe with a new estimated power column of the specified name.
     """
     #average current * 208V * PF * sqrt(3)
     df[new_power_column] = (df[current_a_column] + df[current_b_column] + df[current_c_column]) / 3 * assumed_voltage * power_factor * np.sqrt(3) / 1000
@@ -462,35 +531,39 @@ def estimate_power(df : pd.DataFrame, new_power_column : str, current_a_column :
 def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.DataFrame, load_dict: dict = {1: "normal", 2: "loadUp", 3 : "shed"}, ls_column: str = 'ls',
                       drop_ls_from_df : bool = False):
     """
-    Function takes aggregated dfs and adds loadshift signals to hourly df and loadshift days to daily_df
+    Add load-shift signals to hourly and daily aggregated dataframes.
 
     Parameters
-    ---------- 
-    df: pd.DataFrame
-        Timestamp indexed Pandas dataframe of minute by minute values
-    hourly_df: pd.DataFrame
-        Timestamp indexed Pandas dataframe of hourly average values
-    daily_df: pd.DataFrame
-        Timestamp indexed Pandas dataframe of daily average values
-    load_dict: dict
-        dictionary of what loadshift signal is indicated by a value of the ls_column column in df
-    ls_column: str
-        the name of the loadshift column in df
-    drop_ls_from_df: bool
-        Set to true to drop ls_column from df after processing
-    
+    ----------
+    df : pd.DataFrame
+        Timestamp-indexed Pandas dataframe of minute-by-minute values.
+    hourly_df : pd.DataFrame
+        Timestamp-indexed Pandas dataframe of hourly average values.
+    daily_df : pd.DataFrame
+        Timestamp-indexed Pandas dataframe of daily average values.
+    load_dict : dict, optional
+        Mapping from integer load-shift signal values to descriptive string
+        labels. Defaults to ``{1: "normal", 2: "loadUp", 3: "shed"}``.
+    ls_column : str, optional
+        Name of the load-shift column in ``df``. Defaults to ``'ls'``.
+    drop_ls_from_df : bool, optional
+        If ``True``, drops ``ls_column`` from ``df`` after processing.
+        Defaults to ``False``.
+
     Returns
-    ------- 
-    df: pd.DataFrame 
-        Timestamp indexed Pandas dataframe of minute by minute values with ls_column removed if drop_ls_from_df = True
-    hourly_df: pd.DataFrame
-        Timestamp indexed Pandas dataframe of hourly average values with added column 'system_state' which contains the 
-        loadshift command value from load_dict from the average (rounded to the nearest integer) key for all indexes in 
-        df within that load_dict key. If the integer is not a key in load_dict, the loadshift command value will be null 
-    daily_df: pd.DataFrame
-        Timestamp indexed Pandas dataframe of daily average values with added boolean column 'load_shift_day' which holds
-        the value True on days which contains hours in hourly_df in which there are loadshift commands other than normal
-        and Fals on days where the only command in normal unknown
+    -------
+    df : pd.DataFrame
+        Minute-by-minute dataframe with ``ls_column`` removed if
+        ``drop_ls_from_df`` is ``True``.
+    hourly_df : pd.DataFrame
+        Hourly dataframe with an added ``'system_state'`` column containing
+        the load-shift command label from ``load_dict`` for each hour. Values
+        are mapped from the rounded mean of ``ls_column`` within each hour;
+        hours whose rounded mean is not a key in ``load_dict`` will be null.
+    daily_df : pd.DataFrame
+        Daily dataframe with an added boolean ``'load_shift_day'`` column that
+        is ``True`` on days containing at least one non-normal load-shift
+        command in ``hourly_df``.
     """
     # Make copies to avoid modifying original dataframes
     df_copy = df.copy()
@@ -541,23 +614,25 @@ def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.Da
 
 def delete_erroneous_from_time_pt(df: pd.DataFrame, time_point : pd.Timestamp, column_names : list, new_value = None) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and delete specified erroneous values at a specified time point. 
+    Replace erroneous values at a specific timestamp with a given replacement value.
 
     Parameters
-    ---------- 
-    df: pd.DataFrame
-        Timestamp indexed Pandas dataframe that needs to have an erroneous value removed
+    ----------
+    df : pd.DataFrame
+        Timestamp-indexed Pandas dataframe that contains the erroneous value.
     time_point : pd.Timestamp
-        The timepoint index the erroneous value takes place in  
+        The index timestamp at which the erroneous values occur.
     column_names : list
-        list of column names as strings that contain erroneous values at this time stamp
-    new_value : any
-        new value to populate the erroneous columns at this timestamp with. If set to None, will replace value with NaN
-    
+        List of column name strings that contain erroneous values at this
+        timestamp.
+    new_value : any, optional
+        Replacement value to write into the erroneous cells. If ``None``,
+        the cells are replaced with NaN. Defaults to ``None``.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas dataframe with error values replaced with new value
+    -------
+    pd.DataFrame
+        Dataframe with the erroneous values replaced by ``new_value``.
     """
     if new_value is None:
         new_value = float('NaN')  # Replace with NaN if new_value is not provided
@@ -571,23 +646,25 @@ def delete_erroneous_from_time_pt(df: pd.DataFrame, time_point : pd.Timestamp, c
 # TODO test this
 def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and make erroneous values NaN. 
+    Replace known error-sentinel values in a dataframe with NaN.
 
     Parameters
-    ---------- 
-    original_df: pd.DataFrame
-        Pandas dataframe that needs to be filtered for error values
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        There should be at least two columns in this csv: "variable_name" and "error_value"
-        The variable_name should contain the names of all columns in the dataframe that need to have there erroneous values removed
-        The error_value column should contain the error value of each variable_name, or null if there isn't an error value for that variable   
-    
+    ----------
+    original_df : pd.DataFrame
+        Pandas dataframe that needs to be filtered for error values.
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+        Points to a file called Variable_Names.csv in the pipeline's input folder.
+        The CSV must have at least two columns:
+
+        - ``variable_name``: names of columns that may contain error values.
+        - ``error_value``: the sentinel error value for each variable, or null
+          if no error value applies.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas dataframe with error values replaced with NaNs
+    -------
+    pd.DataFrame
+        Dataframe with known error-sentinel values replaced by NaN.
     """
     df = original_df.copy()
     vars_filename = config.get_var_names_path()
@@ -613,21 +690,30 @@ def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.D
 
 def column_name_change(df : pd.DataFrame, dt : pd.Timestamp, new_column : str, old_column : str, remove_old_column : bool = True) -> pd.DataFrame:
     """
-    Overwrites values in `new_column` with values from `old_column` 
-    for all rows before `dt`, if `dt` is within the index range.
+    Back-fill ``new_column`` with values from ``old_column`` for rows before a name-change timestamp.
+
+    Overwrites values in ``new_column`` with values from ``old_column`` for all
+    rows with an index earlier than ``dt``, provided ``dt`` is within the index
+    range. Optionally removes ``old_column`` afterwards.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Pandas dataframe with minute-to-minute data
-    dt: pd.Timestamp
-        timestamp of the varriable name change
-    new_column: str
-        column to be overwritten
-    old_column: str
-        column to copy from
-    remove_old_column : bool
-        remove old column when done
+    df : pd.DataFrame
+        Pandas dataframe with minute-to-minute data.
+    dt : pd.Timestamp
+        Timestamp of the variable name change.
+    new_column : str
+        Name of the column to be overwritten for rows before ``dt``.
+    old_column : str
+        Name of the column to copy values from.
+    remove_old_column : bool, optional
+        If ``True``, drops ``old_column`` from the dataframe after the copy.
+        Defaults to ``True``.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe with ``new_column`` updated for pre-change rows.
     """
     if old_column in df.columns:
         if df.index.min() < dt:
@@ -639,27 +725,31 @@ def column_name_change(df : pd.DataFrame, dt : pd.Timestamp, new_column : str, o
 
 def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp : str, heat_out_col_name : str, return_as_kw : bool = True) -> pd.DataFrame:
     """
-    Function will take a flow varriable and two temperature inputs to calculate heat output 
+    Calculate heat output from flow rate and supply/return temperatures.
+
+    Uses the formula ``Heat (BTU/hr) = 500 * flow (gal/min) * delta_T (°F)``
+    and clips negative values to zero. Optionally converts the result to kW.
 
     Parameters
-    ---------- 
-    df: pd.DataFrame
-        Pandas dataframe with minute-to-minute data
+    ----------
+    df : pd.DataFrame
+        Pandas dataframe with minute-to-minute data.
     flow_var : str
-        The column name of the flow varriable for the calculation. Units of the column should be gal/min
+        Column name of the flow variable. Units must be gal/min.
     hot_temp : str
-        The column name of the hot temperature varriable for the calculation. Units of the column should be degrees F
+        Column name of the hot (supply) temperature variable. Units must be °F.
     cold_temp : str
-        The column name of the cold temperature varriable for the calculation. Units of the column should be degrees F
+        Column name of the cold (return) temperature variable. Units must be °F.
     heat_out_col_name : str
-        The new column name for the heat output calculated from the varriables
-    return_as_kw : bool
-        Set to true for new heat out column to have kW units. Set to false to return column as BTU/hr
-        
+        Name for the new heat output column added to the dataframe.
+    return_as_kw : bool, optional
+        If ``True``, the new column will be in kW. If ``False``, it will be in
+        BTU/hr. Defaults to ``True``.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas dataframe with new heat output column of specified name.
+    -------
+    pd.DataFrame
+        Dataframe with the new heat output column of the specified name.
     """
     df[heat_out_col_name] = 500 * df[flow_var] * (df[hot_temp] - df[cold_temp]) #BTU/hr
     df[heat_out_col_name] = np.where(df[heat_out_col_name] > 0, df[heat_out_col_name], 0)
@@ -670,20 +760,25 @@ def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp
 #TODO investigate if this can be removed
 def sensor_adjustment(df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
     """
-    TO BE DEPRICATED -- Reads in input/adjustments.csv and applies necessary adjustments to the dataframe
+    Apply sensor adjustments from adjustments.csv to the dataframe.
+
+    .. deprecated::
+        This function is scheduled for removal. Use a more explicit adjustment
+        approach instead.
 
     Parameters
-    ---------- 
+    ----------
     df : pd.DataFrame
-        DataFrame to be adjusted
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called adjustments.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/adjustments.csv")
-    
+        Dataframe to be adjusted.
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+        Points to a file called ``adjustments.csv`` in the pipeline's input
+        folder (e.g. ``"full/path/to/pipeline/input/adjustments.csv"``).
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Adjusted Dataframe
+    -------
+    pd.DataFrame
+        Adjusted dataframe.
     """
     adjustments_csv_path = f"{config.input_directory}adjustments.csv"
     try:
@@ -718,23 +813,28 @@ def sensor_adjustment(df: pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
 
 def add_relative_humidity(df : pd.DataFrame, temp_col : str ='airTemp_F', dew_point_col : str ='dewPoint_F', degree_f : bool = True):
     """
-    Add a column for relative humidity to the DataFrame.
+    Add a ``'relative_humidity'`` column to the dataframe.
+
+    Computes relative humidity from air temperature and dew-point temperature
+    using the August-Roche-Magnus approximation. Clips the result to [0, 100].
 
     Parameters
-    ---------- 
-    df : pd.DataFrame 
-        DataFrame containing air temperature and dew point temperature.
-    temp_col : str 
-        Column name for air temperature.
-    dew_point_col : str
-        Column name for dew point temperature.
-    degree_f : bool
-        True if temperature columns are in °F, false if in °C 
+    ----------
+    df : pd.DataFrame
+        Dataframe containing air temperature and dew-point temperature columns.
+    temp_col : str, optional
+        Column name for air temperature. Defaults to ``'airTemp_F'``.
+    dew_point_col : str, optional
+        Column name for dew-point temperature. Defaults to ``'dewPoint_F'``.
+    degree_f : bool, optional
+        If ``True``, temperature columns are assumed to be in °F and are
+        internally converted to °C for the calculation. If ``False``, columns
+        are assumed to already be in °C. Defaults to ``True``.
 
     Returns
     -------
-    pd.DataFrame: 
-        DataFrame with an added column for relative humidity.
+    pd.DataFrame
+        Dataframe with an added ``'relative_humidity'`` column (percent, 0–100).
     """
     # Define constants
     A = 6.11
@@ -771,25 +871,31 @@ def add_relative_humidity(df : pd.DataFrame, temp_col : str ='airTemp_F', dew_po
 
 def cop_method_1(df: pd.DataFrame, recircLosses, heatout_primary_column : str = 'HeatOut_Primary', total_input_power_column : str = 'PowerIn_Total') -> pd.DataFrame:
     """
-    Performs COP calculation method 1 (original AWS method).
+    Perform COP calculation method 1 (original AWS method).
+
+    Computes ``COP_DHWSys_1 = (HeatOut_Primary + recircLosses) / PowerIn_Total``
+    and adds the result as a new column to the dataframe.
 
     Parameters
     ----------
-    df: pd.Dataframe
-        Pandas dataframe representing daily averaged values from datastream to add COP columns to. Adds column called 'COP_DHWSys_1' to the dataframe in place
-        The dataframe needs to already have two columns, 'HeatOut_Primary' and 'PowerIn_Total' to calculate COP_DHWSys_1
-    recircLosses: float or pd.Series
-        If fixed tempurature maintanance reciculation loss value from spot measurement, this should be a float.
-        If reciculation losses measurements are in datastream, this should be a column of df.
-        Units should be in kW.
-    heatout_primary_column : str
-        Name of the column that contains the output power of the primary system in kW. Defaults to 'HeatOut_Primary'
-    total_input_power_column : str
-        Name of the column that contains the total input power of the system in kW. Defaults to 'PowerIn_Total'
+    df : pd.DataFrame
+        Pandas dataframe of daily averaged values. Must already contain
+        ``heatout_primary_column`` and ``total_input_power_column``.
+    recircLosses : float or pd.Series
+        Recirculation losses in kW. Pass a ``float`` for a fixed spot-measured
+        value, or a ``pd.Series`` (aligned with ``df``) if measurements are
+        available in the datastream.
+    heatout_primary_column : str, optional
+        Name of the column containing primary system output power in kW.
+        Defaults to ``'HeatOut_Primary'``.
+    total_input_power_column : str, optional
+        Name of the column containing total system input power in kW.
+        Defaults to ``'PowerIn_Total'``.
 
     Returns
     -------
-    pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_1
+    pd.DataFrame
+        Dataframe with an added ``'COP_DHWSys_1'`` column.
     """
     columns_to_check = [heatout_primary_column, total_input_power_column]
 
@@ -805,24 +911,31 @@ def cop_method_1(df: pd.DataFrame, recircLosses, heatout_primary_column : str = 
 
 def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFrame:
     """
-    Performs COP calculation method 2 as defined by Scott's whiteboard image
-    COP = COP_primary(ELEC_primary/ELEC_total) + COP_tm(ELEC_tm/ELEC_total)
+    Perform COP calculation method 2.
+
+    Formula:
+    ``COP = COP_primary * (ELEC_primary / ELEC_total) + COP_tm * (ELEC_tm / ELEC_total)``
 
     Parameters
-    ---------- 
-    df: pd.DataFrame
-        Pandas DataFrame to add COP columns to. The dataframe needs to have a column for the COP of the primary system (see cop_primary_column_name)
-        as well as a column called 'PowerIn_Total' for the total system power and columns prefixed with 'PowerIn_HPWH' or 'PowerIn_SecLoopPump' for 
-        power readings taken for HPWHs/primary systems and columns prefixed with 'PowerIn_SwingTank' or 'PowerIn_ERTank' for power readings taken for 
-        Temperature Maintenance systems
-    cop_tm: float
-        fixed COP value for temputure Maintenece system
-    cop_primary_column_name: str
-        Name of the column used for COP_Primary values
+    ----------
+    df : pd.DataFrame
+        Pandas dataframe to add the COP column to. Must contain:
+
+        - ``cop_primary_column_name``: primary system COP values.
+        - ``'PowerIn_Total'``: total system power.
+        - Columns prefixed with ``'PowerIn_HPWH'`` or equal to
+          ``'PowerIn_SecLoopPump'`` (primary system power).
+        - Columns prefixed with ``'PowerIn_SwingTank'`` or
+          ``'PowerIn_ERTank'`` (temperature-maintenance system power).
+    cop_tm : float
+        Fixed COP value for the temperature-maintenance system.
+    cop_primary_column_name : str
+        Name of the column containing primary-system COP values.
 
     Returns
     -------
-    pd.DataFrame: Dataframe with added column for system COP called COP_DHWSys_2 
+    pd.DataFrame
+        Dataframe with an added ``'COP_DHWSys_2'`` column.
     """
     columns_to_check = [cop_primary_column_name, 'PowerIn_Total']
 
@@ -858,19 +971,20 @@ def cop_method_2(df: pd.DataFrame, cop_tm, cop_primary_column_name) -> pd.DataFr
 
 def convert_on_off_col_to_bool(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
-    Function takes in a pandas dataframe of data and a list of column names to convert from the strings 
-    "ON" and "OFF" to boolean values True and False resperctively.
+    Convert "ON"/"OFF" string values to boolean ``True``/``False`` in specified columns.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data.
-    column_names : list of stings
-        list of columns with data currently in strings "ON" and "OFF" that need to be converted to boolean values
+        Pandas dataframe of sensor data.
+    column_names : list
+        List of column names containing ``"ON"``/``"OFF"`` (or ``"On"``/``"Off"``)
+        strings to be converted to boolean values.
 
     Returns
     -------
-    pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.
+    pd.DataFrame
+        Dataframe with the specified columns converted to boolean values.
     """
     
     mapping = {'ON': True, 'OFF': False, 'On': True, 'Off': False}
@@ -882,18 +996,21 @@ def convert_on_off_col_to_bool(df: pd.DataFrame, column_names: list) -> pd.DataF
 
 def convert_c_to_f(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
-    Function takes in a pandas dataframe of data and a list of column names to convert from degrees Celsius to Farenhiet.
+    Convert specified columns from degrees Celsius to Fahrenheit.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data.
-    column_names : list of stings
-        list of columns with data currently in Celsius that need to be converted to Farenhiet
+        Pandas dataframe of sensor data.
+    column_names : list
+        List of column names whose values are currently in Celsius and need to
+        be converted to Fahrenheit.
 
     Returns
     -------
-    pd.DataFrame: Dataframe with specified columns converted from Celsius to Farenhiet.
+    pd.DataFrame
+        Dataframe with the specified columns converted from Celsius to
+        Fahrenheit.
     """
     for col in column_names:
         if col in df.columns.to_list():
@@ -908,18 +1025,20 @@ def convert_c_to_f(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
 
 def convert_btuhr_to_kw(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
-    Function takes in a pandas dataframe of data and a list of column names to convert from BTU HR to kW.
+    Convert specified columns from BTU/hr to kilowatts.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data.
-    column_names : list of stings
-        list of columns with data currently in BTU HR that need to be converted to kW
+        Pandas dataframe of sensor data.
+    column_names : list
+        List of column names whose values are currently in BTU/hr and need to
+        be converted to kW.
 
     Returns
     -------
-    pd.DataFrame: Dataframe with specified columns converted from BTU HR to kW.
+    pd.DataFrame
+        Dataframe with the specified columns converted from BTU/hr to kW.
     """
     for col in column_names:
         if col in df.columns.to_list():
@@ -934,18 +1053,20 @@ def convert_btuhr_to_kw(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
 
 def convert_l_to_g(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
     """
-    Function takes in a pandas dataframe of data and a list of column names to convert from Liters to Gallons.
+    Convert specified columns from liters to gallons.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data.
-    column_names : list of stings
-        list of columns with data currently in Liters that need to be converted to Gallons
+        Pandas dataframe of sensor data.
+    column_names : list
+        List of column names whose values are currently in liters and need to
+        be converted to gallons.
 
     Returns
     -------
-    pd.DataFrame: Dataframe with specified columns converted from Liters to Gallons.
+    pd.DataFrame
+        Dataframe with the specified columns converted from liters to gallons.
     """
     for col in column_names:
         if col in df.columns.to_list():
@@ -960,23 +1081,32 @@ def convert_l_to_g(df: pd.DataFrame, column_names: list) -> pd.DataFrame:
 
 def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column : str, supply_temp : int = 110, consecutive_minutes : int = 15) -> pd.DataFrame:
     """
-     Parameters
+    Detect DHW outage events and return an alarm event dataframe.
+
+    Identifies periods where DHW outlet temperature falls below ``supply_temp``
+    for at least ``consecutive_minutes`` consecutive minutes, then records an
+    ALARM event for each affected day.
+
+    Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data on minute intervals.
+        Pandas dataframe of sensor data on minute intervals.
     daily_df : pd.DataFrame
-        Single pandas dataframe of sensor data on daily intervals.
+        Pandas dataframe of sensor data on daily intervals.
     dhw_outlet_column : str
-        Name of the column in df and daily_df that contains temperature of DHW supplied to building occupants
-    supply_temp : int
-        the minimum DHW temperature acceptable to supply to building occupants
-    consecutive_minutes : int
-        the number of minutes in a row that DHW is not delivered to tenants to qualify as a DHW Outage
+        Name of the column in ``df`` that contains the DHW temperature supplied
+        to building occupants.
+    supply_temp : int, optional
+        Minimum acceptable DHW supply temperature in °F. Defaults to 110.
+    consecutive_minutes : int, optional
+        Number of consecutive minutes below ``supply_temp`` required to qualify
+        as a DHW outage. Defaults to 15.
 
     Returns
     -------
-    event_df : pd.DataFrame
-        Dataframe with 'ALARM' events on the days in which there was a DHW Outage.
+    pd.DataFrame
+        Dataframe indexed by ``start_time_pt`` containing ``'ALARM'`` events
+        for each day on which a DHW outage occurred.
     """
     # TODO edge case for outage that spans over a day
     events = {
@@ -1006,16 +1136,20 @@ def flag_dhw_outage(df: pd.DataFrame, daily_df : pd.DataFrame, dhw_outlet_column
 
 def generate_event_log_df(config : ConfigManager):
     """
-    Creates an event log df based on user submitted events in an event log csv
+    Create an event log dataframe from a user-submitted Event_log.csv file.
+
     Parameters
     ----------
-    config : ecopipeline.ConfigManager
+    config : ConfigManager
         The ConfigManager object that holds configuration data for the pipeline.
+        Points to the Event_log.csv file via ``config.get_event_log_path()``.
 
     Returns
     -------
-    event_df : pd.DataFrame
-        Dataframe formatted from events in Event_log.csv for pipeline.
+    pd.DataFrame
+        Dataframe indexed by ``start_time_pt`` and formatted from the events in
+        Event_log.csv. Returns an empty dataframe with the expected columns if
+        the file cannot be read.
     """
     event_filename = config.get_event_log_path()
     try:
@@ -1035,36 +1169,41 @@ def generate_event_log_df(config : ConfigManager):
 
 def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, remove_partial : bool = True) -> (pd.DataFrame, pd.DataFrame):
     """
-    Function takes in a pandas dataframe of minute data, aggregates it into hourly and daily 
-    dataframes, appends 'load_shift_day' column onto the daily_df and the 'system_state' column to
-    hourly_df to keep track of the loadshift schedule for the system, and then returns those dataframes.
-    The function will only trim the returned dataframes such that only averages from complete hours and
-    complete days are returned rather than agregated data from partial datasets.
+    Aggregate minute-level data into hourly and daily dataframes.
+
+    Energy columns (matching ``.*Energy.*`` but not ``EnergyRate`` or BTU
+    suffixes) are summed; all other numeric columns are averaged. Optionally
+    appends load-shift schedule data and removes partial hours/days.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of minute-by-minute sensor data.
-    ls_filename : str
-        Path to csv file containing load shift schedule (e.g. "full/path/to/pipeline/input/loadshift_matrix.csv"),
-        There should be at least four columns in this csv: 'date', 'startTime', 'endTime', and 'event'
-    complete_hour_threshold : float
-        Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8) 
-        Only applicable if remove_partial set to True
-    complete_day_threshold : float
-        Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8) 
-        Only applicable if remove_partial set to True
-    remove_partial : bool
-        Default to True. Removes parial days and hours from aggregated dfs 
-    
+        Pandas dataframe of minute-by-minute sensor data.
+    ls_filename : str, optional
+        Path to the load-shift schedule CSV file (e.g.
+        ``"full/path/to/pipeline/input/loadshift_matrix.csv"``). The CSV must
+        have at least four columns: ``date``, ``startTime``, ``endTime``, and
+        ``event``. Defaults to ``""``.
+    complete_hour_threshold : float, optional
+        Fraction of minutes in an hour required to count as a complete hour,
+        expressed as a float (e.g. 80% = 0.8). Defaults to 0.8. Only
+        applicable when ``remove_partial`` is ``True``.
+    complete_day_threshold : float, optional
+        Fraction of hours in a day required to count as a complete day,
+        expressed as a float (e.g. 80% = 0.8). Defaults to 1.0. Only
+        applicable when ``remove_partial`` is ``True``.
+    remove_partial : bool, optional
+        If ``True``, removes partial hours and days from the aggregated
+        dataframes. Defaults to ``True``.
+
     Returns
     -------
-    daily_df : pd.DataFrame
-        agregated daily dataframe that contains all daily information as well as the 'load_shift_day' column if
-        relevant to the data set.
     hourly_df : pd.DataFrame
-        agregated hourly dataframe that contains all hourly information as well as the 'system_state' column if
-        relevant to the data set.
+        Aggregated hourly dataframe, including a ``'system_state'`` column if
+        a valid load-shift file was provided.
+    daily_df : pd.DataFrame
+        Aggregated daily dataframe, including a ``'load_shift_day'`` column if
+        a valid load-shift file was provided.
     """
     # If df passed in empty, we just return empty dfs for hourly_df and daily_df
     if (df.empty):
@@ -1117,21 +1256,23 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
 
 def convert_time_zone(df: pd.DataFrame, tz_convert_from: str = 'UTC', tz_convert_to: str = 'America/Los_Angeles') -> pd.DataFrame:
     """
-    converts a dataframe's indexed timezone from tz_convert_from to tz_convert_to.
+    Convert a dataframe's DatetimeIndex from one timezone to another.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data.
-    tz_convert_from : str
-        String value of timezone data is currently in
-    tz_convert_to : str
-        String value of timezone data should be converted to
-    
+        Pandas dataframe of sensor data whose index should be timezone-converted.
+    tz_convert_from : str, optional
+        Timezone string the index is currently in. Defaults to ``'UTC'``.
+    tz_convert_to : str, optional
+        Timezone string the index should be converted to. Defaults to
+        ``'America/Los_Angeles'``.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        The dataframe with it's index converted to the appropriate timezone. 
+    -------
+    pd.DataFrame
+        Dataframe with its index converted to the target timezone (stored
+        without timezone info as a naive datetime index).
     """
     time_UTC = df.index.tz_localize(tz_convert_from)
     time_PST = time_UTC.tz_convert(tz_convert_to)
@@ -1141,19 +1282,22 @@ def convert_time_zone(df: pd.DataFrame, tz_convert_from: str = 'UTC', tz_convert
 
 def shift_accumulative_columns(df : pd.DataFrame, column_names : list = []):
     """
-    converts a dataframe's accumulative columns to non accumulative difference values.
+    Convert accumulative columns to period-difference (non-cumulative) values.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of sensor data.
-    column_names : list
-        The names of columns that need to be changed from accumulative sum data to non-accumulative data. Will do this to all columns if set to an empty list
-    
+        Pandas dataframe of sensor data.
+    column_names : list, optional
+        Names of columns to convert from cumulative-sum data to
+        non-cumulative difference data. If an empty list is provided, all
+        columns are converted. Defaults to ``[]``.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        The dataframe with aappropriate columns changed from accumulative sum data to non-accumulative data. 
+    -------
+    pd.DataFrame
+        Dataframe with the specified columns (or all columns) converted from
+        cumulative to period-difference values.
     """
     df.sort_index(inplace = True)
     df_diff = df - df.shift(1)
@@ -1168,17 +1312,19 @@ def shift_accumulative_columns(df : pd.DataFrame, column_names : list = []):
 
 def create_summary_tables(df: pd.DataFrame):
     """
-    Revamped version of "aggregate_data" function. Creates hourly and daily summary tables.
+    Create hourly and daily summary tables from minute-by-minute data.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of minute-by-minute sensor data.
-    
+        Pandas dataframe of minute-by-minute sensor data.
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Two pandas dataframes, one of by the hour and one of by the day aggregated sensor data. 
+    -------
+    hourly_df : pd.DataFrame
+        Hourly mean aggregation of the input data, with partial hours removed.
+    daily_df : pd.DataFrame
+        Daily mean aggregation of the input data, with partial days removed.
     """
     # If df passed in empty, we just return empty dfs for hourly_df and daily_df
     if (df.empty):
@@ -1191,24 +1337,41 @@ def create_summary_tables(df: pd.DataFrame):
     return hourly_df, daily_df
 
 def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float = 0.8, complete_day_threshold : float = 1.0, partial_day_removal_exclusion : list = []):
-    '''
-    Helper function for removing daily and hourly values that are calculated from incomplete data.
+    """
+    Remove hourly and daily rows that are derived from insufficient minute-level data.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Single pandas dataframe of minute-by-minute sensor data.
-    daily_df : pd.DataFrame
-        agregated daily dataframe that contains all daily information.
+        Pandas dataframe of minute-by-minute sensor data.
     hourly_df : pd.DataFrame
-        agregated hourly dataframe that contains all hourly information.
-    complete_hour_threshold : float
-        Default to 0.8. percent of minutes in an hour needed to count as a complete hour. Percent as a float (e.g. 80% = 0.8)
-    complete_day_threshold : float
-        Default to 1.0. percent of hours in a day needed to count as a complete day. Percent as a float (e.g. 80% = 0.8)
-    partial_day_removal_exclusion : list[str]
-        List of column names to ignore when searching through columns to remove sections without enough data
-    '''
+        Aggregated hourly dataframe.
+    daily_df : pd.DataFrame
+        Aggregated daily dataframe.
+    complete_hour_threshold : float, optional
+        Fraction of minutes in an hour required to count as a complete hour,
+        expressed as a float (e.g. 80% = 0.8). Defaults to 0.8.
+    complete_day_threshold : float, optional
+        Fraction of hours in a day required to count as a complete day,
+        expressed as a float (e.g. 80% = 0.8). Defaults to 1.0.
+    partial_day_removal_exclusion : list, optional
+        Column names to skip when evaluating completeness. Defaults to ``[]``.
+
+    Returns
+    -------
+    hourly_df : pd.DataFrame
+        Hourly dataframe with incomplete hours removed and sparse columns
+        nullified.
+    daily_df : pd.DataFrame
+        Daily dataframe with incomplete days removed and sparse columns
+        nullified.
+
+    Raises
+    ------
+    Exception
+        If ``complete_hour_threshold`` or ``complete_day_threshold`` is not
+        between 0 and 1.
+    """
     if complete_hour_threshold < 0.0 or complete_hour_threshold > 1.0:
         raise Exception("complete_hour_threshold must be a float between 0 and 1 to represent a percent (e.g. 80% = 0.8)")
     if complete_day_threshold < 0.0 or complete_day_threshold > 1.0:
@@ -1250,19 +1413,24 @@ def remove_partial_days(df, hourly_df, daily_df, complete_hour_threshold : float
 
 def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame, oat_column_name : str = 'OAT_NOAA') -> pd.DataFrame:
     """
-    Function left-joins the weather data to the hourly dataframe.
+    Left-join weather data onto the hourly dataframe.
 
     Parameters
-    ---------- 
+    ----------
     hourly_data : pd.DataFrame
-        Hourly dataframe
+        Hourly sensor dataframe.
     noaa_data : pd.DataFrame
-        noaa dataframe
-    
+        Weather (e.g. NOAA) dataframe to join.
+    oat_column_name : str, optional
+        Name of the outdoor air temperature column in ``noaa_data``. Defaults
+        to ``'OAT_NOAA'``.
+
     Returns
     -------
-    pd.DataFrame:
-        A single, joined dataframe
+    pd.DataFrame
+        Hourly dataframe left-joined with the weather dataframe. Returns
+        ``hourly_data`` unchanged if the OAT column in ``noaa_data`` contains
+        no non-null values.
     """
     #fixing pipelines for new years
     if oat_column_name in noaa_data.columns and not noaa_data[oat_column_name].notnull().any():
@@ -1273,46 +1441,55 @@ def join_to_hourly(hourly_data: pd.DataFrame, noaa_data: pd.DataFrame, oat_colum
 
 def join_to_daily(daily_data: pd.DataFrame, cop_data: pd.DataFrame) -> pd.DataFrame:
     """
-    Function left-joins the the daily data and COP data.
+    Left-join COP data onto the daily dataframe.
 
     Parameters
-    ---------- 
+    ----------
     daily_data : pd.DataFrame
-        Daily dataframe
+        Daily sensor dataframe.
     cop_data : pd.DataFrame
-        cop_values dataframe
-    
+        COP values dataframe to join.
+
     Returns
     -------
     pd.DataFrame
-        A single, joined dataframe
+        Daily dataframe left-joined with the COP dataframe.
     """
     out_df = daily_data.join(cop_data)
     return out_df
 
 def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int = 16) -> pd.DataFrame:
     """
-    Function derates equipment method system COP based on R value
-    R12 - R16 : 12 %
-    R16 - R20 : 10%
-    R20 - R24 : 8%
-    R24 - R28 : 6%
-    R28 - R32 : 4%
-    > R32 : 2%
+    Derate equipment-method system COP based on building R-value.
+
+    Derate percentages applied:
+
+    - R12–R16: 12%
+    - R16–R20: 10%
+    - R20–R24: 8%
+    - R24–R28: 6%
+    - R28–R32: 4%
+    - > R32: 2%
 
     Parameters
-    ---------- 
+    ----------
     df : pd.DataFrame
-        dataframe
+        Dataframe containing the equipment COP column to derate.
     equip_cop_col : str
-        name of COP column to derate
-    r_val : int
-        R value, defaults to 16
+        Name of the COP column to derate.
+    r_val : int, optional
+        Building R-value used to determine the derate factor. Defaults to 16.
 
     Returns
     -------
     pd.DataFrame
-        df with equip_cop_col derated
+        Dataframe with ``equip_cop_col`` multiplied by the appropriate derate
+        factor.
+
+    Raises
+    ------
+    Exception
+        If ``r_val`` is less than 12.
     """
     derate = 1 # R12-R16
     if r_val >= 12:
@@ -1336,22 +1513,30 @@ def apply_equipment_cop_derate(df: pd.DataFrame, equip_cop_col: str, r_val : int
 
 def create_data_statistics_df(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Function must be called on the raw minute data df after the rename_varriables() and before the ffill_missing() function has been called.
-    The function returns a dataframe indexed by day. Each column will expanded to 3 columns, appended with '_missing_mins', '_avg_gap', and
-    '_max_gap' respectively. the columns will carry the following statisctics:
-    _missing_mins -> the number of minutes in the day that have no reported data value for the column
-    _avg_gap -> the average gap (in minutes) between collected data values that day
-    _max_gap -> the maximum gap (in minutes) between collected data values that day
+    Compute per-column data-gap statistics aggregated by day.
+
+    Must be called on the raw minute-level dataframe after ``rename_sensors()``
+    and before ``ffill_missing()``. Each original column is expanded into three
+    derived columns:
+
+    - ``<col>_missing_mins``: number of minutes in the day with no reported
+      value.
+    - ``<col>_avg_gap``: average consecutive gap length (in minutes) for that
+      day.
+    - ``<col>_max_gap``: maximum consecutive gap length (in minutes) for that
+      day.
 
     Parameters
-    ---------- 
+    ----------
     df : pd.DataFrame
-        minute data df after the rename_varriables() and before the ffill_missing() function has been called
+        Minute-level dataframe after ``rename_sensors()`` and before
+        ``ffill_missing()`` has been called.
 
     Returns
     -------
-    daily_data_stats : pd.DataFrame
-        new dataframe with the columns descriped in the function's description
+    pd.DataFrame
+        Day-indexed dataframe containing the three gap-statistic columns for
+        each original column.
     """
     min_time = df.index.min()
     start_day = min_time.floor('D')

@@ -6,11 +6,36 @@ from ecopipeline.load.Loader import Loader
 
 
 class AlarmLoader(Loader):
+    """
+    Loader subclass for writing alarm data to the ``alarm`` and ``alarm_inst``
+    MySQL tables.
+
+    Overrides :class:`Loader` table-existence checks and table-creation logic
+    so that the paired ``alarm`` / ``alarm_inst`` tables are always created and
+    validated together.
+    """
 
     def check_table_exists(self, cursor: mysql.connector.cursor.MySQLCursor, table_name: str, dbname: str) -> bool:
         """
-        Returns True only if both the alarm table and its companion alarm_inst table exist.
-        If either is missing the tables should be (re)created together.
+        Return ``True`` only when both the alarm table and its ``_inst`` companion exist.
+
+        Both tables must be present before loading can proceed; if either is
+        missing they should both be (re)created together.
+
+        Parameters
+        ----------
+        cursor : mysql.connector.cursor.MySQLCursor
+            An active database cursor.
+        table_name : str
+            Base name of the alarm table (e.g. ``'alarm'``).
+        dbname : str
+            Name of the database to search within.
+
+        Returns
+        -------
+        bool
+            ``True`` if both ``table_name`` and ``{table_name}_inst`` exist;
+            ``False`` otherwise.
         """
         alarm_exists = super().check_table_exists(cursor, table_name, dbname)
         alarm_inst_exists = super().check_table_exists(cursor, f"{table_name}_inst", dbname)
@@ -20,8 +45,35 @@ class AlarmLoader(Loader):
                          table_column_names: list = None, table_column_types: list = None,
                          primary_key: str = "time_pt", has_primary_key: bool = True) -> bool:
         """
-        Creates both the alarm table and the alarm_inst table using IF NOT EXISTS so it is safe
-        to call even when only one of the two is missing.
+        Create both the alarm table and its ``_inst`` companion table.
+
+        Uses ``CREATE TABLE IF NOT EXISTS`` so the method is safe to call even
+        when only one of the two tables is missing.
+
+        Parameters
+        ----------
+        cursor : mysql.connector.cursor.MySQLCursor
+            An active database cursor.
+        table_name : str
+            Base name for the alarm table. The instance table is derived as
+            ``{table_name}_inst``.
+        table_column_names : list, optional
+            Ignored; the alarm schema is fixed. Retained for interface
+            compatibility with the parent class.
+        table_column_types : list, optional
+            Ignored; the alarm schema is fixed. Retained for interface
+            compatibility with the parent class.
+        primary_key : str, optional
+            Ignored; the alarm schema uses a fixed auto-increment ``id``.
+            Retained for interface compatibility with the parent class.
+        has_primary_key : bool, optional
+            Ignored; the alarm schema always defines a primary key. Retained
+            for interface compatibility with the parent class.
+
+        Returns
+        -------
+        bool
+            Always returns ``True`` after executing the DDL statements.
         """
         alarm_inst_table = f"{table_name}_inst"
 
@@ -59,30 +111,63 @@ class AlarmLoader(Loader):
                       auto_log_data_loss: bool = False, primary_key: str = "time_pt",
                       site_name: str = None) -> bool:
         """
-        Loads alarm data into the alarm and alarm_inst tables.
+        Load alarm data into the alarm and alarm_inst tables.
 
-        For each alarm instance in the DataFrame:
-        - Checks if a matching alarm record exists (same site_name, alarm_type, variable_name)
-        - If no matching alarm exists, creates a new record in the alarm table
-        - Inserts the alarm instance (with start/end times and certainty) into alarm_inst
+        For each alarm instance in the DataFrame the method:
 
-        Certainty-based overlap handling:
-        - Higher certainty new alarm: existing instance is split around it
-        - Lower certainty new alarm: only non-overlapping portions are inserted
-        - Same certainty: existing instance is extended to encompass both time periods
+        1. Checks whether a matching alarm record (same ``site_name``,
+           ``alarm_type``, ``variable_name``) already exists within a
+           three-day gap tolerance.
+        2. Creates a new alarm record if none is found, or extends the
+           date range of the nearest existing record.
+        3. Inserts alarm instances into ``{table_name}_inst`` using
+           certainty-based overlap resolution:
+
+           - **Higher certainty** new alarm: the existing instance is split
+             around the new one so each segment retains the highest available
+             certainty.
+           - **Lower certainty** new alarm: only the non-overlapping portions
+             of the new alarm are inserted.
+           - **Same certainty**: the existing instance is extended to
+             encompass both time periods.
 
         Parameters
         ----------
         config : ConfigManager
+            The ConfigManager object that holds configuration data for the
+            pipeline.
         alarm_df : pd.DataFrame
-            Must have columns: start_time_pt, end_time_pt, alarm_type, variable_name.
-            Optional column: certainty (defaults to 3 if absent). Values: 3=high, 2=med, 1=low.
+            DataFrame of alarms to load. Required columns: ``start_time_pt``,
+            ``end_time_pt``, ``alarm_type``, ``variable_name``. Optional
+            column: ``certainty`` (defaults to ``3`` if absent).
+            Certainty scale: ``3`` = high, ``2`` = medium, ``1`` = low.
         table_name : str
-            Name of the alarm table (companion alarm_inst table is derived as "{table_name}_inst").
+            Base name of the alarm table. The companion instance table is
+            derived as ``{table_name}_inst``.
         dbname : str
-            Name of the database.
+            Name of the MySQL database.
+        auto_log_data_loss : bool, optional
+            Unused in this subclass; retained for interface compatibility.
+            Defaults to ``False``.
+        primary_key : str, optional
+            Unused in this subclass; retained for interface compatibility.
+            Defaults to ``'time_pt'``.
         site_name : str, optional
-            Site name to associate alarms with. Defaults to config.get_site_name().
+            Site name to associate alarms with. Defaults to
+            ``config.get_site_name()``.
+
+        Returns
+        -------
+        bool
+            ``True`` if all alarms were loaded successfully; ``False`` if an
+            exception occurred (transaction is rolled back).
+
+        Raises
+        ------
+        Exception
+            If ``alarm_df`` is missing any of the required columns.
+        Exception
+            If an alarm ID cannot be retrieved after insertion.
         """
         if alarm_df.empty:
             print("No alarms to load. DataFrame is empty.")

@@ -8,33 +8,56 @@ from datetime import datetime, timedelta
 import os
 
 class FileProcessor:
+    """Base class for reading raw data files into a pandas DataFrame.
+
+    On instantiation the processor collects matching files from the configured
+    data directory, optionally filters them by date range, and concatenates them
+    into a single DataFrame accessible via :meth:`get_raw_data`.
+
+    Parameters
+    ----------
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the pipeline.
+    extension : str
+        File extension of raw data files (e.g. ``".csv"``, ``".gz"``).
+    start_time : datetime, optional
+        Earliest timestamp (inclusive) used to filter files by the date encoded
+        in their filename.  Uses local time matching the data index.
+    end_time : datetime, optional
+        Latest timestamp (exclusive) used to filter files by the date encoded in
+        their filename.  Uses local time matching the data index.
+    raw_time_column : str, optional
+        Name of the column in the raw file that contains timestamp strings.
+        Defaults to ``'DateTime'``.
+    time_column_format : str, optional
+        :func:`datetime.strptime` format string used to parse ``raw_time_column``.
+        Defaults to ``'%Y/%m/%d %H:%M:%S'``.
+    filename_date_format : str, optional
+        :func:`datetime.strftime` format string used to convert ``start_time``
+        and ``end_time`` to integers for filename comparison.
+        Defaults to ``'%Y%m%d%H%M%S'``.
+    file_prefix : str, optional
+        Only files whose names begin with this prefix are processed.
+        Defaults to an empty string (all files).
+    data_sub_dir : str, optional
+        Sub-directory appended to the configured data directory when locating
+        files.  For example, if files live in ``'path/to/data/DENT/'`` and the
+        configured data directory is ``'path/to/data/'``, pass ``'DENT/'``.
+        Defaults to an empty string.
+    date_string_start_idx : int, optional
+        Start index (from the end) of the date substring within each filename.
+        Defaults to ``-17``.
+    date_string_end_idx : int, optional
+        End index (from the end) of the date substring within each filename.
+        Defaults to ``-3``.
+    round_time_index : bool, optional
+        If ``True``, floor the datetime index to the minute and average any
+        duplicate timestamps after concatenation.  Defaults to ``False``.
+    """
+
     def __init__(self, config : ConfigManager, extension: str, start_time: datetime = None, end_time: datetime = None, raw_time_column : str = 'DateTime',
                  time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S", file_prefix : str = "", data_sub_dir : str = "",
                  date_string_start_idx : int = -17, date_string_end_idx : int = -3, round_time_index : bool = False):
-        """
-        Parameters
-        ----------  
-        config : ecopipeline.ConfigManager
-            The ConfigManager object that holds configuration data for the pipeline 
-        extension : str
-            File extension of raw data files as string (e.g. ".csv", ".gz", ...)
-        start_time: datetime
-            The point in time for which we want to start the data extraction from. This 
-            is local time from the data's index.
-        end_time: datetime
-            The point in time for which we want to end the data extraction. This 
-            is local time from the data's index.
-        data_sub_dir : str
-            defaults to an empty string. If the files being accessed are in a sub directory of the configured data directory, use this parameter to point there.
-            e.g. if the data files you want to extract are in "path/to/data/DENT/" and your configured data directory is "path/to/data/", put "DENT/" as the data_sub_dir
-        file_prefix : str
-            File name prefix of raw data file if only file names with a certain prefix should be processed.
-        
-        Returns
-        ------- 
-        list[str]: 
-            list of filenames 
-        """
         self.extension = extension
         self.start_time = start_time
         self.end_time = end_time
@@ -55,16 +78,34 @@ class FileProcessor:
             raise e
         
     def get_raw_data(self) -> pd.DataFrame:
+        """Return the concatenated raw DataFrame produced during initialisation.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing all raw data read from the matching files.
+            Returns an empty DataFrame when no files were found or all reads
+            failed.
+        """
         return self.raw_df
 
     def extract_files(self, config: ConfigManager) -> list[str]:
-        """
-        Function returns a list of all file names in the processors assigned directory with file names that fall between the start and end date (if such dates exist)
-        
+        """Collect the full paths of files that match the processor's criteria.
+
+        Scans the configured data directory (plus any ``data_sub_dir``) for
+        files whose names end with the configured extension and begin with the
+        configured prefix.  When ``start_time`` is set the list is further
+        filtered by :meth:`extract_new`.
+
+        Parameters
+        ----------
+        config : ConfigManager
+            The ConfigManager object that provides the base data directory path.
+
         Returns
-        ------- 
-        list[str]: 
-            list of filenames 
+        -------
+        list of str
+            Absolute file paths for all files that satisfy the criteria.
         """
         os.chdir(os.getcwd())
         filenames = []
@@ -80,7 +121,25 @@ class FileProcessor:
         return filenames
     
     def extract_new(self, filenames: list[str]) -> list[str]:
-        
+        """Filter a list of filenames to those whose encoded date falls in range.
+
+        The date is extracted from each filename using ``date_string_start_idx``
+        and ``date_string_end_idx``, then compared as an integer against the
+        integer representations of ``start_time`` and ``end_time`` (formatted
+        with ``filename_date_format``).
+
+        Parameters
+        ----------
+        filenames : list of str
+            Candidate file paths to filter.
+
+        Returns
+        -------
+        list of str
+            Only the file paths whose encoded date satisfies
+            ``start_time <= date < end_time`` (``end_time`` bound is omitted
+            when ``end_time`` is ``None``).
+        """
         endTime_int = self.end_time
         startTime_int = int(self.start_time.strftime(self.filename_date_format))
         if not self.end_time is None:
@@ -90,10 +149,44 @@ class FileProcessor:
         return return_list
     
     def _read_file_into_df(self, file_name : str) -> pd.DataFrame:
+        """Read a single file into a DataFrame.
+
+        Subclasses override this method to apply format-specific parsing
+        (header skipping, timestamp construction, column renaming, etc.).
+
+        Parameters
+        ----------
+        file_name : str
+            Absolute path to the file to read.
+
+        Returns
+        -------
+        pd.DataFrame
+            Raw contents of the file as a DataFrame.  Returns an empty
+            DataFrame when the file contains no data.
+        """
         data = pd.read_csv(file_name)
         return data
 
     def raw_files_to_df(self, filenames : list[str]) -> pd.DataFrame:
+        """Concatenate multiple raw files into a single DataFrame.
+
+        Calls :meth:`_read_file_into_df` for each path in ``filenames``,
+        ignores files that are not found or raise read errors, and
+        concatenates the results.  When ``round_time_index`` is enabled the
+        index is floored to the minute and duplicate timestamps are averaged.
+
+        Parameters
+        ----------
+        filenames : list of str
+            Absolute file paths to read and concatenate.
+
+        Returns
+        -------
+        pd.DataFrame
+            Concatenated DataFrame for all successfully read files.  Returns
+            an empty DataFrame when no files could be read.
+        """
         temp_dfs = []
         for file in filenames:
             try:

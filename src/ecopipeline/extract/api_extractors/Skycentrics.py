@@ -10,9 +10,32 @@ from datetime import datetime, timedelta
 class Skycentrics(APIExtractor):
     """APIExtractor for the Skycentrics API.
 
-    Pulls data day-by-day between start_time and end_time, normalises the JSON
-    sensor records into a pivot table, and rounds 59:59 timestamps up to the
-    next minute.
+    Pulls data day-by-day between ``start_time`` and ``end_time``, normalises
+    the JSON sensor records into a pivot table, and rounds 59:59 timestamps up
+    to the next minute.
+
+    Parameters
+    ----------
+    config : ConfigManager
+        The ConfigManager object that holds configuration data for the
+        pipeline, including the Skycentrics API token
+        (``config.get_skycentrics_token``) and device ID
+        (``config.api_device_id``).
+    start_time : datetime, optional
+        The start of the data extraction window. Defaults to one day before
+        ``end_time`` if not provided.
+    end_time : datetime, optional
+        The end of the data extraction window. Defaults to
+        ``datetime.utcnow()`` if not provided.
+    create_csv : bool, optional
+        If ``True``, writes the raw DataFrame to a CSV file in the configured
+        data directory after a successful pull. Default is ``True``.
+    csv_prefix : str, optional
+        A string prefix prepended to the generated CSV filename. Default is
+        an empty string.
+    time_zone : str, optional
+        The timezone string used to localise timestamps after converting from
+        UTC. Default is ``'US/Pacific'``.
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None,
@@ -21,6 +44,36 @@ class Skycentrics(APIExtractor):
         super().__init__(config, start_time, end_time, create_csv, csv_prefix)
 
     def raw_data_to_df(self, config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
+        """Fetch sensor data from the Skycentrics API and return it as a DataFrame.
+
+        Iterates day-by-day from ``startTime`` to ``endTime``, issuing one
+        authenticated GET request per day.  Each gzip-compressed JSON response
+        is decompressed, normalised with :py:func:`pandas.json_normalize`, and
+        pivoted so that sensor IDs become columns.  Timestamps that fall at
+        second 59:59 of a minute are nudged forward by one second to align with
+        the top of the next minute.
+
+        Parameters
+        ----------
+        config : ConfigManager
+            The ConfigManager object used to retrieve the per-request
+            Skycentrics HMAC token via ``config.get_skycentrics_token`` and
+            the device ID via ``config.api_device_id``.
+        startTime : datetime, optional
+            Start of the query window (UTC). Defaults to one day before
+            ``endTime`` if not provided.
+        endTime : datetime, optional
+            End of the query window (UTC). Defaults to ``datetime.utcnow()``
+            if not provided.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame indexed by ``time_pt`` (timezone-aware timestamps
+            converted to ``self.time_zone``) with one column per sensor ID.
+            Returns an empty DataFrame if no data is retrieved for the
+            requested time frame.
+        """
         if endTime is None:
             endTime = datetime.utcnow()
         if startTime is None:

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 1.1.6 documentation</title>
+    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 2.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>  
@@ -49,24 +49,75 @@
 <span class="target" id="module-utils.ConfigManager"></span><dl class="py class">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">utils.ConfigManager.</span></span><span class="sig-name descname"><span class="pre">ConfigManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.ini'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eco_file_structure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager" title="Permalink to this definition">¶</a></dt>
-<dd><p>A helpful object to manage configuration</p>
+<dd><p>Manage configuration, directory paths, database credentials, and API tokens for a data pipeline.</p>
+<p>Reads a <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> file to populate connection and directory settings.
+Optionally remaps Windows-style drive letters to POSIX paths when running on
+Ecotope’s server infrastructure.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config_file_path</strong><span class="classifier">str, optional</span></dt><dd><p>Path to the <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> file for the pipeline
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/config.ini&quot;</span></code>). Must contain login information
+for the MySQL database where data is to be loaded. Defaults to
+<code class="docutils literal notranslate"><span class="pre">&quot;config.ini&quot;</span></code>.</p>
+</dd>
+<dt><strong>input_directory</strong><span class="classifier">str, optional</span></dt><dd><p>Path to the input directory for the pipeline
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/input/&quot;</span></code>). Defaults to the value
+defined in the <code class="docutils literal notranslate"><span class="pre">[input]</span></code> section of the config file.</p>
+</dd>
+<dt><strong>output_directory</strong><span class="classifier">str, optional</span></dt><dd><p>Path to the output directory for the pipeline
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/output/&quot;</span></code>). Defaults to the value
+defined in the <code class="docutils literal notranslate"><span class="pre">[output]</span></code> section of the config file.</p>
+</dd>
+<dt><strong>data_directory</strong><span class="classifier">str, optional</span></dt><dd><p>Path to the data directory for the pipeline
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/data/&quot;</span></code>). Defaults to the value
+defined in the <code class="docutils literal notranslate"><span class="pre">[data]</span></code> section of the config file.</p>
+</dd>
+<dt><strong>eco_file_structure</strong><span class="classifier">bool, optional</span></dt><dd><p>Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> when the pipeline runs on Ecotope’s server so that
+Windows drive-letter prefixes (<code class="docutils literal notranslate"><span class="pre">R:</span></code>, <code class="docutils literal notranslate"><span class="pre">F:</span></code>) are remapped to the
+correct POSIX mount points. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">config_file_path</span></code> does not exist on the filesystem.</p>
+</dd>
+<dt>Exception</dt><dd><p>If the <code class="docutils literal notranslate"><span class="pre">[input]</span></code> section or its <code class="docutils literal notranslate"><span class="pre">directory</span></code> key is missing from
+the config file.</p>
+</dd>
+<dt>Exception</dt><dd><p>If the <code class="docutils literal notranslate"><span class="pre">[output]</span></code> section or its <code class="docutils literal notranslate"><span class="pre">directory</span></code> key is missing from
+the config file.</p>
+</dd>
+<dt>Exception</dt><dd><p>If the <code class="docutils literal notranslate"><span class="pre">[data]</span></code> section is missing or contains no recognised data
+source configuration.</p>
+</dd>
+<dt>Exception</dt><dd><p>If any of the resolved directory paths do not exist on the filesystem.</p>
+</dd>
+</dl>
+</dd>
 <dt class="field-odd">Attributes<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config_file_path</strong><span class="classifier">str</span></dt><dd><p>The path to the config.ini file for the pipeline (e.g. “full/path/to/config.ini”). Defaults to “config.ini”
-This file should contain login information for MySQL database where data is to be loaded.</p>
+<dt><strong>config_directory</strong><span class="classifier">str</span></dt><dd><p>Resolved path to the <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> file.</p>
 </dd>
-<dt><strong>input_directory</strong><span class="classifier">str</span></dt><dd><p>The path to the input directory for the pipeline (e.g. “full/path/to/pipeline/input/”).
-Defaults to the input directory defined in the config.ini configuration file</p>
+<dt><strong>input_directory</strong><span class="classifier">str</span></dt><dd><p>Resolved path to the pipeline input directory.</p>
 </dd>
-<dt><strong>output_directory</strong><span class="classifier">str</span></dt><dd><p>The path to the output directory for the pipeline (e.g. “full/path/to/pipeline/output/”).
-Defaults to the output directory defined in the config.ini configuration file</p>
+<dt><strong>output_directory</strong><span class="classifier">str</span></dt><dd><p>Resolved path to the pipeline output directory.</p>
 </dd>
-<dt><strong>data_directory</strong><span class="classifier">str</span></dt><dd><p>The path to the data directory for the pipeline (e.g. “full/path/to/pipeline/data/”).
-Defaults to the data directory defined in the config.ini configuration file</p>
+<dt><strong>data_directory</strong><span class="classifier">str</span></dt><dd><p>Resolved path to the pipeline data directory.</p>
 </dd>
-<dt><strong>eco_file_structure</strong><span class="classifier">boolean</span></dt><dd><p>Set to True if this is a data pipeline running on Ecotope’s server for file path reconfiguration. Set False if not running at Ecotope.
-Defaults to False</p>
+<dt><strong>api_usr</strong><span class="classifier">str or None</span></dt><dd><p>API username read from the config file, if present.</p>
+</dd>
+<dt><strong>api_pw</strong><span class="classifier">str or None</span></dt><dd><p>API password read from the config file, if present.</p>
+</dd>
+<dt><strong>api_token</strong><span class="classifier">str or None</span></dt><dd><p>API token read from the config file, if present.</p>
+</dd>
+<dt><strong>api_secret</strong><span class="classifier">str or None</span></dt><dd><p>API secret read from the config file, if present.</p>
+</dd>
+<dt><strong>api_device_id</strong><span class="classifier">str or None</span></dt><dd><p>API device ID read from the config file, if present.</p>
+</dd>
+<dt><strong>db_connection_info</strong><span class="classifier">dict</span></dt><dd><p>Dictionary containing <code class="docutils literal notranslate"><span class="pre">user</span></code>, <code class="docutils literal notranslate"><span class="pre">password</span></code>, <code class="docutils literal notranslate"><span class="pre">host</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">database</span></code> keys used to open MySQL connections.</p>
 </dd>
 </dl>
 </dd>
@@ -75,67 +126,67 @@ Defaults to False</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db" title="utils.ConfigManager.ConfigManager.connect_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_db</span></code></a>()</p></td>
-<td><p>Create a connection with the mySQL server.</p></td>
+<td><p>Create a connection to the configured MySQL database.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db" title="utils.ConfigManager.ConfigManager.connect_siteConfig_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_siteConfig_db</span></code></a>()</p></td>
-<td><p>Create a connection with the mySQL server.</p></td>
+<td><p>Create a connection to the <code class="docutils literal notranslate"><span class="pre">SiteConfig</span></code> MySQL database.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_name" title="utils.ConfigManager.ConfigManager.get_db_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_name</span></code></a>()</p></td>
-<td><p>returns name of database that data will be uploaded to</p></td>
+<td><p>Return the name of the database that data will be uploaded to.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="utils.ConfigManager.ConfigManager.get_db_table_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_table_info</span></code></a>(table_headers)</p></td>
-<td><p>Reads the config.ini file stored in the config_file_path file path.</p></td>
+<td><p>Read table configuration from the config file and return a combined info dict.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="utils.ConfigManager.ConfigManager.get_event_log_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_event_log_path</span></code></a>()</p></td>
-<td><p>Returns path to the full path to the Event_Log.csv file.</p></td>
+<td><p>Return the full path to the <code class="docutils literal notranslate"><span class="pre">Event_Log.csv</span></code> file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_device_id" title="utils.ConfigManager.ConfigManager.get_fm_device_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fm_device_id</span></code></a>()</p></td>
+<td><p>Return the configured API device ID.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_token" title="utils.ConfigManager.ConfigManager.get_fm_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fm_token</span></code></a>()</p></td>
+<td><p>Retrieve a Field Manager API token using the configured credentials.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_df" title="utils.ConfigManager.ConfigManager.get_ls_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ls_df</span></code></a>([ls_file_name])</p></td>
+<td><p>Load the load-shift schedule CSV and return it as a DataFrame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_filename" title="utils.ConfigManager.ConfigManager.get_ls_filename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ls_filename</span></code></a>([ls_file_name])</p></td>
+<td><p>Return the full path to the load-shift CSV file if it exists.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>([config_key])</p></td>
-<td><p>returns name of site</p></td>
+<td><p>Return the site name derived from the configured minute-table name.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="utils.ConfigManager.ConfigManager.get_var_names_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_names_path</span></code></a>()</p></td>
-<td><p>Returns path to the full path to the Variable_Names.csv file.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_skycentrics_token" title="utils.ConfigManager.ConfigManager.get_skycentrics_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_skycentrics_token</span></code></a>([request_str, date_str])</p></td>
+<td><p>Generate a Skycentrics HMAC-SHA1 authentication token.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weather_dir_path</span></code></a>()</p></td>
-<td><p>Returns path to the directory that holds NOAA weather data files.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_table_name" title="utils.ConfigManager.ConfigManager.get_table_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_name</span></code></a>(header)</p></td>
+<td><p>Return the <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value for the given config file section.</p></td>
 </tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><strong>get_fm_device_id</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_thingsboard_token" title="utils.ConfigManager.ConfigManager.get_thingsboard_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_thingsboard_token</span></code></a>()</p></td>
+<td><p>Retrieve a ThingsBoard API JWT token using the configured credentials.</p></td>
 </tr>
-<tr class="row-even"><td><p><strong>get_fm_token</strong></p></td>
-<td></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="utils.ConfigManager.ConfigManager.get_var_names_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_names_path</span></code></a>()</p></td>
+<td><p>Return the full path to the <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_ls_df</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><strong>get_skycentrics_token</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><strong>get_table_name</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><strong>get_thingsboard_token</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weather_dir_path</span></code></a>()</p></td>
+<td><p>Return the path to the directory that holds NOAA weather data files.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.connect_db">
-<span class="sig-name descname"><span class="pre">connect_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a connection with the mySQL server.</p>
+<span class="sig-name descname"><span class="pre">connect_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">[&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;]</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a connection to the configured MySQL database.</p>
+<p>Uses the host, user, password, and database name stored in
+<code class="docutils literal notranslate"><span class="pre">db_connection_info</span></code>. Prints a message and returns <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None)</span></code>
+if the connection attempt fails.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>None</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor:</dt><dd><p>A connection and cursor object. THe cursor can be used to execute
-mySQL queries and the connection object can be used to save those changes.</p>
+<dt>tuple</dt><dd><p>A 2-tuple of <code class="docutils literal notranslate"><span class="pre">(mysql.connector.MySQLConnection,</span>
+<span class="pre">mysql.connector.cursor.MySQLCursor)</span></code>. The cursor can be used to
+execute MySQL queries and the connection object can be used to
+commit those changes. Both elements are <code class="docutils literal notranslate"><span class="pre">None</span></code> if the connection
+could not be established.</p>
 </dd>
 </dl>
 </dd>
@@ -145,17 +196,19 @@ mySQL queries and the connection object can be used to save those changes.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.connect_siteConfig_db">
 <span class="sig-name descname"><span class="pre">connect_siteConfig_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a connection with the mySQL server.</p>
+<dd><p>Create a connection to the <code class="docutils literal notranslate"><span class="pre">SiteConfig</span></code> MySQL database.</p>
+<p>Uses the same host, user, and password stored in <code class="docutils literal notranslate"><span class="pre">db_connection_info</span></code>
+but always connects to the <code class="docutils literal notranslate"><span class="pre">SiteConfig</span></code> database regardless of the
+database name in the config file. Prints a message and returns
+<code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None)</span></code> if the connection attempt fails.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>None</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor:</dt><dd><p>A connection and cursor object. THe cursor can be used to execute
-mySQL queries and the connection object can be used to save those changes.</p>
+<dt>tuple</dt><dd><p>A 2-tuple of <code class="docutils literal notranslate"><span class="pre">(mysql.connector.MySQLConnection,</span>
+<span class="pre">mysql.connector.cursor.MySQLCursor)</span></code>. The cursor can be used to
+execute MySQL queries and the connection object can be used to
+commit those changes. Both elements are <code class="docutils literal notranslate"><span class="pre">None</span></code> if the connection
+could not be established.</p>
 </dd>
 </dl>
 </dd>
@@ -164,31 +217,40 @@ mySQL queries and the connection object can be used to save those changes.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_db_name">
-<span class="sig-name descname"><span class="pre">get_db_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_db_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns name of database that data will be uploaded to</p>
+<span class="sig-name descname"><span class="pre">get_db_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_db_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the name of the database that data will be uploaded to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str</dt><dd><p>The database name from the stored connection info.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_db_table_info">
 <span class="sig-name descname"><span class="pre">get_db_table_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads the config.ini file stored in the config_file_path file path.</p>
+<dd><p>Read table configuration from the config file and return a combined info dict.</p>
+<p>For each header in <code class="docutils literal notranslate"><span class="pre">table_headers</span></code>, the corresponding <code class="docutils literal notranslate"><span class="pre">table_name</span></code>
+value is read from the matching section of <code class="docutils literal notranslate"><span class="pre">config.ini</span></code>. The name of
+the configured database is also included in the result under the key
+<code class="docutils literal notranslate"><span class="pre">&quot;database&quot;</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>table_headers</strong><span class="classifier">list</span></dt><dd><p>A list of table headers. These headers must correspond to the
-section headers in the config.ini file. Your list must contain the section
-header for each table you wish to write into. The first header must correspond
-to the login information of the database. The other are the tables which you wish
-to write to.</p>
+<dt><strong>table_headers</strong><span class="classifier">list</span></dt><dd><p>Section headers from <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> whose <code class="docutils literal notranslate"><span class="pre">table_name</span></code> values
+should be retrieved. Each entry must exactly match a section name
+in the config file.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>dict:</dt><dd><p>A dictionary containing all relevant information is returned. This
-includes information used to create a connection with a mySQL server and
-information (table names and column names) used to load the data into
-tables.</p>
+<dt>dict</dt><dd><p>A dictionary mapping each header to a nested dict with a
+<code class="docutils literal notranslate"><span class="pre">&quot;table_name&quot;</span></code> key, plus a top-level <code class="docutils literal notranslate"><span class="pre">&quot;database&quot;</span></code> key
+containing the database name from the stored connection info.</p>
 </dd>
 </dl>
 </dd>
@@ -198,18 +260,213 @@ tables.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_event_log_path">
 <span class="sig-name descname"><span class="pre">get_event_log_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns path to the full path to the Event_Log.csv file.
-This file should be in the pipeline’s input directory “/” (i.e. “full/path/to/pipeline/input/Event_Log.csv”)</p>
+<dd><p>Return the full path to the <code class="docutils literal notranslate"><span class="pre">Event_Log.csv</span></code> file.</p>
+<p>The file is expected to reside directly inside the pipeline’s input
+directory (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/input/Event_Log.csv&quot;</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str</dt><dd><p>Absolute path to <code class="docutils literal notranslate"><span class="pre">Event_Log.csv</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_fm_device_id">
+<span class="sig-name descname"><span class="pre">get_fm_device_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_fm_device_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the configured API device ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str</dt><dd><p>The device ID string from the configuration file.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">device_id</span></code> (or <code class="docutils literal notranslate"><span class="pre">fieldManager_device_id</span></code>) was not provided
+in the configuration file.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_fm_token">
+<span class="sig-name descname"><span class="pre">get_fm_token</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_fm_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a Field Manager API token using the configured credentials.</p>
+<p>Sends a GET request to the FieldPop login endpoint with the stored
+<code class="docutils literal notranslate"><span class="pre">api_usr</span></code> and <code class="docutils literal notranslate"><span class="pre">api_pw</span></code> credentials. Prints a message and returns
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if the HTTP request fails or an exception is raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str or None</dt><dd><p>The Field Manager API token string on success, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the
+token could not be retrieved.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">api_usr</span></code> or <code class="docutils literal notranslate"><span class="pre">api_pw</span></code> were not provided in the configuration
+file.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_ls_df">
+<span class="sig-name descname"><span class="pre">get_ls_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls_file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'load_shift.csv'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_ls_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the load-shift schedule CSV and return it as a DataFrame.</p>
+<p>Reads the CSV file from the input directory, parses the <code class="docutils literal notranslate"><span class="pre">date</span></code> and
+<code class="docutils literal notranslate"><span class="pre">startTime</span></code> columns into a <code class="docutils literal notranslate"><span class="pre">startDateTime</span></code> column, and the <code class="docutils literal notranslate"><span class="pre">date</span></code>
+and <code class="docutils literal notranslate"><span class="pre">endTime</span></code> columns into an <code class="docutils literal notranslate"><span class="pre">endDateTime</span></code> column. If the file
+does not exist, a warning is printed and an empty DataFrame is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>ls_file_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the load-shift CSV file located in the pipeline’s input
+directory. Defaults to <code class="docutils literal notranslate"><span class="pre">'load_shift.csv'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>DataFrame containing the load-shift schedule with additional
+<code class="docutils literal notranslate"><span class="pre">startDateTime</span></code> and <code class="docutils literal notranslate"><span class="pre">endDateTime</span></code> columns, or an empty
+DataFrame if the file does not exist.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_ls_filename">
+<span class="sig-name descname"><span class="pre">get_ls_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls_file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'load_shift.csv'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_ls_filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the full path to the load-shift CSV file if it exists.</p>
+<p>Constructs the full path by joining the input directory with
+<code class="docutils literal notranslate"><span class="pre">ls_file_name</span></code>. Returns an empty string if the file does not exist
+or if <code class="docutils literal notranslate"><span class="pre">ls_file_name</span></code> is an empty string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>ls_file_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the load-shift CSV file located in the pipeline’s input
+directory. Defaults to <code class="docutils literal notranslate"><span class="pre">'load_shift.csv'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>Full path to the load-shift CSV file, or an empty string if the
+file does not exist.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_site_name">
-<span class="sig-name descname"><span class="pre">get_site_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minute'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_site_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns name of site</p>
+<span class="sig-name descname"><span class="pre">get_site_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'minute'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_site_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the site name derived from the configured minute-table name.</p>
+<p>The site name is read as the <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value from the section
+identified by <code class="docutils literal notranslate"><span class="pre">config_key</span></code> in <code class="docutils literal notranslate"><span class="pre">config.ini</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>config_key</strong><span class="classifier">str</span></dt><dd><p>The key in the config.ini file that points to the minute table data for the site. The name of this table is also the site name.</p>
+<dt><strong>config_key</strong><span class="classifier">str, optional</span></dt><dd><p>Section header in <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> that points to the minute-level
+table for the site. The <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value of this section is
+used as the site name. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;minute&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>The site name (i.e. the <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value for the given section).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_skycentrics_token">
+<span class="sig-name descname"><span class="pre">get_skycentrics_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request_str</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GET</span> <span class="pre">/api/devices/</span> <span class="pre">HTTP/1.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_str</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_skycentrics_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a Skycentrics HMAC-SHA1 authentication token.</p>
+<p>Constructs a signed token by combining the configured <code class="docutils literal notranslate"><span class="pre">api_token</span></code>
+and a base64-encoded HMAC-SHA1 signature derived from <code class="docutils literal notranslate"><span class="pre">api_secret</span></code>,
+the request string, the date string, and an MD5 hash of an empty body.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>request_str</strong><span class="classifier">str, optional</span></dt><dd><p>The HTTP request line used as part of the signature input
+(e.g. <code class="docutils literal notranslate"><span class="pre">'GET</span> <span class="pre">/api/devices/</span> <span class="pre">HTTP/1.'</span></code>). Defaults to
+<code class="docutils literal notranslate"><span class="pre">'GET</span> <span class="pre">/api/devices/</span> <span class="pre">HTTP/1.'</span></code>.</p>
+</dd>
+<dt><strong>date_str</strong><span class="classifier">str, optional</span></dt><dd><p>The date string to include in the signature, formatted as
+<code class="docutils literal notranslate"><span class="pre">'%a,</span> <span class="pre">%d</span> <span class="pre">%b</span> <span class="pre">%H:%M:%S</span> <span class="pre">GMT'</span></code>. Defaults to the current UTC time
+formatted in that style.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>tuple</dt><dd><p>A 2-tuple of <code class="docutils literal notranslate"><span class="pre">(token,</span> <span class="pre">date_str)</span></code> where <code class="docutils literal notranslate"><span class="pre">token</span></code> is the
+<code class="docutils literal notranslate"><span class="pre">&quot;&lt;api_token&gt;:&lt;signature&gt;&quot;</span></code> string and <code class="docutils literal notranslate"><span class="pre">date_str</span></code> is the date
+string that was used (either the supplied value or the generated
+one).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_table_name">
+<span class="sig-name descname"><span class="pre">get_table_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_table_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value for the given config file section.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>header</strong><span class="classifier">str</span></dt><dd><p>Section header in <code class="docutils literal notranslate"><span class="pre">config.ini</span></code> whose <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value should
+be retrieved.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value found under the specified section.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_thingsboard_token">
+<span class="sig-name descname"><span class="pre">get_thingsboard_token</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_thingsboard_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a ThingsBoard API JWT token using the configured credentials.</p>
+<p>Sends a POST request to the ThingsBoard Cloud login endpoint with the
+stored <code class="docutils literal notranslate"><span class="pre">api_usr</span></code> and <code class="docutils literal notranslate"><span class="pre">api_pw</span></code> credentials. Prints a message and
+returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if the HTTP request fails or an exception is raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str or None</dt><dd><p>The ThingsBoard JWT token string on success, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the
+token could not be retrieved.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Exception</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">api_usr</span></code> or <code class="docutils literal notranslate"><span class="pre">api_pw</span></code> were not provided in the configuration
+file.</p>
 </dd>
 </dl>
 </dd>
@@ -219,15 +476,33 @@ This file should be in the pipeline’s input directory “/” (i.e. “full/pa
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_var_names_path">
 <span class="sig-name descname"><span class="pre">get_var_names_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_var_names_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns path to the full path to the Variable_Names.csv file.
-This file should be in the pipeline’s input directory “/” (i.e. “full/path/to/pipeline/input/Variable_Names.csv”)</p>
+<dd><p>Return the full path to the <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code> file.</p>
+<p>The file is expected to reside directly inside the pipeline’s input
+directory (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/input/Variable_Names.csv&quot;</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str</dt><dd><p>Absolute path to <code class="docutils literal notranslate"><span class="pre">Variable_Names.csv</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_weather_dir_path">
 <span class="sig-name descname"><span class="pre">get_weather_dir_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns path to the directory that holds NOAA weather data files.
-This diectory should be in the pipeline’s data directory “/” (i.e. “full/path/to/pipeline/data/weather”)</p>
+<dd><p>Return the path to the directory that holds NOAA weather data files.</p>
+<p>The directory is expected to reside directly inside the pipeline’s data
+directory (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;full/path/to/pipeline/data/weather&quot;</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str</dt><dd><p>Path to the <code class="docutils literal notranslate"><span class="pre">weather</span></code> subdirectory within the data directory.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -251,7 +526,14 @@ This diectory should be in the pipeline’s data directory “/” (i.e. “full
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_name()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_table_info()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_event_log_path()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_device_id"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_fm_device_id()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_token"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_fm_token()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_df"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_ls_df()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_filename"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_ls_filename()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_site_name()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_skycentrics_token"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_skycentrics_token()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_table_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_table_name()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_thingsboard_token"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_thingsboard_token()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_var_names_path()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_weather_dir_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_weather_dir_path()</span></code></a></li>
 </ul>
@@ -307,7 +589,7 @@ This diectory should be in the pipeline’s data directory “/” (i.e. “full
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 1.1.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>

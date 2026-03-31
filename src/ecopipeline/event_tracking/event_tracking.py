@@ -20,10 +20,62 @@ from .alarms.AbnormalCOP import AbnormalCOP
 from .alarms.PowerRatio import PowerRatio
 from .alarms.Boundary import Boundary
 
-def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "", 
+def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "",
                              default_cop_high_bound : float = 4.5, default_cop_low_bound : float = 0,
                              default_boundary_fault_time : int = 15, site_name : str = None, day_table_name_header : str = "day",
                              power_ratio_period_days : int = 7) -> pd.DataFrame:
+    """
+    Run all available alarm detectors and return a combined alarm event DataFrame.
+
+    Iterates over every alarm type (boundary, power ratio, abnormal COP, TM
+    setpoint, balancing valve, HPWH inlet/outlet, backup use, HPWH outage,
+    blown fuse, unexpected SOO change, short cycle, unexpected temperature, and
+    demand-response inconsistency) and concatenates any detected events into a
+    single result.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_data : pd.DataFrame
+        Post-transformed daily-level data DataFrame with a datetime index.
+    config : ConfigManager
+        Pipeline configuration object.  Used to locate ``Variable_Names.csv``
+        and to resolve database table names.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_cop_high_bound : float, optional
+        Upper COP threshold for the abnormal-COP alarm (default 4.5).
+    default_cop_low_bound : float, optional
+        Lower COP threshold for the abnormal-COP alarm (default 0).
+    default_boundary_fault_time : int, optional
+        Consecutive minutes a sensor must be out of bounds before a boundary
+        alarm triggers (default 15).
+    site_name : str, optional
+        Site identifier used for context in certain alarm checks.  Defaults to
+        ``None``.
+    day_table_name_header : str, optional
+        Key passed to ``config.get_table_name()`` to resolve the daily database
+        table name (default ``"day"``).
+    power_ratio_period_days : int, optional
+        Rolling window in days used by the power-ratio alarm (default 7).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame of alarm events with columns ``end_time_pt``, ``alarm_type``,
+        ``alarm_detail``, and ``variable_name``, indexed by ``start_time_pt``.
+        Returns an empty DataFrame if ``df`` is empty or ``Variable_Names.csv``
+        cannot be found.
+
+    Raises
+    ------
+    Exception
+        If ``system`` is non-empty but the ``system`` column is absent from
+        ``Variable_Names.csv``.
+    """
     print("++++++++++++ ALARM ++++++++++++")
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -72,6 +124,32 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     return alarm_df
 
 def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: str = "", default_high_bound : float = 4.5, default_low_bound : float = 0) -> pd.DataFrame:
+    """
+    Detect days with an abnormal coefficient of performance (COP) value.
+
+    Reads alarm configuration from ``Variable_Names.csv`` via ``config`` and
+    delegates detection to :class:`AbnormalCOP`.
+
+    Parameters
+    ----------
+    daily_data : pd.DataFrame
+        Post-transformed daily-level data DataFrame with a datetime index.
+    config : ConfigManager
+        Pipeline configuration object used to locate ``Variable_Names.csv``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_high_bound : float, optional
+        Upper COP threshold above which an alarm is triggered (default 4.5).
+    default_low_bound : float, optional
+        Lower COP threshold below which an alarm is triggered (default 0).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if
+        ``Variable_Names.csv`` cannot be found.
+    """
     variable_names_path = config.get_var_names_path()
     try:
         bounds_df = pd.read_csv(variable_names_path)
@@ -84,32 +162,37 @@ def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: 
 
 def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 15, system: str = "", full_days : list = None) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Flag out-of-bounds sensor readings and return alarm events.
+
+    Reads acceptable sensor ranges from ``Variable_Names.csv`` via ``config``
+    and triggers an alarm whenever a sensor stays outside its bounds for
+    ``default_fault_time`` consecutive minutes.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least three columns which must be titled "variable_name", "low_alarm", and "high_alarm" which should contain the
-        name of each variable in the dataframe that requires the alarming, the lower bound for acceptable data, and the upper bound for
-        acceptable data respectively
-    default_fault_time : int
-        Number of consecutive minutes that a sensor must be out of bounds for to trigger an alarm. Can be customized for each variable with 
-        the fault_time column in Variable_Names.csv
-    system: str
-        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
-    full_days : list
-        list of pd.Datetimes that should be considered full days here. If set to none, will take any day at all present in df
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name``, ``low_alarm``,
+        and ``high_alarm``.
+    default_fault_time : int, optional
+        Number of consecutive minutes a sensor must be out of bounds before an
+        alarm is triggered (default 15).  Can be overridden per variable using
+        a ``fault_time`` column in ``Variable_Names.csv``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    full_days : list, optional
+        List of ``pd.Timestamp`` objects representing complete days to consider.
+        If ``None`` (default), every day present in ``df`` is used.
 
     Returns
-    ------- 
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    -------
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag boundary alarms. Dataframe is empty")
@@ -123,47 +206,62 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
     alarm = Boundary(bounds_df, default_fault_time)
     return alarm.find_alarms(df, None, config)
 
-def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 3, 
+def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 3,
                              system: str = "", default_setpoint : float = 130.0, default_power_indication : float = 1.0,
                              default_power_ratio : float = 0.4) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detect temperature-maintenance (TM) setpoint violations on swing-tank equipment.
 
-    VarNames syntax:
-    TMSTPT_T_ID:### - Swing Tank Outlet Temperature. Alarm triggered if over number ### (or 130) for 3 minutes with power on
-    TMSTPT_SP_ID:### - Swing Tank Power. ### is lowest recorded power for Swing Tank to be considered 'on'. Defaults to 1.0
-    TMSTPT_TP_ID:### - Total System Power for ratio alarming for alarming if swing tank power is more than ### (40% default) of usage
-    TMSTPT_ST_ID:### - Swing Tank Setpoint that should not change at all from ### (default 130)
+    Triggers alarms when the swing tank outlet temperature exceeds the setpoint
+    while the tank is powered, or when the swing tank consumes a disproportionate
+    share of total system power.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``TMSTPT_T_ID:###`` — Swing Tank Outlet Temperature.  Alarm triggers if
+      temperature exceeds ``###`` (default ``default_setpoint``) for
+      ``default_fault_time`` consecutive minutes with power on.
+    - ``TMSTPT_SP_ID:###`` — Swing Tank Power.  ``###`` is the minimum power (kW)
+      for the tank to be considered *on* (default ``default_power_indication``).
+    - ``TMSTPT_TP_ID:###`` — Total System Power for ratio alarming.  Alarm triggers
+      when swing-tank power exceeds ``###`` fraction (default
+      ``default_power_ratio``) of total power.
+    - ``TMSTPT_ST_ID:###`` — Swing Tank Setpoint that must remain equal to ``###``
+      (default ``default_setpoint``).
 
     Parameters
     ----------
-    df: pd.DataFrame
-        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the TMSTPT alarm codes (e.g., TMSTPT_T_1:140, TMSTPT_SP_1:2.0)
-    default_fault_time : int
-        Number of consecutive minutes for T+SP alarms (default 3). T+SP alarms trigger when tank is powered and temperature exceeds
-        setpoint for this many consecutive minutes.
-    system: str
-        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
-    default_setpoint : float
-        Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)
-    default_power_indication : float
-        Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)
-    default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.  Used for power-ratio checks
+        and to determine which days to process.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    default_fault_time : int, optional
+        Consecutive minutes the T+SP fault condition must persist before
+        triggering (default 3).
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_setpoint : float, optional
+        Default temperature setpoint in degrees F for T and ST alarm codes when
+        no custom bound is provided (default 130.0).
+    default_power_indication : float, optional
+        Default power threshold in kW for SP alarm codes when no custom bound is
+        provided (default 1.0).
+    default_power_ratio : float, optional
+        Default power-ratio threshold (e.g., 0.4 for 40 %) for TP alarm codes
+        when no custom bound is provided (default 0.4).
 
     Returns
-    ------- 
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    -------
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag swing tank setpoint alarms. Dataframe is empty")
@@ -177,42 +275,52 @@ def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : Con
     alarm = TMSetpoint(bounds_df, default_fault_time, default_setpoint, default_power_indication, default_power_ratio)
     return alarm.find_alarms(df, daily_df, config)
 
-def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, 
+def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager,
                              system: str = "", default_setpoint : float = 130.0, default_power_ratio : float = 0.1) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detect improper backup heating use based on power consumption and setpoint checks.
 
-    VarNames syntax:
-    BU_P_ID - Back Up Tank Power Variable. Must be in same power units as total system power
-    BU_TP_ID:### - Total System Power for ratio alarming for alarming if back up power is more than ### (40% default) of usage
-    BU_ST_ID:### - Back Up Setpoint that should not change at all from ### (default 130)
+    Triggers alarms when the backup tank consumes a disproportionate share of
+    total system power or when the backup setpoint deviates from its expected
+    value.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``BU_P_ID`` — Backup tank power variable.  Must use the same power units
+      as total system power.
+    - ``BU_TP_ID:###`` — Total system power for ratio alarming.  Alarm triggers
+      when backup power exceeds ``###`` fraction of total power (default
+      ``default_power_ratio``).
+    - ``BU_ST_ID:###`` — Backup setpoint that must not deviate from ``###``
+      (default ``default_setpoint``).
 
     Parameters
     ----------
-    df: pd.DataFrame
-        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        post-transformed dataframe for daily data. Used for checking power ratios and determining which days to process.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the STS alarm codes (e.g., STS_T_1:140, STS_SP_1:2.0)
-    system: str
-        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
-    default_setpoint : float
-        Default temperature setpoint in degrees for T and ST alarm codes when no custom bound is specified (default 130.0)
-    default_power_indication : float
-        Default power threshold in kW for SP alarm codes when no custom bound is specified (default 1.0)
-    default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4)
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.  Used for power-ratio checks
+        and to determine which days to process.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_setpoint : float, optional
+        Default temperature setpoint in degrees F for ST alarm codes when no
+        custom bound is provided (default 130.0).
+    default_power_ratio : float, optional
+        Default power-ratio threshold (e.g., 0.1 for 10 %) for TP alarm codes
+        when no custom bound is provided (default 0.1).
 
     Returns
-    ------- 
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    -------
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag swing tank setpoint alarms. Dataframe is empty")
@@ -229,41 +337,54 @@ def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
 def flag_HP_outage(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, day_table_name : str, system: str = "", default_power_ratio : float = 0.3,
                    ratio_period_days : int = 7) -> pd.DataFrame:
     """
-    Detects possible heat pump failures or outages by checking if heat pump power consumption falls below
-    an expected ratio of total system power over a rolling period, or by checking for non-zero values in
-    a direct alarm variable from the heat pump controller.
+    Detect possible heat pump failures or outages.
 
-    VarNames syntax:
-    HPOUT_POW_[OPTIONAL ID]:### - Heat pump power variable. ### is the minimum expected ratio of HP power to total power
-        (default 0.3 for 30%). Must be in same power units as total system power.
-    HPOUT_TP_[OPTIONAL ID] - Total system power variable for ratio comparison. Required when using POW codes.
-    HPOUT_ALRM_[OPTIONAL ID] - Direct alarm variable from HP controller. Alarm triggers if any non-zero value is detected.
+    Checks whether heat pump power consumption falls below an expected ratio of
+    total system power over a rolling period, or whether a direct alarm variable
+    from the heat pump controller reports a non-zero value.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``HPOUT_POW_[OPTIONAL ID]:###`` — Heat pump power variable.  ``###`` is
+      the minimum expected ratio of HP power to total power (default
+      ``default_power_ratio``).  Must use the same power units as total system
+      power.
+    - ``HPOUT_TP_[OPTIONAL ID]`` — Total system power variable for ratio
+      comparison.  Required when using POW codes.
+    - ``HPOUT_ALRM_[OPTIONAL ID]`` — Direct alarm variable from the HP
+      controller.  Alarm triggers if any non-zero value is detected.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. Used for checking ALRM codes for non-zero values.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data. Used for checking power ratios over the rolling period.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the HPOUT alarm codes (e.g., HPOUT_POW_1:0.3, HPOUT_TP_1, HPOUT_ALRM_1).
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Used for checking ALRM
+        codes for non-zero values.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.  Used for checking power
+        ratios over the rolling period.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
     day_table_name : str
-        Name of the daily database table to fetch previous days' data for the rolling period calculation.
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_power_ratio : float
-        Default minimum power ratio threshold (as decimal, e.g., 0.3 for 30%) for POW alarm codes when no custom bound is specified (default 0.3).
-        An alarm triggers if HP power falls below this ratio of total power over the rolling period.
-    ratio_period_days : int
-        Number of days to use for the rolling power ratio calculation (default 7). Must be greater than 1.
+        Name of the daily database table used to fetch previous days' data for
+        the rolling-period calculation.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_ratio : float, optional
+        Minimum power-ratio threshold (e.g., 0.3 for 30 %) for POW alarm codes
+        when no custom bound is provided (default 0.3).  An alarm triggers when
+        HP power falls below this ratio of total power over the rolling period.
+    ratio_period_days : int, optional
+        Number of days in the rolling power-ratio window (default 7).  Must be
+        greater than 1.
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag swing tank setpoint alarms. Dataframe is empty")
@@ -280,41 +401,47 @@ def flag_HP_outage(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMana
 
 def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_ratio : float = 0.4) -> pd.DataFrame:
     """
-    Detects recirculation balance issues by comparing sum of ER (equipment recirculation) heater
-    power to either total power or heating output.
+    Detect recirculation loop balancing valve issues.
 
-    VarNames syntax:
-    BV_ER_[OPTIONAL ID] - Indicates a power variable for an ER heater (equipment recirculation).
-        Multiple ER variables with the same ID will be summed together.
-    BV_TP_[OPTIONAL ID]:### - Indicates the Total Power of the system. Optional ### for the percentage
-        threshold that should not be crossed by the ER elements (default 0.4 for 40%).
-        Alarm triggers when sum of ER >= total_power * threshold.
-    BV_OUT_[OPTIONAL ID] - Indicates the heating output variable the ER heating contributes to.
-        Alarm triggers when sum of ER > sum of OUT * 0.95 (i.e., ER exceeds 95% of heating output).
-        Multiple OUT variables with the same ID will be summed together.
+    Compares the sum of equipment-recirculation (ER) heater power to either
+    total system power or heating output to identify imbalance.
 
-    Note: Each alarm ID requires at least one ER code AND either one TP code OR at least one OUT code.
-    If a TP code exists for an ID, it takes precedence over OUT codes.
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``BV_ER_[OPTIONAL ID]`` — Power variable for an ER heater.  Multiple ER
+      variables sharing the same ID are summed together.
+    - ``BV_TP_[OPTIONAL ID]:###`` — Total system power.  Optional ``###`` sets
+      the ratio threshold (default ``default_power_ratio``).  Alarm triggers
+      when sum of ER >= total_power * threshold.
+    - ``BV_OUT_[OPTIONAL ID]`` — Heating output variable that ER heating
+      contributes to.  Alarm triggers when sum of ER > sum of OUT * 0.95.
+      Multiple OUT variables sharing the same ID are summed together.
+
+    Each alarm ID requires at least one ER code and either one TP code or at
+    least one OUT code.  When a TP code is present it takes precedence over OUT
+    codes.
 
     Parameters
     ----------
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data. Used for checking recirculation balance by comparing sum of ER equipment
-        power to total power or heating output power.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the BV alarm codes (e.g., BV_ER_1, BV_TP_1:0.3)
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_power_ratio : float
-        Default power ratio threshold (as decimal, e.g., 0.4 for 40%) for TP alarm codes when no custom bound is specified (default 0.4).
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.  Used to compare ER
+        equipment power against total power or heating output.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_ratio : float, optional
+        Default power-ratio threshold (e.g., 0.4 for 40 %) for TP alarm codes
+        when no custom bound is provided (default 0.4).
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if
+        ``daily_df`` is empty or ``Variable_Names.csv`` cannot be found.
     """
     if daily_df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -331,42 +458,51 @@ def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, sy
 def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
                        default_temp_threshold : float = 115.0, fault_time : int = 5) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detect high heat pump inlet temperature while the heat pump is running.
 
-    VarNames syntax:
-    HPI_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
-        the heat pump is considered 'on'
-    HPI_T_[OPTIONAL ID]:### - Indicates heat pump inlet temperature variable. ### is the temperature threshold (default 120.0)
-        that should not be exceeded while the heat pump is on
+    Triggers an alarm when the heat pump is on and its inlet temperature exceeds
+    the threshold for ``fault_time`` consecutive minutes.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``HPI_POW_[OPTIONAL ID]:###`` — Heat pump power variable.  ``###`` is the
+      power threshold (default ``default_power_threshold``) above which the heat
+      pump is considered *on*.
+    - ``HPI_T_[OPTIONAL ID]:###`` — Heat pump inlet temperature variable.
+      ``###`` is the temperature threshold (default ``default_temp_threshold``)
+      that must not be exceeded while the heat pump is on.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        post-transformed dataframe for daily data.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the HPI alarm codes (e.g., HPI_POW_1:0.5, HPI_T_1:125.0)
-    system: str
-        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
-    default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 0.4). Heat pump is considered 'on'
-        when power exceeds this value.
-    default_temp_threshold : float
-        Default temperature threshold for T alarm codes when no custom bound is specified (default 120.0). Alarm triggers when
-        temperature exceeds this value while heat pump is on.
-    fault_time : int
-        Number of consecutive minutes that both power and temperature must exceed their thresholds before triggering an alarm (default 10).
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_threshold : float, optional
+        Default power threshold in kW for POW alarm codes when no custom bound
+        is provided (default 1.0).  Heat pump is considered *on* when power
+        exceeds this value.
+    default_temp_threshold : float, optional
+        Default temperature threshold in degrees F for T alarm codes when no
+        custom bound is provided (default 115.0).  Alarm triggers when
+        temperature exceeds this value while the heat pump is on.
+    fault_time : int, optional
+        Consecutive minutes that both power and temperature must exceed their
+        thresholds before an alarm is triggered (default 5).
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -383,44 +519,54 @@ def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Config
 def flag_hp_outlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
                        default_temp_threshold : float = 140.0, fault_time : int = 5) -> pd.DataFrame:
     """
-    Detects low heat pump outlet temperature by checking if the outlet temperature falls below a threshold
-    while the heat pump is running. The first 10 minutes after each HP turn-on are excluded as a warmup
-    period. An alarm triggers if the temperature stays below the threshold for `fault_time` consecutive
-    minutes after the warmup period.
+    Detect low heat pump outlet temperature while the heat pump is running.
 
-    VarNames syntax:
-    HPO_POW_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
-        the heat pump is considered 'on'.
-    HPO_T_[OPTIONAL ID]:### - Indicates heat pump outlet temperature variable. ### is the temperature threshold (default 140.0)
-        that should always be exceeded while the heat pump is on after the 10-minute warmup period.
+    The first 10 minutes after each HP turn-on are excluded as a warm-up period.
+    An alarm triggers if the outlet temperature stays below the threshold for
+    ``fault_time`` consecutive minutes after the warm-up period.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``HPO_POW_[OPTIONAL ID]:###`` — Heat pump power variable.  ``###`` is the
+      power threshold (default ``default_power_threshold``) above which the heat
+      pump is considered *on*.
+    - ``HPO_T_[OPTIONAL ID]:###`` — Heat pump outlet temperature variable.
+      ``###`` is the temperature threshold (default ``default_temp_threshold``)
+      that must be exceeded while the heat pump is on after the 10-minute
+      warm-up period.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the HPO alarm codes (e.g., HPO_POW_1:1.0, HPO_T_1:140.0).
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
-    default_temp_threshold : float
-        Default temperature threshold for T alarm codes when no custom bound is specified (default 140.0). Alarm triggers when
-        temperature falls BELOW this value while heat pump is on (after warmup period).
-    fault_time : int
-        Number of consecutive minutes that temperature must be below threshold (after warmup) before triggering an alarm (default 5).
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_threshold : float, optional
+        Default power threshold in kW for POW alarm codes when no custom bound
+        is provided (default 1.0).  Heat pump is considered *on* when power
+        exceeds this value.
+    default_temp_threshold : float, optional
+        Default temperature threshold in degrees F for T alarm codes when no
+        custom bound is provided (default 140.0).  Alarm triggers when
+        temperature falls below this value while the heat pump is on (after
+        warm-up period).
+    fault_time : int, optional
+        Consecutive minutes that temperature must remain below threshold (after
+        warm-up) before an alarm is triggered (default 5).
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -431,47 +577,56 @@ def flag_hp_outlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Confi
     except FileNotFoundError:
         print("File Not Found: ", variable_names_path)
         return pd.DataFrame()
-    
+
     alarm = HPWHOutlet(bounds_df, default_power_threshold, default_temp_threshold, fault_time)
     return alarm.find_alarms(df, daily_df, config)
 
 def flag_blown_fuse(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
                        default_power_range : float = 2.0, default_power_draw : float = 30, fault_time : int = 3) -> pd.DataFrame:
     """
-    Detects blown fuse alarms for heating elements by identifying when an element is drawing power
-    but significantly less than expected, which may indicate a blown fuse.
+    Detect blown fuse conditions on heating elements.
 
-    VarNames syntax:
-    BF_[OPTIONAL ID]:### - Indicates a blown fuse alarm for an element. ### is the expected kW input when the element is on.
+    Identifies when a heating element is drawing power but significantly less
+    than expected, which may indicate a blown fuse.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``BF_[OPTIONAL ID]:###`` — Blown fuse alarm for an element.  ``###`` is
+      the expected kW draw when the element is on.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the BF alarm codes (e.g., BF:30, BF_1:25).
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_power_threshold : float
-        Power threshold to determine if the element is "on" (default 1.0). Element is considered on when power exceeds this value.
-    default_power_range : float
-        Allowable variance below the expected power draw (default 2.0). An alarm triggers when the actual power draw is less than
-        (expected_power_draw - default_power_range) while the element is on.
-    default_power_draw : float
-        Default expected power draw in kW when no custom bound is specified in the alarm code (default 30).
-    fault_time : int
-        Number of consecutive minutes that the fault condition must persist before triggering an alarm (default 3).
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_threshold : float, optional
+        Power threshold in kW used to determine whether the element is *on*
+        (default 1.0).  Element is considered on when power exceeds this value.
+    default_power_range : float, optional
+        Allowable variance below the expected power draw in kW (default 2.0).
+        An alarm triggers when actual power is less than
+        ``expected_power_draw - default_power_range`` while the element is on.
+    default_power_draw : float, optional
+        Default expected power draw in kW when no custom bound is specified in
+        the alarm code (default 30).
+    fault_time : int, optional
+        Consecutive minutes the fault condition must persist before an alarm is
+        triggered (default 3).
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -489,47 +644,59 @@ def flag_blown_fuse(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
 def flag_unexpected_soo_change(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
                        default_on_temp : float = 115.0, default_off_temp : float = 140.0) -> pd.DataFrame:
     """
-    Detects unexpected state of operation (SOO) changes by checking if the heat pump turns on or off
-    when the temperature is not near the expected aquastat setpoint thresholds. An alarm is triggered
-    if the HP turns on/off and the corresponding temperature is more than 5.0 degrees away from the
-    expected threshold.
+    Detect unexpected state-of-operation (SOO) changes.
 
-    VarNames syntax:
-    SOOCHNG_POW:### - Indicates a power variable for the heat pump system (should be total power across all primary heat pumps). ### is the power threshold (default 1.0) above which
-        the heat pump system is considered 'on'.
-    SOOCHNG_ON_[Mode ID]:### - Indicates the temperature variable at the ON aquastat fraction. ### is the temperature (default 115.0)
-        that should trigger the heat pump to turn ON. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
-    SOOCHNG_OFF_[Mode ID]:### - Indicates the temperature variable at the OFF aquastat fraction (can be same as ON aquastat). ### is the temperature (default 140.0)
-        that should trigger the heat pump to turn OFF. Mode ID should be the load up mode from ['loadUp','shed','criticalPeak','gridEmergency','advLoadUp','normal'] or left blank for normal mode
+    Triggers an alarm when the heat pump turns on or off at a temperature that
+    is more than 5.0 degrees away from the expected aquastat setpoint threshold
+    for the current load-shifting mode.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``SOOCHNG_POW:###`` — Total power variable across all primary heat pumps.
+      ``###`` is the power threshold (default ``default_power_threshold``) above
+      which the HP system is considered *on*.
+    - ``SOOCHNG_ON_[Mode ID]:###`` — Temperature variable at the ON aquastat
+      setpoint.  ``###`` is the temperature (default ``default_on_temp``) that
+      triggers the HP to turn ON.  Mode ID should be one of
+      ``loadUp``, ``shed``, ``criticalPeak``, ``gridEmergency``,
+      ``advLoadUp``, or ``normal`` (or left blank for normal mode).
+    - ``SOOCHNG_OFF_[Mode ID]:###`` — Temperature variable at the OFF aquastat
+      setpoint (may be the same as the ON variable).  ``###`` is the temperature
+      (default ``default_off_temp``) that triggers the HP to turn OFF.  Same
+      Mode ID options as above.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the SOOCHNG alarm codes (e.g., SOOCHNG_POW_normal:1.0, SOOCHNG_ON_normal:115.0, SOOCHNG_OFF_normal:140.0).
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_power_threshold : float
-        Default power threshold for POW alarm codes when no custom bound is specified (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
-    default_on_temp : float
-        Default ON temperature threshold (default 115.0). When the HP turns on, an alarm triggers if the temperature
-        is more than 5.0 degrees away from this value.
-    default_off_temp : float
-        Default OFF temperature threshold (default 140.0). When the HP turns off, an alarm triggers if the temperature
-        is more than 5.0 degrees away from this value.
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_threshold : float, optional
+        Default power threshold in kW for POW alarm codes when no custom bound
+        is provided (default 1.0).  Heat pump is considered *on* when power
+        exceeds this value.
+    default_on_temp : float, optional
+        Default ON temperature threshold in degrees F (default 115.0).  An alarm
+        triggers when the HP turns on and the temperature is more than 5.0
+        degrees from this value.
+    default_off_temp : float, optional
+        Default OFF temperature threshold in degrees F (default 140.0).  An alarm
+        triggers when the HP turns off and the temperature is more than 5.0
+        degrees from this value.
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -546,31 +713,37 @@ def flag_unexpected_soo_change(df: pd.DataFrame, daily_df: pd.DataFrame, config 
 
 def flag_ls_mode_inconsistancy(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "") -> pd.DataFrame:
     """
-    Detects when reported loadshift mode does not match its expected value during a load shifting event.
-    An alarm is triggered if the variable value does not equal the expected value during the
-    time periods defined in the load shifting schedule for that mode.
+    Detect load-shift mode inconsistencies.
 
-    VarNames syntax:
-    SOO_[mode]:### - Indicates a variable that should equal ### during [mode] load shifting events.
-        [mode] can be: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp
-        ### is the expected value (e.g., SOO_loadUp:1 means the variable should be 1 during loadUp events)
+    Triggers an alarm when a reported load-shift mode variable does not match
+    its expected value during a scheduled load-shifting event.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``SOO_[mode]:###`` — Variable that must equal ``###`` during ``[mode]``
+      load-shifting events.  ``[mode]`` can be ``normal``, ``loadUp``,
+      ``shed``, ``criticalPeak``, ``gridEmergency``, or ``advLoadUp``.
+      For example, ``SOO_loadUp:1`` means the variable should be 1 during
+      loadUp events.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive,
-        in order minutes. If minutes are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Pandas dataframe with daily data. This dataframe should have a datetime index.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline.
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems.
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame with a datetime index.
+    config : ConfigManager
+        Pipeline configuration object used to locate ``Variable_Names.csv``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag load shift mode inconsistency alarms. Dataframe is empty")
@@ -588,39 +761,50 @@ def flag_ls_mode_inconsistancy(df: pd.DataFrame, daily_df: pd.DataFrame, config 
 def flag_unexpected_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_high_temp : float = 130,
                        default_low_temp : float = 115, fault_time : int = 10) -> pd.DataFrame:
     """
-    Detects when a temperature value falls outside an acceptable range for
-    too long. An alarm is triggered if the temperature is above the high bound or below the low bound
-    for `fault_time` consecutive minutes.
+    Detect temperatures outside an acceptable range.
 
-    VarNames syntax:
-    TMPRNG_[OPTIONAL ID]:###-### - Indicates a temperature variable. ###-### is the acceptable temperature range
-        (e.g., TMPRNG:110-130 means temperature should stay between 110 and 130 degrees).
+    Triggers an alarm when a temperature variable stays above the high bound or
+    below the low bound for ``fault_time`` consecutive minutes.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``TMPRNG_[OPTIONAL ID]:###-###`` — Temperature variable with acceptable
+      range.  The ``###-###`` portion defines the low and high bounds
+      (e.g., ``TMPRNG:110-130`` means temperature must stay between 110 and
+      130 degrees).
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data. Used for determining which days to process.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the DHW alarm codes (e.g., DHW:110-130, DHW_1:115-125).
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_high_temp : float
-        Default high temperature bound when no custom range is specified in the alarm code (default 130). Temperature above this triggers alarm.
-    default_low_temp : float
-        Default low temperature bound when no custom range is specified in the alarm code (default 130). Temperature below this triggers alarm.
-    fault_time : int
-        Number of consecutive minutes that temperature must be outside the acceptable range before triggering an alarm (default 10).
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.  Used to determine which
+        days to process.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_high_temp : float, optional
+        Default upper temperature bound in degrees F when no custom range is
+        provided in the alarm code (default 130).  Temperature above this value
+        triggers an alarm.
+    default_low_temp : float, optional
+        Default lower temperature bound in degrees F when no custom range is
+        provided in the alarm code (default 115).  Temperature below this value
+        triggers an alarm.
+    fault_time : int, optional
+        Consecutive minutes temperature must be outside the acceptable range
+        before an alarm is triggered (default 10).
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -637,39 +821,46 @@ def flag_unexpected_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Conf
 def flag_shortcycle(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
                        short_cycle_time : int = 15) -> pd.DataFrame:
     """
-    Detects short cycling by identifying when the heat pump turns on for less than `short_cycle_time`
-    consecutive minutes before turning off again. Short cycling can indicate equipment issues or
-    improper system sizing.
+    Detect heat pump short-cycling events.
 
-    VarNames syntax:
-    SHRTCYC_[OPTIONAL ID]:### - Indicates a power variable for the heat pump. ### is the power threshold (default 1.0) above which
-        the heat pump is considered 'on'.
+    Identifies when the heat pump turns on for fewer than ``short_cycle_time``
+    consecutive minutes before turning off again.  Short cycling can indicate
+    equipment issues or improper system sizing.
+
+    VarNames syntax (``alarm_codes`` column in ``Variable_Names.csv``):
+
+    - ``SHRTCYC_[OPTIONAL ID]:###`` — Heat pump power variable.  ``###`` is
+      the power threshold (default ``default_power_threshold``) above which
+      the heat pump is considered *on*.
 
     Parameters
     ----------
-    df: pd.DataFrame
-        Post-transformed dataframe for minute data. It should be noted that this function expects consecutive, in order minutes. If minutes
-        are out of order or have gaps, the function may return erroneous alarms.
-    daily_df: pd.DataFrame
-        Post-transformed dataframe for daily data.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name" and "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires alarming and the SHRTCYC alarm codes (e.g., SHRTCYC:1.0, SHRTCYC_1:0.5).
-    system: str
-        String of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not applicable.
-    default_power_threshold : float
-        Default power threshold when no custom bound is specified in the alarm code (default 1.0). Heat pump is considered 'on'
-        when power exceeds this value.
-    short_cycle_time : int
-        Minimum expected run time in minutes (default 15). An alarm triggers if the heat pump runs for fewer than this many
-        consecutive minutes before turning off.
+    df : pd.DataFrame
+        Post-transformed minute-level data DataFrame.  Must contain consecutive,
+        in-order minutes; out-of-order rows or gaps may produce erroneous alarms.
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    default_power_threshold : float, optional
+        Default power threshold in kW when no custom bound is provided in the
+        alarm code (default 1.0).  Heat pump is considered *on* when power
+        exceeds this value.
+    short_cycle_time : int, optional
+        Minimum expected run time in minutes (default 15).  An alarm triggers
+        when the heat pump runs for fewer than this many consecutive minutes
+        before turning off.
 
     Returns
     -------
-    pd.DataFrame:
-        Pandas dataframe with alarm events
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if ``df`` is
+        empty or ``Variable_Names.csv`` cannot be found.
     """
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
@@ -686,6 +877,7 @@ def flag_shortcycle(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
 
 
 def _convert_silent_alarm_dict_to_df(alarm_dict : dict) -> pd.DataFrame:
+    """Convert a silent-alarm dictionary to a standardized alarm event DataFrame."""
     events = {
         'start_time_pt' : [],
         'end_time_pt' : [],
@@ -709,28 +901,39 @@ def _convert_silent_alarm_dict_to_df(alarm_dict : dict) -> pd.DataFrame:
 
 def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, day_table_name : str, system: str = "", verbose : bool = False, ratio_period_days : int = 7) -> pd.DataFrame:
     """
-    Function will take a pandas dataframe of daily data and location of alarm information in a csv,
-    and create an dataframe with applicable alarm events
+    Detect power-ratio anomalies using daily energy data.
+
+    Reads power-ratio alarm configuration from ``Variable_Names.csv`` via
+    ``config`` and triggers alarms when the ratio of one power variable to
+    another falls outside the defined bounds over a rolling window.
 
     Parameters
     ----------
-    daily_df: pd.DataFrame
-        post-transformed dataframe for daily data. It should be noted that this function expects consecutive, in order days. If days
-        are out of order or have gaps, the function may return erroneous alarms.
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
-        called Variable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv").
-        The file must have at least two columns which must be titled "variable_name", "alarm_codes" which should contain the
-        name of each variable in the dataframe that requires the alarming and the ratio alarm code in the form "PR_{Power Ratio Name}:{low percentage}-{high percentage}
-    system: str
-        string of system name if processing a particular system in a Variable_Names.csv file with multiple systems. Leave as an empty string if not aplicable.
-    verbose : bool
-        add print statements in power ratio
+    daily_df : pd.DataFrame
+        Post-transformed daily-level data DataFrame.  Must contain consecutive,
+        in-order days; out-of-order rows or gaps may produce erroneous alarms.
+    config : ConfigManager
+        Pipeline configuration object.  Points to a ``Variable_Names.csv`` file
+        that must contain at least the columns ``variable_name`` and
+        ``alarm_codes``.  Ratio alarm codes take the form
+        ``PR_{Power Ratio Name}:{low percentage}-{high percentage}``.
+    day_table_name : str
+        Name of the daily database table used to fetch historical data for the
+        rolling-period calculation.
+    system : str, optional
+        Name of the system to filter on when ``Variable_Names.csv`` contains
+        multiple systems.  Pass an empty string (default) if not applicable.
+    verbose : bool, optional
+        If ``True``, emit additional print statements during processing
+        (default ``False``).
+    ratio_period_days : int, optional
+        Number of days in the rolling power-ratio window (default 7).
 
     Returns
-    ------- 
-    pd.DataFrame:
-        Pandas dataframe with alarm events, empty if no alarms triggered
+    -------
+    pd.DataFrame
+        DataFrame of alarm events.  Returns an empty DataFrame if no alarms
+        are triggered or ``Variable_Names.csv`` cannot be found.
     """
     variable_names_path = config.get_var_names_path()
     try:

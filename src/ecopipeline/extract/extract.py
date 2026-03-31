@@ -34,6 +34,89 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                  raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S",
                  file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3,
                  time_zone : str = "America/Los_Angeles", site : str = "", system : str = "") -> [pd.DataFrame, pd.DataFrame]:
+    """
+    Primary entry point for the extract stage of the data pipeline.
+
+    Dispatches to the appropriate file-based or API-based extractor based on
+    ``process_type``, reads raw sensor data into a DataFrame, and then fetches
+    matching outdoor air temperature (OAT) weather data from Open Meteo for
+    the same time window.  When ``start_time`` is ``None`` the function queries
+    the database for the timestamp of the last available minute record and
+    extracts only data newer than that point (normal run mode).  When
+    ``start_time`` is provided explicitly the function performs a reprocess run,
+    reading from already-saved CSV files for API-based process types instead of
+    hitting the remote API again.
+
+    Parameters
+    ----------
+    config : ConfigManager
+        Configuration object that stores database credentials, directory paths,
+        API tokens, and site metadata used throughout the pipeline.
+    process_type : str
+        Identifier for the extraction method.  Accepted values are ``"csv"``,
+        ``"csv_mb"``, ``"csv_dent"``, ``"csv_flow"``, ``"csv_msa"``,
+        ``"csv_egauge"``, ``"csv_small_planet"``, ``"json"``, ``"api_tb"``,
+        ``"api_skycentrics"``, ``"api_fm"``, and ``"api_licor"``.
+    start_time : datetime, optional
+        Inclusive start of the extraction window in local time.  If ``None``
+        the start time is derived from :func:`get_last_full_day_from_db`.
+    end_time : datetime, optional
+        Exclusive end of the extraction window in local time.  If ``None`` data
+        is extracted up to the most recent available record.
+    use_defaults : bool, optional
+        When ``True`` (default) the function overwrites ``raw_time_column`` and
+        ``time_column_format`` with the standard defaults for ``process_type``
+        via :func:`_get_time_indicator_defaults`.
+    raw_time_column : str, optional
+        Name of the timestamp column in raw data files.  Default is
+        ``'DateTime'``.  Ignored when ``use_defaults`` is ``True``.
+    time_column_format : str, optional
+        ``strptime``-compatible format string for parsing ``raw_time_column``.
+        Default is ``'%Y/%m/%d %H:%M:%S'``.  Ignored when ``use_defaults`` is
+        ``True``.
+    filename_date_format : str, optional
+        ``strftime``-compatible format string used to parse dates embedded in
+        raw data filenames.  Default is ``"%Y%m%d%H%M%S"``.
+    file_prefix : str, optional
+        Optional prefix used to filter which files in the data directory are
+        ingested.  Default is ``""``.
+    data_sub_dir : str, optional
+        Sub-directory path appended to the configured data directory when
+        locating raw data files (e.g. ``"DENT/"``).  Default is ``""``.
+    date_string_start_idx : int, optional
+        Character index marking the start of the date substring within each
+        filename.  Default is ``-17``.
+    date_string_end_idx : int, optional
+        Character index marking the end of the date substring within each
+        filename.  Default is ``-3``.
+    time_zone : str, optional
+        IANA time-zone name used to localise timestamps in the returned
+        DataFrames (e.g. ``"America/Los_Angeles"``).  Default is
+        ``"America/Los_Angeles"``.
+    site : str, optional
+        Site identifier passed to ``SmallPlanetCSVProcessor`` to filter data
+        to a single site when a file contains data for multiple sites.
+        Default is ``""``.
+    system : str, optional
+        System identifier passed to ``SmallPlanetCSVProcessor`` to filter data
+        to a single system.  Default is ``""``.
+
+    Returns
+    -------
+    pd.DataFrame
+        Raw sensor data indexed by timestamp.  Empty if no data was found for
+        the requested time window.
+    pd.DataFrame
+        Hourly outdoor air temperature data from Open Meteo indexed by
+        timestamp, covering the same time window as the raw data.  Empty if
+        the raw DataFrame is empty or if the weather request fails.
+
+    Raises
+    ------
+    Exception
+        If ``process_type`` is not one of the recognised extraction method
+        strings.
+    """
     print("++++++++++++ EXTRACT ++++++++++++")
     reprocess = True
     if start_time is None:
@@ -108,7 +191,37 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
 
 def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time_column_format : str, use_defaults : bool = True) -> list[str]:
     """
-    Returns the default time column name and format for the file/api type.
+    Return the default time-column name and format string for a given process type.
+
+    When ``use_defaults`` is ``False`` the supplied ``raw_time_column`` and
+    ``time_column_format`` values are returned unchanged.  Otherwise the
+    function looks up the canonical defaults for ``process_type`` from an
+    internal mapping and raises an ``Exception`` if the type is unrecognised.
+
+    Parameters
+    ----------
+    process_type : str
+        Extraction method identifier (e.g. ``"csv"``, ``"api_tb"``).
+    raw_time_column : str
+        Caller-supplied time-column name; returned as-is when
+        ``use_defaults`` is ``False``.
+    time_column_format : str
+        Caller-supplied format string; returned as-is when
+        ``use_defaults`` is ``False``.
+    use_defaults : bool, optional
+        If ``True`` (default) override the supplied values with the
+        canonical defaults for ``process_type``.
+
+    Returns
+    -------
+    list of str
+        Two-element list ``[time_column_name, time_column_format]``.
+
+    Raises
+    ------
+    Exception
+        If ``use_defaults`` is ``True`` and ``process_type`` is not
+        recognised.
     """
     if not use_defaults:
         return [raw_time_column, time_column_format]
@@ -136,20 +249,29 @@ def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time
 
 def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
     """
-    Function retrieves the last line from the database with the most recent datetime 
-    in local time.
-    
+    Retrieve the timestamp of the last fully recorded minute from the database.
+
+    Queries the table identified by ``table_identifier`` in the pipeline
+    database and returns the most recent timestamp.  If the most recent row
+    does not fall exactly at 23:59, the function assumes the day is incomplete
+    and rolls back to the previous day at 23:59:00.  If the table is empty or
+    the query fails, a default datetime of 2000-01-09 23:59:00 US/Pacific is
+    returned.
+
     Parameters
-    ---------- 
-    config : ecopipeline.ConfigManager
-        The ConfigManager object that holds configuration data for the pipeline
-    table_identifier : str
-        Table identifier in config.ini with minute data. Default: "minute"
-    
+    ----------
+    config : ConfigManager
+        Configuration object that provides database connection details and
+        table metadata for the pipeline.
+    table_identifier : str, optional
+        Key used to look up the target table name in the pipeline config.
+        Default is ``"minute"``.
+
     Returns
-    ------- 
-    datetime:
-        end of last full day populated in database or default past time if no data found
+    -------
+    datetime
+        End of the last fully populated day found in the database, or a
+        default past datetime if no data is available.
     """
     # config_dict = get_login_info(["minute"], config)
     table_config_dict = config.get_db_table_info([table_identifier])
@@ -222,6 +344,10 @@ def extract_new(startTime: datetime, filenames: List[str], decihex = False, time
                 dateStringEndIdx : int = -3, dateFormat : str = "%Y%m%d%H%M%S", epochFormat : bool = False) -> List[str]:
     """
     Function filters the filenames to only those equal to or newer than the date specified startTime.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     If filenames are in deciheximal, The function can still handel it. Note that for some projects,
     files are dropped at irregular intervals so data cannot be filtered by exact date.
 
@@ -287,8 +413,11 @@ def extract_files(extension: str, config: ConfigManager, data_sub_dir : str = ""
     """
     Function takes in a file extension and subdirectory and returns a list of paths files in the directory of that type.
 
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     Parameters
-    ----------  
+    ----------
     extension : str
         File extension of raw data files as string (e.g. ".csv", ".gz", ...)
     config : ecopipeline.ConfigManager
@@ -320,8 +449,11 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
     """
     Function takes a list of gz/json filenames and reads all files into a singular dataframe.
 
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     Parameters
-    ----------  
+    ----------
     json_filenames: List[str]
         List of filenames to be processed into a single dataframe 
     time_zone: str
@@ -366,10 +498,13 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
 
 def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_index : bool = True, create_time_pt_idx : bool = False, original_time_columns : str = 'DateTime', time_format : str ='%Y/%m/%d %H:%M:%S') -> pd.DataFrame:
     """
-    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
 
     Parameters
-    ----------  
+    ----------
     csv_filenames: List[str]
         List of filenames to be processed into a single dataframe 
     mb_prefix: bool
@@ -470,21 +605,24 @@ def remove_char_sequence_from_csv_header(csv_filenames: List[str], header_sequen
 
 def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> pd.DataFrame:
     """
-    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
 
     Parameters
-    ----------  
+    ----------
     csv_filenames: List[str]
-        List of filenames to be processed into a single dataframe 
+        List of filenames to be processed into a single dataframe
     round_time_index: bool
         A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
         Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
         Defaults to True.
-        
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
+    -------
+    pd.DataFrame:
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
         (with prepended modbus prefix if mb_prefix = True)
     """
     print("WARNING: dent_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
@@ -527,21 +665,24 @@ def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
 
 def flow_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> pd.DataFrame:
     """
-    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data. 
+    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for aquisuite data.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
 
     Parameters
-    ----------  
+    ----------
     csv_filenames: List[str]
-        List of filenames to be processed into a single dataframe 
+        List of filenames to be processed into a single dataframe
     round_time_index: bool
         A boolean that signifys if the dataframe timestamp indexes should be rounded down to the nearest minute.
         Should be set to False if there is no column in the data frame called 'time(UTC)' to index on.
         Defaults to True.
-        
+
     Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files 
+    -------
+    pd.DataFrame:
+        Pandas Dataframe containing data from all files with column headers the same as the variable names in the files
         (with prepended modbus prefix if mb_prefix = True)
     """
     print("WARNING: flow_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
@@ -583,22 +724,25 @@ def flow_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
 
 def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str = 'US/Pacific') -> pd.DataFrame:
      """
-    Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data. 
+     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for MSA data.
 
-    Parameters
-    ----------  
-    csv_filenames : List[str]
-        List of filenames 
-    mb_prefix : bool
-        signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
-    timezone : str
-        local timezone, default is pacific
-    
-    Returns
-    ------- 
-    pd.DataFrame: 
-        Pandas Dataframe containing data from all files
-    """
+     .. deprecated::
+         Use :func:`central_extract_function` instead.
+
+     Parameters
+     ----------
+     csv_filenames : List[str]
+         List of filenames
+     mb_prefix : bool
+         signifys in modbus form- if set to true, will append modbus prefix to each raw varriable
+     timezone : str
+         local timezone, default is pacific
+
+     Returns
+     -------
+     pd.DataFrame:
+         Pandas Dataframe containing data from all files
+     """
      print("WARNING: msa_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
      temp_dfs = []
      for file in csv_filenames:
@@ -639,11 +783,15 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
 def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], site: str = "", system: str = "") -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
     afterwards.
 
     Parameters
-    ---------- 
+    ----------
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. Among other things, this object will point to a file 
         called Varriable_Names.csv in the input folder of the pipeline (e.g. "full/path/to/pipeline/input/Variable_Names.csv")
@@ -731,17 +879,21 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
 def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     """
     Function takes a list of csv filenames and reads all files into a singular dataframe. Use this for small planet control data.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     This data will have variable names equal variable_name column is Variable_Names.csv so you will not need to use the rename_sensors function
     afterwards.
 
     Parameters
-    ---------- 
+    ----------
     csv_filenames : List[str]
         List of filenames
-    
+
     Returns
-    ------- 
-    pd.DataFrame: 
+    -------
+    pd.DataFrame:
         Pandas Dataframe containing data from all files
     """
     print("WARNING: egauge_csv_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
@@ -791,8 +943,11 @@ def skycentrics_api_to_df(config: ConfigManager, startTime: datetime = None, end
     """
     Function connects to the field manager api to pull data and returns a dataframe.
 
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     Parameters
-    ----------  
+    ----------
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. The config manager
         must contain information to connect to the api, i.e. the api user name and password as well as
@@ -877,8 +1032,11 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     """
     Function connects to the field manager api to pull data and returns a dataframe.
 
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     Parameters
-    ----------  
+    ----------
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. The config manager
         must contain information to connect to the api, i.e. the api user name and password as well as
@@ -973,6 +1131,12 @@ def fm_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
         return None
     
 def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, eGauge_pw : str, num_days : int = 2):
+    """
+    Download raw eGauge data files from eGauge devices via wget.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+    """
     print("WARNING: pull_egauge_data() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
     original_directory = os.getcwd()
     os.chdir(config.data_directory)
@@ -992,6 +1156,9 @@ def pull_egauge_data(config: ConfigManager, eGauge_ids: list, eGauge_usr : str, 
 def licor_cloud_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: datetime = None, create_csv : bool = True) -> pd.DataFrame:
     """
     Connects to the LI-COR Cloud API to pull sensor data and returns a dataframe.
+
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
 
     The function queries the LI-COR Cloud API for sensor data within the specified time range.
     Each sensor's data is returned as a separate column in the dataframe, indexed by timestamp.
@@ -1079,8 +1246,11 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     """
     Function connects to the things board manager api to pull data and returns a dataframe.
 
+    .. deprecated::
+        Use :func:`central_extract_function` instead.
+
     Parameters
-    ----------  
+    ----------
     config : ecopipeline.ConfigManager
         The ConfigManager object that holds configuration data for the pipeline. The config manager
         must contain information to connect to the api, i.e. the api user name and password as well as
@@ -1191,6 +1361,22 @@ def tb_api_to_df(config: ConfigManager, startTime: datetime = None, endTime: dat
     return df
     
 def _get_float_value(value):
+    """
+    Convert a value to float, returning ``None`` if conversion fails.
+
+    Parameters
+    ----------
+    value : object
+        The value to convert.  Typically a string or numeric type returned
+        from an API response.
+
+    Returns
+    -------
+    float or None
+        The float representation of ``value``, or ``None`` if the value
+        cannot be cast to float (e.g. ``None``, empty string, or
+        non-numeric text).
+    """
     try:
         ret_val = float(value)
         return ret_val
