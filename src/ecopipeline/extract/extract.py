@@ -33,7 +33,7 @@ from .api_extractors.LiCOR import LiCOR
 def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, use_defaults : bool = True,
                  raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S",
                  file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3,
-                 time_zone : str = "America/Los_Angeles", site : str = "", system : str = "") -> [pd.DataFrame, pd.DataFrame]:
+                 time_zone : str = "America/Los_Angeles", site : str = "", system : str = "", pull_weather_data : bool = True) -> [pd.DataFrame, pd.DataFrame]:
     """
     Primary entry point for the extract stage of the data pipeline.
 
@@ -100,6 +100,8 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
     system : str, optional
         System identifier passed to ``SmallPlanetCSVProcessor`` to filter data
         to a single system.  Default is ``""``.
+    pull_weather_data : bool, optional
+        Default True. Set to False to avoid pulling weather data from Open Meteo
 
     Returns
     -------
@@ -187,12 +189,15 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                 raise Exception(f"{process_type} is not a recognized extraction method.")
             if merge_process:
                 print("Merging existing data and new data...")
-                raw_df = pd.concat([raw_df, api_extractor.get_raw_data()])
-                print("data merged.")
+                api_df = api_extractor.get_raw_data()
+                if not (raw_df.empty or api_df.empty):
+                    raw_df.index = raw_df.index.tz_localize(None)
+                    api_df.index = api_df.index.tz_localize(None)
+                raw_df = pd.concat([raw_df, api_df])
             else:
                 raw_df = api_extractor.get_raw_data()
 
-    if not raw_df.empty:
+    if not raw_df.empty and pull_weather_data:
         print(f"Successfully pulled raw data. Index range: {raw_df.index.min().strftime('%Y/%m/%d %H:%M:%S')} to {raw_df.index.max().strftime('%Y/%m/%d %H:%M:%S')}")
         print("Now extracting weather....")
         lat, long = _get_lat_and_long(config)
@@ -201,8 +206,10 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
             print(f"Successfully pulled weather data. Index range: {weather_df.index.min().strftime('%Y/%m/%d %H:%M:%S')} to {weather_df.index.max().strftime('%Y/%m/%d %H:%M:%S')}")
         else:
             print("No weather data collected.")
-    else:
+    elif raw_df.empty:
         print("No raw data available for time period.")
+    else:
+        print("returning raw data. Did not attempt to pull weather data.")
     return raw_df, weather_df
 
 def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time_column_format : str, use_defaults : bool = True) -> list[str]:

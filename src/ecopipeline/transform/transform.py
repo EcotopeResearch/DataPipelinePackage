@@ -265,17 +265,7 @@ def avg_duplicate_times(df: pd.DataFrame, timezone : str) -> pd.DataFrame:
         Dataframe with all duplicate timestamps collapsed into one row,
         averaging numeric data values.
     """
-    if isinstance(df.index, pd.DatetimeIndex):
-        if df.index.tz is not None:
-            df.index = df.index.tz_convert(None)
-    else:
-        try:
-            df.index = pd.DatetimeIndex(df.index)
-        except ValueError:
-            # Object index containing tz-aware datetime objects
-            df.index = pd.to_datetime(df.index, utc=True).tz_convert(None)
-        if df.index.tz is not None:
-            df.index = df.index.tz_convert(None)
+    df.index = pd.DatetimeIndex(df.index).tz_localize(None)
     # get rid of time stamp 0 values
     if df.index.min() < pd.Timestamp('2000-01-01'):
         df = df[df.index > pd.Timestamp('2000-01-01')]
