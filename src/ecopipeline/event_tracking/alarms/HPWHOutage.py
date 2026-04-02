@@ -14,7 +14,7 @@ class HPWHOutage(Alarm):
     a direct alarm variable from the heat pump controller.
 
     Variable_Names.csv configuration:
-      alarm_codes column: HPOUTGE or HPOUTGE:### where ### provides the bound for the variable (see types below).
+      alarm_codes column: HPOUTGE or HPOUTGE:### where ### is the bound for the variable (see types below).
       variable_name column: determines the role of the variable by its first underscore-separated part:
         PowerIn_[name] - HP power variable. Bound (###) from alarm_codes is the minimum expected ratio of HP
             power to total system power over the rolling period (default 0.3 for 30%). Alarm triggers when

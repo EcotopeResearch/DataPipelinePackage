@@ -83,8 +83,12 @@ class PowerRatio(Alarm):
                 low_bound = var_row.iloc[0]['bound']
                 high_bound = var_row.iloc[0]['bound2']
                 pretty_name = var_row.iloc[0]['pretty_name']
-
-                alarm_blocks_df = blocks_df.loc[(blocks_df[f"{variable}_{alarm_id}"] < low_bound) | (blocks_df[f"{variable}_{alarm_id}"] > high_bound)]
+                if alarm_id == 'Total':
+                    # report all TM heating that is out of bounds
+                    alarm_blocks_df = blocks_df.loc[(blocks_df[f"{variable}_{alarm_id}"] < low_bound) | (blocks_df[f"{variable}_{alarm_id}"] > high_bound)]
+                else:
+                    # report only HPWHs that are underreporting
+                    alarm_blocks_df = blocks_df.loc[(blocks_df[f"{variable}_{alarm_id}"] < low_bound)]
                 if not alarm_blocks_df.empty:
                     for block_end_date, values in alarm_blocks_df.iterrows():
                         block_start_date = block_end_date - timedelta(days=self.ratio_period_days - 1)

@@ -88,20 +88,19 @@ def test_flag_ratio_alarms(mock_config_manager):
                         'PowerIn_SwingTank': [4, 20, 500]})
         df.index = timestamps
         
-        event_time_pts = pd.to_datetime(['2022-01-01','2022-01-03','2022-01-01','2022-01-03'])
-        end_event_time_pts = pd.to_datetime(['2022-01-02','2022-01-04','2022-01-02','2022-01-04'])
+        event_time_pts = pd.to_datetime(['2022-01-01','2022-01-03','2022-01-01'])
+        end_event_time_pts = pd.to_datetime(['2022-01-02','2022-01-04','2022-01-02'])
         df_expected = pd.DataFrame({
                         'start_time_pt': event_time_pts,
                         'end_time_pt': end_event_time_pts,
-                        'alarm_type': ['POWRRAT']*4,
+                        'alarm_type': ['POWRRAT']*3,
                         'event_detail': [
                                         "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_HPWH2 accounted for 0.0% of HPWH energy use. 20.0-40.0% expected.",
                                         "Power ratio alarm (1-day block ending 2022-01-03): PowerIn_HPWH2 accounted for 5.5% of HPWH energy use. 20.0-40.0% expected.",
-                                        "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_SwingTank accounted for 0.0% of Total energy use. 20.0-50.0% expected.",
-                                        "Power ratio alarm (1-day block ending 2022-01-03): PowerIn_HPWH1 accounted for 94.5% of HPWH energy use. 60.0-80.0% expected."
+                                        "Power ratio alarm (1-day block ending 2022-01-01): PowerIn_SwingTank accounted for 0.0% of Total energy use. 20.0-50.0% expected."
                                         ],
-                        'variable_name' : ['PowerIn_HPWH2','PowerIn_HPWH2','PowerIn_SwingTank','PowerIn_HPWH1'],
-                        'certainty': [3]*4})
+                        'variable_name' : ['PowerIn_HPWH2','PowerIn_HPWH2','PowerIn_SwingTank'],
+                        'certainty': [3]*3})
         # df_expected.set_index('start_time_pt', inplace=True)
 
         # Call the function that uses mysql.connector.connect()
