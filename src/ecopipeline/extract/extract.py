@@ -166,17 +166,16 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         merge_process = False
         if reprocess:
             last_db_day = get_last_full_day_from_db(config, tz_aware = False)
-            if start_time < last_db_day and (end_time is None or end_time > last_db_day):
+            if end_time is None or end_time > last_db_day:
                 print("Time frame includes existing data and new data.")
                 merge_process = True
             file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
                  -18, -4)
             raw_df = file_processor.get_raw_data()
-            if merge_process:
+            if merge_process and start_time < last_db_day:
                 start_time = last_db_day
         if not reprocess or merge_process:
             if process_type == "api_tb":
-                print()
                 api_extractor = ThingsBoard(config, start_time, end_time)
             elif process_type == "api_skycentrics":
                 if time_zone is None or time_zone == 'America/Los_Angeles':
