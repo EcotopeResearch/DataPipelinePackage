@@ -158,7 +158,7 @@ def test_central_extract_no_start_time_queries_db(
 
     central_extract_function(config, "csv")  # start_time=None
 
-    mock_last_day.assert_called_once_with(config)
+    mock_last_day.assert_called_once_with(config, tz_aware = False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -122,7 +122,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
     print("++++++++++++ EXTRACT ++++++++++++")
     reprocess = True
     if start_time is None:
-        start_time = get_last_full_day_from_db(config)
+        start_time = get_last_full_day_from_db(config, tz_aware = False)
         print(f"last full day in database found to be {start_time.strftime('%Y/%m/%d %H:%M:%S')}")
         reprocess = False
     if end_time is None:
@@ -165,7 +165,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
     elif "api_" in process_type:
         merge_process = False
         if reprocess:
-            last_db_day = get_last_full_day_from_db(config)
+            last_db_day = get_last_full_day_from_db(config, tz_aware = False)
             if end_time is None or end_time > last_db_day:
                 print("Time frame includes existing data and new data.")
                 merge_process = True
@@ -270,7 +270,7 @@ def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time
         raise Exception(f"{process_type} is not a recognized method of extraction. Must be one of [{', '.join(default_map.keys())}]")
     
 
-def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute") -> datetime:
+def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "minute", tz_aware : bool = True) -> datetime:
     """
     Retrieve the timestamp of the last fully recorded minute from the database.
 
@@ -289,6 +289,8 @@ def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "
     table_identifier : str, optional
         Key used to look up the target table name in the pipeline config.
         Default is ``"minute"``.
+    tz_aware : bool
+        determines if returned default date is timezone aware
 
     Returns
     -------
@@ -300,7 +302,9 @@ def get_last_full_day_from_db(config : ConfigManager, table_identifier : str = "
     table_config_dict = config.get_db_table_info([table_identifier])
     # db_connection, db_cursor = connect_db(config_info=config_dict['database'])
     db_connection, db_cursor = config.connect_db()
-    return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0).astimezone(timezone('US/Pacific')) # arbitrary default time
+    return_time = datetime(year=2000, month=1, day=9, hour=23, minute=59, second=0) # arbitrary default time
+    if tz_aware:
+        return_time = return_time.astimezone(timezone('US/Pacific')) # arbitrary default time
     
     try:
         db_cursor.execute(
