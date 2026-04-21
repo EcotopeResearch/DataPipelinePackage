@@ -33,7 +33,8 @@ from .api_extractors.LiCOR import LiCOR
 def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, use_defaults : bool = True,
                  raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S",
                  file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3,
-                 time_zone : str = "America/Los_Angeles", site : str = "", system : str = "", pull_weather_data : bool = True) -> [pd.DataFrame, pd.DataFrame]:
+                 time_zone : str = "America/Los_Angeles", site : str = "", system : str = "", pull_weather_data : bool = True,
+                 prevent_csv_reprocess : bool = False) -> [pd.DataFrame, pd.DataFrame]:
     """
     Primary entry point for the extract stage of the data pipeline.
 
@@ -102,6 +103,8 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         to a single system.  Default is ``""``.
     pull_weather_data : bool, optional
         Default True. Set to False to avoid pulling weather data from Open Meteo
+    prevent_csv_reprocess : bool
+        Default False. Set true to force API pull rather than using CSV files from previous pulls if reprocessing data
 
     Returns
     -------
@@ -164,7 +167,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         raw_df = file_processor.get_raw_data()
     elif "api_" in process_type:
         merge_process = False
-        if reprocess:
+        if reprocess and not prevent_csv_reprocess:
             last_db_day = get_last_full_day_from_db(config, tz_aware = False)
             if end_time is None or end_time > last_db_day:
                 print("Time frame includes existing data and new data.")
