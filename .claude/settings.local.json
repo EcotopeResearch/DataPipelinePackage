@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\nolan\\\\Documents\\\\DataPipelinePackage\" -Force)",
+      "Bash(Format-Table -Property Name, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\nolan\\\\Documents\\\\DataPipelinePackage\\\\src\" -Recurse -Directory | ForEach-Object { $_.FullName.Replace\\(\"C:\\\\Users\\\\nolan\\\\Documents\\\\DataPipelinePackage\\\\src\\\\\", \"\"\\) } | Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\nolan\\\\Documents\\\\DataPipelinePackage\\\\tests\")"
+    ]
+  }
+}

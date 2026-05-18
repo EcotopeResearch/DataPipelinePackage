@@ -11,9 +11,12 @@ subclasses, each of which targets a specific third-party data API:
   FieldPop / Field Manager API.
 - :class:`~ecopipeline.extract.api_extractors.LiCOR.LiCOR` —
   LI-COR Cloud sensor API.
+- :class:`~ecopipeline.extract.api_extractors.Bluedot.Bluedot` —
+  Bluedot API.
 """
 
 from .ThingsBoard import ThingsBoard
 from .Skycentrics import Skycentrics
 from .FieldManager import FieldManager
 from .LiCOR import LiCOR
+from .Bluedot import Bluedot
