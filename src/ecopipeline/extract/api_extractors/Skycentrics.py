@@ -39,9 +39,9 @@ class Skycentrics(APIExtractor):
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None,
-                 create_csv: bool = True, csv_prefix: str = "", time_zone: str = 'US/Pacific'):
+                 create_csv: bool = True, csv_prefix: str = "", time_zone: str = 'US/Pacific', sub_directory: str = ""):
         self.time_zone = time_zone
-        super().__init__(config, start_time, end_time, create_csv, csv_prefix)
+        super().__init__(config, start_time, end_time, create_csv, csv_prefix, sub_directory)
 
     def raw_data_to_df(self, config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
         """Fetch sensor data from the Skycentrics API and return it as a DataFrame.

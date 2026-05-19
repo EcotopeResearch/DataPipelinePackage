@@ -34,8 +34,8 @@ class LiCOR(APIExtractor):
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None,
-                 create_csv: bool = True, csv_prefix: str = ""):
-        super().__init__(config, start_time, end_time, create_csv, csv_prefix)
+                 create_csv: bool = True, csv_prefix: str = "", sub_directory: str = ""):
+        super().__init__(config, start_time, end_time, create_csv, csv_prefix, sub_directory)
 
     def raw_data_to_df(self, config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
         """Fetch sensor data from the LI-COR Cloud API and return it as a DataFrame.

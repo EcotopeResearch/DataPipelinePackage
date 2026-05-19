@@ -39,8 +39,8 @@ class Bluedot(APIExtractor):
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None,
-                 create_csv: bool = True, csv_prefix: str = ""):
-        super().__init__(config, start_time, end_time, create_csv, csv_prefix)
+                 create_csv: bool = True, csv_prefix: str = "", sub_directory: str = ""):
+        super().__init__(config, start_time, end_time, create_csv, csv_prefix, sub_directory)
 
     def raw_data_to_df(self, config: ConfigManager, startTime: datetime = None, endTime: datetime = None) -> pd.DataFrame:
         """Fetch sensor data from the BlueBot Flow API and return it as a DataFrame.
@@ -86,8 +86,8 @@ class Bluedot(APIExtractor):
                 df = pd.DataFrame(response_json)
                 df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s', utc=True).dt.tz_localize(None)
                 df = df.pivot(index='timestamp', columns='device_id', values='total')
-                if f'{api_key}' in df.columns:
-                    df = df.rename(columns={f'{api_key}': 'total_flow'})
+                df.columns = ['total_flow']
+                df.columns.name = None
                 df = df.sort_index()
                 return df
             else:

@@ -181,17 +181,17 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                 start_time = last_db_day
         if not reprocess or merge_process:
             if process_type == "api_tb":
-                api_extractor = ThingsBoard(config, start_time, end_time)
+                api_extractor = ThingsBoard(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_skycentrics":
                 if time_zone is None or time_zone == 'America/Los_Angeles':
                     time_zone = 'US/Pacific'
-                api_extractor = Skycentrics(config, start_time, end_time, time_zone=time_zone)
+                api_extractor = Skycentrics(config, start_time, end_time, time_zone=time_zone, sub_directory=data_sub_dir)
             elif process_type == "api_fm":
-                api_extractor = FieldManager(config, start_time, end_time)
+                api_extractor = FieldManager(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_licor":
-                api_extractor = LiCOR(config, start_time, end_time)
+                api_extractor = LiCOR(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_bluedot":
-                api_extractor = Bluedot(config, start_time, end_time)
+                api_extractor = Bluedot(config, start_time, end_time, sub_directory=data_sub_dir)
             else:
                 raise Exception(f"{process_type} is not a recognized extraction method.")
             if merge_process:

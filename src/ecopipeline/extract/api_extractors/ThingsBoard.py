@@ -8,12 +8,12 @@ from datetime import datetime, timedelta
 import os
 
 class ThingsBoard(APIExtractor):
-    def __init__(self, config : ConfigManager, start_time: datetime = None, end_time: datetime = None, create_csv : bool = True):
+    def __init__(self, config : ConfigManager, start_time: datetime = None, end_time: datetime = None, create_csv : bool = True, sub_directory: str = ""):
         self.device_id_overwrite = None
         self.sensor_keys = []
         self.query_hours = 1
         self.seperate_keys = False
-        super().__init__(config, start_time, end_time, create_csv)
+        super().__init__(config, start_time, end_time, create_csv, sub_directory=sub_directory)
         
     def _get_tb_keys(self, token : str, api_device_id : str) -> list[str]:
         url = f'https://thingsboard.cloud/api/plugins/telemetry/DEVICE/{api_device_id}/keys/timeseries'

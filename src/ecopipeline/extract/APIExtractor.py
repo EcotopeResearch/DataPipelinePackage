@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import os
 
 class APIExtractor:
-    def __init__(self, config : ConfigManager, start_time: datetime = None, end_time: datetime = None, create_csv : bool = True, csv_prefix : str = ""):
+    def __init__(self, config : ConfigManager, start_time: datetime = None, end_time: datetime = None, create_csv : bool = True, csv_prefix : str = "", sub_directory: str = ""):
         """
         Parameters
         ----------  
@@ -36,11 +36,9 @@ class APIExtractor:
             self.raw_df = self.raw_data_to_df(config, start_time, end_time)
             if create_csv and not self.raw_df.empty:
                 filename = f"{csv_prefix}{start_time.strftime('%Y%m%d%H%M%S')}.csv"
-                original_directory = os.getcwd()
-                os.chdir(config.data_directory)
-                self.raw_df.to_csv(filename, index_label='time_pt')
-                os.chdir(original_directory)
-                print(f"Created raw data CSV file: {filename}")
+                filepath = os.path.join(config.data_directory + sub_directory, filename)
+                self.raw_df.to_csv(filepath, index_label='time_pt')
+                print(f"Created raw data CSV file: {filepath}")
         except Exception as e:
             print(f"API data extraction failed: {e}")
             raise e
