@@ -179,7 +179,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
             raw_df = file_processor.get_raw_data()
             if merge_process and start_time < last_db_day:
                 start_time = last_db_day
-        if not reprocess or merge_process:
+        if prevent_csv_reprocess or not reprocess or merge_process:
             if process_type == "api_tb":
                 api_extractor = ThingsBoard(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_skycentrics":
@@ -191,6 +191,8 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
             elif process_type == "api_licor":
                 api_extractor = LiCOR(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_bluedot":
+                print("here", start_time)
+                print("and", end_time)
                 api_extractor = Bluedot(config, start_time, end_time, sub_directory=data_sub_dir)
             else:
                 raise Exception(f"{process_type} is not a recognized extraction method.")
