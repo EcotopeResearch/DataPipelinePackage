@@ -111,3 +111,26 @@ class Skycentrics(APIExtractor):
             return pd.concat(temp_dfs, ignore_index=False)
         print("No Skycentrics data retrieved for time frame.")
         return pd.DataFrame()
+    
+    def print_all_devices_list(self, config: ConfigManager):
+        """Fetch sensor data from the Skycentrics API and return it as a DataFrame.
+
+        Prints device list from SkyCentrics
+
+        Parameters
+        ----------
+        config : ConfigManager
+            The ConfigManager object used to retrieve the per-request
+            Skycentrics HMAC token via ``config.get_skycentrics_token`` and
+            the device ID via ``config.api_device_id``.
+        """
+        skycentrics_token, date_str = config.get_skycentrics_token(
+            request_str=f'GET /api/devices/ HTTP/1.1',
+            date_str=None)
+        response = requests.get(
+            f'https://api.skycentrics.com/api/devices/',
+            headers={'Date': date_str, 'x-sc-api-token': skycentrics_token, 'Accept': 'application/gzip'})
+        if response.status_code == 200:
+            print(response.content)
+        else:
+            print(f"Failed to make GET request. Status code: {response.status_code} {response.json()}")

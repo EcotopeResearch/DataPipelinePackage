@@ -288,7 +288,8 @@ class Alarm:
             element_id = 'No ID'
             parts = row['variable_name'].split('_')
             if len(parts) <= 1:
-                raise Exception(f"Improper variable name for '{row['variable_name']}', mustt be in form '[Unit Type]_[Element Identifier]' (e.g. 'Temp_HPWH' or 'PowerIn_SwingTank1').")
+                if len(parts) < 1 or parts[0] != 'SystemCOP':
+                    raise Exception(f"Improper variable name for '{row['variable_name']}', must be in form '[Unit Type]_[Element Identifier]' (e.g. 'Temp_HPWH' or 'PowerIn_SwingTank1').")
             if parts[0] == "PowerIn" and parts[1] == "Total":
                 # total power is own catagory
                 if seen_total_power:

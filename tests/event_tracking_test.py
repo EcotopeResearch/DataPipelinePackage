@@ -157,13 +157,14 @@ def test_flag_abnormal_COP(mock_config_manager):
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings','meh'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment', 'SystemCOP', 'serious_var_4','serious_var_5'],
-                        'high_alarm': [5, None, 3,None,45]})
+                        'high_alarm': [5, None, 3,None,45],
+                        'alarm_codes': ['ABNRMCP','ABNRMCP','ABNRMCP:0.1-3.9','','']})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
-        df = pd.DataFrame({'COP_Equipment': [float('inf'), 4, 120],
+        df = pd.DataFrame({'COP_Equipment': [float('inf'), 4, 1.4],
                         'serious_var_2': [2, 2, 90],
-                        'SystemCOP': [4, 2.4, 2.7],
+                        'SystemCOP': [4, 0.5, 2.7],
                         'COP_Boundary': [4.8, 2, -1]})
         df.index = timestamps
         
@@ -175,7 +176,7 @@ def test_flag_abnormal_COP(mock_config_manager):
                         'alarm_type': ['ABNRMCP']*4,
                         'event_detail': [
                                         "Unexpected COP Value detected: COP_Equipment = inf",
-                                        "Unexpected COP Value detected: COP_Equipment = 120.0",
+                                        "Unexpected COP Value detected: COP_Equipment = 1.4",
                                         "Unexpected COP Value detected: SystemCOP = 4.0",
                                         "Unexpected COP Value detected: COP_Boundary = -1.0"
                                         ],
@@ -445,7 +446,7 @@ def test_flag_abnormal_COP_all_null_values(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['cop1', 'cop2', 'cop3'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment', 'SystemCOP'],
-                        'high_alarm': [5, None, 3]})
+                        'alarm_codes': ['ABNRMCP', 'ABNRMCP', 'ABNRMCP']})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -466,7 +467,7 @@ def test_flag_abnormal_COP_all_nan_values(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['cop1', 'cop2', 'cop3'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment', 'SystemCOP'],
-                        'high_alarm': [5, 4.5, 3]})
+                        'alarm_codes': ['ABNRMCP', 'ABNRMCP', 'ABNRMCP']})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])
@@ -658,13 +659,13 @@ def test_power_ratio_alarm_all_nan_alarm_codes(mock_config_manager):
         assert event_df.empty
 
 @patch('ecopipeline.ConfigManager')
-def test_flag_abnormal_COP_all_null_high_alarm(mock_config_manager):
+def test_flag_abnormal_COP_no_alarms_triggered(mock_config_manager):
     """Test that flag_abnormal_COP uses default bounds when high_alarm column is all null"""
     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['cop1', 'cop2'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment'],
-                        'high_alarm': [None, None]})
+                        'alarm_codes': ['ABNRMCP', 'ABNRMCP']})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01 00:00','2022-01-02 00:00','2022-01-03 00:00'])

@@ -134,7 +134,7 @@ class SOOChange(Alarm):
         for idx, row in bounds_df.iterrows():
             var_name_parts = row['variable_name'].split('_')
             if len(var_name_parts) <= 1:
-                raise Exception(f"Improper variable name for '{row['variable_name']}', mustt be in form '[Unit Type]_[Element Identifier]' (e.g. 'Temp_HPWH' or 'PowerIn_SwingTank1').")
+                raise Exception(f"Improper variable name for '{row['variable_name']}', must be in form '[Unit Type]_[Element Identifier]' (e.g. 'Temp_HPWH' or 'PowerIn_SwingTank1').")
             if var_name_parts[0] == "PowerIn":
                 alarm_code_parts.append(["PowerIn", "No ID"])
             elif var_name_parts[0] == "Temp":

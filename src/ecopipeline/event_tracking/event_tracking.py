@@ -118,7 +118,7 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
 
     return alarm_df
 
-def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: str = "", default_high_bound : float = 4.5, default_low_bound : float = 0) -> pd.DataFrame:
+def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: str = "", default_high_bound : float = 5.5, default_low_bound : float = 1.5) -> pd.DataFrame:
     """
     Detect days with an abnormal coefficient of performance (COP) value.
 
