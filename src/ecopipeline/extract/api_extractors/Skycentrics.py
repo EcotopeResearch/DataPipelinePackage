@@ -92,9 +92,18 @@ class Skycentrics(APIExtractor):
                 f'https://api.skycentrics.com/api/devices/{config.api_device_id}/data?b={start_time_str}&e={end_time_str}&g=1',
                 headers={'Date': date_str, 'x-sc-api-token': skycentrics_token, 'Accept': 'application/gzip'})
             if response.status_code == 200:
-                decompressed_data = gzip.decompress(response.content)
-                json_data = json.loads(decompressed_data)
-                norm_data = pd.json_normalize(json_data, record_path=['sensors'], meta=['time'], meta_prefix='response_')
+                try:
+                    try:
+                        # Sometimes data comes as zip
+                        decompressed_data = gzip.decompress(response.content)
+                        json_data = json.loads(decompressed_data)
+                    except Exception:
+                        # sometimes data comes as json
+                        json_data = json.loads(response.content)
+                    norm_data = pd.json_normalize(json_data, record_path=['sensors'], meta=['time'], meta_prefix='response_')
+                except Exception as e:
+                    norm_data = pd.DataFrame()
+                    print(f'Unable to process data from {start_time_str} to {end_time_str}: {e}')
                 if len(norm_data) != 0:
                     norm_data['time_pt'] = pd.to_datetime(norm_data['response_time'], utc=True)
                     norm_data['time_pt'] = norm_data['time_pt'].dt.tz_convert(self.time_zone)
