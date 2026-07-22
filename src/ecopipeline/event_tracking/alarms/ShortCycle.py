@@ -38,6 +38,7 @@ class ShortCycle(Alarm):
             rows = self.bounds_df[self.bounds_df['variable_name'] == var_name]
             if len(rows) != 1:
                 raise Exception(f"Multiple short cycle alarm codes set for {var_name}")
+            self.record_set_alarm([var_name])
             pwr_thresh = rows.iloc[0]['bound']
             var_pretty = rows.iloc[0]['pretty_name']
             if var_name in df.columns:

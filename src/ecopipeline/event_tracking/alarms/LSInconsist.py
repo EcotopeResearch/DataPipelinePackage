@@ -36,6 +36,7 @@ class LSInconsist(Alarm):
                 continue
 
             var_name = row['variable_name']
+            self.record_set_alarm([var_name])
             pretty_name = row['pretty_name']
             expected_value = row['bound']
 

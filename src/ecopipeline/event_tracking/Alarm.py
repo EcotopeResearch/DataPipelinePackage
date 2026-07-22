@@ -25,6 +25,23 @@ class Alarm:
                 'certainty' : []
             }
         self.bounds_df = self._process_bounds_df_alarm_codes(bounds_df)
+        self.set_alarms ={
+            'alarm_type' : [],
+            'variables' : []
+        }
+    
+    def record_set_alarm(self, variable_triggers : list):
+        if len(variable_triggers) > 0:
+            variable_triggers_str = ';'.join(variable_triggers)
+            if len(self.set_alarms['variables']) > 0 and variable_triggers_str in self.set_alarms['variables']:
+                # alarm already recorded
+                return
+            self.set_alarms['alarm_type'].append(self.alarm_tag)
+            variable_triggers_str = ';'.join(variable_triggers)
+            self.set_alarms['variables'].append(variable_triggers_str)
+
+    def get_alarm_set_df(self) -> pd.DataFrame:
+        return pd.DataFrame(self.set_alarms)
 
     def find_alarms(self, df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager) -> pd.DataFrame:
         """

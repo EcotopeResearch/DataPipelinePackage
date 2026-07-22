@@ -50,6 +50,7 @@ class BalancingValve(Alarm):
             if len(tp_codes) == 1 and tp_codes.iloc[0]['variable_name']in daily_df.columns:
                 tp_var_name = tp_codes.iloc[0]['variable_name']
                 tp_bound = tp_codes.iloc[0]['bound']
+                self.record_set_alarm([tp_var_name] + er_var_names)
                 for day in daily_df.index:
 
                     # Check if all ER variables exist in daily_df
@@ -64,18 +65,20 @@ class BalancingValve(Alarm):
                                                f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(tp_bound * 100):.2f}% of total power.", 
                                                add_one_minute_to_end=False, certainty="low")
                             alarm_triggered = True
-            if len(out_codes) >= 1 and not alarm_triggered:
+            if len(out_codes) >= 1:
                 out_var_names = out_codes['variable_name'].tolist()
-                for day in daily_df.index:
+                self.record_set_alarm(out_var_names + er_var_names)
+                if not alarm_triggered:
+                    for day in daily_df.index:
 
-                    # Check if all ER variables exist in daily_df
-                    if all(var in daily_df.columns for var in er_var_names) and all(var in daily_df.columns for var in out_var_names):
-                        # Sum all ER variables for this day
-                        er_sum = daily_df.loc[day, er_var_names].sum()
-                        out_sum = daily_df.loc[day, out_var_names].sum()
+                        # Check if all ER variables exist in daily_df
+                        if all(var in daily_df.columns for var in er_var_names) and all(var in daily_df.columns for var in out_var_names):
+                            # Sum all ER variables for this day
+                            er_sum = daily_df.loc[day, er_var_names].sum()
+                            out_sum = daily_df.loc[day, out_var_names].sum()
 
-                        # Check if sum of ER >= OUT value
-                        if er_sum > out_sum:
-                            self._add_an_alarm(day, day + timedelta(1), out_codes.iloc[0]['variable_name'], 
-                                               f"Recirculation imbalance: Sum of recirculation equipment power ({er_sum:.2f} kW) exceeds TM heating output ({out_sum:.2f} kW).",
-                                               add_one_minute_to_end=False, certainty="low")
+                            # Check if sum of ER >= OUT value
+                            if er_sum > out_sum:
+                                self._add_an_alarm(day, day + timedelta(1), out_codes.iloc[0]['variable_name'], 
+                                                f"Recirculation imbalance: Sum of recirculation equipment power ({er_sum:.2f} kW) exceeds TM heating output ({out_sum:.2f} kW).",
+                                                add_one_minute_to_end=False, certainty="low")

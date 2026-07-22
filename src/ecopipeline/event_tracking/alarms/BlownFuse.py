@@ -40,6 +40,7 @@ class BlownFuse(Alarm):
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for var_name in self.bounds_df['variable_name'].unique():
+            self.record_set_alarm([var_name])
             for day in daily_df.index:
                 next_day = day + pd.Timedelta(days=1)
                 filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
