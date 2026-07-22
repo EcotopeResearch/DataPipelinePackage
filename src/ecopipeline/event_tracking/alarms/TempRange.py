@@ -40,6 +40,7 @@ class TempRange(Alarm):
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         # Process each unique alarm_code_id
         for dhw_var in self.bounds_df['variable_name'].unique():
+            self.record_set_alarm([dhw_var])
             for day in daily_df.index:
                 next_day = day + pd.Timedelta(days=1)
                 filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]

@@ -19,11 +19,12 @@ from .alarms.TMSetpoint import TMSetpoint
 from .alarms.AbnormalCOP import AbnormalCOP
 from .alarms.PowerRatio import PowerRatio
 from .alarms.Boundary import Boundary
+from ecopipeline.load.AlarmSetLoader import AlarmSetLoader
 
 def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "",
                              default_cop_high_bound : float = 4.5, default_cop_low_bound : float = 0,
                              default_boundary_fault_time : int = 15, day_table_name_header : str = "day",
-                             power_ratio_period_days : int = 7) -> pd.DataFrame:
+                             power_ratio_period_days : int = 7, upload_alarm_set : bool = True) -> pd.DataFrame:
     """
     Run all available alarm detectors and return a combined alarm event DataFrame.
 
@@ -58,6 +59,10 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
         table name (default ``"day"``).
     power_ratio_period_days : int, optional
         Rolling window in days used by the power-ratio alarm (default 7).
+    upload_alarm_set : bool, optional
+        If ``True`` (default), the accumulated alarm-set DataFrame (which
+        variables are configured to trigger each alarm type) is uploaded to
+        the ``alarm_set`` table via ``AlarmSetLoader`` before returning.
 
     Returns
     -------
@@ -89,6 +94,10 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
         bounds_df = bounds_df.loc[bounds_df['system'] == system]
     print('Checking for alarms...')
     alarm_df = _convert_silent_alarm_dict_to_df({})
+    alarm_set = pd.DataFrame({
+            'alarm_type' : [],
+            'variables' : []
+        })
     dict_of_alarms = {}
     dict_of_alarms['boundary'] = Boundary(bounds_df, default_fault_time= default_boundary_fault_time)
     dict_of_alarms['power ratio'] = PowerRatio(bounds_df, day_table_name = config.get_table_name(day_table_name_header), ratio_period_days=power_ratio_period_days)
@@ -110,12 +119,15 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
         # if key in ongoing_COP_exception and _check_if_during_ongoing_cop_alarm(daily_data, config, site_name):
         #     print("Ongoing DATA_LOSS_COP detected. ABNORMAL_COP events will be uploaded")
         specific_alarm_df = value.find_alarms(df, daily_data, config)
+        # print(value.get_alarm_set_df())
+        alarm_set = pd.concat([alarm_set, value.get_alarm_set_df()])
         if len(specific_alarm_df) > 0:
             print(f"Detected {key} alarm(s). Adding to event df...")
             alarm_df = pd.concat([alarm_df, specific_alarm_df])
         else:
             print(f"No {key} alarm(s) detected.")
-
+    if upload_alarm_set:
+        AlarmSetLoader().load_database(config, alarm_set)
     return alarm_df
 
 def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: str = "", default_high_bound : float = 5.5, default_low_bound : float = 1.5) -> pd.DataFrame:

@@ -66,12 +66,13 @@ class PowerRatio(Alarm):
                     raise Exception(f"POWRRAT Error: There must be exactly one Total Power variable. Found {len(tp_codes)}")
                 if tp_codes.iloc[0]['variable_name'] in blocks_df.columns:
                     blocks_df[alarm_id] = blocks_df[tp_codes.iloc[0]['variable_name']]
+                    self.record_set_alarm(var_list.tolist())
                     var_list = var_list[var_list != tp_codes.iloc[0]['variable_name']]
                 else:
                    raise Exception(f"POWRRAT Error: PowerIn_Total variable missing from total power ratio") 
             else:
                 blocks_df[alarm_id] = blocks_df[var_list].sum(axis=1)
-
+                self.record_set_alarm(var_list.tolist())
             for variable in var_list:
                 # Calculate ratio for each block
                 blocks_df[f"{variable}_{alarm_id}"] = (blocks_df[variable]/blocks_df[alarm_id]) * 100

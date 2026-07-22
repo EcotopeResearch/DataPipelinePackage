@@ -337,12 +337,14 @@ def _mock_alarm_cls(alarm_df=None):
         alarm_df = pd.DataFrame()
     instance = MagicMock()
     instance.find_alarms.return_value = alarm_df
+    instance.get_alarm_set_df.return_value = pd.DataFrame({'alarm_type': [], 'variables': []})
     cls = MagicMock(return_value=instance)
     return cls
 
 
+@patch("ecopipeline.event_tracking.event_tracking.AlarmSetLoader")
 @patch("pandas.read_csv")
-def test_central_alarm_all_detectors_called_and_results_concatenated(mock_read_csv):
+def test_central_alarm_all_detectors_called_and_results_concatenated(mock_read_csv, mock_alarm_set_loader_cls):
     """All 14 alarm detectors must have find_alarms called; detected events are combined."""
     config = _make_config()
     config.get_table_name.return_value = "day_table"
@@ -390,6 +392,46 @@ def test_central_alarm_all_detectors_called_and_results_concatenated(mock_read_c
     assert not result.empty
     assert "alarm_type" in result.columns
     assert result["alarm_type"].iloc[0] == "boundary"
+
+    mock_alarm_set_loader_cls.return_value.load_database.assert_called_once()
+    uploaded_alarm_set = mock_alarm_set_loader_cls.return_value.load_database.call_args[0][1]
+    assert list(uploaded_alarm_set.columns) == ['alarm_type', 'variables']
+
+
+@patch("ecopipeline.event_tracking.event_tracking.AlarmSetLoader")
+@patch("pandas.read_csv")
+def test_central_alarm_upload_alarm_set_false_skips_loader(mock_read_csv, mock_alarm_set_loader_cls):
+    """upload_alarm_set=False must skip the AlarmSetLoader call entirely."""
+    config = _make_config()
+    config.get_table_name.return_value = "day_table"
+    mock_read_csv.return_value = pd.DataFrame(
+        {"variable_alias": ["sensor_a"], "variable_name": ["Sensor_A"]}
+    )
+
+    empty_cls = _mock_alarm_cls()
+    patches = {
+        "Boundary": empty_cls,
+        "PowerRatio": empty_cls,
+        "AbnormalCOP": empty_cls,
+        "TMSetpoint": empty_cls,
+        "BalancingValve": empty_cls,
+        "HPWHInlet": empty_cls,
+        "HPWHOutlet": empty_cls,
+        "BackupUse": empty_cls,
+        "HPWHOutage": empty_cls,
+        "BlownFuse": empty_cls,
+        "SOOChange": empty_cls,
+        "ShortCycle": empty_cls,
+        "TempRange": empty_cls,
+        "LSInconsist": empty_cls,
+    }
+
+    with patch.multiple("ecopipeline.event_tracking.event_tracking", **patches):
+        central_alarm_df_creator(
+            _make_minute_df(), pd.DataFrame(), config, upload_alarm_set=False
+        )
+
+    mock_alarm_set_loader_cls.return_value.load_database.assert_not_called()
 
 
 # ══════════════════════════════════════════════════════════════════════════════

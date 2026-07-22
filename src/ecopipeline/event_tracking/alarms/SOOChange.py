@@ -101,6 +101,7 @@ class SOOChange(Alarm):
                 off_t_var_name = off_t_codes.iloc[0]['variable_name']
                 off_t_pretty_name = off_t_codes.iloc[0]['pretty_name']
                 off_t_thresh = off_t_codes.iloc[0]['bound']
+                self.record_set_alarm([pow_var_name, on_t_var_name, off_t_var_name])
                 if pow_var_name in filtered_df.columns:
                     power_below = filtered_df[pow_var_name] <= pow_thresh
                     power_above = filtered_df[pow_var_name] > pow_thresh

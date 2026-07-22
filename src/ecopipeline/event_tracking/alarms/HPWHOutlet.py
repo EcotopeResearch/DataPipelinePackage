@@ -58,6 +58,7 @@ class HPWHOutlet(Alarm):
                 t_thresh = t_codes.iloc[0]['bound']
                 if len(t_codes) != 1 or len(pow_codes) != 1:
                     raise Exception(f"Improper alarm codes for balancing valve with id {alarm_id}")
+                self.record_set_alarm([t_var_name, pow_var_name])
                 if pow_var_name in filtered_df.columns and t_var_name in filtered_df.columns:
                     # Check for consecutive minutes where both power and temp exceed thresholds
                     power_mask = filtered_df[pow_var_name] > pow_thresh

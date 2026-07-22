@@ -82,9 +82,10 @@ class BackupUse(Alarm):
                 if len(tp_codes) == 1 and len(pow_codes) >= 1:
                     tp_var_name = tp_codes.iloc[0]['variable_name']
                     tp_bound = tp_codes.iloc[0]['bound']
+                    # Get list of ER variable names
+                    bu_pow_names = pow_codes['variable_name'].tolist()
+                    self.record_set_alarm([tp_var_name] + bu_pow_names)
                     if tp_var_name in daily_df.columns:
-                        # Get list of ER variable names
-                        bu_pow_names = pow_codes['variable_name'].tolist()
 
                         # Check if all ER variables exist in daily_df
                         if all(var in daily_df.columns for var in bu_pow_names):

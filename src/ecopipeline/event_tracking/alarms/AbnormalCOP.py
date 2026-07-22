@@ -38,6 +38,7 @@ class AbnormalCOP(Alarm):
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for bound_var in self.bounds_df['variable_name'].unique():
+            self.record_set_alarm([bound_var])
             rows = self.bounds_df[self.bounds_df['variable_name'] == bound_var]
             bounds = rows.iloc[0]
             low_bound = bounds['bound']

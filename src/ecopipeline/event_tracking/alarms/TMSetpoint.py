@@ -70,6 +70,7 @@ class TMSetpoint(Alarm):
                 trigger_columns_condition_met = False 
                 if len(st_codes) == 1:
                     st_var_name = st_codes.iloc[0]['variable_name']
+                    self.record_set_alarm([st_var_name])
                     st_setpoint = st_codes.iloc[0]['bound']
                     st_pretty_name = st_codes.iloc[0]['pretty_name']
                     # Check if st_var_name exists in filtered_df
@@ -97,6 +98,7 @@ class TMSetpoint(Alarm):
                     sp_pretty_name = sp_codes.iloc[0]['pretty_name']
                     sp_power_indication = sp_codes.iloc[0]['bound']
                     t_setpoint = t_codes.iloc[0]['bound']
+                    self.record_set_alarm([t_var_name, sp_var_name])
                     # Check if both variables exist in df
                     if t_var_name in filtered_df.columns and sp_var_name in filtered_df.columns:
                         trigger_columns_condition_met = True
@@ -124,6 +126,7 @@ class TMSetpoint(Alarm):
             if len(tp_codes) == 1 and len(all_sp_codes) >= 1:
                 tp_var_name = tp_codes.iloc[0]['variable_name']
                 sp_var_names = all_sp_codes['variable_name']
+                self.record_set_alarm([tp_var_name]+sp_var_names.to_list())
                 daily_df['PowerIn_all_TM'] = daily_df[sp_var_names].sum(axis=1)
                 tp_ratio = tp_codes.iloc[0]['bound']
                 # Check if both variables exist in df

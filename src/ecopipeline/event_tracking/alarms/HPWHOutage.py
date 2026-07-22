@@ -58,6 +58,7 @@ class HPWHOutage(Alarm):
             if len(alrm_codes) > 0:
                 for i in range(len(alrm_codes)):
                     alrm_var_name = alrm_codes.iloc[i]['variable_name']
+                    self.record_set_alarm([alrm_var_name])
                     alrm_pretty_name = alrm_codes.iloc[i]['pretty_name']
                     if alrm_var_name in df.columns:
                         for day in daily_df.index:
@@ -97,6 +98,7 @@ class HPWHOutage(Alarm):
                         block_data = daily_df_copy.iloc[start_idx:end_idx].sum()
                         for j in range(len(pow_codes)):
                             pow_var_name = pow_codes.iloc[j]['variable_name']
+                            self.record_set_alarm([tp_var_name, pow_var_name])
                             pow_var_bound = pow_codes.iloc[j]['bound']
                             if block_data[pow_var_name] < block_data[tp_var_name] * pow_var_bound:
                                 self._add_an_alarm(day, day + timedelta(1), pow_var_name, f"Possible Heat Pump failure or outage.", False,

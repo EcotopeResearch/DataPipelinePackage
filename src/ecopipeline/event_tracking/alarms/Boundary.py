@@ -58,6 +58,7 @@ class Boundary(Alarm):
         full_days = pd.to_datetime(pd.Series(idx).dt.normalize().unique())
         for bound_var, bounds in self.bounds_df.iterrows():
             if bound_var in df.columns:
+                self.record_set_alarm([bound_var])
                 lower_mask = df[bound_var] < bounds["low_alarm"]
                 upper_mask = df[bound_var] > bounds["high_alarm"]
                 if pd.isna(bounds['fault_time']):
