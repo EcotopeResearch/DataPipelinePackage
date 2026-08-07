@@ -3,9 +3,17 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import datetime
 from ecopipeline.extract import *
+from ecopipeline.utils.ConfigManager import ConfigManager as _RealConfigManager
 import numpy as np
 from datetime import datetime
 from pandas.testing import assert_frame_equal
+
+
+def _mock_var_names_config(mock_config, var_names_path):
+    """Point a mocked ConfigManager at var_names_path and route get_var_names_df()
+    through the real reader, so patches on pandas.read_csv still take effect."""
+    mock_config.get_var_names_path.return_value = var_names_path
+    mock_config.get_var_names_df.side_effect = lambda: _RealConfigManager.get_var_names_df(mock_config)
 
 def test_json_to_df():
     with patch('gzip.open') as mock_gzip:
@@ -179,7 +187,7 @@ def test_csv_to_df_mb(file_1_df, file_2_df, expected_df):
 
 @patch('ecopipeline.ConfigManager')
 def test_small_planet_control_to_df(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value

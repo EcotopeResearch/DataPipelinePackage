@@ -516,19 +516,21 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
         except json.decoder.JSONDecodeError:
             print('Empty or invalid JSON File')
             return
+        try:
+            norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+            if len(norm_data) != 0:
 
-        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
-        if len(norm_data) != 0:
+                norm_data["time"] = pd.to_datetime(norm_data["time"])
 
-            norm_data["time"] = pd.to_datetime(norm_data["time"])
-
-            norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert(time_zone)
-            norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
-            # Iterate over the index and round up if necessary (work around for json format from sensors)
-            for i in range(len(norm_data.index)):
-                if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
-                    norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
-            temp_dfs.append(norm_data)
+                norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert(time_zone)
+                norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
+                # Iterate over the index and round up if necessary (work around for json format from sensors)
+                for i in range(len(norm_data.index)):
+                    if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
+                        norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
+                temp_dfs.append(norm_data)
+        except Exception:
+            print(f'Could not process {file}. Empty or improperly formated.')
 
     df = pd.concat(temp_dfs, ignore_index=False)
     return df  
@@ -851,12 +853,8 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
         Pandas Dataframe containing data from all files
     """
     print("WARNING: small_planet_control_to_df() will be deprecated in future versions. Please amend pipeline to use central_extract_function() instead.")
-    variable_names_path = config.get_var_names_path()
-    try:
-        variable_data = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        raise Exception("Variable names file Not Found: "+ variable_names_path)
-    
+    variable_data = config.get_var_names_df()
+
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
     if (system != ""):

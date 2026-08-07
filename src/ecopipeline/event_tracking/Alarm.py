@@ -37,7 +37,6 @@ class Alarm:
                 # alarm already recorded
                 return
             self.set_alarms['alarm_type'].append(self.alarm_tag)
-            variable_triggers_str = ';'.join(variable_triggers)
             self.set_alarms['variables'].append(variable_triggers_str)
 
     def get_alarm_set_df(self) -> pd.DataFrame:

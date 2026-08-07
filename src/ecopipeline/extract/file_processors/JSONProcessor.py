@@ -31,19 +31,19 @@ class JSONProcessor(FileProcessor):
             return pd.DataFrame()
         try:
             data = json.load(data)
-        except json.decoder.JSONDecodeError:
-            print('Empty or invalid JSON File')
+            norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
+            if len(norm_data) != 0:
+
+                norm_data["time_pt"] = pd.to_datetime(norm_data[self.raw_time_column])
+
+                norm_data["time_pt"] = norm_data["time_pt"].dt.tz_localize("UTC").dt.tz_convert(self.time_zone)
+                norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
+                # Iterate over the index and round up if necessary (work around for json format from sensors)
+                for i in range(len(norm_data.index)):
+                    if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
+                        norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
+            return norm_data
+        except Exception:
+            print(f'Could not process {file_name}. Empty or invalid JSON File')
             return pd.DataFrame()
         
-        norm_data = pd.json_normalize(data, record_path=['sensors'], meta=['device', 'connection', 'time'])
-        if len(norm_data) != 0:
-
-            norm_data["time_pt"] = pd.to_datetime(norm_data[self.raw_time_column])
-
-            norm_data["time_pt"] = norm_data["time_pt"].dt.tz_localize("UTC").dt.tz_convert(self.time_zone)
-            norm_data = pd.pivot_table(norm_data, index="time_pt", columns="id", values="data")
-            # Iterate over the index and round up if necessary (work around for json format from sensors)
-            for i in range(len(norm_data.index)):
-                if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
-                    norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
-        return norm_data

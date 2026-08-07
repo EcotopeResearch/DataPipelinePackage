@@ -210,12 +210,8 @@ def rename_sensors(original_df: pd.DataFrame, config : ConfigManager, site: str 
         If the Variable_Names.csv file is not found at the path provided by
         ``config``.
     """
-    variable_names_path = config.get_var_names_path()
-    try:
-        variable_data = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        raise Exception("File Not Found: "+ variable_names_path)
-    
+    variable_data = config.get_var_names_df()
+
     if (site != ""):
         variable_data = variable_data.loc[variable_data['site'] == site]
     if (system != ""):
@@ -334,11 +330,10 @@ def remove_outliers(original_df: pd.DataFrame, config : ConfigManager, site: str
         Dataframe with outliers replaced by NaN.
     """
     df = original_df.copy()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return df
 
     if (site != ""):
@@ -415,12 +410,11 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
     """
     df = original_df.copy()
     df = df.sort_index()
-    vars_filename = config.get_var_names_path()
     try:
         # ffill dataframe holds ffill length and changepoint bool
-        ffill_df = pd.read_csv(vars_filename)
-    except FileNotFoundError:
-        print("File Not Found: ", vars_filename)
+        ffill_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return df
 
     ffill_df = ffill_df.loc[:, [
@@ -667,12 +661,11 @@ def nullify_erroneous(original_df: pd.DataFrame, config : ConfigManager) -> pd.D
         Dataframe with known error-sentinel values replaced by NaN.
     """
     df = original_df.copy()
-    vars_filename = config.get_var_names_path()
     try:
         # ffill dataframe holds ffill length and changepoint bool
-        error_df = pd.read_csv(vars_filename)
-    except FileNotFoundError:
-        print("File Not Found: ", vars_filename)
+        error_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return df
 
     error_df = error_df.loc[:, [

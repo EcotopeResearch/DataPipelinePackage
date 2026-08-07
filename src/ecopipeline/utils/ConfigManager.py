@@ -173,6 +173,17 @@ class ConfigManager:
             Absolute path to ``Variable_Names.csv``.
         """
         return f"{self.input_directory}Variable_Names.csv"
+    
+    def get_var_names_df(self) -> pd.DataFrame:
+        variable_names_path = self.get_var_names_path()
+        variable_data = pd.DataFrame()
+        try:
+            variable_data = pd.read_csv(variable_names_path)
+        except UnicodeDecodeError:
+            variable_data = pd.read_csv(variable_names_path,encoding='latin-1')
+        except FileNotFoundError:
+            raise Exception("File Not Found: "+ variable_names_path)
+        return variable_data
 
     def get_event_log_path(self) -> str:
         """Return the full path to the ``Event_Log.csv`` file.

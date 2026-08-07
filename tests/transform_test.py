@@ -3,8 +3,16 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from ecopipeline.transform import *
+from ecopipeline.utils.ConfigManager import ConfigManager as _RealConfigManager
 import numpy as np
 import math
+
+
+def _mock_var_names_config(mock_config, var_names_path):
+    """Point a mocked ConfigManager at var_names_path and route get_var_names_df()
+    through the real reader, so patches on pandas.read_csv still take effect."""
+    mock_config.get_var_names_path.return_value = var_names_path
+    mock_config.get_var_names_df.side_effect = lambda: _RealConfigManager.get_var_names_df(mock_config)
 
 def test_concat_last_row():
     df = pd.DataFrame({'PowerIn_HPWH1': [float('inf'), float('-inf'), math.nan],
@@ -38,7 +46,7 @@ def test_concat_last_row():
 
 @patch('ecopipeline.ConfigManager')
 def test_rename_sensors_no_site(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -74,7 +82,7 @@ def test_rename_sensors_no_site(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_rename_sensors_with_site(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings'],
@@ -108,7 +116,7 @@ def test_rename_sensors_with_site(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_rename_sensors_error(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         # Set the desired response for mock_connect.return_value
         mock_csv.side_effect = FileNotFoundError
@@ -124,7 +132,7 @@ def test_rename_sensors_error(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_rename_sensors_with_system(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         # Set the desired response for mock_connect.return_value
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable', 'silly_strings'],
@@ -264,7 +272,7 @@ def test_convert_timezone_daylight_savings():
 
 @patch('ecopipeline.ConfigManager')
 def test_ffill_missing(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
@@ -292,7 +300,7 @@ def test_ffill_missing(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_ffill_missing_out_of_order(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
@@ -319,7 +327,7 @@ def test_ffill_missing_out_of_order(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_ffill_missing_out_of_order_timeswitch(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'changepoint': [1, 0, None, 1],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
@@ -583,7 +591,7 @@ def test_round_time():
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers(mock_config_manager):
 
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
 
@@ -622,7 +630,7 @@ def test_remove_outliers(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_empty_dataframe(mock_config_manager):
     """Test remove_outliers with an empty dataframe"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
@@ -639,7 +647,7 @@ def test_remove_outliers_empty_dataframe(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_no_bounds_columns(mock_config_manager):
     """Test remove_outliers when dataframe columns don't match any bounds"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -660,7 +668,7 @@ def test_remove_outliers_no_bounds_columns(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_missing_bounds_file(mock_config_manager):
     """Test remove_outliers when the bounds file doesn't exist"""
-    mock_config_manager.get_var_names_path.return_value = "nonexistent/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "nonexistent/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         mock_csv.side_effect = FileNotFoundError
@@ -678,7 +686,7 @@ def test_remove_outliers_missing_bounds_file(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_nan_values(mock_config_manager):
     """Test remove_outliers with NaN values in data"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -702,7 +710,7 @@ def test_remove_outliers_nan_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_boundary_values(mock_config_manager):
     """Test remove_outliers with values exactly at boundaries"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
@@ -724,7 +732,7 @@ def test_remove_outliers_boundary_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_missing_lower_bound(mock_config_manager):
     """Test remove_outliers when lower_bound is missing for some variables"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -748,7 +756,7 @@ def test_remove_outliers_missing_lower_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_missing_upper_bound(mock_config_manager):
     """Test remove_outliers when upper_bound is missing for some variables"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -772,7 +780,7 @@ def test_remove_outliers_missing_upper_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_negative_bounds(mock_config_manager):
     """Test remove_outliers with negative boundary values"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
@@ -794,7 +802,7 @@ def test_remove_outliers_negative_bounds(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_preserves_original_dataframe(mock_config_manager):
     """Test that remove_outliers doesn't modify the original dataframe"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1'],
@@ -821,7 +829,7 @@ def test_remove_outliers_preserves_original_dataframe(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_remove_outliers_multiple_sites(mock_config_manager):
     """Test remove_outliers with site filtering"""
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -856,7 +864,7 @@ def test_remove_outliers_multiple_sites(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_nullify_erroneous(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3', 'serious_var_4'],
                         'error_value': [1, 2, None,None]})

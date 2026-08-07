@@ -94,12 +94,14 @@ class HPWHOutage(Alarm):
                     for i in range(self.ratio_period_days - 1, len(daily_df_copy)):
                         start_idx = i - self.ratio_period_days + 1
                         end_idx = i + 1
-                        day = daily_df_copy.index[i]
+                        start_day = daily_df_copy.index[start_idx]
+                        end_day = daily_df_copy.index[i]
                         block_data = daily_df_copy.iloc[start_idx:end_idx].sum()
                         for j in range(len(pow_codes)):
                             pow_var_name = pow_codes.iloc[j]['variable_name']
                             self.record_set_alarm([tp_var_name, pow_var_name])
                             pow_var_bound = pow_codes.iloc[j]['bound']
                             if block_data[pow_var_name] < block_data[tp_var_name] * pow_var_bound:
-                                self._add_an_alarm(day, day + timedelta(1), pow_var_name, f"Possible Heat Pump failure or outage.", False,
+                                # TODO known issue: if there is a day missing from the daily dataframe, it still reports an error, regardless of how many days apart the start and end day actually are
+                                self._add_an_alarm(start_day, end_day + timedelta(1), pow_var_name, f"Possible Heat Pump failure or outage.", False,
                                                    certainty='med')
