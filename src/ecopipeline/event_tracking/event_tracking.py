@@ -82,11 +82,10 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     if (system != ""):
         if not 'system' in bounds_df.columns:
@@ -157,11 +156,10 @@ def flag_abnormal_COP(daily_data: pd.DataFrame, config : ConfigManager, system: 
         DataFrame of alarm events.  Returns an empty DataFrame if
         ``Variable_Names.csv`` cannot be found.
     """
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = AbnormalCOP(bounds_df, default_high_bound, default_low_bound)
     return alarm.find_alarms(None, daily_data, config)
@@ -204,11 +202,10 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
     if df.empty:
         print("cannot flag boundary alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = Boundary(bounds_df, default_fault_time)
     return alarm.find_alarms(df, None, config)
@@ -273,11 +270,10 @@ def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : Con
     if df.empty:
         print("cannot flag swing tank setpoint alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = TMSetpoint(bounds_df, default_fault_time, default_setpoint, default_power_indication, default_power_ratio)
     return alarm.find_alarms(df, daily_df, config)
@@ -332,11 +328,10 @@ def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
     if df.empty:
         print("cannot flag swing tank setpoint alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = BackupUse(bounds_df,  default_setpoint, default_power_ratio)
     return alarm.find_alarms(df, daily_df, config)
@@ -396,11 +391,10 @@ def flag_HP_outage(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMana
     if df.empty:
         print("cannot flag swing tank setpoint alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     
     alarm = HPWHOutage(bounds_df,  day_table_name, default_power_ratio, ratio_period_days)
@@ -453,11 +447,10 @@ def flag_recirc_balance_valve(daily_df: pd.DataFrame, config : ConfigManager, sy
     if daily_df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = BalancingValve(bounds_df, default_power_ratio)
     return alarm.find_alarms(None, daily_df, config)
@@ -514,11 +507,10 @@ def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Config
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = HPWHInlet(bounds_df, default_power_threshold, default_temp_threshold, fault_time)
     return alarm.find_alarms(df, daily_df, config)
@@ -578,11 +570,10 @@ def flag_hp_outlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Confi
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
 
     alarm = HPWHOutlet(bounds_df, default_power_threshold, default_temp_threshold, fault_time)
@@ -638,11 +629,10 @@ def flag_blown_fuse(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
 
     alarm = BlownFuse(bounds_df, default_power_threshold, default_power_range, default_power_draw,fault_time)
@@ -708,11 +698,10 @@ def flag_unexpected_soo_change(df: pd.DataFrame, daily_df: pd.DataFrame, config 
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
 
     alarm = SOOChange(bounds_df, default_power_threshold, default_on_temp, default_off_temp)
@@ -755,11 +744,10 @@ def flag_ls_mode_inconsistancy(df: pd.DataFrame, daily_df: pd.DataFrame, config 
     if df.empty:
         print("cannot flag load shift mode inconsistency alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     
     alarm = LSInconsist(bounds_df)
@@ -816,11 +804,10 @@ def flag_unexpected_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Conf
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     temp_alarm = TempRange(bounds_df, default_high_temp, default_low_temp, fault_time)
     return temp_alarm.find_alarms(df, daily_df, config)
@@ -872,11 +859,10 @@ def flag_shortcycle(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
     if df.empty:
         print("cannot flag missing balancing valve alarms. Dataframe is empty")
         return pd.DataFrame()
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
 
     short_alarm = ShortCycle(bounds_df, default_power_threshold, short_cycle_time)
@@ -942,11 +928,10 @@ def power_ratio_alarm(daily_df: pd.DataFrame, config : ConfigManager, day_table_
         DataFrame of alarm events.  Returns an empty DataFrame if no alarms
         are triggered or ``Variable_Names.csv`` cannot be found.
     """
-    variable_names_path = config.get_var_names_path()
     try:
-        bounds_df = pd.read_csv(variable_names_path)
-    except FileNotFoundError:
-        print("File Not Found: ", variable_names_path)
+        bounds_df = config.get_var_names_df()
+    except Exception as e:
+        print(e)
         return pd.DataFrame()
     alarm = PowerRatio(bounds_df, day_table_name, ratio_period_days)
     return alarm.find_alarms(None, daily_df, config)

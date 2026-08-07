@@ -17,6 +17,7 @@ from ecopipeline.extract.extract import central_extract_function
 from ecopipeline.transform.transform import central_transform_function
 from ecopipeline.load.load import central_load_function
 from ecopipeline.event_tracking.event_tracking import central_alarm_df_creator
+from ecopipeline.utils.ConfigManager import ConfigManager as _RealConfigManager
 
 
 # ─────────────────────────── shared helpers ──────────────────────────────────
@@ -36,6 +37,8 @@ def _make_config(
         "day": day_table,
     }.get(key, f"{key}_table")
     config.get_var_names_path.return_value = var_names_path
+    # route get_var_names_df() through the real reader so pandas.read_csv patches apply
+    config.get_var_names_df.side_effect = lambda: _RealConfigManager.get_var_names_df(config)
     return config
 
 

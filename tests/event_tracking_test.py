@@ -3,12 +3,20 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from ecopipeline.event_tracking import *
+from ecopipeline.utils.ConfigManager import ConfigManager as _RealConfigManager
 import numpy as np
 import math
 
+
+def _mock_var_names_config(mock_config, var_names_path):
+    """Point a mocked ConfigManager at var_names_path and route get_var_names_df()
+    through the real reader, so patches on pandas.read_csv still take effect."""
+    mock_config.get_var_names_path.return_value = var_names_path
+    mock_config.get_var_names_df.side_effect = lambda: _RealConfigManager.get_var_names_df(mock_config)
+
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -40,7 +48,7 @@ def test_flag_boundary_alarms(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_with_fault_times(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -72,7 +80,7 @@ def test_flag_boundary_alarms_with_fault_times(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_ratio_alarms(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -113,7 +121,7 @@ def test_flag_ratio_alarms(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -151,7 +159,7 @@ def test_flag_ratio_alarms_ignore_other_alarm_types(mock_config_manager):
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_abnormal_COP(mock_config_manager):
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
 
         # Set the desired response for mock_connect.return_value
@@ -198,7 +206,7 @@ def test_flag_abnormal_COP(mock_config_manager):
 
 # # @patch('ecopipeline.ConfigManager')
 # # def test_central_alarm_function(mock_config_manager, mocker):
-# #     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+# #     _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
 # #     mock_config_manager.get_table_name.return_value = "fake_daily_table"
 # #     cursor_mock = MagicMock()
 # #     con_mock = MagicMock()
@@ -279,7 +287,7 @@ def test_flag_abnormal_COP(mock_config_manager):
 
 # # @patch('ecopipeline.ConfigManager')
 # # def test_central_alarm_function_with_ongoing_cop_data_loss(mock_config_manager, mocker):
-# #     mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+# #     _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
 # #     mock_config_manager.get_table_name.return_value = "fake_daily_table"
 # #     cursor_mock = MagicMock()
 # #     con_mock = MagicMock()
@@ -353,7 +361,7 @@ def test_flag_abnormal_COP(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_null_values(mock_config_manager):
     """Test that flag_boundary_alarms returns empty dataframe when all values in a column are null"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name'],
                         'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -374,7 +382,7 @@ def test_flag_boundary_alarms_all_null_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_nan_values(mock_config_manager):
     """Test that flag_boundary_alarms returns empty dataframe when all values in a column are NaN"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name'],
                         'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -396,7 +404,7 @@ def test_flag_boundary_alarms_all_nan_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_power_ratio_alarm_all_null_values(mock_config_manager):
     """Test that power_ratio_alarm returns empty dataframe when all energy values are null"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
                         'variable_name': ['PowerIn_HPWH1', 'serious_var_2', 'PowerIn_HPWH2'],
@@ -418,7 +426,7 @@ def test_power_ratio_alarm_all_null_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_power_ratio_alarm_all_zero_values(mock_config_manager):
     """Test that power_ratio_alarm handles all zero energy values gracefully (no division by zero)"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
                         'variable_name': ['PowerIn_HPWH1', 'serious_var_2', 'PowerIn_HPWH2'],
@@ -442,7 +450,7 @@ def test_power_ratio_alarm_all_zero_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_abnormal_COP_all_null_values(mock_config_manager):
     """Test that flag_abnormal_COP returns empty dataframe when all COP values are null"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['cop1', 'cop2', 'cop3'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment', 'SystemCOP'],
@@ -463,7 +471,7 @@ def test_flag_abnormal_COP_all_null_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_abnormal_COP_all_nan_values(mock_config_manager):
     """Test that flag_abnormal_COP returns empty dataframe when all COP values are NaN"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['cop1', 'cop2', 'cop3'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment', 'SystemCOP'],
@@ -484,7 +492,7 @@ def test_flag_abnormal_COP_all_nan_values(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_mixed_null_and_valid(mock_config_manager):
     """Test that flag_boundary_alarms handles mixed null and valid values correctly"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G'],
                         'variable_name': ['serious_var_1'],
@@ -509,7 +517,7 @@ def test_flag_boundary_alarms_mixed_null_and_valid(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_empty_dataframe(mock_config_manager):
     """Test that flag_boundary_alarms handles empty dataframe gracefully"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G'],
                         'variable_name': ['serious_var_1'],
@@ -528,7 +536,7 @@ def test_flag_boundary_alarms_empty_dataframe(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_null_low_alarm(mock_config_manager):
     """Test that flag_boundary_alarms handles all null low_alarm values"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name'],
                         'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -551,7 +559,7 @@ def test_flag_boundary_alarms_all_null_low_alarm(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_null_high_alarm(mock_config_manager):
     """Test that flag_boundary_alarms handles all null high_alarm values"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name'],
                         'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -574,7 +582,7 @@ def test_flag_boundary_alarms_all_null_high_alarm(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_null_both_alarms(mock_config_manager):
     """Test that flag_boundary_alarms handles all null for both low_alarm and high_alarm"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name'],
                         'variable_name': ['serious_var_1', 'serious_var_2'],
@@ -596,7 +604,7 @@ def test_flag_boundary_alarms_all_null_both_alarms(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_boundary_alarms_all_null_fault_time(mock_config_manager):
     """Test that flag_boundary_alarms uses default_fault_time when fault_time column is all null"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G'],
                         'variable_name': ['serious_var_1'],
@@ -619,7 +627,7 @@ def test_flag_boundary_alarms_all_null_fault_time(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_power_ratio_alarm_all_null_alarm_codes(mock_config_manager):
     """Test that power_ratio_alarm returns empty when all alarm_codes are null"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3'],
@@ -640,7 +648,7 @@ def test_power_ratio_alarm_all_null_alarm_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_power_ratio_alarm_all_nan_alarm_codes(mock_config_manager):
     """Test that power_ratio_alarm returns empty when all alarm_codes are NaN"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['0X53G', 'silly_name', 'silly_varriable'],
                         'variable_name': ['serious_var_1', 'serious_var_2', 'serious_var_3'],
@@ -661,7 +669,7 @@ def test_power_ratio_alarm_all_nan_alarm_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_abnormal_COP_no_alarms_triggered(mock_config_manager):
     """Test that flag_abnormal_COP uses default bounds when high_alarm column is all null"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_alias': ['cop1', 'cop2'],
                         'variable_name': ['COP_Boundary', 'COP_Equipment'],
@@ -682,7 +690,7 @@ def test_flag_abnormal_COP_no_alarms_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_no_TMNSTPT_codes(mock_config_manager):
     """Test that flag_high_tm_setpoint returns empty dataframe when no TMNSTPT alarm codes exist"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'var_2', 'var_3'],
@@ -706,7 +714,7 @@ def test_flag_high_tm_setpoint_no_TMNSTPT_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
     """Test T and SP alarm when temperature is high while powered for 3+ minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_SwingTankOutlet', 'PowerIn_SwingTank'],
@@ -736,7 +744,7 @@ def test_flag_high_tm_setpoint_t_and_sp_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
     """Test T and SP with no alarm when conditions not met"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_SwingTankOutlet', 'PowerIn_SwingTank'],
@@ -763,7 +771,7 @@ def test_flag_high_tm_setpoint_t_and_sp_no_alarm(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_st_setpoint_altered(mock_config_manager):
     """Test ST alarm when setpoint is altered for 10+ minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Setpoint_Tank'],
@@ -794,7 +802,7 @@ def test_flag_high_tm_setpoint_st_setpoint_altered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_st_no_alteration(mock_config_manager):
     """Test ST with no alarm when setpoint matches default"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Setpoint_Tank'],
@@ -820,7 +828,7 @@ def test_flag_high_tm_setpoint_st_no_alteration(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_tp_and_sp_high_ratio(mock_config_manager):
     """Test TP and SP alarm when power ratio exceeds threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_ER1', 'PowerIn_ER2', 'PowerIn_Total'],
@@ -854,7 +862,7 @@ def test_flag_high_tm_setpoint_tp_and_sp_high_ratio(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_tp_and_sp_normal_ratio(mock_config_manager):
     """Test TP and SP with no alarm when power ratio is normal"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_ER', 'PowerIn_Total'],
@@ -884,7 +892,7 @@ def test_flag_high_tm_setpoint_tp_and_sp_normal_ratio(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_multiple_TMNSTPT_codes(mock_config_manager):
     """Test multiple TMNSTPT codes separated by semicolons"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_EROutlet', 'PowerIn_ER', 'other_var'],
@@ -911,7 +919,7 @@ def test_flag_high_tm_setpoint_multiple_TMNSTPT_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_improper_format_no_underscore(mock_config_manager):
     """Test that improper TMNSTPT format (no underscore) raises exception"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['tank_temp'],
@@ -935,7 +943,7 @@ def test_flag_high_tm_setpoint_improper_format_no_underscore(mock_config_manager
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_multiple_t_codes_same_id(mock_config_manager):
     """Test that multiple T codes with same ID raises exception"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_Swing_Outlet', 'Temp_SwingOutlet', 'PowerIn_Swing'],
@@ -959,7 +967,7 @@ def test_flag_high_tm_setpoint_multiple_t_codes_same_id(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_empty_dataframe(mock_config_manager):
     """Test that empty dataframe returns empty result"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_Swing_Outlet'],
@@ -977,7 +985,7 @@ def test_flag_high_tm_setpoint_empty_dataframe(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_file_not_found(mock_config_manager):
     """Test that file not found returns empty dataframe"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/nonexistent.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/nonexistent.csv")
     with patch('pandas.read_csv') as mock_csv:
         mock_csv.side_effect = FileNotFoundError("File not found")
 
@@ -996,7 +1004,7 @@ def test_flag_high_tm_setpoint_file_not_found(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager):
     """Test multiple days with multiple alarm types triggered"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_Swing_Outlet', 'PowerIn_Swing', 'PowerIn_Total', 'Setpoint_swing'],
@@ -1038,7 +1046,7 @@ def test_flag_high_tm_setpoint_multiple_days_multiple_alarms(mock_config_manager
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_TMNSTPT_with_two_parts(mock_config_manager):
     """Test TMNSTPT code with only two parts (no ID)"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_Swing_Outlet', 'PowerIn_Swing'],
@@ -1065,7 +1073,7 @@ def test_flag_high_tm_setpoint_TMNSTPT_with_two_parts(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_TMNSTPT_with_different_IDs(mock_config_manager):
     """Test TMNSTPT code with only two parts (no ID)"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_Swing_1_Outlet', 'PowerIn_Swing_1','PowerIn_Swing_2', 'Temp_Swing_2_Outlet'],
@@ -1094,7 +1102,7 @@ def test_flag_high_tm_setpoint_TMNSTPT_with_different_IDs(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_custom_t_bound(mock_config_manager):
     """Test T and SP alarm with custom temperature bound specified after colon"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_Swing_Outlet', 'PowerIn_Swing'],
@@ -1122,7 +1130,7 @@ def test_flag_high_tm_setpoint_custom_t_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_custom_st_bound(mock_config_manager):
     """Test ST alarm with custom setpoint bound specified after colon"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Setpoint_Swing'],
@@ -1152,7 +1160,7 @@ def test_flag_high_tm_setpoint_custom_st_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_custom_tp_ratio_bound(mock_config_manager):
     """Test TP and SP alarm with custom power ratio bound specified after colon"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_Swing', 'PowerIn_Total'],
@@ -1184,7 +1192,7 @@ def test_flag_high_tm_setpoint_custom_tp_ratio_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_high_tm_setpoint_no_custom_bound_uses_default(mock_config_manager):
     """Test that default bounds are used when no custom bound specified"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_SwingOutlet', 'PowerIn_Swing'],
@@ -1213,7 +1221,7 @@ def test_flag_high_tm_setpoint_no_custom_bound_uses_default(mock_config_manager)
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_no_BALVALV_codes(mock_config_manager):
     """Test that flag_recirc_balance_valve returns empty dataframe when no BV alarm codes exist"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
@@ -1233,7 +1241,7 @@ def test_flag_recirc_balance_valve_no_BALVALV_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_alarm_triggered(mock_config_manager):
     """Test ER and OUT alarm when recirculation sum exceeds heating output"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_SwingTank1', 'PowerIn_SwingTank2', 'HeatOut_TM'],
@@ -1258,7 +1266,7 @@ def test_flag_recirc_balance_valve_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_no_alarm(mock_config_manager):
     """Test ER and OUT with no alarm when recirculation is below 95% of heating output"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_SwingTank1', 'PowerIn_SwingTank2', 'HeatOut_TM'],
@@ -1281,7 +1289,7 @@ def test_flag_recirc_balance_valve_no_alarm(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_tp_custom_bound(mock_config_manager):
     """Test BV alarm with TP (total power) and custom bound specified"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_SwingTank1', 'PowerIn_Total'],
@@ -1304,7 +1312,7 @@ def test_flag_recirc_balance_valve_tp_custom_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_tp_default_bound(mock_config_manager):
     """Test that default bound is used for TP when no custom bound specified"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_SwingTank1', 'PowerIn_Total'],
@@ -1328,7 +1336,7 @@ def test_flag_recirc_balance_valve_tp_default_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_multiple_days(mock_config_manager):
     """Test BV alarm with OUT across multiple days"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_SwingTank2', 'HeatOut_TM'],
@@ -1351,7 +1359,7 @@ def test_flag_recirc_balance_valve_multiple_days(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_multiple_out_codes(mock_config_manager):
     """Test that multiple OUT codes with same ID sums their values"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_SwingTank2', 'HeatOut_TM1', 'HeatOut_TM2'],
@@ -1375,7 +1383,7 @@ def test_flag_recirc_balance_valve_multiple_out_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_no_er_codes_error(mock_config_manager):
     """Test that no ER codes raises exception"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['HeatOut_TM'],
@@ -1397,7 +1405,7 @@ def test_flag_recirc_balance_valve_no_er_codes_error(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_empty_dataframe(mock_config_manager):
     """Test that empty dataframe returns empty result"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_ER', 'HeatOut_TM'],
@@ -1414,7 +1422,7 @@ def test_flag_recirc_balance_valve_empty_dataframe(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_file_not_found(mock_config_manager):
     """Test that file not found returns empty dataframe"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/nonexistent.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/nonexistent.csv")
     with patch('pandas.read_csv') as mock_csv:
         mock_csv.side_effect = FileNotFoundError("File not found")
 
@@ -1429,7 +1437,7 @@ def test_flag_recirc_balance_valve_file_not_found(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
     """Test BV alarm with multiple ER variables"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_ER1', 'PowerIn_ER2', 'PowerIn_ER3', 'HeatOut_TM'],
@@ -1454,7 +1462,7 @@ def test_flag_recirc_balance_valve_multiple_er_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_no_HPINLET_codes(mock_config_manager):
     """Test that flag_hp_inlet_temp returns empty dataframe when no HPI alarm codes exist"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
@@ -1477,7 +1485,7 @@ def test_flag_hp_inlet_temp_no_HPINLET_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_alarm_triggered(mock_config_manager):
     """Test HPI alarm when both power and temp exceed thresholds for fault_time minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHinlet'],
@@ -1509,7 +1517,7 @@ def test_flag_hp_inlet_temp_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_no_alarm_temp_low(mock_config_manager):
     """Test no alarm when temperature is below threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_inlet'],
@@ -1538,7 +1546,7 @@ def test_flag_hp_inlet_temp_no_alarm_temp_low(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_no_alarm_power_low(mock_config_manager):
     """Test no alarm when power is below threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_Inlet'],
@@ -1567,7 +1575,7 @@ def test_flag_hp_inlet_temp_no_alarm_power_low(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_custom_bounds(mock_config_manager):
     """Test HPI alarm with custom bounds specified"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
@@ -1599,7 +1607,7 @@ def test_flag_hp_inlet_temp_custom_bounds(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_not_enough_consecutive_minutes(mock_config_manager):
     """Test no alarm when conditions met but not for enough consecutive minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
@@ -1629,7 +1637,7 @@ def test_flag_hp_inlet_temp_not_enough_consecutive_minutes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_multiple_pow_codes_error(mock_config_manager):
     """Test that multiple POW codes with same ID raises exception"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'PowerIn_HPWH', 'Temp_HPWHInlet'],
@@ -1657,7 +1665,7 @@ def test_flag_hp_inlet_temp_multiple_pow_codes_error(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_empty_dataframe(mock_config_manager):
     """Test that empty dataframe returns empty result"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
@@ -1676,7 +1684,7 @@ def test_flag_hp_inlet_temp_empty_dataframe(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_file_not_found(mock_config_manager):
     """Test that file not found returns empty dataframe"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/nonexistent.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/nonexistent.csv")
     with patch('pandas.read_csv') as mock_csv:
         mock_csv.side_effect = FileNotFoundError("File not found")
 
@@ -1695,7 +1703,7 @@ def test_flag_hp_inlet_temp_file_not_found(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_custom_fault_time(mock_config_manager):
     """Test HPI alarm with custom fault_time parameter"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
@@ -1724,7 +1732,7 @@ def test_flag_hp_inlet_temp_custom_fault_time(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
     """Test no alarm when condition is intermittent and not consecutive"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHInlet'],
@@ -1755,7 +1763,7 @@ def test_flag_hp_inlet_temp_intermittent_condition(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_backup_use_no_IMBCKUP_codes(mock_config_manager):
     """Test that flag_backup_use returns empty dataframe when no BU alarm codes exist"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['var_1', 'var_2', 'var_3'],
@@ -1778,7 +1786,7 @@ def test_flag_backup_use_no_IMBCKUP_codes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_backup_use_st_alarm_triggered(mock_config_manager):
     """Test BU ST alarm when setpoint is altered for 10+ consecutive minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Setpoint_BU'],
@@ -1810,7 +1818,7 @@ def test_flag_backup_use_st_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_backup_use_st_alarm_not_triggered(mock_config_manager):
     """Test no ST alarm when setpoint altered for less than 10 consecutive minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Setpoint_BU'],
@@ -1840,7 +1848,7 @@ def test_flag_backup_use_st_alarm_not_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_backup_use_tp_pow_alarm_triggered(mock_config_manager):
     """Test TP+POW alarm when backup power exceeds ratio of total power"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_BU1', 'PowerIn_Total'],
@@ -1872,7 +1880,7 @@ def test_flag_backup_use_tp_pow_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
     """Test blown fuse alarm when element is on but drawing unexpectedly low power"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_Elem'],
@@ -1903,7 +1911,7 @@ def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_blown_fuse_no_alarm_normal_power(mock_config_manager):
     """Test no alarm when element is drawing expected power"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_Elem'],
@@ -1932,7 +1940,7 @@ def test_flag_blown_fuse_no_alarm_normal_power(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_blown_fuse_no_alarm_element_off(mock_config_manager):
     """Test no alarm when element is off (power below threshold)"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_Elem'],
@@ -1961,7 +1969,7 @@ def test_flag_blown_fuse_no_alarm_element_off(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_alarm_on_turn_on(mock_config_manager):
     """Test alarm when HP turns on but temperature is far from ON threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
@@ -1995,7 +2003,7 @@ def test_flag_unexpected_soo_change_alarm_on_turn_on(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_no_alarm_temp_within_threshold(mock_config_manager):
     """Test no alarm when HP turns on and temperature is within 5.0 of ON threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
@@ -2026,7 +2034,7 @@ def test_flag_unexpected_soo_change_no_alarm_temp_within_threshold(mock_config_m
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_off_threshold(mock_config_manager):
     """Test no alarm when HP turns on and temperature is within 5.0 of ON threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
@@ -2059,7 +2067,7 @@ def test_flag_unexpected_soo_change_off_threshold(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_no_power_transition(mock_config_manager):
     """Test no alarm when HP power stays constant (no turn on/off)"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
@@ -2090,7 +2098,7 @@ def test_flag_unexpected_soo_change_no_power_transition(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_ls_alarm_type_only_during_event(mock_config_manager):
     """Test that when alarm_id is a load shifting type, only data during those events is analyzed"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'loadUp' event from 01:05 to 01:10
     ls_df = pd.DataFrame({
         'event': ['loadUp'],
@@ -2132,7 +2140,7 @@ def test_flag_unexpected_soo_change_ls_alarm_type_only_during_event(mock_config_
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_ls_alarm_type_no_matching_events(mock_config_manager):
     """Test that when alarm_id is a load shifting type but no matching events exist, no alarms trigger"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'shed' event (not 'loadUp')
     ls_df = pd.DataFrame({
         'event': ['shed'],
@@ -2171,7 +2179,7 @@ def test_flag_unexpected_soo_change_ls_alarm_type_no_matching_events(mock_config
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_non_ls_type_excludes_ls_periods(mock_config_manager):
     """Test that when alarm_id is NOT a load shifting type, load shift periods are excluded"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'loadUp' event from 01:03 to 01:06
     ls_df = pd.DataFrame({
         'event': ['loadUp'],
@@ -2214,7 +2222,7 @@ def test_flag_unexpected_soo_change_non_ls_type_excludes_ls_periods(mock_config_
 @patch('ecopipeline.ConfigManager')
 def test_flag_unexpected_soo_change_non_ls_type_alarm_outside_ls_period(mock_config_manager):
     """Test that when alarm_id is NOT a load shifting type, alarms outside load shift periods are detected"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'shed' event from 01:01 to 01:03
     ls_df = pd.DataFrame({
         'event': ['shed'],
@@ -2257,7 +2265,7 @@ def test_flag_unexpected_soo_change_non_ls_type_alarm_outside_ls_period(mock_con
 @patch('ecopipeline.ConfigManager')
 def test_flag_shortcycle_alarm_triggered(mock_config_manager):
     """Test alarm when HP runs for less than short_cycle_time minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HP'],
@@ -2290,7 +2298,7 @@ def test_flag_shortcycle_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_shortcycle_no_alarm_long_run(mock_config_manager):
     """Test no alarm when HP runs for >= short_cycle_time minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HP'],
@@ -2317,7 +2325,7 @@ def test_flag_shortcycle_no_alarm_long_run(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_shortcycle_no_alarm_hp_always_off(mock_config_manager):
     """Test no alarm when HP never turns on"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HP'],
@@ -2346,7 +2354,7 @@ def test_flag_shortcycle_no_alarm_hp_always_off(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_outlet_temp_alarm_after_warmup(mock_config_manager):
     """Test alarm when outlet temp is low after 10-minute warmup period"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_Outlet'],
@@ -2375,7 +2383,7 @@ def test_flag_hp_outlet_temp_alarm_after_warmup(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_outlet_temp_no_alarm_during_warmup(mock_config_manager):
     """Test no alarm when temp is low only during the 10-minute warmup period"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHOutlet'],
@@ -2403,7 +2411,7 @@ def test_flag_hp_outlet_temp_no_alarm_during_warmup(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_outlet_temp_no_alarm_temp_above_threshold(mock_config_manager):
     """Test no alarm when outlet temp stays above threshold"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH', 'Temp_HPWHOutlet'],
@@ -2431,7 +2439,7 @@ def test_flag_hp_outlet_temp_no_alarm_temp_above_threshold(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_hp_outlet_temp_two_hpwhs_tracked_separately(mock_config_manager):
     """Test that two HPWHs are tracked independently — one alarms, one does not"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['PowerIn_HPWH1', 'Temp_HPWH1_Outlet', 'PowerIn_HPWH2', 'Temp_HPWH2_Outlet'],
@@ -2465,7 +2473,7 @@ def test_flag_hp_outlet_temp_two_hpwhs_tracked_separately(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_HP_outage_alarm_triggered_low_power_ratio(mock_config_manager):
     """Test alarm when HP power ratio falls below threshold over rolling period"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv, \
          patch('ecopipeline.event_tracking.Alarm.Alarm._append_previous_days_to_df') as mock_append:
         csv_df = pd.DataFrame({
@@ -2499,7 +2507,7 @@ def test_flag_HP_outage_alarm_triggered_low_power_ratio(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_HP_outage_no_alarm_normal_power_ratio(mock_config_manager):
     """Test no alarm when HP power ratio is normal"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv, \
          patch('ecopipeline.event_tracking.Alarm.Alarm._append_previous_days_to_df') as mock_append:
         csv_df = pd.DataFrame({
@@ -2531,7 +2539,7 @@ def test_flag_HP_outage_no_alarm_normal_power_ratio(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_HP_outage_alarm_triggered_nonzero_alrm(mock_config_manager):
     """Test alarm when ALRM variable has non-zero value"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Alarm_HPWH'],
@@ -2561,7 +2569,7 @@ def test_flag_HP_outage_alarm_triggered_nonzero_alrm(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_HP_outage_no_alarm_alrm_all_zero(mock_config_manager):
     """Test no alarm when ALRM variable is all zeros"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Alarm_HPWH'],
@@ -2590,7 +2598,7 @@ def test_flag_HP_outage_no_alarm_alrm_all_zero(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_dhw_unexpected_temp_alarm_above_high_bound(mock_config_manager):
     """Test alarm when DHW temp is above high bound for fault_time consecutive minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_DHW'],
@@ -2617,7 +2625,7 @@ def test_flag_dhw_unexpected_temp_alarm_above_high_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_dhw_unexpected_temp_alarm_below_low_bound(mock_config_manager):
     """Test alarm when DHW temp is below low bound for fault_time consecutive minutes"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_DHW'],
@@ -2644,7 +2652,7 @@ def test_flag_dhw_unexpected_temp_alarm_below_low_bound(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_dhw_unexpected_temp_no_alarm_within_range(mock_config_manager):
     """Test no alarm when DHW temp stays within acceptable range"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
             'variable_name': ['Temp_DHW'],
@@ -2670,7 +2678,7 @@ def test_flag_dhw_unexpected_temp_no_alarm_within_range(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_alarm_triggered(mock_config_manager):
     """Test alarm when variable doesn't match expected value during load shifting event"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'loadUp' event from 01:03 to 01:07
     ls_df = pd.DataFrame({
         'event': ['loadUp'],
@@ -2711,7 +2719,7 @@ def test_flag_ls_mode_inconsistancy_alarm_triggered(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_no_alarm_value_matches(mock_config_manager):
     """Test no alarm when variable matches expected value during load shifting event"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'shed' event from 01:03 to 01:07
     ls_df = pd.DataFrame({
         'event': ['shed'],
@@ -2749,7 +2757,7 @@ def test_flag_ls_mode_inconsistancy_no_alarm_value_matches(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_no_alarm_empty_ls_df(mock_config_manager):
     """Test no alarm when ls_df is empty (no load shifting events)"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     mock_config_manager.get_ls_df.return_value = pd.DataFrame()
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({
@@ -2779,7 +2787,7 @@ def test_flag_ls_mode_inconsistancy_no_alarm_empty_ls_df(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_no_alarm_no_matching_mode(mock_config_manager):
     """Test no alarm when ls_df has events but not for the configured mode"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'shed' event, but alarm code is for 'loadUp'
     ls_df = pd.DataFrame({
         'event': ['shed'],
@@ -2816,7 +2824,7 @@ def test_flag_ls_mode_inconsistancy_no_alarm_no_matching_mode(mock_config_manage
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_multiple_modes(mock_config_manager):
     """Test alarm detection with multiple modes configured"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with both 'loadUp' and 'shed' events
     ls_df = pd.DataFrame({
         'event': ['loadUp', 'shed'],
@@ -2858,7 +2866,7 @@ def test_flag_ls_mode_inconsistancy_multiple_modes(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_normal_mode_alarm(mock_config_manager):
     """Test alarm when variable doesn't match expected value during normal (non-load-shifting) periods"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'loadUp' event from 01:03 to 01:05
     ls_df = pd.DataFrame({
         'event': ['loadUp'],
@@ -2899,7 +2907,7 @@ def test_flag_ls_mode_inconsistancy_normal_mode_alarm(mock_config_manager):
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_normal_mode_no_alarm(mock_config_manager):
     """Test no alarm when variable matches expected value during normal (non-load-shifting) periods"""
-    mock_config_manager.get_var_names_path.return_value = "fake/path/whatever/Variable_Names.csv"
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
     # ls_df with a 'shed' event from 01:04 to 01:07
     ls_df = pd.DataFrame({
         'event': ['shed'],

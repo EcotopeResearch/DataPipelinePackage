@@ -19,8 +19,8 @@ class SmallPlanetCSVProcessor(FileProcessor):
     ----------
     config : ConfigManager
         The ConfigManager object that holds configuration data for the
-        pipeline.  Must provide a path to ``Variable_Names.csv`` via
-        :meth:`~ecopipeline.ConfigManager.get_var_names_path`.
+        pipeline.  Must provide ``Variable_Names.csv`` data via
+        :meth:`~ecopipeline.ConfigManager.get_var_names_df`.
     start_time : datetime, optional
         Earliest filename-encoded timestamp to include.
     end_time : datetime, optional
@@ -54,8 +54,8 @@ class SmallPlanetCSVProcessor(FileProcessor):
     Raises
     ------
     Exception
-        If the ``Variable_Names.csv`` file cannot be found at the path
-        returned by ``config.get_var_names_path()``.
+        If the ``Variable_Names.csv`` file cannot be read by
+        ``config.get_var_names_df()``.
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None,
@@ -66,11 +66,7 @@ class SmallPlanetCSVProcessor(FileProcessor):
         self.system = system
         self.time_zone = time_zone
 
-        variable_names_path = config.get_var_names_path()
-        try:
-            variable_data = pd.read_csv(variable_names_path)
-        except FileNotFoundError:
-            raise Exception("Variable names file Not Found: " + variable_names_path)
+        variable_data = config.get_var_names_df()
 
         if site != "":
             variable_data = variable_data.loc[variable_data['site'] == site]
