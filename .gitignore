@@ -126,3 +126,6 @@ dmypy.json
 
 nolan_test.py
 config.ini
+
+# Claude Code per-developer settings (shared settings.json is still tracked)
+.claude/settings.local.json
