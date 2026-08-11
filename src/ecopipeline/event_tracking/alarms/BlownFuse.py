@@ -41,36 +41,19 @@ class BlownFuse(Alarm):
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for var_name in self.bounds_df['variable_name'].unique():
             self.record_set_alarm([var_name])
-            for day in daily_df.index:
-                next_day = day + pd.Timedelta(days=1)
-                filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
-                rows = self.bounds_df[self.bounds_df['variable_name'] == var_name]
-                expected_power_draw = rows.iloc[0]['bound']
-                if len(rows) != 1:
-                    raise Exception(f"Multiple blown fuse alarm codes for {var_name}")
-                if var_name in filtered_df.columns:
-                    # Check for consecutive minutes where both power and temp exceed thresholds
-                    power_on_mask = filtered_df[var_name] > self.default_power_threshold
-                    unexpected_power_mask = filtered_df[var_name] < expected_power_draw - self.default_power_range
-                    combined_mask = power_on_mask & unexpected_power_mask
+            rows = self.bounds_df[self.bounds_df['variable_name'] == var_name]
+            if len(rows) != 1:
+                raise Exception(f"Multiple blown fuse alarm codes for {var_name}")
+            expected_power_draw = rows.iloc[0]['bound']
+            if var_name in df.columns:
+                # Element is drawing power, but less than the expected draw for its fuse
+                power_on_mask = df[var_name] > self.default_power_threshold
+                unexpected_power_mask = df[var_name] < expected_power_draw - self.default_power_range
+                combined_mask = power_on_mask & unexpected_power_mask
 
-                    # Check for fault_time consecutive minutes
-                    consecutive_condition = combined_mask.rolling(window=self.fault_time).min() == 1
-                    if consecutive_condition.any():
-
-                         # Find all streaks of consecutive True values
-                        group = (consecutive_condition != consecutive_condition.shift()).cumsum()
-
-                        # Iterate through each streak and add an alarm for each
-                        for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
-                            streak_indices = consecutive_condition[group == group_id].index
-                            start_time = streak_indices[0] - pd.Timedelta(minutes=self.fault_time-1)
-                            end_time = streak_indices[-1]
-
-                            self._add_an_alarm(start_time, end_time, var_name,
-                                f"Blown Fuse: {var_name} had a power draw less than {expected_power_draw - self.default_power_range:.1f} while element was ON starting at {start_time}.",
-                                certainty="high")
-                            
-                        # first_true_index = consecutive_condition.idxmax()
-                        # adjusted_time = first_true_index - pd.Timedelta(minutes=self.fault_time-1)
-                        # _add_an_alarm(alarms, day, var_name, f"Blown Fuse: {var_name} had a power draw less than {expected_power_draw - self.default_power_range:.1f} while element was ON starting at {adjusted_time}.")
+                # fault_time is a duration in minutes, so the sample interval of the data does
+                # not change the result, and a data gap is never counted as fault time
+                for start_time, end_time, _ in self._iter_sustained_streaks(combined_mask, self.fault_time):
+                    self._add_an_alarm(start_time, end_time, var_name,
+                        f"Blown Fuse: {var_name} had a power draw less than {expected_power_draw - self.default_power_range:.1f} while element was ON starting at {start_time}.",
+                        add_one_interval_to_end=False, certainty="high")

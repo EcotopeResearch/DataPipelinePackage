@@ -39,11 +39,15 @@ class TMSetpoint(Alarm):
     default_power_ratio : float
         Default ratio threshold for PowerIn_Total variables when no bound is specified (default 0.4).
         Alarm triggers when TM power / total power exceeds this threshold.
+    setpoint_fault_time : int
+        Number of minutes a Setpoint variable must differ from its expected value before
+        triggering an alarm (default 10).
     """
     def __init__(self, bounds_df : pd.DataFrame, default_fault_time : int = 3, default_setpoint : float = 130.0, default_power_indication : float = 1.0,
-                             default_power_ratio : float = 0.4):
+                             default_power_ratio : float = 0.4, setpoint_fault_time : int = 10):
         alarm_tag = 'TMNSTPT'
         self.default_fault_time = default_fault_time
+        self.setpoint_fault_time = setpoint_fault_time
         type_default_dict = {'Temp' : default_setpoint,
                  'PowerIn': default_power_indication,
                  'PowerIn_Total': default_power_ratio,
@@ -51,91 +55,73 @@ class TMSetpoint(Alarm):
         super().__init__(bounds_df, alarm_tag,type_default_dict, element_id_matching = True)
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
-        for day in daily_df.index:
-            next_day = day + pd.Timedelta(days=1)
-            filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
-            tp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn_Total']
-            all_sp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn']
-            for alarm_id in self.bounds_df['alarm_code_id'].unique():
-                id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
+        tp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn_Total']
+        all_sp_codes = self.bounds_df[self.bounds_df['alarm_code_type'] == 'PowerIn']
 
-                # Get T and SP alarm codes for this ID
-                t_codes = id_group[id_group['alarm_code_type'] == 'Temp']
-                sp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
-                st_codes = id_group[id_group['alarm_code_type'] == 'Setpoint']
+        # Minute level checks. These scan the whole frame at once, so a fault spanning
+        # midnight stays a single event, and their thresholds are durations in minutes
+        # rather than row counts.
+        for alarm_id in self.bounds_df['alarm_code_id'].unique():
+            id_group = self.bounds_df[self.bounds_df['alarm_code_id'] == alarm_id]
 
-                # Check for multiple T or SP codes with same ID
-                if len(t_codes) > 1 or len(sp_codes) > 1 or len(tp_codes) > 1 or len(st_codes) > 1:
-                    raise Exception(f"Improper alarm codes for swing tank setpoint with id {alarm_id}")
-                trigger_columns_condition_met = False 
-                if len(st_codes) == 1:
-                    st_var_name = st_codes.iloc[0]['variable_name']
-                    self.record_set_alarm([st_var_name])
-                    st_setpoint = st_codes.iloc[0]['bound']
-                    st_pretty_name = st_codes.iloc[0]['pretty_name']
-                    # Check if st_var_name exists in filtered_df
-                    if st_var_name in filtered_df.columns:
-                        trigger_columns_condition_met = True
-                        # Check if setpoint was altered for over 10 minutes
-                        altered_mask = filtered_df[st_var_name] != st_setpoint
-                        consecutive_condition = altered_mask.rolling(window=10).min() == 1
-                        if consecutive_condition.any():
-                            # Find all consecutive groups where condition is true
-                            group = (consecutive_condition != consecutive_condition.shift()).cumsum()
-                            for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
-                                streak_indices = consecutive_condition[group == group_id].index
-                                start_time = streak_indices[0] - pd.Timedelta(minutes=9)
-                                end_time = streak_indices[-1]
-                                streak_length = len(streak_indices) + 9
-                                actual_value = filtered_df.loc[streak_indices[0], st_var_name]
-                                self._add_an_alarm(start_time, end_time, st_var_name,
-                                    f"Setpoint altered: {st_pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} (expected {st_setpoint}).")
-                # Check if we have both T and SP
-                if len(t_codes) == 1 and len(sp_codes) == 1:
-                    t_var_name = t_codes.iloc[0]['variable_name']
-                    t_pretty_name = t_codes.iloc[0]['pretty_name']
-                    sp_var_name = sp_codes.iloc[0]['variable_name']
-                    sp_pretty_name = sp_codes.iloc[0]['pretty_name']
-                    sp_power_indication = sp_codes.iloc[0]['bound']
-                    t_setpoint = t_codes.iloc[0]['bound']
-                    self.record_set_alarm([t_var_name, sp_var_name])
-                    # Check if both variables exist in df
-                    if t_var_name in filtered_df.columns and sp_var_name in filtered_df.columns:
-                        trigger_columns_condition_met = True
-                        # Check for consecutive minutes where SP > default_power_indication
-                        # AND T >= default_setpoint
-                        power_mask = filtered_df[sp_var_name] >= sp_power_indication
-                        temp_mask = filtered_df[t_var_name] >= t_setpoint
-                        combined_mask = power_mask & temp_mask
+            # Get T and SP alarm codes for this ID
+            t_codes = id_group[id_group['alarm_code_type'] == 'Temp']
+            sp_codes = id_group[id_group['alarm_code_type'] == 'PowerIn']
+            st_codes = id_group[id_group['alarm_code_type'] == 'Setpoint']
 
-                        # Check for fault_time consecutive minutes
-                        consecutive_condition = combined_mask.rolling(window=self.default_fault_time).min() == 1
-                        if consecutive_condition.any():
-                            # Find all consecutive groups where condition is true
-                            group = (consecutive_condition != consecutive_condition.shift()).cumsum()
-                            for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
-                                streak_indices = consecutive_condition[group == group_id].index
-                                start_time = streak_indices[0] - pd.Timedelta(minutes=self.default_fault_time - 1)
-                                end_time = streak_indices[-1]
-                                streak_length = len(streak_indices) + self.default_fault_time - 1
-                                actual_temp = filtered_df.loc[streak_indices[0], t_var_name]
-                                self._add_an_alarm(start_time, end_time, sp_var_name,
-                                    f"High TM Setpoint: {sp_pretty_name} showed draw for {streak_length} minutes starting at {start_time} while {t_pretty_name} was {actual_temp:.1f} F (above {t_setpoint} F).",
-                                    certainty="med")
-
-            if len(tp_codes) == 1 and len(all_sp_codes) >= 1:
-                tp_var_name = tp_codes.iloc[0]['variable_name']
-                sp_var_names = all_sp_codes['variable_name']
-                self.record_set_alarm([tp_var_name]+sp_var_names.to_list())
-                daily_df['PowerIn_all_TM'] = daily_df[sp_var_names].sum(axis=1)
-                tp_ratio = tp_codes.iloc[0]['bound']
+            # Check for multiple T or SP codes with same ID
+            if len(t_codes) > 1 or len(sp_codes) > 1 or len(tp_codes) > 1 or len(st_codes) > 1:
+                raise Exception(f"Improper alarm codes for swing tank setpoint with id {alarm_id}")
+            if len(st_codes) == 1:
+                st_var_name = st_codes.iloc[0]['variable_name']
+                self.record_set_alarm([st_var_name])
+                st_setpoint = st_codes.iloc[0]['bound']
+                st_pretty_name = st_codes.iloc[0]['pretty_name']
+                # Check if st_var_name exists in df
+                if st_var_name in df.columns:
+                    # Check if setpoint was altered for setpoint_fault_time minutes
+                    altered_mask = df[st_var_name] != st_setpoint
+                    for start_time, end_time, duration in self._iter_sustained_streaks(altered_mask, self.setpoint_fault_time):
+                        actual_value = df.loc[start_time, st_var_name]
+                        self._add_an_alarm(start_time, end_time, st_var_name,
+                            f"Setpoint altered: {st_pretty_name} was {actual_value} for {duration:.0f} minutes starting at {start_time} (expected {st_setpoint}).",
+                            add_one_interval_to_end=False)
+            # Check if we have both T and SP
+            if len(t_codes) == 1 and len(sp_codes) == 1:
+                t_var_name = t_codes.iloc[0]['variable_name']
+                t_pretty_name = t_codes.iloc[0]['pretty_name']
+                sp_var_name = sp_codes.iloc[0]['variable_name']
+                sp_pretty_name = sp_codes.iloc[0]['pretty_name']
+                sp_power_indication = sp_codes.iloc[0]['bound']
+                t_setpoint = t_codes.iloc[0]['bound']
+                self.record_set_alarm([t_var_name, sp_var_name])
                 # Check if both variables exist in df
-                if tp_var_name in daily_df.columns:
-                    trigger_columns_condition_met = True
+                if t_var_name in df.columns and sp_var_name in df.columns:
+                    # Equipment drawing power while its temperature sits at or above setpoint
+                    power_mask = df[sp_var_name] >= sp_power_indication
+                    temp_mask = df[t_var_name] >= t_setpoint
+                    combined_mask = power_mask & temp_mask
+
+                    for start_time, end_time, duration in self._iter_sustained_streaks(combined_mask, self.default_fault_time):
+                        actual_temp = df.loc[start_time, t_var_name]
+                        self._add_an_alarm(start_time, end_time, sp_var_name,
+                            f"High TM Setpoint: {sp_pretty_name} showed draw for {duration:.0f} minutes starting at {start_time} while {t_pretty_name} was {actual_temp:.1f} F (above {t_setpoint} F).",
+                            add_one_interval_to_end=False, certainty="med")
+
+        # Daily power ratio check. This one is genuinely per day, so it keeps its day loop.
+        if len(tp_codes) == 1 and len(all_sp_codes) >= 1:
+            tp_var_name = tp_codes.iloc[0]['variable_name']
+            sp_var_names = all_sp_codes['variable_name']
+            self.record_set_alarm([tp_var_name]+sp_var_names.to_list())
+            tm_power = daily_df[sp_var_names].sum(axis=1)
+            tp_ratio = tp_codes.iloc[0]['bound']
+            # Check if both variables exist in df
+            if tp_var_name in daily_df.columns:
+                for day in daily_df.index:
                     # Check if swing tank power ratio exceeds threshold
-                    if day in daily_df.index and daily_df.loc[day, tp_var_name] != 0:
-                        power_ratio = daily_df.loc[day, 'PowerIn_all_TM'] / daily_df.loc[day, tp_var_name]
+                    if daily_df.loc[day, tp_var_name] != 0:
+                        power_ratio = tm_power.loc[day] / daily_df.loc[day, tp_var_name]
                         if power_ratio > tp_ratio:
                             self._add_an_alarm(day, day + timedelta(1), tp_var_name,
                                 f"High temperature maintenance power ratio: TM heating accounted for {power_ratio * 100:.1f}% of daily power (threshold {tp_ratio * 100}%).",
-                                certainty="low", add_one_minute_to_end = False)
+                                certainty="low", add_one_interval_to_end = False)

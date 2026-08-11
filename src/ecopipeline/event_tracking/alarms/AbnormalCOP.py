@@ -46,4 +46,4 @@ class AbnormalCOP(Alarm):
             for day, day_values in daily_df.iterrows():
                 if bound_var in daily_df.columns and not day_values[bound_var] is None and (day_values[bound_var] > high_bound or day_values[bound_var] < low_bound):
                     alarm_str = f"Unexpected COP Value detected: {bounds['pretty_name']} = {round(day_values[bound_var],2)}"
-                    self._add_an_alarm(day, day + timedelta(1), bound_var, alarm_str, add_one_minute_to_end=False)
+                    self._add_an_alarm(day, day + timedelta(1), bound_var, alarm_str, add_one_interval_to_end=False)

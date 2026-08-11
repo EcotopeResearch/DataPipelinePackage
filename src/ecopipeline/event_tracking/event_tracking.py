@@ -212,7 +212,7 @@ def flag_boundary_alarms(df: pd.DataFrame, config : ConfigManager, default_fault
 
 def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, default_fault_time : int = 3,
                              system: str = "", default_setpoint : float = 130.0, default_power_indication : float = 1.0,
-                             default_power_ratio : float = 0.4) -> pd.DataFrame:
+                             default_power_ratio : float = 0.4, setpoint_fault_time : int = 10) -> pd.DataFrame:
     """
     Detect temperature-maintenance (TM) setpoint violations on swing-tank equipment.
 
@@ -275,11 +275,12 @@ def flag_high_tm_setpoint(df: pd.DataFrame, daily_df: pd.DataFrame, config : Con
     except Exception as e:
         print(e)
         return pd.DataFrame()
-    alarm = TMSetpoint(bounds_df, default_fault_time, default_setpoint, default_power_indication, default_power_ratio)
+    alarm = TMSetpoint(bounds_df, default_fault_time, default_setpoint, default_power_indication, default_power_ratio, setpoint_fault_time)
     return alarm.find_alarms(df, daily_df, config)
 
 def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager,
-                             system: str = "", default_setpoint : float = 130.0, default_power_ratio : float = 0.1) -> pd.DataFrame:
+                             system: str = "", default_setpoint : float = 130.0, default_power_ratio : float = 0.1,
+                             setpoint_fault_time : int = 10) -> pd.DataFrame:
     """
     Detect improper backup heating use based on power consumption and setpoint checks.
 
@@ -333,7 +334,7 @@ def flag_backup_use(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigMan
     except Exception as e:
         print(e)
         return pd.DataFrame()
-    alarm = BackupUse(bounds_df,  default_setpoint, default_power_ratio)
+    alarm = BackupUse(bounds_df,  default_setpoint, default_power_ratio, setpoint_fault_time)
     return alarm.find_alarms(df, daily_df, config)
 
 def flag_HP_outage(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, day_table_name : str, system: str = "", default_power_ratio : float = 0.3,
@@ -516,7 +517,7 @@ def flag_hp_inlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Config
     return alarm.find_alarms(df, daily_df, config)
 
 def flag_hp_outlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,
-                       default_temp_threshold : float = 140.0, fault_time : int = 5) -> pd.DataFrame:
+                       default_temp_threshold : float = 140.0, fault_time : int = 5, warmup_minutes : int = 10) -> pd.DataFrame:
     """
     Detect low heat pump outlet temperature while the heat pump is running.
 
@@ -576,7 +577,7 @@ def flag_hp_outlet_temp(df: pd.DataFrame, daily_df: pd.DataFrame, config : Confi
         print(e)
         return pd.DataFrame()
 
-    alarm = HPWHOutlet(bounds_df, default_power_threshold, default_temp_threshold, fault_time)
+    alarm = HPWHOutlet(bounds_df, default_power_threshold, default_temp_threshold, fault_time, warmup_minutes)
     return alarm.find_alarms(df, daily_df, config)
 
 def flag_blown_fuse(df: pd.DataFrame, daily_df: pd.DataFrame, config : ConfigManager, system: str = "", default_power_threshold : float = 1.0,

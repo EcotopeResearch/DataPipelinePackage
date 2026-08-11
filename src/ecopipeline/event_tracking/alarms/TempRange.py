@@ -41,33 +41,19 @@ class TempRange(Alarm):
         # Process each unique alarm_code_id
         for dhw_var in self.bounds_df['variable_name'].unique():
             self.record_set_alarm([dhw_var])
-            for day in daily_df.index:
-                next_day = day + pd.Timedelta(days=1)
-                filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
-                rows = self.bounds_df[self.bounds_df['variable_name'] == dhw_var]
-                low_bound = rows.iloc[0]['bound']
-                high_bound = rows.iloc[0]['bound2']
-                pretty_name = rows.iloc[0]['pretty_name']
+            rows = self.bounds_df[self.bounds_df['variable_name'] == dhw_var]
+            low_bound = rows.iloc[0]['bound']
+            high_bound = rows.iloc[0]['bound2']
+            pretty_name = rows.iloc[0]['pretty_name']
 
-                if dhw_var in filtered_df.columns:
-                    # Check if temp is above high bound or below low bound
-                    out_of_range_mask = (filtered_df[dhw_var] > high_bound) | (filtered_df[dhw_var] < low_bound)
+            if dhw_var in df.columns:
+                # Check if temp is above high bound or below low bound
+                out_of_range_mask = (df[dhw_var] > high_bound) | (df[dhw_var] < low_bound)
 
-                    # Check for fault_time consecutive minutes
-                    consecutive_condition = out_of_range_mask.rolling(window=self.fault_time).min() == 1
-                    if consecutive_condition.any():
-                        # Find all streaks of consecutive True values
-                        group = (consecutive_condition != consecutive_condition.shift()).cumsum()
-
-                        # Iterate through each streak and add an alarm for each
-                        for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
-                            streak_indices = consecutive_condition[group == group_id].index
-                            streak_length = len(streak_indices)
-
-                            # Adjust start time because first (fault_time-1) minutes don't count in window
-                            start_time = streak_indices[0] - pd.Timedelta(minutes=self.fault_time-1)
-                            end_time = streak_indices[-1]
-                            adjusted_streak_length = streak_length + self.fault_time - 1
-
-                            self._add_an_alarm(start_time, end_time, dhw_var,
-                                f"Temperature out of range: {pretty_name} was outside {low_bound}-{high_bound} F for {adjusted_streak_length} consecutive minutes starting at {start_time}.")
+                # Check for fault_time worth of out of range minutes, measured from the
+                # timestamps so the sample interval does not change the result. The whole
+                # frame is scanned at once so a fault spanning midnight stays one event.
+                for start_time, end_time, duration in self._iter_sustained_streaks(out_of_range_mask, self.fault_time):
+                    self._add_an_alarm(start_time, end_time, dhw_var,
+                        f"Temperature out of range: {pretty_name} was outside {low_bound}-{high_bound} F for {duration:.0f} consecutive minutes starting at {start_time}.",
+                        add_one_interval_to_end=False)

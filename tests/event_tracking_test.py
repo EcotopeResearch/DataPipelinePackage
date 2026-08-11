@@ -1878,6 +1878,32 @@ def test_flag_backup_use_tp_pow_alarm_triggered(mock_config_manager):
         assert '10.00%' in event_df.iloc[0]['event_detail']
 
 @patch('ecopipeline.ConfigManager')
+def test_flag_backup_use_daily_ratio_ends_on_the_day_boundary(mock_config_manager):
+    """The daily ratio alarm must cover exactly its day, with no interval added on.
+
+    day + 1 is already the exclusive end, so nothing should extend past midnight. Run on
+    5-minute data, where an added interval would be visible as a 5-minute overhang.
+    """
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_BU1', 'PowerIn_Total'],
+            'alarm_codes': ['IMBCKUP', 'IMBCKUP:0.1'],
+            'pretty_name': ['Backup Power 1', 'Total Power'],
+        })
+        index = pd.date_range('2022-01-01 01:00', periods=6, freq='5min')
+        df = pd.DataFrame({'PowerIn_BU1': [15.0] * 6, 'PowerIn_Total': [100.0] * 6},
+                          index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'PowerIn_BU1': [15.0], 'PowerIn_Total': [100.0]},
+                                index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_backup_use(df, daily_df, mock_config_manager)
+
+        assert len(event_df) == 1
+        assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01')
+        assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02')
+
+@patch('ecopipeline.ConfigManager')
 def test_flag_blown_fuse_alarm_triggered(mock_config_manager):
     """Test blown fuse alarm when element is on but drawing unexpectedly low power"""
     _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
@@ -2674,6 +2700,925 @@ def test_flag_dhw_unexpected_temp_no_alarm_within_range(mock_config_manager):
         event_df = flag_unexpected_temp(minute_df, daily_df, mock_config_manager, fault_time=10)
 
         assert event_df.empty
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  TempRange — sample-interval awareness
+#
+#  fault_time is a duration in MINUTES, not a row count. These tests pin that
+#  down across 1-minute, 5-minute, and changing sample intervals, and verify
+#  that a data gap is never bridged into an alarm.
+# ══════════════════════════════════════════════════════════════════════════════
+
+_TEMP_RANGE_VAR_NAMES = pd.DataFrame({
+    'variable_name': ['Temp_DHW'],
+    'alarm_codes': ['TMPRANG:110-130'],
+    'pretty_name': ['DHW Temperature'],
+})
+
+
+def _run_temp_range(mock_config_manager, index, temps, days, fault_time=10):
+    """Run flag_unexpected_temp over an explicit index/value pair and return the alarm df."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = _TEMP_RANGE_VAR_NAMES.copy()
+
+        minute_df = pd.DataFrame({'Temp_DHW': temps}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0] * len(days)}, index=pd.to_datetime(days))
+
+        return flag_unexpected_temp(minute_df, daily_df, mock_config_manager,
+                                    fault_time=fault_time)
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_1min_exact_fault_time_alarms(mock_config_manager):
+    """1-minute data: exactly fault_time out-of-range samples must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=21, freq='1min')
+    temps = [120] * 5 + [140] * 10 + [120] * 6      # out of range 01:05 - 01:14
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_1min_one_short_of_fault_time_no_alarm(mock_config_manager):
+    """1-minute data: one sample short of fault_time must not alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=21, freq='1min')
+    temps = [120] * 5 + [140] * 9 + [120] * 7       # out of range 01:05 - 01:13 (9 min)
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_5min_two_samples_alarms(mock_config_manager):
+    """5-minute data: two consecutive out-of-range samples span 10 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    temps = [120] + [140] * 2 + [120] * 10          # out of range 01:05 and 01:10
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_5min_single_sample_no_alarm(mock_config_manager):
+    """5-minute data: one out-of-range sample is only 5 minutes and must not alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    temps = [120] + [140] + [120] * 11              # out of range 01:05 only
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_5min_three_samples_alarms(mock_config_manager):
+    """5-minute data: three out-of-range samples represent 15 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    temps = [120] + [140] * 3 + [120] * 9           # out of range 01:05, 01:10, 01:15
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:20')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_data_gap_is_not_bridged(mock_config_manager):
+    """A missing-data gap must break the streak, not be counted as out-of-range time.
+
+    Ten out-of-range samples exist, but they are two five-minute stretches an hour
+    apart. Neither stretch reaches fault_time, so there must be no alarm.
+    """
+    index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+    temps = [140] * 10
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_changing_interval_alarms_across_transition(mock_config_manager):
+    """Changing interval: a run that starts at 5-minute spacing and continues at
+    1-minute spacing must be measured in real time (00:50 - 01:03 = 14 min)."""
+    index = (list(pd.date_range('2022-01-01 00:00', periods=13, freq='5min'))   # 00:00 - 01:00
+             + list(pd.date_range('2022-01-01 01:01', periods=5, freq='1min')))  # 01:01 - 01:05
+    temps = ([120] * 10 + [140] * 3            # out of range 00:50, 00:55, 01:00
+             + [140] * 3 + [120] * 2)          # continues 01:01, 01:02, 01:03
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 00:50')
+
+
+# Documented limitation, intentionally not covered.
+#
+# _iter_sustained_streaks derives max_gap from the modal interval of the whole frame, so a
+# stretch of coarser samples sitting inside a mostly-finer frame reads as a run of gaps and
+# never alarms. Left unaddressed because a single data source is not expected to change its
+# cadence partway through a pull. Different sources have different cadences, and any source
+# can drop out entirely, and both of those cases are handled. If a source ever does switch
+# cadence mid-frame, the fix is a local spacing estimate in place of the frame-wide one:
+#
+#     diff_sec  = mask.index.to_series().diff().dt.total_seconds()
+#     local_sec = diff_sec.rolling(5, center=True, min_periods=1).median()
+#     limit_sec = np.minimum(2 * local_sec, max(fault_minutes - 1, 1) * 60)
+#
+# @patch('ecopipeline.ConfigManager')
+# def test_temp_range_coarse_stretch_inside_fine_frame_alarms(mock_config_manager):
+#     """The frame is mostly 1-minute data, and the out-of-range run sits in a 5-minute
+#     stretch covering 25 real minutes, so it should alarm."""
+#     index = (list(pd.date_range('2022-01-01 01:00', periods=31, freq='1min'))    # 01:00 - 01:30
+#              + list(pd.date_range('2022-01-01 01:35', periods=9, freq='5min')))  # 01:35 - 02:15
+#     temps = [120] * 31 + [140] * 5 + [120] * 4      # out of range 01:35 - 01:55
+#
+#     event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+#
+#     assert len(event_df) == 1
+#     assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:35')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_temp_range_alarm_spans_midnight(mock_config_manager):
+    """A fault straddling midnight is one 13-minute event, not two sub-threshold ones."""
+    index = pd.date_range('2022-01-01 23:55', periods=16, freq='1min')  # 23:55 - 00:10
+    temps = [140] * 13 + [120] * 3                                      # 23:55 - 00:07
+
+    event_df = _run_temp_range(mock_config_manager, index, temps,
+                               ['2022-01-01', '2022-01-02'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:55')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:08')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Boundary / BlownFuse / HPWHInlet — sample-interval awareness
+#
+#  Same three properties as the TempRange block above, for the alarms that share
+#  its sustained-condition shape: fault_time counts minutes rather than rows, a
+#  data gap is never counted as fault time, and midnight is not a boundary.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _run_boundary(mock_config_manager, index, values, fault_time=10):
+    """Run flag_boundary_alarms over an explicit index/value pair."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Temp_Tank'],
+            'variable_alias': ['tank'],
+            'low_alarm': [110],
+            'high_alarm': [130],
+        })
+        df = pd.DataFrame({'Temp_Tank': values}, index=pd.DatetimeIndex(index))
+        return flag_boundary_alarms(df, mock_config_manager, default_fault_time=fault_time)
+
+
+def _run_blown_fuse(mock_config_manager, index, values, days, fault_time=10):
+    """Run flag_blown_fuse over an explicit index/value pair."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_Elem'],
+            'alarm_codes': ['BLWNFSE:30'],
+            'pretty_name': ['Element Power'],
+        })
+        df = pd.DataFrame({'PowerIn_Elem': values}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0] * len(days)}, index=pd.to_datetime(days))
+        return flag_blown_fuse(df, daily_df, mock_config_manager, fault_time=fault_time)
+
+
+def _run_hp_inlet(mock_config_manager, index, powers, temps, days, fault_time=10):
+    """Run flag_hp_inlet_temp over an explicit index/value pair."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWHinlet'],
+            'alarm_codes': ['HPINLET', 'HPINLET'],
+            'pretty_name': ['HP Power', 'HP Inlet Temperature'],
+        })
+        df = pd.DataFrame({'PowerIn_HPWH': powers, 'Temp_HPWHinlet': temps},
+                          index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0] * len(days)}, index=pd.to_datetime(days))
+        return flag_hp_inlet_temp(df, daily_df, mock_config_manager, fault_time=fault_time)
+
+
+@patch('ecopipeline.ConfigManager')
+def test_boundary_5min_two_samples_alarms(mock_config_manager):
+    """5-minute data: two out-of-bounds samples span 10 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    values = [120] + [140] * 2 + [120] * 10         # out of bounds 01:05 and 01:10
+
+    event_df = _run_boundary(mock_config_manager, index, values)
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_boundary_5min_single_sample_no_alarm(mock_config_manager):
+    """5-minute data: one out-of-bounds sample is only 5 minutes and must not alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    values = [120] + [140] + [120] * 11
+
+    event_df = _run_boundary(mock_config_manager, index, values)
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_boundary_data_gap_is_not_bridged(mock_config_manager):
+    """Two five-minute out-of-bounds stretches an hour apart must not merge into an alarm."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+    values = [140] * 10
+
+    event_df = _run_boundary(mock_config_manager, index, values)
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_boundary_alarm_spans_midnight(mock_config_manager):
+    """A boundary fault straddling midnight is one event, not two sub-threshold ones."""
+    index = pd.date_range('2022-01-01 23:55', periods=16, freq='1min')
+    values = [140] * 13 + [120] * 3                 # 23:55 - 00:07
+
+    event_df = _run_boundary(mock_config_manager, index, values)
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:55')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:08')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_boundary_per_variable_fault_time_is_minutes(mock_config_manager):
+    """The per-variable fault_time column is also a duration, not a row count."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Temp_Tank'],
+            'variable_alias': ['tank'],
+            'low_alarm': [110],
+            'high_alarm': [130],
+            'fault_time': [20],
+        })
+        index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+        # 01:05 - 01:20 out of bounds is 20 minutes, exactly the per-variable fault_time
+        df = pd.DataFrame({'Temp_Tank': [120] + [140] * 4 + [120] * 8},
+                          index=pd.DatetimeIndex(index))
+
+        event_df = flag_boundary_alarms(df, mock_config_manager, default_fault_time=10)
+
+        assert len(event_df) == 1
+        assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+        assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:25')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_blown_fuse_5min_two_samples_alarms(mock_config_manager):
+    """5-minute data: two low-draw samples span 10 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    values = [30.0] + [5.0] * 2 + [30.0] * 10       # on but under-drawing 01:05 and 01:10
+
+    event_df = _run_blown_fuse(mock_config_manager, index, values, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_blown_fuse_5min_single_sample_no_alarm(mock_config_manager):
+    """5-minute data: one low-draw sample is only 5 minutes and must not alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    values = [30.0] + [5.0] + [30.0] * 11
+
+    event_df = _run_blown_fuse(mock_config_manager, index, values, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_blown_fuse_data_gap_is_not_bridged(mock_config_manager):
+    """A missing-data gap must not be counted as continued under-draw."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+    values = [5.0] * 10
+
+    event_df = _run_blown_fuse(mock_config_manager, index, values, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_blown_fuse_alarm_spans_midnight(mock_config_manager):
+    """A blown fuse fault straddling midnight is one event."""
+    index = pd.date_range('2022-01-01 23:55', periods=16, freq='1min')
+    values = [5.0] * 13 + [30.0] * 3
+
+    event_df = _run_blown_fuse(mock_config_manager, index, values,
+                               ['2022-01-01', '2022-01-02'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:55')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:08')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_inlet_5min_two_samples_alarms(mock_config_manager):
+    """5-minute data: two hot-inlet samples span 10 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    powers = [1.5] * 13                             # HP on throughout
+    temps = [110] + [120] * 2 + [110] * 10          # above 115 at 01:05 and 01:10
+
+    event_df = _run_hp_inlet(mock_config_manager, index, powers, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+    assert 'for 10 minutes' in event_df.iloc[0]['event_detail']
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_inlet_5min_single_sample_no_alarm(mock_config_manager):
+    """5-minute data: one hot-inlet sample is only 5 minutes and must not alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    powers = [1.5] * 13
+    temps = [110] + [120] + [110] * 11
+
+    event_df = _run_hp_inlet(mock_config_manager, index, powers, temps, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_inlet_data_gap_is_not_bridged(mock_config_manager):
+    """A missing-data gap must not be counted as continued high inlet temperature."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+    powers = [1.5] * 10
+    temps = [120] * 10
+
+    event_df = _run_hp_inlet(mock_config_manager, index, powers, temps, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_inlet_alarm_spans_midnight(mock_config_manager):
+    """A high inlet temperature fault straddling midnight is one event."""
+    index = pd.date_range('2022-01-01 23:55', periods=16, freq='1min')
+    powers = [1.5] * 16
+    temps = [120] * 13 + [110] * 3
+
+    event_df = _run_hp_inlet(mock_config_manager, index, powers, temps,
+                             ['2022-01-01', '2022-01-02'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:55')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:08')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  TMSetpoint / BackupUse / HPWHOutlet — sample-interval awareness
+#
+#  These three mix minute-level checks with genuinely daily ones. The minute-level
+#  checks must behave like the alarms above; the daily checks keep their day loop.
+#  HPWHOutlet additionally measures its warmup exclusion in minutes.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _run_tm_setpoint_altered(mock_config_manager, index, setpoints, days, setpoint_fault_time=10):
+    """Run the Setpoint-altered half of flag_high_tm_setpoint."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Setpoint_Tank'],
+            'alarm_codes': ['TMNSTPT'],
+        })
+        df = pd.DataFrame({'Setpoint_Tank': setpoints}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'Setpoint_Tank': [130] * len(days)}, index=pd.to_datetime(days))
+        return flag_high_tm_setpoint(df, daily_df, mock_config_manager, default_setpoint=130.0,
+                                     setpoint_fault_time=setpoint_fault_time)
+
+
+def _run_backup_use_altered(mock_config_manager, index, setpoints, days, setpoint_fault_time=10):
+    """Run the Setpoint-altered half of flag_backup_use."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Setpoint_BU'],
+            'alarm_codes': ['IMBCKUP'],
+        })
+        df = pd.DataFrame({'Setpoint_BU': setpoints}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0] * len(days)}, index=pd.to_datetime(days))
+        return flag_backup_use(df, daily_df, mock_config_manager,
+                               setpoint_fault_time=setpoint_fault_time)
+
+
+def _run_hp_outlet(mock_config_manager, index, powers, temps, days, fault_time=10, warmup_minutes=10):
+    """Run flag_hp_outlet_temp over an explicit index/value pair."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_HPWH', 'Temp_HPWH_Outlet'],
+            'alarm_codes': ['HPOUTLT:1.0', 'HPOUTLT:140'],
+            'pretty_name': ['HP Power', 'Outlet Temperature'],
+        })
+        df = pd.DataFrame({'PowerIn_HPWH': powers, 'Temp_HPWH_Outlet': temps},
+                          index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0] * len(days)}, index=pd.to_datetime(days))
+        return flag_hp_outlet_temp(df, daily_df, mock_config_manager, fault_time=fault_time,
+                                   warmup_minutes=warmup_minutes)
+
+
+@patch('ecopipeline.ConfigManager')
+def test_tm_setpoint_altered_5min_two_samples_alarms(mock_config_manager):
+    """5-minute data: two altered samples span 10 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    setpoints = [130] + [140] * 2 + [130] * 10      # altered 01:05 and 01:10
+
+    event_df = _run_tm_setpoint_altered(mock_config_manager, index, setpoints, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+    assert 'for 10 minutes' in event_df.iloc[0]['event_detail']
+
+
+@patch('ecopipeline.ConfigManager')
+def test_tm_setpoint_altered_5min_single_sample_no_alarm(mock_config_manager):
+    """5-minute data: one altered sample is only 5 minutes and must not alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    setpoints = [130] + [140] + [130] * 11
+
+    event_df = _run_tm_setpoint_altered(mock_config_manager, index, setpoints, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_tm_setpoint_altered_data_gap_is_not_bridged(mock_config_manager):
+    """A missing-data gap must not be counted as continued setpoint alteration."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+    setpoints = [140] * 10
+
+    event_df = _run_tm_setpoint_altered(mock_config_manager, index, setpoints, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_tm_setpoint_altered_spans_midnight(mock_config_manager):
+    """A setpoint alteration straddling midnight is one event, not two shorter ones."""
+    index = pd.date_range('2022-01-01 23:55', periods=16, freq='1min')
+    setpoints = [140] * 13 + [130] * 3              # 23:55 - 00:07
+
+    event_df = _run_tm_setpoint_altered(mock_config_manager, index, setpoints,
+                                        ['2022-01-01', '2022-01-02'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:55')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:08')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_tm_setpoint_overheat_5min_two_samples_alarms(mock_config_manager):
+    """The Temp + PowerIn overheat check is also measured in minutes."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Temp_Tank', 'PowerIn_Tank'],
+            'alarm_codes': ['TMNSTPT:130', 'TMNSTPT:1.0'],
+            'pretty_name': ['Tank Temperature', 'Tank Power'],
+        })
+        index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+        df = pd.DataFrame({
+            'Temp_Tank': [120] + [135] * 2 + [120] * 10,   # at/above setpoint 01:05, 01:10
+            'PowerIn_Tank': [1.5] * 13,                    # drawing power throughout
+        }, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0]}, index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_high_tm_setpoint(df, daily_df, mock_config_manager, default_fault_time=10)
+
+        assert len(event_df) == 1
+        assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+        assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_tm_setpoint_daily_ratio_still_per_day(mock_config_manager):
+    """The daily power ratio check keeps its day loop and is evaluated day by day.
+
+    Day one is over the 0.4 threshold and day two is well under it, so exactly one
+    day may alarm.
+    """
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_Total', 'PowerIn_Tank'],
+            'alarm_codes': ['TMNSTPT:0.4', 'TMNSTPT:1.0'],
+            'pretty_name': ['Total Power', 'Tank Power'],
+        })
+        index = pd.date_range('2022-01-01 00:00', periods=10, freq='5min')
+        df = pd.DataFrame({'PowerIn_Total': [10.0] * 10, 'PowerIn_Tank': [8.0] * 10},
+                          index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'PowerIn_Total': [100.0, 100.0], 'PowerIn_Tank': [80.0, 10.0]},
+                                index=pd.to_datetime(['2022-01-01', '2022-01-02']))
+
+        event_df = flag_high_tm_setpoint(df, daily_df, mock_config_manager)
+
+        ratio_alarms = event_df[event_df['event_detail'].str.contains('power ratio')]
+        assert len(ratio_alarms) == 1
+        assert ratio_alarms.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01')
+        assert ratio_alarms.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02')
+        # the daily aggregate must not be written back into the caller's frame
+        assert 'PowerIn_all_TM' not in daily_df.columns
+
+
+@patch('ecopipeline.ConfigManager')
+def test_backup_use_altered_5min_two_samples_alarms(mock_config_manager):
+    """5-minute data: two altered samples span 10 minutes and must alarm."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    setpoints = [130] + [140] * 2 + [130] * 10
+
+    event_df = _run_backup_use_altered(mock_config_manager, index, setpoints, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_backup_use_altered_data_gap_is_not_bridged(mock_config_manager):
+    """A missing-data gap must not be counted as continued setpoint alteration."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+    setpoints = [140] * 10
+
+    event_df = _run_backup_use_altered(mock_config_manager, index, setpoints, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_backup_use_altered_spans_midnight(mock_config_manager):
+    """A setpoint alteration straddling midnight is one event."""
+    index = pd.date_range('2022-01-01 23:55', periods=16, freq='1min')
+    setpoints = [140] * 13 + [130] * 3
+
+    event_df = _run_backup_use_altered(mock_config_manager, index, setpoints,
+                                       ['2022-01-01', '2022-01-02'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:55')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:08')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_outlet_warmup_is_measured_in_minutes(mock_config_manager):
+    """5-minute data: the warmup exclusion must cover 10 minutes, not 10 samples.
+
+    The HP turns on at 01:00 and the outlet is cold throughout. Warmup ends at 01:10,
+    so the fault runs 01:10 - 02:00. Counting rows would have discarded the first 50
+    minutes instead of the first 10.
+    """
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    powers = [1.5] * 13
+    temps = [130.0] * 13                            # below the 140 threshold throughout
+
+    event_df = _run_hp_outlet(mock_config_manager, index, powers, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:10')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 02:05')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_outlet_gap_restarts_the_warmup(mock_config_manager):
+    """A data gap starts a new HP run, so accumulated runtime does not carry across it.
+
+    Two on-stretches, an hour apart. The first clears warmup and alarms. The second
+    only runs 15 minutes, so it never gets past its own warmup and must not alarm.
+    """
+    index = (list(pd.date_range('2022-01-01 01:00', periods=21, freq='1min'))   # 01:00 - 01:20
+             + list(pd.date_range('2022-01-01 02:00', periods=16, freq='1min')))  # 02:00 - 02:15
+    powers = [1.5] * 37
+    temps = [130.0] * 37
+
+    event_df = _run_hp_outlet(mock_config_manager, index, powers, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:10')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_outlet_alarm_spans_midnight(mock_config_manager):
+    """A low outlet temperature fault straddling midnight is one event."""
+    index = pd.date_range('2022-01-01 23:40', periods=31, freq='1min')  # 23:40 - 00:10
+    powers = [1.5] * 31
+    temps = [150.0] * 10 + [130.0] * 21             # cold from 23:50 onward
+
+    event_df = _run_hp_outlet(mock_config_manager, index, powers, temps,
+                              ['2022-01-01', '2022-01-02'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 23:50')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-02 00:11')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  ShortCycle / LSInconsist / HPWHOutage — sample-interval awareness
+#
+#  ShortCycle is inverted relative to the alarms above: it fires when a run ends
+#  too soon, so missing data makes a run look shorter than it was rather than
+#  longer. A run whose true length is unknown must therefore be suppressed.
+#
+#  LSInconsist and the HPWHOutage alarm variable have no duration threshold at
+#  all - any mismatch fires - so only the reported duration and the streak
+#  boundaries were interval-dependent.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _run_short_cycle(mock_config_manager, index, powers, days, short_cycle_time=15):
+    """Run flag_shortcycle over an explicit index/value pair."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_HP'],
+            'alarm_codes': ['SHRTCYC:1.0'],
+            'pretty_name': ['HP Power'],
+        })
+        df = pd.DataFrame({'PowerIn_HP': powers}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0] * len(days)}, index=pd.to_datetime(days))
+        return flag_shortcycle(df, daily_df, mock_config_manager,
+                               short_cycle_time=short_cycle_time)
+
+
+@patch('ecopipeline.ConfigManager')
+def test_short_cycle_5min_run_length_is_minutes(mock_config_manager):
+    """5-minute data: a three-sample run is 15 real minutes and must not alarm.
+
+    Counting rows would read it as 3 and report a short cycle that did not happen.
+    """
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    powers = [0.5] * 3 + [1.5] * 3 + [0.5] * 7      # on 01:15 - 01:25, 15 real minutes
+
+    event_df = _run_short_cycle(mock_config_manager, index, powers, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_short_cycle_5min_genuinely_short_run_alarms(mock_config_manager):
+    """5-minute data: a two-sample run is 10 real minutes and is a genuine short cycle."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    powers = [0.5] * 3 + [1.5] * 2 + [0.5] * 8      # on 01:15 - 01:20, 10 real minutes
+
+    event_df = _run_short_cycle(mock_config_manager, index, powers, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:25')
+    assert '10 minutes' in event_df.iloc[0]['event_detail']
+
+
+@patch('ecopipeline.ConfigManager')
+def test_short_cycle_run_ending_at_a_gap_is_suppressed(mock_config_manager):
+    """A run that runs up against missing data has an unknown true length.
+
+    The HP is still on when the data stops, so this may well have been a long run
+    that simply was not recorded. It must not be reported as a short cycle.
+    """
+    index = (list(pd.date_range('2022-01-01 01:00', periods=8, freq='1min'))   # 01:00 - 01:07
+             + list(pd.date_range('2022-01-01 02:00', periods=8, freq='1min')))  # 02:00 - 02:07
+    powers = [0.5] * 3 + [1.5] * 5 + [0.5] * 8      # on 01:03 - 01:07, then data stops
+
+    event_df = _run_short_cycle(mock_config_manager, index, powers, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_short_cycle_run_starting_after_a_gap_is_suppressed(mock_config_manager):
+    """A run already underway when data resumes has an unknown start, so it is suppressed."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=8, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=8, freq='1min')))
+    powers = [0.5] * 8 + [1.5] * 5 + [0.5] * 3      # on from the first sample after the gap
+
+    event_df = _run_short_cycle(mock_config_manager, index, powers, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_short_cycle_bounded_run_after_a_gap_still_alarms(mock_config_manager):
+    """Suppression applies only to runs touching a gap, not to every run in a gappy frame."""
+    index = (list(pd.date_range('2022-01-01 01:00', periods=8, freq='1min'))
+             + list(pd.date_range('2022-01-01 02:00', periods=8, freq='1min')))
+    # off at 02:00, on 02:01 - 02:05, off again at 02:06: both edges observed
+    powers = [0.5] * 8 + [0.5] + [1.5] * 5 + [0.5] * 2
+
+    event_df = _run_short_cycle(mock_config_manager, index, powers, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 02:01')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_short_cycle_run_at_frame_edge_is_still_suppressed(mock_config_manager):
+    """The pre-existing frame-edge guard is preserved by the boundedness check."""
+    index = pd.date_range('2022-01-01 01:00', periods=10, freq='1min')
+    powers = [1.5] * 5 + [0.5] * 5                  # on from the very first sample
+
+    event_df = _run_short_cycle(mock_config_manager, index, powers, ['2022-01-01'])
+
+    assert event_df.empty
+
+
+@patch('ecopipeline.ConfigManager')
+def test_ls_inconsist_reports_duration_in_minutes(mock_config_manager):
+    """5-minute data: a three-sample mismatch must be reported as 15 minutes, not 3."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    ls_df = pd.DataFrame({
+        'event': ['loadUp'],
+        'startDateTime': pd.to_datetime(['2022-01-01 01:00']),
+        'endDateTime': pd.to_datetime(['2022-01-01 02:00']),
+    })
+    mock_config_manager.get_ls_df.return_value = ls_df
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Setpoint_Tank'],
+            'alarm_codes': ['SOOSCHD_loadUp:130'],
+            'pretty_name': ['Tank Setpoint'],
+        })
+        index = pd.date_range('2022-01-01 01:00', periods=12, freq='5min')
+        df = pd.DataFrame({'Setpoint_Tank': [130] + [140] * 3 + [130] * 8},
+                          index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0]}, index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_ls_mode_inconsistancy(df, daily_df, mock_config_manager)
+
+        assert len(event_df) == 1
+        assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+        assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:20')
+        assert 'for 15 minutes' in event_df.iloc[0]['event_detail']
+
+
+@patch('ecopipeline.ConfigManager')
+def test_ls_inconsist_data_gap_splits_the_streak(mock_config_manager):
+    """A mismatch either side of a data gap is two events, not one continuous one."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    ls_df = pd.DataFrame({
+        'event': ['loadUp'],
+        'startDateTime': pd.to_datetime(['2022-01-01 01:00']),
+        'endDateTime': pd.to_datetime(['2022-01-01 03:00']),
+    })
+    mock_config_manager.get_ls_df.return_value = ls_df
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Setpoint_Tank'],
+            'alarm_codes': ['SOOSCHD_loadUp:130'],
+            'pretty_name': ['Tank Setpoint'],
+        })
+        index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+                 + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+        df = pd.DataFrame({'Setpoint_Tank': [140] * 10}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0]}, index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_ls_mode_inconsistancy(df, daily_df, mock_config_manager)
+
+        assert len(event_df) == 2
+        assert list(event_df['start_time_pt']) == [pd.Timestamp('2022-01-01 01:00'),
+                                                   pd.Timestamp('2022-01-01 02:00')]
+        assert all('for 5 minutes' in detail for detail in event_df['event_detail'])
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_outage_alarm_variable_reports_duration_in_minutes(mock_config_manager):
+    """5-minute data: a three-sample controller alarm is 15 minutes, not 3."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Alarm_HPWH'],
+            'alarm_codes': ['HPOUTGE'],
+            'pretty_name': ['HPWH Controller Alarm'],
+        })
+        index = pd.date_range('2022-01-01 01:00', periods=12, freq='5min')
+        df = pd.DataFrame({'Alarm_HPWH': [0] + [1] * 3 + [0] * 8},
+                          index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0]}, index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_HP_outage(df, daily_df, mock_config_manager, day_table_name='test_table')
+
+        assert len(event_df) == 1
+        assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+        assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:20')
+        assert 'for 15 minutes' in event_df.iloc[0]['event_detail']
+
+
+@patch('ecopipeline.ConfigManager')
+def test_hp_outage_alarm_variable_data_gap_splits_the_streak(mock_config_manager):
+    """A controller alarm either side of a data gap is two events, not one."""
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['Alarm_HPWH'],
+            'alarm_codes': ['HPOUTGE'],
+            'pretty_name': ['HPWH Controller Alarm'],
+        })
+        index = (list(pd.date_range('2022-01-01 01:00', periods=5, freq='1min'))
+                 + list(pd.date_range('2022-01-01 02:00', periods=5, freq='1min')))
+        df = pd.DataFrame({'Alarm_HPWH': [1] * 10}, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0]}, index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_HP_outage(df, daily_df, mock_config_manager, day_table_name='test_table')
+
+        assert len(event_df) == 2
+        assert list(event_df['start_time_pt']) == [pd.Timestamp('2022-01-01 01:00'),
+                                                   pd.Timestamp('2022-01-01 02:00')]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Alarm base class — the two interval-dependent behaviours shared by every alarm
+#
+#  _add_an_alarm extends an inclusive end by one sample interval, and
+#  _compress_alarm_df merges alarms that sit within one sample interval of each
+#  other. Both were fixed at one minute regardless of the data's cadence.
+# ══════════════════════════════════════════════════════════════════════════════
+
+@patch('ecopipeline.ConfigManager')
+def test_add_an_alarm_extends_end_by_one_interval(mock_config_manager):
+    """An instantaneous event on 5-minute data must span one 5-minute sample.
+
+    SOOChange records turn-on events with start == end and lets the base class extend
+    the end, so it is the check for that path.
+    """
+    _mock_var_names_config(mock_config_manager, "fake/path/whatever/Variable_Names.csv")
+    mock_config_manager.get_ls_df.return_value = pd.DataFrame()
+    with patch('pandas.read_csv') as mock_csv:
+        mock_csv.return_value = pd.DataFrame({
+            'variable_name': ['PowerIn_HPWH', 'Temp_tank_1', 'Temp_tank_2'],
+            'alarm_codes': ['SOOCHNG', 'SOOCHNG_ON:115', 'SOOCHNG_OFF:140'],
+            'pretty_name': ['HP Power', 'Tank Temperature', 'Tank Temperature'],
+        })
+        index = pd.date_range('2022-01-01 01:00', periods=5, freq='5min')
+        df = pd.DataFrame({
+            'PowerIn_HPWH': [0.5, 0.5, 1.5, 1.5, 1.5],      # turns on at 01:10
+            'Temp_tank_1': [130.0] * 5,                     # far from the 115 ON threshold
+            'Temp_tank_2': [140.0] * 5,
+        }, index=pd.DatetimeIndex(index))
+        daily_df = pd.DataFrame({'dummy': [0]}, index=pd.to_datetime(['2022-01-01']))
+
+        event_df = flag_unexpected_soo_change(df, daily_df, mock_config_manager)
+
+        assert len(event_df) == 1
+        assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:10')
+        assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:15')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_compress_alarm_df_merges_within_one_interval(mock_config_manager):
+    """Two faults one sample apart in 5-minute data are one event after compression.
+
+    01:05 - 01:10 and 01:20 - 01:25 are out of range with a single in-range sample at
+    01:15 between them, so the first alarm ends exactly where the gap of one interval
+    begins and the two must merge.
+    """
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    temps = [120] + [140] * 2 + [120] + [140] * 2 + [120] * 7
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert len(event_df) == 1
+    assert event_df.iloc[0]['start_time_pt'] == pd.Timestamp('2022-01-01 01:05')
+    assert event_df.iloc[0]['end_time_pt'] == pd.Timestamp('2022-01-01 01:30')
+
+
+@patch('ecopipeline.ConfigManager')
+def test_compress_alarm_df_keeps_distant_alarms_separate(mock_config_manager):
+    """Faults more than one sample apart stay separate events."""
+    index = pd.date_range('2022-01-01 01:00', periods=13, freq='5min')
+    # 01:05 - 01:10 and 01:30 - 01:35 out of range, four in-range samples between
+    temps = [120] + [140] * 2 + [120] * 3 + [140] * 2 + [120] * 5
+
+    event_df = _run_temp_range(mock_config_manager, index, temps, ['2022-01-01'])
+
+    assert len(event_df) == 2
+    assert list(event_df['start_time_pt']) == [pd.Timestamp('2022-01-01 01:05'),
+                                               pd.Timestamp('2022-01-01 01:30')]
+
 
 @patch('ecopipeline.ConfigManager')
 def test_flag_ls_mode_inconsistancy_alarm_triggered(mock_config_manager):

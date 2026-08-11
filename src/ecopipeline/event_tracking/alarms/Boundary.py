@@ -54,38 +54,24 @@ class Boundary(Alarm):
         return bounds_df
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
-        idx = df.index
-        full_days = pd.to_datetime(pd.Series(idx).dt.normalize().unique())
         for bound_var, bounds in self.bounds_df.iterrows():
             if bound_var in df.columns:
                 self.record_set_alarm([bound_var])
+                fault_time = bounds['fault_time']
+                if pd.isna(fault_time):
+                    fault_time = self.default_fault_time
+                fault_time = int(fault_time)
+                if fault_time < 1:
+                    print(f"Could not process alarm for {bound_var}. Fault time must be greater than or equal to 1 minute.")
+                    continue
                 lower_mask = df[bound_var] < bounds["low_alarm"]
                 upper_mask = df[bound_var] > bounds["high_alarm"]
-                if pd.isna(bounds['fault_time']):
-                    bounds['fault_time'] = self.default_fault_time
-                for day in full_days:
-                    if bounds['fault_time'] < 1 :
-                        print(f"Could not process alarm for {bound_var}. Fault time must be greater than or equal to 1 minute.")
-                    self._check_and_add_alarm(lower_mask, day, bounds["fault_time"], bound_var, bounds['pretty_name'])
-                    self._check_and_add_alarm(upper_mask, day, bounds["fault_time"], bound_var, bounds['pretty_name'])
-    
-    def _check_and_add_alarm(self, mask : pd.Series, day, fault_time : int, var_name : str, pretty_name : str):
-        next_day = day + pd.Timedelta(days=1)
-        filtered_df = mask.loc[(mask.index >= day) & (mask.index < next_day)]
-        consecutive_condition = filtered_df.rolling(window=fault_time).min() == 1
-        if consecutive_condition.any():
-            group = (consecutive_condition != consecutive_condition.shift()).cumsum()
+                self._check_and_add_alarm(lower_mask, fault_time, bound_var, bounds['pretty_name'])
+                self._check_and_add_alarm(upper_mask, fault_time, bound_var, bounds['pretty_name'])
 
-            # Iterate through each streak and add an alarm for each
-            for group_id in consecutive_condition.groupby(group).first()[lambda x: x].index:
-                streak_indices = consecutive_condition[group == group_id].index
-                # streak_length = len(streak_indices)
-
-                # Adjust start time because first (fault_time-1) minutes don't count in window
-                start_time = streak_indices[0] - pd.Timedelta(minutes=fault_time-1)
-                end_time = streak_indices[-1]
-
-                alarm_string = f"Boundary alarm for {pretty_name}"
-
-                # if start_time in alarms_dict:
-                self._add_an_alarm(start_time, end_time, var_name, alarm_string)
+    def _check_and_add_alarm(self, mask : pd.Series, fault_time : int, var_name : str, pretty_name : str):
+        # fault_time is a duration in minutes, so the sample interval of the data does not
+        # change the result, and a data gap will not be counted as time out of bounds
+        for start_time, end_time, _ in self._iter_sustained_streaks(mask, fault_time):
+            self._add_an_alarm(start_time, end_time, var_name, f"Boundary alarm for {pretty_name}",
+                               add_one_interval_to_end=False)
