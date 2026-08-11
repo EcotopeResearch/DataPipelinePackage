@@ -17,6 +17,23 @@ class LSInconsist(Alarm):
       alarm_codes column: SOOSCHD_[mode]:###
         [mode] must be one of: normal, loadUp, shed, criticalPeak, gridEmergency, advLoadUp.
         Bound (###) from alarm_codes is the expected value of the variable during that mode.
+
+    Known limitations
+    -----------------
+    There is no fault time here: any mismatch alarms, however brief. Streak durations are
+    measured in minutes and split on data gaps, so the sample interval of the data does not
+    change the result. Two things are outstanding:
+
+    1. The day loop is still in place, so a mismatch spanning midnight is recorded as two
+       events rather than one. :meth:`Alarm._compress_alarm_df` merges them again when they
+       land within one sample interval of each other, which is the usual case, so this mostly
+       self-corrects. Removing the loop and scanning the whole frame would be cleaner.
+    2. In 'normal' mode the load shift event windows are dropped from the frame before the
+       streaks are found. Those removals leave holes in the index that are indistinguishable
+       from missing data, so a mismatch either side of a load shift event is reported as two
+       separate normal-mode events. That is arguably correct, since normal operation genuinely
+       was interrupted, but it is a side effect of how the filtering works rather than a
+       deliberate decision.
     """
     def __init__(self, bounds_df : pd.DataFrame):
         alarm_tag = 'SOOSCHD'
@@ -43,6 +60,9 @@ class LSInconsist(Alarm):
             if var_name not in df.columns:
                 continue
 
+            # KNOWN LIMITATION: this day slicing records a mismatch spanning midnight as two
+            # events. _compress_alarm_df usually merges them back together. See the Known
+            # limitations section of the class docstring.
             for day in daily_df.index:
                 next_day = day + pd.Timedelta(days=1)
                 filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
@@ -51,7 +71,10 @@ class LSInconsist(Alarm):
                     continue
 
                 if mode == 'normal':
-                    # For 'normal' mode, check periods NOT covered by any load shifting events
+                    # For 'normal' mode, check periods NOT covered by any load shifting events.
+                    # KNOWN LIMITATION: dropping those rows leaves holes in the index that read
+                    # as data gaps, so a mismatch either side of a load shift event becomes two
+                    # separate normal-mode events.
                     normal_df = filtered_df.copy()
                     if not ls_df.empty:
                         mask = pd.Series(True, index=normal_df.index)
@@ -67,19 +90,14 @@ class LSInconsist(Alarm):
                     # Check if any values don't match the expected value during normal periods
                     mismatch_mask = normal_df[var_name] != expected_value
 
-                    if mismatch_mask.any():
-                        # Find all consecutive streaks of mismatches
-                        group = (mismatch_mask != mismatch_mask.shift()).cumsum()
-
-                        for group_id in mismatch_mask.groupby(group).first()[lambda x: x].index:
-                            streak_indices = mismatch_mask[group == group_id].index
-                            start_time = streak_indices[0]
-                            end_time = streak_indices[-1]
-                            streak_length = len(streak_indices)
-                            actual_value = normal_df.loc[start_time, var_name]
-
-                            self._add_an_alarm(start_time, end_time, var_name,
-                                f"Load shift mode inconsistency: {pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} during normal operation (expected {expected_value}).")
+                    # Any mismatch alarms, so there is no duration threshold here. Streaks
+                    # are still split on data gaps, and their length is measured in minutes
+                    # rather than counted in rows.
+                    for start_time, end_time, duration, _ in self._iter_runs(mismatch_mask, self._gap_tolerance()):
+                        actual_value = normal_df.loc[start_time, var_name]
+                        self._add_an_alarm(start_time, end_time, var_name,
+                            f"Load shift mode inconsistency: {pretty_name} was {actual_value} for {duration.total_seconds() / 60:.0f} minutes starting at {start_time} during normal operation (expected {expected_value}).",
+                            add_one_interval_to_end=False)
                 else:
                     # For load shifting modes, check periods covered by those specific events
                     mode_events = ls_df[ls_df['event'] == mode]
@@ -100,19 +118,14 @@ class LSInconsist(Alarm):
                         # Check if any values don't match the expected value
                         mismatch_mask = event_df[var_name] != expected_value
 
-                        if mismatch_mask.any():
-                            # Find all consecutive streaks of mismatches
-                            group = (mismatch_mask != mismatch_mask.shift()).cumsum()
-
-                            for group_id in mismatch_mask.groupby(group).first()[lambda x: x].index:
-                                streak_indices = mismatch_mask[group == group_id].index
-                                start_time = streak_indices[0]
-                                end_time = streak_indices[-1]
-                                streak_length = len(streak_indices)
-                                actual_value = event_df.loc[start_time, var_name]
-
-                                self._add_an_alarm(start_time, end_time, var_name,
-                                    f"Load shift mode inconsistency: {pretty_name} was {actual_value} for {streak_length} minutes starting at {start_time} during {mode} event (expected {expected_value}).")
+                        # Any mismatch alarms, so there is no duration threshold here. Streaks
+                        # are still split on data gaps, and their length is measured in minutes
+                        # rather than counted in rows.
+                        for start_time, end_time, duration, _ in self._iter_runs(mismatch_mask, self._gap_tolerance()):
+                            actual_value = event_df.loc[start_time, var_name]
+                            self._add_an_alarm(start_time, end_time, var_name,
+                                f"Load shift mode inconsistency: {pretty_name} was {actual_value} for {duration.total_seconds() / 60:.0f} minutes starting at {start_time} during {mode} event (expected {expected_value}).",
+                                add_one_interval_to_end=False)
                                 
     def _organize_alarm_codes(self, bounds_df : pd.DataFrame) -> list:
         alarm_code_parts = []

@@ -33,6 +33,23 @@ class HPWHOutage(Alarm):
         Alarm triggers when HP power falls below this ratio of total power over the rolling period.
     ratio_period_days : int
         Number of days to use for the rolling power ratio calculation (default 7). Must be greater than 1.
+
+    Known limitations
+    -----------------
+    The ``Alarm_[name]`` check runs on minute data and is interval aware: block lengths are
+    measured in minutes and a data gap splits a block. The power ratio check is not, and has
+    the same class of problem one level up, at day rather than minute granularity:
+
+    1. The rolling window is positional, not calendar based. ``daily_df_copy.iloc[start:end]``
+       takes ``ratio_period_days`` consecutive *rows*, so if days are missing from the daily
+       frame a block spans more calendar time than intended while still being reported as a
+       ``ratio_period_days`` block. The minute-level equivalent of this was fixed by measuring
+       from the timestamps and splitting on gaps; the same approach applies here, comparing
+       ``end_day - start_day`` against ``ratio_period_days`` and skipping blocks that do not
+       line up.
+    2. The ``Alarm_[name]`` check still slices per day. That loop is pure windowing, so a
+       controller alarm spanning midnight is reported as two events instead of one. Removing
+       it is safe but was left for a separate pass.
     """
     def __init__(self, bounds_df : pd.DataFrame, day_table_name : str, default_power_ratio : float = 0.3,
                    ratio_period_days : int = 7):
@@ -61,27 +78,24 @@ class HPWHOutage(Alarm):
                     self.record_set_alarm([alrm_var_name])
                     alrm_pretty_name = alrm_codes.iloc[i]['pretty_name']
                     if alrm_var_name in df.columns:
+                        # KNOWN LIMITATION: this day slicing is pure windowing, so a controller
+                        # alarm spanning midnight is split into two events. Safe to remove.
+                        # See the Known limitations section of the class docstring.
                         for day in daily_df.index:
                             next_day = day + pd.Timedelta(days=1)
                             filtered_df = df.loc[(df.index >= day) & (df.index < next_day)]
                             if not filtered_df.empty:
-                                # Find all consecutive blocks where alarm variable is non-zero
+                                # Find all consecutive blocks where alarm variable is non-zero.
+                                # Any non-zero value alarms, so there is no duration threshold
+                                # here. Blocks are still split on data gaps, and their length is
+                                # measured in minutes rather than counted in rows.
                                 alarm_mask = filtered_df[alrm_var_name] != 0
-                                if alarm_mask.any():
-                                    # Find consecutive groups
-                                    group = (alarm_mask != alarm_mask.shift()).cumsum()
-
-                                    # Iterate through each consecutive block of non-zero values
-                                    for group_id in alarm_mask.groupby(group).first()[lambda x: x].index:
-                                        streak_indices = alarm_mask[group == group_id].index
-                                        start_time = streak_indices[0]
-                                        end_time = streak_indices[-1]
-                                        streak_length = len(streak_indices)
-                                        alarm_value = filtered_df.loc[start_time, alrm_var_name]
-
-                                        self._add_an_alarm(start_time, end_time, alrm_var_name,
-                                            f"Heat pump alarm triggered: {alrm_pretty_name} was {alarm_value} for {streak_length} minutes starting at {start_time}.")
-                                        alarm_triggered = True
+                                for start_time, end_time, duration, _ in self._iter_runs(alarm_mask, self._gap_tolerance()):
+                                    alarm_value = filtered_df.loc[start_time, alrm_var_name]
+                                    self._add_an_alarm(start_time, end_time, alrm_var_name,
+                                        f"Heat pump alarm triggered: {alrm_pretty_name} was {alarm_value} for {duration.total_seconds() / 60:.0f} minutes starting at {start_time}.",
+                                        add_one_interval_to_end=False)
+                                    alarm_triggered = True
             elif len(pow_codes) > 0 and len(tp_codes) != 1:
                 raise Exception(f"Improper alarm codes for heat pump outage with id {alarm_id}. Requires 1 total power (TP) variable.")
             if len(pow_codes) > 0 and len(tp_codes) == 1 and not alarm_triggered:
@@ -91,6 +105,13 @@ class HPWHOutage(Alarm):
                     tp_var_name = tp_codes.iloc[0]['variable_name'] 
                     daily_df_copy = daily_df.copy()
                     daily_df_copy = self._append_previous_days_to_df(daily_df_copy, config, self.ratio_period_days, self.day_table_name)
+                    # KNOWN LIMITATION: this window is positional rather than calendar based, so
+                    # it takes ratio_period_days consecutive ROWS. When days are missing from the
+                    # daily frame the block covers more calendar time than intended and is still
+                    # reported as a ratio_period_days block. This is the day-level version of the
+                    # row-counting problem the minute-level alarms had; the fix is to measure
+                    # end_day - start_day and skip blocks that do not line up. See the Known
+                    # limitations section of the class docstring.
                     for i in range(self.ratio_period_days - 1, len(daily_df_copy)):
                         start_idx = i - self.ratio_period_days + 1
                         end_idx = i + 1
@@ -102,6 +123,5 @@ class HPWHOutage(Alarm):
                             self.record_set_alarm([tp_var_name, pow_var_name])
                             pow_var_bound = pow_codes.iloc[j]['bound']
                             if block_data[pow_var_name] < block_data[tp_var_name] * pow_var_bound:
-                                # TODO known issue: if there is a day missing from the daily dataframe, it still reports an error, regardless of how many days apart the start and end day actually are
                                 self._add_an_alarm(start_day, end_day + timedelta(1), pow_var_name, f"Possible Heat Pump failure or outage.", False,
                                                    certainty='med')

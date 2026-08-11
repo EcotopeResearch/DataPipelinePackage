@@ -95,7 +95,7 @@ class PowerRatio(Alarm):
                         block_start_date = block_end_date - timedelta(days=self.ratio_period_days - 1)
                         actual_ratio = values[f'{variable}_{alarm_id}']
                         self._add_an_alarm(block_start_date, block_end_date + timedelta(1), variable,
-                            f"Power ratio alarm ({self.ratio_period_days}-day block ending {block_end_date.strftime('%Y-%m-%d')}): {pretty_name} accounted for {actual_ratio:.1f}% of {alarm_id} energy use. {low_bound:.1f}-{high_bound:.1f}% expected.", add_one_minute_to_end=False) 
+                            f"Power ratio alarm ({self.ratio_period_days}-day block ending {block_end_date.strftime('%Y-%m-%d')}): {pretty_name} accounted for {actual_ratio:.1f}% of {alarm_id} energy use. {low_bound:.1f}-{high_bound:.1f}% expected.", add_one_interval_to_end=False) 
     
     def _create_period_blocks(self, daily_df: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
         """

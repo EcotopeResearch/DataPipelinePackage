@@ -43,18 +43,21 @@ class ShortCycle(Alarm):
             var_pretty = rows.iloc[0]['pretty_name']
             if var_name in df.columns:
                 power_on_mask = df[var_name] > pwr_thresh
+                max_gap = self._gap_tolerance(self.short_cycle_time)
+                short_cycle_duration = pd.Timedelta(minutes=self.short_cycle_time)
 
-                # Find runs of consecutive True values by detecting changes in the mask
-                mask_changes = power_on_mask != power_on_mask.shift(1)
-                run_groups = mask_changes.cumsum()
-
-                # For each run where power is on, check if it's shorter than short_cycle_time
-                for group_id in run_groups[power_on_mask].unique():
-                    run_indices = df.index[(run_groups == group_id) & power_on_mask]
-                    run_length = len(run_indices)
-                    if run_length > 0 and run_length < self.short_cycle_time:
-                        start_time = run_indices[0]
-                        end_time = run_indices[-1]
-                        if start_time == df.index[0] or end_time == df.index[-1]:
-                            continue
-                        self._add_an_alarm(start_time, end_time, var_name, f"Short cycle: {var_pretty} was on for only {run_length} minutes starting at {start_time}.")
+                # Run length is measured in minutes rather than counted in rows, so the
+                # sample interval of the data does not change the result
+                for start_time, end_time, duration, bounded in self._iter_runs(power_on_mask, max_gap):
+                    if duration >= short_cycle_duration:
+                        continue
+                    # Unlike the alarms that fire on a condition lasting too long, missing
+                    # data here makes a run look shorter than it was. A run that touches the
+                    # edge of the frame or a data gap has an unknown true length, so it
+                    # cannot be reported as a short cycle.
+                    if not bounded:
+                        continue
+                    run_minutes = duration.total_seconds() / 60
+                    self._add_an_alarm(start_time, end_time, var_name,
+                        f"Short cycle: {var_pretty} was on for only {run_minutes:.0f} minutes starting at {start_time}.",
+                        add_one_interval_to_end=False)

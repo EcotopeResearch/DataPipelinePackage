@@ -36,6 +36,23 @@ class SOOChange(Alarm):
     default_off_temp : float
         Default OFF temperature threshold (default 140.0). Alarm triggers if temperature differs by
         more than 5.0 degrees from this value when the HP turns off.
+
+    Known limitations
+    -----------------
+    This alarm detects instantaneous transitions rather than sustained conditions, so it has
+    no fault time to convert and does not use the interval aware helpers on ``Alarm``. Two
+    consequences are outstanding:
+
+    1. Transitions are not gap aware. ``power_below.shift(1) & power_above`` compares each
+       sample against the previous row without checking that the two are actually adjacent
+       in time, so when data resumes after an outage with the HP running, the resumption is
+       reported as a turn-on. Fixing this means suppressing a transition when the preceding
+       sample is more than :meth:`Alarm._gap_tolerance` away, which
+       :meth:`Alarm._streak_ids` already computes for the other alarms.
+    2. The day loop is still in place. Slicing per day means the first sample of each day has
+       no predecessor within its slice, so a transition happening exactly at midnight is
+       never detected. Removing the loop and scanning the whole frame would pick those up.
+       That is a deliberate behavior change rather than a pure fix, so it was left alone.
     """
     def __init__(self, bounds_df : pd.DataFrame, default_power_threshold : float = 1.0, default_on_temp : float = 115.0, default_off_temp : float = 140.0):
         alarm_tag = 'SOOCHNG'
@@ -87,6 +104,9 @@ class SOOChange(Alarm):
                     mask &= ~((ls_filtered_df.index >= row['startDateTime']) & (ls_filtered_df.index < row['endDateTime']))
                 ls_filtered_df = ls_filtered_df[mask]
 
+            # KNOWN LIMITATION: this day slicing hides any transition that happens exactly at
+            # midnight, because the first sample of each slice has no predecessor to compare
+            # against. See the Known limitations section of the class docstring.
             for day in daily_df.index:
                 next_day = day + pd.Timedelta(days=1)
                 filtered_df = ls_filtered_df.loc[(ls_filtered_df.index >= day) & (ls_filtered_df.index < next_day)]
@@ -107,6 +127,10 @@ class SOOChange(Alarm):
                     power_above = filtered_df[pow_var_name] > pow_thresh
 
                     # Check all turn-on events
+                    # KNOWN LIMITATION: shift(1) compares against the previous row without
+                    # checking the two samples are adjacent in time, so data resuming after an
+                    # outage with the HP already running reads as a turn-on. A gap check using
+                    # Alarm._gap_tolerance would suppress those. Same applies to turn-off below.
                     if on_t_var_name in filtered_df.columns:
                         power_turn_on = power_below.shift(1) & power_above
                         power_on_times = filtered_df.index[power_turn_on.fillna(False)]

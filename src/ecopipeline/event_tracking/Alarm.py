@@ -16,6 +16,7 @@ class Alarm:
         self.range_bounds = range_bounds
         self.type_default_dict = type_default_dict
         self.element_id_matching = element_id_matching
+        self.interval_minutes = 1.0
         self.triggered_alarms = {
                 'start_time_pt' : [],
                 'end_time_pt' : [],
@@ -70,13 +71,226 @@ class Alarm:
         elif df.empty:
             print(f"cannot flag {self.alarm_tag} alarms. Dataframe is empty")
             return pd.DataFrame()
+        if df is not None and not df.empty:
+            self.interval_minutes = self._infer_interval_minutes(df.index)
         self.specific_alarm_function(df, daily_data, config)
         return self._convert_silent_alarm_dict_to_df(self.triggered_alarms)
-    
+
+    def _infer_interval_minutes(self, index) -> float:
+        """
+        Estimate the spacing between samples, in minutes.
+
+        Uses the most common spacing rather than the mean or median so that data gaps
+        do not inflate the estimate. Falls back to one minute when the index is too
+        short or is not time-based.
+
+        Different sources having different cadences is handled, and so is a source
+        dropping out entirely, since a gap larger than :meth:`_gap_tolerance` ends a
+        streak rather than being counted as elapsed time.
+
+        Known limitation
+        ----------------
+        This is one estimate for the whole frame. A source that switches cadence partway
+        through a single pull, say from 1-minute to 5-minute samples, gets the modal
+        interval of whichever cadence dominates, and the coarser stretch then reads as a
+        run of gaps and never alarms. Left unaddressed because a single source is not
+        expected to change its reporting cadence mid-pull. If one ever does, replace the
+        frame-wide estimate with a local one::
+
+            diff_sec  = mask.index.to_series().diff().dt.total_seconds()
+            local_sec = diff_sec.rolling(5, center=True, min_periods=1).median()
+            limit_sec = np.minimum(2 * local_sec, max(fault_minutes - 1, 1) * 60)
+
+        There is a commented-out test for this case in tests/event_tracking_test.py, named
+        test_temp_range_coarse_stretch_inside_fine_frame_alarms.
+
+        Parameters
+        ----------
+        index : pd.Index
+            Index of the minute dataframe being alarmed on.
+
+        Returns
+        -------
+        float
+            Sample interval in minutes.
+        """
+        if not isinstance(index, pd.DatetimeIndex) or len(index) < 2:
+            return 1.0
+        diffs = index.to_series().diff().dt.total_seconds()
+        diffs = diffs[diffs > 0]
+        if diffs.empty:
+            return 1.0
+        return float(diffs.mode().iloc[0]) / 60.0
+
+    def _gap_tolerance(self, fault_minutes : float = None, max_gap_minutes : float = None) -> pd.Timedelta:
+        """
+        Largest jump in the index that may appear inside a single stretch of data.
+
+        Defaults to twice the sample interval. When ``fault_minutes`` is given the
+        result is also capped at ``fault_minutes - 1``, so that missing data can never
+        account for most of a fault window. Alarms with no duration threshold pass no
+        ``fault_minutes`` and get the uncapped allowance.
+
+        Parameters
+        ----------
+        fault_minutes : float, optional
+            Duration the caller is measuring against, used for the cap. Omit for alarms
+            that have no duration threshold.
+        max_gap_minutes : float, optional
+            Explicit tolerance in minutes, overriding the interval-derived default.
+
+        Returns
+        -------
+        pd.Timedelta
+            Maximum tolerated gap.
+        """
+        allowance = pd.Timedelta(minutes=2 * self.interval_minutes if max_gap_minutes is None else max_gap_minutes)
+        if fault_minutes is None:
+            return allowance
+        return min(allowance, pd.Timedelta(minutes=max(fault_minutes - 1, 1)))
+
+    def _streak_ids(self, mask : pd.Series, max_gap : pd.Timedelta) -> pd.Series:
+        """
+        Label each row with a streak id, so that rows sharing an id are both adjacent
+        in time and hold the same value of ``mask``.
+
+        A new streak starts wherever the condition flips or the index jumps a gap
+        larger than ``max_gap``, which keeps missing data from being read as a
+        continuous run.
+
+        Parameters
+        ----------
+        mask : pd.Series
+            Boolean series indexed by timestamp.
+        max_gap : pd.Timedelta
+            Largest index jump that may appear inside one streak.
+
+        Returns
+        -------
+        pd.Series
+            Integer streak id per row, aligned to ``mask``.
+        """
+        index_jumps = mask.index.to_series().diff() > max_gap
+        return (mask.ne(mask.shift()) | index_jumps).cumsum()
+
+    def _iter_sustained_streaks(self, mask : pd.Series, fault_minutes : float, max_gap_minutes : float = None):
+        """
+        Find every stretch where a fault condition held long enough to alarm.
+
+        ``fault_minutes`` is a duration rather than a row count, so the same value
+        behaves the same way on 1-minute and 5-minute data. Durations are measured
+        from the timestamps, and any jump in the index larger than the allowed gap
+        breaks the stretch, so an alarm is never inferred across missing data.
+
+        Parameters
+        ----------
+        mask : pd.Series
+            Boolean series indexed by timestamp, True where the fault condition holds.
+        fault_minutes : float
+            Minutes the condition must hold before the stretch counts as an alarm.
+        max_gap_minutes : float, optional
+            Largest jump in the index tolerated inside a stretch. Defaults to twice the
+            sample interval, and is capped at ``fault_minutes - 1`` either way so that a
+            gap can never account for most of the fault window.
+
+        Yields
+        ------
+        tuple of (pd.Timestamp, pd.Timestamp, float)
+            Stretch start, stretch end, and observed duration in minutes. The end is
+            exclusive - it is the last faulted sample plus one sample width - so pass it
+            to :meth:`_add_an_alarm` with ``add_one_interval_to_end=False``.
+        """
+        fault_duration = pd.Timedelta(minutes=fault_minutes)
+        max_gap = self._gap_tolerance(fault_minutes, max_gap_minutes)
+        for start_time, end_time, duration, _ in self._iter_runs(mask, max_gap):
+            if duration >= fault_duration:
+                yield start_time, end_time, duration.total_seconds() / 60
+
+    def _iter_runs(self, mask : pd.Series, max_gap : pd.Timedelta):
+        """
+        Walk every run of consecutive True values in ``mask``.
+
+        Durations are measured from the timestamps rather than counted in rows, and a
+        jump in the index larger than ``max_gap`` ends a run, so missing data is never
+        read as a continuous stretch.
+
+        Parameters
+        ----------
+        mask : pd.Series
+            Boolean series indexed by timestamp.
+        max_gap : pd.Timedelta
+            Largest index jump that may appear inside one run.
+
+        Yields
+        ------
+        tuple of (pd.Timestamp, pd.Timestamp, pd.Timedelta, bool)
+            Run start, run end, observed duration, and whether both edges of the run
+            were actually observed. The end is exclusive - it is the last sample in the
+            run plus one sample width - so pass it to :meth:`_add_an_alarm` with
+            ``add_one_interval_to_end=False``.
+
+            A run is *bounded* when the samples immediately before and after it are
+            both present in the data. An unbounded run runs off the edge of the frame
+            or up against a gap, so its true length is unknown. Alarms that fire on a
+            condition lasting too *long* can ignore this; alarms that fire on one
+            ending too *soon*, such as short cycling, must not report an unbounded run.
+        """
+        mask = mask.fillna(False).astype(bool)
+        if not mask.any():
+            return
+        if not mask.index.is_monotonic_increasing:
+            # durations are measured from the index, so order matters here
+            mask = mask.sort_index()
+
+        fallback_width = pd.Timedelta(minutes=self.interval_minutes)
+        run_ids = self._streak_ids(mask, max_gap).to_numpy()
+        values = mask.to_numpy()
+        # gap_before[i] is True when the sample before row i is missing
+        gap_before = (mask.index.to_series().diff() > max_gap).to_numpy()
+        row_count = len(mask)
+
+        starts = np.flatnonzero(np.r_[True, run_ids[1:] != run_ids[:-1]])
+        ends = np.r_[starts[1:] - 1, row_count - 1]
+
+        for first, last in zip(starts, ends):
+            if not values[first]:
+                continue
+            run_index = mask.index[first:last + 1]
+            # measure sample width inside this run so that a frame with changing
+            # intervals is judged against its local spacing
+            widths = run_index.to_series().diff().dropna()
+            width = widths.median() if not widths.empty else fallback_width
+            duration = (run_index[-1] - run_index[0]) + width
+            bounded = (first > 0 and not gap_before[first]
+                       and last < row_count - 1 and not gap_before[last + 1])
+            yield run_index[0], run_index[-1] + width, duration, bounded
+
+
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         self.triggered_alarms = {}
 
-    def _add_an_alarm(self, start_time : datetime, end_time : datetime, var_name : str, alarm_string : str, add_one_minute_to_end : bool = True, certainty : str = "high"):
+    def _add_an_alarm(self, start_time : datetime, end_time : datetime, var_name : str, alarm_string : str, add_one_interval_to_end : bool = True, certainty : str = "high"):
+        """
+        Record one alarm event.
+
+        Parameters
+        ----------
+        start_time : datetime
+            First moment the alarm condition held.
+        end_time : datetime
+            Last moment the alarm condition held, or the exclusive end when
+            ``add_one_interval_to_end`` is False.
+        var_name : str
+            Variable the alarm is attributed to.
+        alarm_string : str
+            Human readable description stored in the event_detail column.
+        add_one_interval_to_end : bool
+            When True, extend ``end_time`` by one sample interval so that the recorded
+            end is exclusive. Pass False when ``end_time`` is already exclusive, which
+            is the case for every end produced by :meth:`_iter_runs`.
+        certainty : str
+            One of "high", "med" or "low".
+        """
         certainty_dict = {
             "high" : 3,
             "med" : 2,
@@ -84,10 +298,10 @@ class Alarm:
         }
         if certainty not in certainty_dict.keys():
             raise Exception(f"{certainty} is not a valid certainty key. Valid keys are {certainty_dict.keys()}")
-        else: 
+        else:
             certainty = certainty_dict[certainty]
-        if add_one_minute_to_end:
-            end_time = end_time + timedelta(minutes=1)
+        if add_one_interval_to_end:
+            end_time = end_time + timedelta(minutes=self.interval_minutes)
         self.triggered_alarms['start_time_pt'].append(start_time)
         self.triggered_alarms['end_time_pt'].append(end_time)
         self.triggered_alarms['alarm_type'].append(self.alarm_tag)
@@ -104,8 +318,10 @@ class Alarm:
     def _compress_alarm_df(self, alarm_df: pd.DataFrame) -> pd.DataFrame:
         """
         Compresses consecutive alarms of the same variable_name and alarm_type into single rows.
-        If one alarm's start_time_pt is within one minute of another alarm's end_time_pt,
-        they are merged into one row with the earliest start_time_pt and latest end_time_pt.
+        If one alarm's start_time_pt is within one sample interval of another alarm's
+        end_time_pt, they are merged into one row with the earliest start_time_pt and latest
+        end_time_pt. The tolerance follows the sample interval rather than being fixed at one
+        minute, so alarms that are adjacent in 5-minute data still merge.
 
         Parameters
         ----------
@@ -123,6 +339,7 @@ class Alarm:
         # Sort entire DataFrame by start_time_pt before processing
         alarm_df = alarm_df.sort_values('start_time_pt').reset_index(drop=True)
 
+        merge_tolerance = timedelta(minutes=self.interval_minutes)
         compressed_rows = []
 
         # Group by variable_name and alarm_type
@@ -145,7 +362,7 @@ class Alarm:
                     current_end = row_end
                     current_detail = row['event_detail']
                     current_certainty = row['certainty']
-                elif row_start <= current_end + timedelta(minutes=1):
+                elif row_start <= current_end + merge_tolerance:
                     # This row is within 1 minute of current end - merge it after checking 
                     row_certainty = row['certainty']
                     if row_certainty > current_certainty:
@@ -193,7 +410,7 @@ class Alarm:
                     else:
                         current_end = max(current_end, row_end)
                 else:
-                    # Gap is more than 1 minute - save current and start new
+                    # Gap is more than one sample interval - save current and start new
                     compressed_rows.append({
                         'start_time_pt': current_start,
                         'end_time_pt': current_end,

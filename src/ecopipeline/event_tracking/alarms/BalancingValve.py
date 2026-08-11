@@ -63,7 +63,7 @@ class BalancingValve(Alarm):
                         if er_sum >= tp_value*tp_bound:
                             self._add_an_alarm(day, day + timedelta(1), tp_var_name, 
                                                f"Recirculation imbalance: Sum of recirculation equipment ({er_sum:.2f}) exceeds or equals {(tp_bound * 100):.2f}% of total power.", 
-                                               add_one_minute_to_end=False, certainty="low")
+                                               add_one_interval_to_end=False, certainty="low")
                             alarm_triggered = True
             if len(out_codes) >= 1:
                 out_var_names = out_codes['variable_name'].tolist()
@@ -81,4 +81,4 @@ class BalancingValve(Alarm):
                             if er_sum > out_sum:
                                 self._add_an_alarm(day, day + timedelta(1), out_codes.iloc[0]['variable_name'], 
                                                 f"Recirculation imbalance: Sum of recirculation equipment power ({er_sum:.2f} kW) exceeds TM heating output ({out_sum:.2f} kW).",
-                                                add_one_minute_to_end=False, certainty="low")
+                                                add_one_interval_to_end=False, certainty="low")
