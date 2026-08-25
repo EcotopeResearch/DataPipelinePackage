@@ -48,6 +48,7 @@ Supported `process_type` values map to processor classes:
 | `process_type`     | Class / Source                   |
 |--------------------|----------------------------------|
 | `csv`              | `CSVProcessor`                   |
+| `csv_long`         | `LongCSVProcessor` (long-form)   |
 | `csv_mb`           | `ModbusCSVProcessor`             |
 | `csv_dent`         | `DentCSVProcessor`               |
 | `csv_flow`         | `FlowCSVProcessor`               |

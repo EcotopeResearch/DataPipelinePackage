@@ -8,6 +8,9 @@ Classes
 -------
 CSVProcessor
     Generic CSV files with a named string timestamp column.
+LongCSVProcessor
+    Long-form CSV files with field-name / timestamp / value columns, pivoted
+    into wide form at read time.
 JSONProcessor
     JSON-formatted raw data files.
 ModbusCSVProcessor
@@ -30,6 +33,7 @@ SmallPlanetCSVProcessor
 """
 
 from .CSVProcessor import CSVProcessor
+from .LongCSVProcessor import LongCSVProcessor
 from .JSONProcessor import JSONProcessor
 from .ModbusCSVProcessor import ModbusCSVProcessor
 from .DentCSVProcessor import DentCSVProcessor
