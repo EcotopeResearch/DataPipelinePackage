@@ -117,14 +117,18 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     for key, value in dict_of_alarms.items():
         # if key in ongoing_COP_exception and _check_if_during_ongoing_cop_alarm(daily_data, config, site_name):
         #     print("Ongoing DATA_LOSS_COP detected. ABNORMAL_COP events will be uploaded")
-        specific_alarm_df = value.find_alarms(df, daily_data, config)
-        # print(value.get_alarm_set_df())
-        alarm_set = pd.concat([alarm_set, value.get_alarm_set_df()])
-        if len(specific_alarm_df) > 0:
-            print(f"Detected {key} alarm(s). Adding to event df...")
-            alarm_df = pd.concat([alarm_df, specific_alarm_df])
-        else:
-            print(f"No {key} alarm(s) detected.")
+        try:
+            specific_alarm_df = value.find_alarms(df, daily_data, config)
+            # print(value.get_alarm_set_df())
+            alarm_set = pd.concat([alarm_set, value.get_alarm_set_df()])
+            if len(specific_alarm_df) > 0:
+                print(f"Detected {key} alarm(s). Adding to event df...")
+                alarm_df = pd.concat([alarm_df, specific_alarm_df])
+            else:
+                print(f"No {key} alarm(s) detected.")
+        except Exception as e:
+            print(f"Unable to process {key}: {e}")
+            print("moving on to next alarm...")
     if upload_alarm_set:
         AlarmSetLoader().load_database(config, alarm_set)
     return alarm_df

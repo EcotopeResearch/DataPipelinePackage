@@ -18,6 +18,7 @@ import requests
 import subprocess
 import traceback
 from .file_processors.CSVProcessor import CSVProcessor
+from .file_processors.LongCSVProcessor import LongCSVProcessor
 from .file_processors.JSONProcessor import JSONProcessor
 from .file_processors.ModbusCSVProcessor import ModbusCSVProcessor
 from .file_processors.DentCSVProcessor import DentCSVProcessor
@@ -35,7 +36,8 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                  raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S",
                  file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3,
                  time_zone : str = "America/Los_Angeles", site : str = "", system : str = "", pull_weather_data : bool = True,
-                 prevent_csv_reprocess : bool = False) -> [pd.DataFrame, pd.DataFrame]:
+                 prevent_csv_reprocess : bool = False, field_column_name : str = 'field', value_column_name : str = 'value',
+                 strip_time_zone_suffix : bool = False) -> [pd.DataFrame, pd.DataFrame]:
     """
     Primary entry point for the extract stage of the data pipeline.
 
@@ -56,10 +58,10 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         API tokens, and site metadata used throughout the pipeline.
     process_type : str
         Identifier for the extraction method.  Accepted values are ``"csv"``,
-        ``"csv_mb"``, ``"csv_dent"``, ``"csv_flow"``, ``"csv_msa"``,
-        ``"csv_egauge"``, ``"csv_small_planet"``, ``"json"``, ``"api_tb"``,
-        ``"api_skycentrics"``, ``"api_fm"``, ``"api_licor"``, and
-        ``"api_bluedot"``.
+        ``"csv_long"``, ``"csv_mb"``, ``"csv_dent"``, ``"csv_flow"``,
+        ``"csv_msa"``, ``"csv_egauge"``, ``"csv_small_planet"``, ``"json"``,
+        ``"api_tb"``, ``"api_skycentrics"``, ``"api_fm"``, ``"api_licor"``,
+        and ``"api_bluedot"``.
     start_time : datetime, optional
         Inclusive start of the extraction window in local time.  If ``None``
         the start time is derived from :func:`get_last_full_day_from_db`.
@@ -107,6 +109,20 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         Default True. Set to False to avoid pulling weather data from Open Meteo
     prevent_csv_reprocess : bool
         Default False. Set true to force API pull rather than using CSV files from previous pulls if reprocessing data
+    field_column_name : str, optional
+        Name of the column holding the sensor/field name for each row in a
+        long-form CSV.  Each distinct value becomes a column in the returned
+        DataFrame.  Only used by ``"csv_long"``.  Default is ``'field'``.
+    value_column_name : str, optional
+        Name of the column holding the measurement for each row in a long-form
+        CSV.  Only used by ``"csv_long"``.  Default is ``'value'``.
+    strip_time_zone_suffix : bool, optional
+        When ``True``, remove the final whitespace-delimited token from each
+        timestamp string before parsing (e.g. the ``'PDT'`` in
+        ``'22-Aug-26 12:00 AM PDT'``), so ``time_column_format`` does not need
+        a ``%Z`` directive.  Requires ``use_defaults=False`` together with an
+        explicit ``time_column_format``.  Only used by ``"csv_long"``.
+        Default is ``False``.
 
     Returns
     -------
@@ -143,6 +159,10 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         if process_type == "csv":
             file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
                     date_string_start_idx, date_string_end_idx)
+        elif process_type == "csv_long":
+            file_processor = LongCSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
+                    date_string_start_idx, date_string_end_idx, field_column_name=field_column_name, value_column_name=value_column_name,
+                    strip_time_zone_suffix=strip_time_zone_suffix)
         elif process_type == "csv_mb":
             file_processor = ModbusCSVProcessor(config, start_time, end_time, raw_time_column, filename_date_format, file_prefix, data_sub_dir,
                     date_string_start_idx, date_string_end_idx)
@@ -191,8 +211,6 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
             elif process_type == "api_licor":
                 api_extractor = LiCOR(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_bluedot":
-                print("here", start_time)
-                print("and", end_time)
                 api_extractor = Bluedot(config, start_time, end_time, sub_directory=data_sub_dir)
             else:
                 raise Exception(f"{process_type} is not a recognized extraction method.")
@@ -259,6 +277,7 @@ def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time
         return [raw_time_column, time_column_format]
     default_map = {
         "csv" : ['DateTime', '%Y/%m/%d %H:%M:%S'],
+        "csv_long" : ['DateTime', '%Y/%m/%d %H:%M:%S'],
         "csv_mb" : ["time(UTC)", '%Y/%m/%d %H:%M:%S'],
         # The following types handle time indexing internally in _read_file_into_df;
         # raw_time_column / time_column_format are unused placeholders.
