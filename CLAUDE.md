@@ -4,22 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-**EcoPipeline** (`ecopipeline`, v2.0.8) is a Python library for processing sensor data from heat pump water heater (HPWH) systems. It implements a 3-stage ETL pipeline: Extract → Transform → Load, with an optional Event Tracking stage for anomaly detection. Developed by Ecotope Inc.
+**EcoPipeline** (`ecopipeline`, v2.2.3) is a Python library for processing sensor data from heat pump water heater (HPWH) systems. It implements a 3-stage ETL pipeline: Extract → Transform → Load, with an optional Event Tracking stage for anomaly detection. Developed by Ecotope Inc.
 
 ## Common Commands
 
+This project uses [uv](https://docs.astral.sh/uv/). The interpreter is pinned in
+`.python-version` and the dependency set is locked in `uv.lock`.
+
 ```bash
+# Create/refresh the environment from the lockfile
+uv sync
+
 # Run all tests
-python -m pytest
+uv run pytest
 
 # Run a single test file
-python -m pytest tests/transform_test.py
+uv run pytest tests/transform_test.py
 
 # Run a single test by name
-python -m pytest tests/event_tracking_test.py -k "test_boundary_alarm"
+uv run pytest tests/event_tracking_test.py -k "test_boundary_alarm"
 
-# Install in editable mode (for development)
-pip install -e .
+# Bump the version (updates pyproject.toml and uv.lock together)
+uv version --bump patch
+
+# Build sdist + wheel
+uv build
 ```
 
 ## Pipeline Architecture
@@ -120,4 +129,11 @@ Many older functions are deprecated and should not be used in new code. Prefer t
 
 ## Dependencies
 
-Core: `pandas`, `numpy`, `mysql-connector-python`, `scikit-learn`, `statsmodels`, `openmeteo_requests`. See `requirements.txt` for full list. Python >= 3.11 required.
+Core: `pandas`, `numpy`, `mysql-connector-python`, `scikit-learn`, `openmeteo_requests`,
+`requests`, `pytz`. Declared with upper bounds in `pyproject.toml`; the exact resolved
+set lives in `uv.lock`. Python 3.11 only (`>=3.11,<3.12`) -- pandas 1.5.x, numpy 1.24.x,
+and scikit-learn 1.2.x publish no cp312 wheels.
+
+`src/ecopipeline/__init__.py` checks the installed numpy version before importing
+pandas. numpy outside `>=1.24.1,<1.25` raises an `ImportError` naming the fix, instead
+of surfacing as a `numpy.dtype size changed` ABI error from inside pandas.
