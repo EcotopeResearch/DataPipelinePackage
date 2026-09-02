@@ -55,7 +55,7 @@ class Boundary(Alarm):
 
     def specific_alarm_function(self, df: pd.DataFrame, daily_df : pd.DataFrame, config : ConfigManager):
         for bound_var, bounds in self.bounds_df.iterrows():
-            if bound_var in df.columns:
+            if bound_var in df.columns and not(pd.isna(bounds["low_alarm"]) and pd.isna(bounds["high_alarm"])):
                 self.record_set_alarm([bound_var])
                 fault_time = bounds['fault_time']
                 if pd.isna(fault_time):

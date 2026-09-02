@@ -3,9 +3,18 @@
 ## To Install the Package
     From the internet for use elsewhere:
     $ pip install ecopipeline
-    Install locally in an editable mode:
-    Navigate to DataPipelinePackage directory and run the following command
-    $ pip install -e .
+
+Requires Python 3.11. The package pins numpy to the 1.24 series and pandas below 2.0;
+installing it will downgrade a newer numpy in the target environment.
+
+## For Development
+This repository uses [uv](https://docs.astral.sh/uv/). From the DataPipelinePackage
+directory:
+
+```bash
+uv sync          # build .venv from uv.lock
+uv run pytest    # run the test suite
+```
 
 ## Using the Package
 See https://ecotoperesearch.github.io/DataPipelinePackage/build/html/index.html for documentation
@@ -37,7 +46,7 @@ See https://ecotoperesearch.github.io/DataPipelinePackage/build/html/index.html 
 ## Unit Testing
 To run Unit tests, run the following command in the terminal in the corresponding directory:
 ```bash
-python -m pytest
+uv run pytest
 ```
 
 
