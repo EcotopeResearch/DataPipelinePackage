@@ -24,13 +24,23 @@ class Loader:
     """
 
     def __init__(self):
+        # pandas 3 infers 'str' where pandas 1.x inferred 'object', and returns
+        # datetime64[us] from to_datetime where pandas 1.x returned
+        # datetime64[ns]. The older names are kept so the map still works for
+        # frames built by callers pinned to an older pandas.
         self.data_map = {
             'int64':'float',
             'int32':'float',
             'float64': 'float',
+            'float32': 'float',
             'M8[ns]':'datetime',
             'datetime64[ns]':'datetime',
+            'datetime64[us]':'datetime',
+            'datetime64[ms]':'datetime',
+            'datetime64[s]':'datetime',
             'object':'varchar(25)',
+            'str':'varchar(25)',
+            'string':'varchar(25)',
             'bool': 'boolean'
         }
 

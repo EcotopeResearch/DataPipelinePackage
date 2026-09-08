@@ -140,7 +140,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         If ``process_type`` is not one of the recognised extraction method
         strings.
     """
-    print("++++++++++++ EXTRACT ++++++++++++")
+    print("++++++++++++ EXTRACT hi ++++++++++++")
     reprocess = True
     if start_time is None:
         start_time = get_last_full_day_from_db(config, tz_aware = False)
@@ -543,10 +543,13 @@ def json_to_df(json_filenames: List[str], time_zone: str = 'US/Pacific') -> pd.D
 
                 norm_data["time"] = norm_data["time"].dt.tz_localize("UTC").dt.tz_convert(time_zone)
                 norm_data = pd.pivot_table(norm_data, index="time", columns="id", values="data")
-                # Iterate over the index and round up if necessary (work around for json format from sensors)
-                for i in range(len(norm_data.index)):
-                    if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
-                        norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
+                # Round :59:59 timestamps up to the next minute (work around for
+                # json format from sensors). The index is rebuilt rather than
+                # mutated through .values, which is read-only in pandas 3.
+                idx = norm_data.index
+                needs_bump = (idx.minute == 59) & (idx.second == 59)
+                if needs_bump.any():
+                    norm_data.index = idx.where(~needs_bump, idx + pd.Timedelta(seconds=1))
                 temp_dfs.append(norm_data)
         except Exception:
             print(f'Could not process {file}. Empty or improperly formated.')
@@ -620,7 +623,7 @@ def csv_to_df(csv_filenames: List[str], mb_prefix : bool = False, round_time_ind
 
     if round_time_index:
         #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
-        df.index = df.index.floor('T')
+        df.index = df.index.floor('min')
         
         #group and sort index
         df = df.groupby(df.index).mean(numeric_only=True)
@@ -713,7 +716,7 @@ def dent_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
     
     if round_time_index:
         #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
-        df.index = df.index.floor('T')
+        df.index = df.index.floor('min')
         
         #group and sort index
         df = df.groupby(df.index).mean(numeric_only=True)
@@ -772,7 +775,7 @@ def flow_csv_to_df(csv_filenames: List[str], round_time_index : bool = True) -> 
     
     if round_time_index:
         #round down all seconds, 99% of points come in between 0 and 30 seconds but there are a few that are higher
-        df.index = df.index.floor('T')
+        df.index = df.index.floor('min')
         
         #group and sort index
         df = df.groupby(df.index).mean(numeric_only=True)
@@ -818,7 +821,7 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
                 #prepend modbus prefix
                 prefix = file.split('.')[0].split("/")[-1]
 
-                data['time_pt'] = pd.to_datetime(data['DateEpoch(secs)'], unit='s',  utc=True)
+                data['time_pt'] = pd.to_datetime(pd.to_numeric(data['DateEpoch(secs)']), unit='s',  utc=True)
                 data['time_pt'] = data['time_pt'].dt.tz_convert('US/Pacific').dt.tz_localize(None)
                 data.set_index('time_pt', inplace = True)
                 data.drop(columns = 'DateEpoch(secs)', inplace = True)
@@ -829,7 +832,7 @@ def msa_to_df(csv_filenames: List[str], mb_prefix : bool = False, time_zone: str
      df = pd.concat(temp_dfs, ignore_index=False)
      
      #note sure if we should be rounding down but best I can do atm
-     df.index = df.index.floor('T')
+     df.index = df.index.floor('min')
 
      #group and sort index
      df = df.groupby(df.index).mean()
@@ -901,7 +904,7 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
             #prepend modbus prefix MOD_RTU_Nesbit_BTU_17_.Building_DHW_Energy_Total.1713078000
             prefix = file.split('.')[0].split("/")[-1]
 
-            data['time_pt'] = pd.to_datetime(data['DateEpoch(secs)'], unit='s',  utc=True)
+            data['time_pt'] = pd.to_datetime(pd.to_numeric(data['DateEpoch(secs)']), unit='s',  utc=True)
             data['time_pt'] = data['time_pt'].dt.tz_convert('US/Pacific').dt.tz_localize(None)
             data.set_index('time_pt', inplace = True)
             data.drop(columns = 'DateEpoch(secs)', inplace = True)
@@ -921,7 +924,7 @@ def small_planet_control_to_df(config: ConfigManager, csv_filenames: List[str], 
     df = pd.concat(temp_dfs, ignore_index=False)
     
     #note sure if we should be rounding down but best I can do atm
-    df.index = df.index.floor('T')
+    df.index = df.index.floor('min')
 
     #group and sort index
     df = df.groupby(df.index).mean()
@@ -981,7 +984,7 @@ def egauge_csv_to_df(csv_filenames: List[str]) -> pd.DataFrame:
     df = pd.concat(temp_dfs, ignore_index=False)
     
     #note sure if we should be rounding down but best I can do atm
-    df.index = df.index.floor('T')
+    df.index = df.index.floor('min')
 
     #group and sort index
     df = df.groupby(df.index).mean()
@@ -1647,7 +1650,7 @@ def get_noaa_data(station_names: List[str], config : ConfigManager, station_ids 
                         break
     except:
         # temporary solution for NOAA ftp not including 2025
-        noaa_df = pd.DataFrame(index=pd.date_range(start='2025-01-01', periods=10, freq='H'))
+        noaa_df = pd.DataFrame(index=pd.date_range(start='2025-01-01', periods=10, freq='h'))
         noaa_df['conditions'] = None
         noaa_df['airTemp_F'] = None
         noaa_df['dewPoint_F'] = None
@@ -1719,7 +1722,7 @@ def _format_df(station_ids: dict, noaa_dfs: dict) -> dict:
 
         # Do unit Conversions
         # Convert all -9999 into N/A
-        temp_df = temp_df.replace(-9999, np.NaN)
+        temp_df = temp_df.replace(-9999, np.nan)
 
         # Convert tz from UTC to PT and format: Y-M-D HR:00:00
         temp_df["time"] = pd.to_datetime(
@@ -1883,5 +1886,6 @@ def _gz_to_df(filename: str) -> pd.DataFrame:
         pd.DataFrame: DataFrame of the corrosponding file
     """
     with gzip.open(filename) as data:
-        table = pd.read_table(data, header=None, delim_whitespace=True)
+        # delim_whitespace was removed in pandas 3.0; sep='\s+' is the replacement
+        table = pd.read_table(data, header=None, sep=r'\s+')
     return table
