@@ -212,11 +212,11 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     ------- 
         row (pd.Series): Pandas series (Refrig_charge added!)
     """
-    superheat_target = np.NaN
+    superheat_target = np.nan
 
     #IF Temp_ODT, Temp_RAT, Humidity_RARH, Pressure_SL_psi, or Temp_SL_C
     # is null, just return the row early. 
-    if(row.loc["Temp_ODT"] == np.NaN or row.loc["Temp_RAT"] == np.NaN or row.loc["Humidity_RARH"] == np.NaN or row.loc["Pressure_SL_psi"] == np.NaN or row.loc["Temp_SL_C"] == np.NaN):
+    if(row.loc["Temp_ODT"] == np.nan or row.loc["Temp_RAT"] == np.nan or row.loc["Humidity_RARH"] == np.nan or row.loc["Pressure_SL_psi"] == np.nan or row.loc["Temp_SL_C"] == np.nan):
         return row
 
     #Convert F to C return air temperature
@@ -231,9 +231,9 @@ def _superheat(row, x_range, row_range, superchart, lr_model):
     #NA checks, elif bound check, else interpolations
     if math.isnan(Temp_ODT or math.isnan(Temp_wb_F)):
         #filtering out na's in recorded data
-        superheat_target = np.NaN
+        superheat_target = np.nan
     elif(Temp_ODT > max(row_range) or Temp_ODT < min(row_range) or Temp_wb_F > max(x_range) or Temp_wb_F < min(x_range)):
-        superheat_target = np.NaN
+        superheat_target = np.nan
     else:
         #row_range exists so this can have yrange
         y_max = math.ceil(Temp_ODT/5) * 5
@@ -307,7 +307,7 @@ def get_refrig_charge(df: pd.DataFrame, site: str, config : ConfigManager) -> pd
     lr_model = LinearRegression().fit(X, y)
 
     #Creating Refrig_charge column populated w/None
-    df["Refrig_charge"] = np.NaN
+    df["Refrig_charge"] = np.nan
 
     # .apply on every row once the metering device has been determined. different calcs for each!
     if (metering_device == "txv"):
@@ -803,7 +803,7 @@ def get_cfm_values(df, site_cfm, site_info, site):
 
 
 def get_acf(elev):
-    if (elev == np.NaN) | (elev < 1000):
+    if (elev == np.nan) | (elev < 1000):
         return 1
 
     # create arrays for elevation in feet and altitude correction factor

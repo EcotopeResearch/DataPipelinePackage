@@ -89,7 +89,7 @@ def conditions_index_to_desc(conditions: int):
         case 19: 
             conditions_desc = 'Dark overcast'  
         case _:
-            conditions_desc = np.NaN  
+            conditions_desc = np.nan  
     return conditions_desc
 
 # Used in verify_power_energy() in transform

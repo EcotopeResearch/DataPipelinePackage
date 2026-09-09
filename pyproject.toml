@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ecopipeline"
-version = "2.3.0"
+version = "2.4.0"
 description = "Contains functions for use in Ecotope Datapipelines"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
@@ -22,19 +22,18 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-# Upper bounds are deliberate. Consumers install this package into shared,
-# long-lived environments, so an unbounded range lets a routine `pip install`
-# pull in an incompatible major release (numpy 2.x against pandas 1.5.x being
-# the recurring case). numpy is held to the 1.24 patch series because that is
-# the only series this code has been exercised against.
+# Floors track the current release of each package; ceilings stop the next
+# major from arriving unannounced. Consumers install this package into shared,
+# long-lived environments where an unbounded range lets a routine `pip install`
+# pull in a breaking major release.
 dependencies = [
-    "numpy~=1.24.1",
-    "pandas>=1.5.3,<2.0",
-    "scikit-learn>=1.2.1,<2.0",
-    "mysql-connector-python>=8.0.32,<9.0",
+    "numpy>=2.4,<3.0",
+    "pandas>=3.0,<4.0",
+    "scikit-learn>=1.9,<2.0",
+    "mysql-connector-python>=26.7,<27.0",
     "openmeteo_requests>=1.7,<2.0",
-    "requests>=2.28,<3.0",
-    "pytz",
+    "requests>=2.34,<3.0",
+    "pytz>=2026.3",
 ]
 
 [dependency-groups]

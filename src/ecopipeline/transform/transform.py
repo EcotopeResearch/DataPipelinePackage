@@ -164,10 +164,10 @@ def round_time(df: pd.DataFrame):
     if not df.index.tz is None:
         tz = df.index.tz
         df.index = df.index.tz_localize(None)
-        df.index = df.index.floor('T')
+        df.index = df.index.floor('min')
         df.index = df.index.tz_localize(tz, ambiguous='infer')
     else:
-        df.index = df.index.floor('T')
+        df.index = df.index.floor('min')
     return True
 
 
@@ -295,13 +295,14 @@ def _rm_cols(col, bounds_df):  # Helper function for remove_outliers
 
         # Skip if both bounds are NaN
         if pd.isna(c_lower) and pd.isna(c_upper):
-            return
+            return col
 
         # Convert bounds to float, handling NaN values
         c_lower = float(c_lower) if not pd.isna(c_lower) else -np.inf
         c_upper = float(c_upper) if not pd.isna(c_upper) else np.inf
 
-        col.mask((col > c_upper) | (col < c_lower), other=np.NaN, inplace=True)
+        col = col.mask((col > c_upper) | (col < c_lower), other=np.nan)
+    return col
 
 # TODO: remove_outliers STRETCH GOAL: Functionality for alarms being raised based on bounds needs to happen here.
 def remove_outliers(original_df: pd.DataFrame, config : ConfigManager, site: str = "") -> pd.DataFrame:
@@ -345,7 +346,7 @@ def remove_outliers(original_df: pd.DataFrame, config : ConfigManager, site: str
     bounds_df.set_index(['variable_name'], inplace=True)
     bounds_df = bounds_df[bounds_df.index.notnull()]
 
-    df.apply(_rm_cols, args=(bounds_df,))
+    df = df.apply(_rm_cols, args=(bounds_df,))
     return df
 
 
@@ -365,6 +366,7 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
         ``col`` when it is NaN.
     """
     if (col.name in ffill_df.index):
+        col = col.copy()
         #set initial fill value where needed for first row
         if previous_fill is not None and len(col) > 0 and pd.isna(col.iloc[0]):
             col.iloc[0] = previous_fill[col.name].iloc[0]
@@ -374,9 +376,10 @@ def _ffill(col, ffill_df, previous_fill: pd.DataFrame = None):  # Helper functio
             length = 0
         length = int(length)  # casting to int to avoid float errors
         if (cp == 1):  # ffill unconditionally
-            col.fillna(method='ffill', inplace=True)
+            col = col.ffill()
         elif (cp == 0):  # ffill only up to length
-            col.fillna(method='ffill', inplace=True, limit=length)
+            col = col.ffill(limit=length)
+    return col
 
 def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fill: pd.DataFrame = None) -> pd.DataFrame:
     """
@@ -437,7 +440,7 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
             for col in missing_cols:
                 df[col] = np.nan 
 
-    df.apply(_ffill, args=(ffill_df,previous_fill))
+    df = df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
 def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_model = 'veris') -> pd.DataFrame:
@@ -570,7 +573,7 @@ def process_ls_signal(df: pd.DataFrame, hourly_df: pd.DataFrame, daily_df: pd.Da
     # Process hourly data - aggregate ls_column values by hour and map to system_state
     if ls_column in df_copy.columns:
         # Group by hour and calculate mean of ls_column, then round to nearest integer
-        hourly_ls = df_copy[ls_column].resample('H').mean().round()
+        hourly_ls = df_copy[ls_column].resample('h').mean().round()
         
         # Convert to int only for non-NaN values
         hourly_ls = hourly_ls.apply(lambda x: int(x) if pd.notna(x) else x)
@@ -1208,8 +1211,8 @@ def aggregate_df(df: pd.DataFrame, ls_filename: str = "", complete_hour_threshol
     mean_df = df.filter(regex="^((?!Energy)(?!EnergyOut_PrimaryPlant_BTU).)*$")
 
     # Resample downsamples the columns of the df into 1 hour bins and sums/means the values of the timestamps falling within that bin
-    hourly_sum = sum_df.resample('H').sum()
-    hourly_mean = mean_df.resample('H').mean(numeric_only=True)
+    hourly_sum = sum_df.resample('h').sum()
+    hourly_mean = mean_df.resample('h').mean(numeric_only=True)
     # Same thing as for hours, but for a whole day
     daily_sum = sum_df.resample("D").sum()
     daily_mean = mean_df.resample('D').mean(numeric_only=True)
@@ -1323,7 +1326,7 @@ def create_summary_tables(df: pd.DataFrame):
     if (df.empty):
         return pd.DataFrame(), pd.DataFrame()
     
-    hourly_df = df.resample('H').mean()
+    hourly_df = df.resample('h').mean()
     daily_df = df.resample('D').mean()
 
     hourly_df, daily_df = remove_partial_days(df, hourly_df, daily_df)
@@ -1541,7 +1544,7 @@ def create_data_statistics_df(df: pd.DataFrame) -> pd.DataFrame:
     # Build a complete minutely timestamp index over the full date range
     full_index = pd.date_range(start=start_day,
                                end=df.index.max().floor('D') - pd.Timedelta(minutes=1),
-                               freq='T')
+                               freq='min')
     
     # Reindex to include any completely missing minutes
     df_full = df.reindex(full_index)

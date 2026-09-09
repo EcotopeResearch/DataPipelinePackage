@@ -51,12 +51,14 @@ def test_json_to_df():
                     ]
                 }
             ]
+            # pivot_table aggregates with mean, so the sensor columns come back
+            # as float rather than the int64 pandas 1.x downcast them to
             normal_df = pd.DataFrame(
                 {
                     'time': ['2023-07-11 10:00:00', '2023-07-11 10:01:00','2023-07-11 11:00:00'],
-                    'sensor_1': [10,15,16],
-                    'sensor_2': [20,25,26],
-                    'sensor_3': [30,35,36]
+                    'sensor_1': [10.0,15.0,16.0],
+                    'sensor_2': [20.0,25.0,26.0],
+                    'sensor_3': [30.0,35.0,36.0]
                 }
             )
 
@@ -227,6 +229,7 @@ def test_small_planet_control_to_df(mock_config_manager):
                     'serious_var_1': [1.1,1.1,1.2,1.2],
                 })
 
-        expected_df['time_pt'] = pd.to_datetime(expected_df['time_pt'])
+        # epoch-second input yields second resolution under pandas 3
+        expected_df['time_pt'] = pd.to_datetime(expected_df['time_pt']).astype('datetime64[s]')
         expected_df.set_index('time_pt', inplace=True)
         assert_frame_equal(result_df, expected_df)

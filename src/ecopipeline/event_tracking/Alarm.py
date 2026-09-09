@@ -498,6 +498,13 @@ class Alarm:
         if len(alarm_code_parts) > 0:
             bounds_df[['alarm_code_type', 'alarm_code_id']] = pd.DataFrame(alarm_code_parts, index=bounds_df.index)
 
+            # Coerce the bound columns to float before filling defaults. They are
+            # built from alarm-code tag strings, which pandas infers as a str
+            # dtype that rejects the numeric defaults assigned below.
+            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
+            if self.range_bounds:
+                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
+
             # Replace None bounds with appropriate defaults based on alarm_code_type
             for idx, row in bounds_df.iterrows():
                 if pd.isna(row['bound']) or row['bound'] is None:
@@ -507,10 +514,6 @@ class Alarm:
                             bounds_df.at[idx, 'bound2'] = self.type_default_dict[row['alarm_code_type']][1]
                         else:
                             bounds_df.at[idx, 'bound'] = self.type_default_dict[row['alarm_code_type']]
-            # Coerce bound column to float
-            bounds_df['bound'] = pd.to_numeric(bounds_df['bound'], errors='coerce').astype(float)
-            if self.range_bounds:
-                bounds_df['bound2'] = pd.to_numeric(bounds_df['bound2'], errors='coerce').astype(float)
 
         return bounds_df
 

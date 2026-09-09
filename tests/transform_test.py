@@ -339,14 +339,14 @@ def test_ffill_missing_out_of_order_timeswitch(mock_config_manager):
                         'serious_var_2': [None,None,None,None, 5],
                         'serious_var_3': [None,3,None,None,None],
                         'serious_var_4': [None,3,None,4,2]})
-        df_input.index = pd.to_datetime(['2024-11-03 01:59:00-07:00', '2024-11-03 01:58:00-07:00', '2024-11-03 01:00:00-07:00','2024-11-03 01:00:00-08:00', '2024-11-03 01:57:00-07:00'])
+        df_input.index = pd.to_datetime(['2024-11-03 01:59:00-07:00', '2024-11-03 01:58:00-07:00', '2024-11-03 01:00:00-07:00','2024-11-03 01:00:00-08:00', '2024-11-03 01:57:00-07:00'], utc=True)
         df_unchanged = df_input.copy()
         df_expected = pd.DataFrame({
                         'serious_var_1': [None, 1, 1, 1, 1],
                         'serious_var_2': [None,5,5,5,None],
                         'serious_var_3': [None,None,3,None,None],
                         'serious_var_4': [None,2,3,3,4]})
-        df_expected.index = pd.to_datetime(['2024-11-03 01:00:00-07:00', '2024-11-03 01:57:00-07:00', '2024-11-03 01:58:00-07:00', '2024-11-03 01:59:00-07:00','2024-11-03 01:00:00-08:00'])
+        df_expected.index = pd.to_datetime(['2024-11-03 01:00:00-07:00', '2024-11-03 01:57:00-07:00', '2024-11-03 01:58:00-07:00', '2024-11-03 01:59:00-07:00','2024-11-03 01:00:00-08:00'], utc=True)
         df_result = ffill_missing(df_input, mock_config_manager)
         assert_frame_equal(df_result, df_expected)
         # check that df_input was not changed in place
@@ -453,9 +453,9 @@ def test_aggregate_df():
 
             hourly_result, daily_result = aggregate_df(df_input, "full/path/to/pipeline/input/loadshift_matrix.csv", remove_partial=False)
             assert len(hourly_result.index) == 73
-            hourly_result = hourly_result.loc[hourly_result.index.isin(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-22 10:00:00','2022-04-23 15:00:00'])]
+            hourly_result = hourly_result.loc[hourly_result.index.isin(pd.to_datetime(['2022-04-21 00:00:00', '2022-04-21 16:00:00', '2022-04-22 10:00:00','2022-04-23 15:00:00']))]
             assert_frame_equal(hourly_result, hourly_df_expected)
-            daily_result = daily_result.loc[daily_result.index.isin(['2022-04-21 00:00:00', '2022-04-22 00:00:00','2022-04-23 00:00:00'])]
+            daily_result = daily_result.loc[daily_result.index.isin(pd.to_datetime(['2022-04-21 00:00:00', '2022-04-22 00:00:00','2022-04-23 00:00:00']))]
             assert_frame_equal(daily_df_expected, daily_result)
             # check that df_input was not changed in place
             assert_frame_equal(df_input, df_unchanged)
@@ -609,20 +609,20 @@ def test_remove_outliers(mock_config_manager):
                         'serious_var_4': [8, 1, 10, 50, -3]})
         df_input.index = timestamps
         df_expected = pd.DataFrame({
-                        'serious_var_1': [8, np.NaN, 10, np.NaN, np.NaN],
-                        'serious_var_2': [np.NaN, np.NaN, 10.7, 50, np.NaN],
-                        'serious_var_3': [8, np.NaN, 10, np.NaN, np.NaN],
-                        'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
+                        'serious_var_1': [8, np.nan, 10, np.nan, np.nan],
+                        'serious_var_2': [np.nan, np.nan, 10.7, 50, np.nan],
+                        'serious_var_3': [8, np.nan, 10, np.nan, np.nan],
+                        'serious_var_4': [np.nan, np.nan, np.nan, 50, np.nan]})
         df_expected.index = timestamps
 
         assert_frame_equal(remove_outliers(df_input, mock_config_manager), df_expected)
 
         timestamps = pd.to_datetime(['2022-01-01 00:00:00', '2022-01-01 00:01:00', '2022-01-01 00:02:00', '2022-01-01 00:03:00','2022-01-01 00:04:00'])
         df_expected = pd.DataFrame({
-                        'serious_var_1': [8, np.NaN, 10, np.NaN, np.NaN],
-                        'serious_var_2': [np.NaN, np.NaN, 10.7, 50, np.NaN],
+                        'serious_var_1': [8, np.nan, 10, np.nan, np.nan],
+                        'serious_var_2': [np.nan, np.nan, 10.7, 50, np.nan],
                         'serious_var_3': [8, 1, 10, 50, -30.789],
-                        'serious_var_4': [np.NaN, np.NaN, np.NaN, 50, np.NaN]})
+                        'serious_var_4': [np.nan, np.nan, np.nan, 50, np.nan]})
         df_expected.index = timestamps
 
         assert_frame_equal(remove_outliers(df_input, mock_config_manager, site="site_1"), df_expected)
@@ -696,12 +696,12 @@ def test_remove_outliers_nan_values(mock_config_manager):
 
         timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03', '2022-01-04'])
         df_input = pd.DataFrame({
-                        'serious_var_1': [np.NaN, 10, 8, np.NaN],
-                        'serious_var_2': [50, np.NaN, 100, 15]})
+                        'serious_var_1': [np.nan, 10, 8, np.nan],
+                        'serious_var_2': [50, np.nan, 100, 15]})
         df_input.index = timestamps
         df_expected = pd.DataFrame({
-                        'serious_var_1': [np.NaN, 10, 8, np.NaN],
-                        'serious_var_2': [50, np.NaN, 100, 15]})
+                        'serious_var_1': [np.nan, 10, 8, np.nan],
+                        'serious_var_2': [50, np.nan, 100, 15]})
         df_expected.index = timestamps
 
         result = remove_outliers(df_input, mock_config_manager)
@@ -723,7 +723,7 @@ def test_remove_outliers_boundary_values(mock_config_manager):
                         'serious_var_1': [9.99, 10.0, 50, 100.0, 100.01]})
         df_input.index = timestamps
         df_expected = pd.DataFrame({
-                        'serious_var_1': [np.NaN, 10.0, 50, 100.0, np.NaN]})
+                        'serious_var_1': [np.nan, 10.0, 50, 100.0, np.nan]})
         df_expected.index = timestamps
 
         result = remove_outliers(df_input, mock_config_manager)
@@ -736,7 +736,7 @@ def test_remove_outliers_missing_lower_bound(mock_config_manager):
 
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
-                        'lower_bound': [np.NaN, 10],
+                        'lower_bound': [np.nan, 10],
                         'upper_bound': [100.0, 110]})
         mock_csv.return_value = csv_df
 
@@ -746,8 +746,8 @@ def test_remove_outliers_missing_lower_bound(mock_config_manager):
                         'serious_var_2': [5, 50.1, 150]})
         df_input.index = timestamps
         df_expected = pd.DataFrame({
-                        'serious_var_1': [-1000.0, 50, np.NaN],
-                        'serious_var_2': [np.NaN, 50.1, np.NaN]})
+                        'serious_var_1': [-1000.0, 50, np.nan],
+                        'serious_var_2': [np.nan, 50.1, np.nan]})
         df_expected.index = timestamps
 
         result = remove_outliers(df_input, mock_config_manager)
@@ -761,7 +761,7 @@ def test_remove_outliers_missing_upper_bound(mock_config_manager):
     with patch('pandas.read_csv') as mock_csv:
         csv_df = pd.DataFrame({'variable_name': ['serious_var_1', 'serious_var_2'],
                         'lower_bound': [5, 10],
-                        'upper_bound': [np.NaN, 110]})
+                        'upper_bound': [np.nan, 110]})
         mock_csv.return_value = csv_df
 
         timestamps = pd.to_datetime(['2022-01-01', '2022-01-02', '2022-01-03'])
@@ -770,8 +770,8 @@ def test_remove_outliers_missing_upper_bound(mock_config_manager):
                         'serious_var_2': [5, 50, 150]})
         df_input.index = timestamps
         df_expected = pd.DataFrame({
-                        'serious_var_1': [np.NaN, 50, 1000],
-                        'serious_var_2': [np.NaN, 50, np.NaN]})
+                        'serious_var_1': [np.nan, 50, 1000],
+                        'serious_var_2': [np.nan, 50, np.nan]})
         df_expected.index = timestamps
 
         result = remove_outliers(df_input, mock_config_manager)
@@ -793,7 +793,7 @@ def test_remove_outliers_negative_bounds(mock_config_manager):
                         'serious_var_1': [-60, -50, -30, -10, 0]})
         df_input.index = timestamps
         df_expected = pd.DataFrame({
-                        'serious_var_1': [np.NaN, -50, -30, -10, np.NaN]})
+                        'serious_var_1': [np.nan, -50, -30, -10, np.nan]})
         df_expected.index = timestamps
 
         result = remove_outliers(df_input, mock_config_manager)
@@ -822,7 +822,7 @@ def test_remove_outliers_preserves_original_dataframe(mock_config_manager):
         assert_frame_equal(df_input, df_original)
         # Result should have outliers removed
         df_expected = pd.DataFrame({
-                        'serious_var_1': [np.NaN, 10, np.NaN]})
+                        'serious_var_1': [np.nan, 10, np.nan]})
         df_expected.index = timestamps
         assert_frame_equal(result, df_expected)
 
@@ -846,7 +846,7 @@ def test_remove_outliers_multiple_sites(mock_config_manager):
 
         # Test site_A filtering - should only apply bounds to serious_var_1
         df_expected_A = pd.DataFrame({
-                        'serious_var_1': [np.NaN, 10, np.NaN],
+                        'serious_var_1': [np.nan, 10, np.nan],
                         'serious_var_2': [50, 150, 250]})
         df_expected_A.index = timestamps
 
@@ -856,7 +856,7 @@ def test_remove_outliers_multiple_sites(mock_config_manager):
         # Test site_B filtering - should only apply bounds to serious_var_2
         df_expected_B = pd.DataFrame({
                         'serious_var_1': [1, 10, 20],
-                        'serious_var_2': [np.NaN, 150, np.NaN]})
+                        'serious_var_2': [np.nan, 150, np.nan]})
         df_expected_B.index = timestamps
 
         result_B = remove_outliers(df_input, mock_config_manager, site="site_B")
@@ -877,8 +877,8 @@ def test_nullify_erroneous(mock_config_manager):
         df_input.index = timestamps
         df_unchanged = df_input.copy()
         df_expected = pd.DataFrame({
-                        'serious_var_1': [None, np.NaN, 2, 3,4],
-                        'serious_var_2': [None,5,1.4,np.NaN,None],
+                        'serious_var_1': [None, np.nan, 2, 3,4],
+                        'serious_var_2': [None,5,1.4,np.nan,None],
                         'serious_var_3': [None,None,3,None,None]})
         df_expected.index = timestamps
         df_result = nullify_erroneous(df_input, mock_config_manager)

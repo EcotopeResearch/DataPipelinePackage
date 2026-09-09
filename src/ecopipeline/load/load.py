@@ -16,9 +16,15 @@ import numpy as np
 data_map = {'int64':'float',
             'int32':'float',
             'float64': 'float',
+            'float32': 'float',
             'M8[ns]':'datetime',
             'datetime64[ns]':'datetime',
+            'datetime64[us]':'datetime',
+            'datetime64[ms]':'datetime',
+            'datetime64[s]':'datetime',
             'object':'varchar(25)',
+            'str':'varchar(25)',
+            'string':'varchar(25)',
             'bool': 'boolean'}
 
 def central_load_function(config : ConfigManager, df : pd.DataFrame, hourly_df : pd.DataFrame, 
