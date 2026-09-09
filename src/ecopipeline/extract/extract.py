@@ -140,7 +140,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         If ``process_type`` is not one of the recognised extraction method
         strings.
     """
-    print("++++++++++++ EXTRACT hi ++++++++++++")
+    print("++++++++++++ EXTRACT ++++++++++++")
     reprocess = True
     if start_time is None:
         start_time = get_last_full_day_from_db(config, tz_aware = False)
