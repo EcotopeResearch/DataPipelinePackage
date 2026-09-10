@@ -41,7 +41,7 @@ class JSONProcessor(FileProcessor):
                 # Iterate over the index and round up if necessary (work around for json format from sensors)
                 for i in range(len(norm_data.index)):
                     if norm_data.index[i].minute == 59 and norm_data.index[i].second == 59:
-                        norm_data.index.values[i] = norm_data.index[i] + pd.Timedelta(seconds=1)
+                        norm_data.rename(index={norm_data.index[i]: norm_data.index[i] + pd.Timedelta(seconds=1)}, inplace=True)
             return norm_data
         except Exception:
             print(f'Could not process {file_name}. Empty or invalid JSON File')
