@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
-import pickle
 import os
+from functools import lru_cache
+from scipy.interpolate import make_interp_spline
 from ecopipeline.utils.unit_convert import temp_c_to_f_non_noaa, volume_l_to_g, power_btuhr_to_kw, temp_f_to_c
 from ecopipeline import ConfigManager
 
@@ -443,12 +444,53 @@ def ffill_missing(original_df: pd.DataFrame, config : ConfigManager, previous_fi
     df = df.apply(_ffill, args=(ffill_df,previous_fill))
     return df
 
+# Knot tables for the 10k Type 2 thermistor conversions, one CSV per direction.
+# These were previously shipped as pickled scipy ``interp1d`` objects, which tied
+# loading to the private ``scipy.interpolate._interpolate`` module path and to
+# scipy arriving transitively through scikit-learn. Storing the knots instead and
+# rebuilding the interpolant here keeps the numbers identical while removing that
+# version coupling.
+_THERMISTOR_CURVE_FILES = {
+    'veris': ('veris_temp_to_resistance.csv', 'veris_resistance_to_temp.csv'),
+    'tasseron': ('tasseron_temp_to_resistance.csv', 'tasseron_resistance_to_temp.csv'),
+}
+
+
+@lru_cache(maxsize=None)
+def _load_thermistor_curve(file_name : str):
+    """Build the cubic interpolant for one thermistor curve file.
+
+    The curve files hold two columns of knots -- input value then output value --
+    which are fitted with a cubic B-spline. ``interp1d(kind='cubic',
+    fill_value='extrapolate')`` used the same spline internally, so values match
+    the previous pickled models exactly, extrapolation included. Results are
+    cached because the same handful of curves is reused across every call.
+
+    Parameters
+    ----------
+    file_name : str
+        Base name of the CSV in ``ecopipeline/utils/thermistor_curves``.
+
+    Returns
+    -------
+    scipy.interpolate.BSpline
+        Callable interpolant mapping the first column to the second.
+    """
+    curve_path = os.path.join(os.path.dirname(__file__), '..', 'utils', 'thermistor_curves', file_name)
+    curve = pd.read_csv(curve_path)
+    knots_in = curve.iloc[:, 0].to_numpy(dtype=float)
+    knots_out = curve.iloc[:, 1].to_numpy(dtype=float)
+    return make_interp_spline(knots_in, knots_out, k=3)
+
+
 def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_model = 'veris') -> pd.DataFrame:
     """
     Convert temperature resistance readings using a 10k Type 2 thermistor model.
 
-    Applies a two-stage pickle-model conversion (temperature-to-resistance, then
+    Applies a two-stage curve conversion (temperature-to-resistance, then
     resistance-to-temperature) to correct sensor readings in the specified column.
+    Both stages interpolate the knot tables in
+    ``ecopipeline/utils/thermistor_curves`` with a cubic spline.
 
     Parameters
     ----------
@@ -470,24 +512,18 @@ def convert_temp_resistance_type(df : pd.DataFrame, column_name : str, sensor_mo
     Exception
         If ``sensor_model`` is not a supported value.
     """
-    model_path_t_to_r = '../utils/pkls/'
-    model_path_r_to_t = '../utils/pkls/'
-    if sensor_model == 'veris':
-        model_path_t_to_r = model_path_t_to_r + 'veris_temp_to_resistance_2.pkl'
-        model_path_r_to_t = model_path_r_to_t + 'veris_resistance_to_temp_3.pkl'
-    elif sensor_model == 'tasseron':
-        model_path_t_to_r = model_path_t_to_r + 'tasseron_temp_to_resistance_2.pkl'
-        model_path_r_to_t = model_path_r_to_t + 'tasseron_resistance_to_temp_3.pkl'
-    else:
+    if column_name not in df.columns:
+        print(f"Could not convert resistance type of {column_name} because it was not present in dataframe")
+        return df
+    if sensor_model not in _THERMISTOR_CURVE_FILES:
         raise Exception("unsupported sensor model")
-    
-    with open(os.path.join(os.path.dirname(__file__),model_path_t_to_r), 'rb') as f:
-        model = pickle.load(f)
-    df['resistance'] = df[column_name].apply(model)
-    with open(os.path.join(os.path.dirname(__file__),model_path_r_to_t), 'rb') as f:
-        model = pickle.load(f)
-    df[column_name] = df['resistance'].apply(model)
-    df.drop(columns='resistance')
+
+    t_to_r_file, r_to_t_file = _THERMISTOR_CURVE_FILES[sensor_model]
+    temp_to_resistance = _load_thermistor_curve(t_to_r_file)
+    resistance_to_temp = _load_thermistor_curve(r_to_t_file)
+
+    resistance = temp_to_resistance(df[column_name].to_numpy(dtype=float))
+    df[column_name] = resistance_to_temp(resistance)
     return df
 
 def estimate_power(df : pd.DataFrame, new_power_column : str, current_a_column : str, current_b_column : str, current_c_column : str,
