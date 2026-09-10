@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ecopipeline"
-version = "2.4.0"
+version = "2.4.1"
 description = "Contains functions for use in Ecotope Datapipelines"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
@@ -30,6 +30,9 @@ dependencies = [
     "numpy>=2.4,<3.0",
     "pandas>=3.0,<4.0",
     "scikit-learn>=1.9,<2.0",
+    # Used directly by transform.convert_temp_resistance_type; previously reached
+    # this package only as a scikit-learn transitive dependency.
+    "scipy>=1.15,<2.0",
     "mysql-connector-python>=26.7,<27.0",
     "openmeteo_requests>=1.7,<2.0",
     "requests>=2.34,<3.0",
@@ -50,5 +53,5 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-"ecopipeline.utils.pkls" = ["*.pkl"]
+"ecopipeline.utils.thermistor_curves" = ["*.csv"]
 "ecopipeline.extract" = ["zip_to_lat_long.csv"]
