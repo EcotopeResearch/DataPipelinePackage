@@ -121,7 +121,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         timestamp string before parsing (e.g. the ``'PDT'`` in
         ``'22-Aug-26 12:00 AM PDT'``), so ``time_column_format`` does not need
         a ``%Z`` directive.  Requires ``use_defaults=False`` together with an
-        explicit ``time_column_format``.  Only used by ``"csv_long"``.
+        explicit ``time_column_format``.  Only used by ``"csv"`` and ``"csv_long"``.
         Default is ``False``.
 
     Returns
@@ -158,7 +158,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
     if process_type == "json" or "csv" in process_type:
         if process_type == "csv":
             file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
-                    date_string_start_idx, date_string_end_idx)
+                    date_string_start_idx, date_string_end_idx, strip_time_zone_suffix=strip_time_zone_suffix)
         elif process_type == "csv_long":
             file_processor = LongCSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
                     date_string_start_idx, date_string_end_idx, field_column_name=field_column_name, value_column_name=value_column_name,
