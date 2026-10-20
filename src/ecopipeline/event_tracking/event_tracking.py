@@ -19,6 +19,7 @@ from .alarms.TMSetpoint import TMSetpoint
 from .alarms.AbnormalCOP import AbnormalCOP
 from .alarms.PowerRatio import PowerRatio
 from .alarms.Boundary import Boundary
+from .alarms.WaterLeak import WaterLeak
 from ecopipeline.load.AlarmSetLoader import AlarmSetLoader
 
 def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config : ConfigManager, system: str = "",
@@ -30,8 +31,8 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
 
     Iterates over every alarm type (boundary, power ratio, abnormal COP, TM
     setpoint, balancing valve, HPWH inlet/outlet, backup use, HPWH outage,
-    blown fuse, unexpected SOO change, short cycle, unexpected temperature, and
-    demand-response inconsistency) and concatenates any detected events into a
+    blown fuse, unexpected SOO change, short cycle, unexpected temperature,
+    demand-response inconsistency, and water leak) and concatenates any detected events into a
     single result.
 
     Parameters
@@ -112,6 +113,7 @@ def central_alarm_df_creator(df: pd.DataFrame, daily_data : pd.DataFrame, config
     dict_of_alarms['short cycle'] = ShortCycle(bounds_df)
     dict_of_alarms['unexpected temperature'] = TempRange(bounds_df)
     dict_of_alarms['demand response inconsistency'] = LSInconsist(bounds_df)
+    dict_of_alarms['water leak'] = WaterLeak(bounds_df)
 
     # ongoing_COP_exception = ['abnormal COP']
     for key, value in dict_of_alarms.items():
