@@ -13,7 +13,8 @@ class WaterLeak(Alarm):
     site's mean daily flow and none of that day's minute flow values are at or below the bound.
     Mean and standard deviation are read from the SiteConfig stat_cache table (stat_ids
     mean_daily_flow and std_daily_flow) when both entries are fresh. Otherwise they are calculated
-    from the non-null values of the variable in the site's daily table.
+    from the non-null values of the variable in the site's daily table, excluding days covered by
+    this site's site_events with summary_filtered set (and all days before an MV_COMMISSIONED event).
 
     Variable_Names.csv configuration:
       alarm_codes column: WTRLEAK:### where ### is the flow at or below which flow is considered
@@ -95,19 +96,52 @@ class WaterLeak(Alarm):
             print("Unable to connect to database, cannot process WTRLEAK alarm")
             return None
         try:
-            cursor.execute(f"SELECT `{var_name}` FROM `{config.get_table_name('day')}`")
-            history = pd.Series([result_row[0] for result_row in cursor.fetchall()], dtype=float).dropna()
+            cursor.execute(f"SELECT time_pt, `{var_name}` FROM `{config.get_table_name('day')}`")
+            results = cursor.fetchall()
+            history = pd.Series([result_row[1] for result_row in results],
+                                index=pd.to_datetime([result_row[0] for result_row in results]), dtype=float)
         except mysqlerrors.ProgrammingError:
             # daily table or var_name column does not exist
-            history = pd.Series(dtype=float)
+            history = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
         finally:
             cursor.close()
             db_connection.close()
 
+        # ---------------- BEGIN site_events filtering (comment out this block to disable) ----------------
+        events = config.get_summary_filtered_events()
+        if events is None:
+            print("Warning: unable to retrieve site_events. Calculating WTRLEAK stats from unfiltered daily history.")
+        else:
+            history = self._filter_event_days(history, events)
+        # ---------------- END site_events filtering ----------------
+
+        history = history.dropna()
         if len(history) < self.min_days:
             print("daily table does not have sufficient data, cannot process WTRLEAK alarm")
             return None
         return history.mean(), history.std()
+
+    def _filter_event_days(self, history : pd.Series, events : pd.DataFrame) -> pd.Series:
+        """
+        Return a copy of history without the days covered by the given site events.
+
+        A day is removed if any part of it overlaps an event. Events with no end_time_pt are treated
+        as still running. For MV_COMMISSIONED events, every day before the event's end_time_pt
+        (or start_time_pt if it has no end) is removed.
+        """
+        day_starts = history.index.normalize()
+        day_ends = day_starts + timedelta(1)
+        keep = pd.Series(True, index=history.index)
+        for _, event in events.iterrows():
+            if event['event_type'] == "MV_COMMISSIONED":
+                cutoff = event['end_time_pt'] if pd.notna(event['end_time_pt']) else event['start_time_pt']
+                keep &= ~(day_starts < cutoff)
+            else:
+                overlaps = day_ends > event['start_time_pt']
+                if pd.notna(event['end_time_pt']):
+                    overlaps &= day_starts <= event['end_time_pt']
+                keep &= ~overlaps
+        return history[keep].copy()
 
     def _get_cached_flow_stats(self, config : ConfigManager):
         """

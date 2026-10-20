@@ -3890,11 +3890,15 @@ def test_flag_ls_mode_inconsistancy_normal_mode_no_alarm(mock_config_manager):
 
         assert event_df.empty
 
-def _water_leak_config(stat_rows=None, history=None):
+def _water_leak_config(stat_rows=None, history=None, events=None):
     """Mocked ConfigManager for WaterLeak. stat_rows are (stat_id, stat_value, calced_date)
-    rows returned from stat_cache; history is the list of daily values returned from the day table,
-    or an Exception to raise from that query."""
+    rows returned from stat_cache; history is the list of daily values returned from the day table
+    (one per day starting 2021-01-01), or an Exception to raise from that query; events is the
+    DataFrame returned by get_summary_filtered_events (default: no events)."""
     config = MagicMock()
+    if events is None:
+        events = pd.DataFrame({'start_time_pt': pd.to_datetime([]), 'end_time_pt': pd.to_datetime([]), 'event_type': []})
+    config.get_summary_filtered_events.return_value = events
     config.get_site_name.return_value = 'site_a'
     config.get_table_name.return_value = 'site_a_day'
     # route get_cached_stat through the real method; the cursor returns the stat_rows for the queried stat_id
@@ -3908,7 +3912,8 @@ def _water_leak_config(stat_rows=None, history=None):
     if isinstance(history, Exception):
         day_cursor.execute.side_effect = history
     else:
-        day_cursor.fetchall.return_value = [(v,) for v in (history or [])]
+        days = pd.date_range('2021-01-01', periods=len(history or []), freq='D')
+        day_cursor.fetchall.return_value = [(day.to_pydatetime(), v) for day, v in zip(days, history or [])]
     config.connect_db.return_value = (MagicMock(), day_cursor)
     return config
 
@@ -4055,3 +4060,77 @@ def test_get_cached_stat_connection_failure():
 def test_get_cached_stat_query_error():
     config, _ = _cached_stat_config(query_error=mysqlerrors.ProgrammingError("Table doesn't exist"))
     assert _RealConfigManager.get_cached_stat(config, 'mean_daily_flow', 72) is None
+
+def _events(rows):
+    """rows are (start_time_pt, end_time_pt, event_type) with end_time_pt optionally None."""
+    return pd.DataFrame({
+        'start_time_pt': pd.to_datetime([r[0] for r in rows]),
+        'end_time_pt': pd.to_datetime([r[1] for r in rows]),
+        'event_type': [r[2] for r in rows]})
+
+def _water_leak_stats_from_history(history, events):
+    config = _water_leak_config(history=history, events=events)
+    return WaterLeak(_water_leak_bounds())._get_flow_stats('Flow_CityWater', config)
+
+def test_water_leak_filters_event_days_from_history():
+    # 30 normal days, then 5 very high days covered by an event that starts and ends mid-day
+    history = [100.0] * 30 + [10000.0] * 5
+    events = _events([('2021-01-31 15:00', '2021-02-04 09:00', 'SYSTEM_TESTING')])
+    mean, std = _water_leak_stats_from_history(history, events)
+    assert mean == 100.0
+    assert std == 0.0
+
+def test_water_leak_ongoing_event_filters_all_later_days():
+    history = [100.0] * 30 + [10000.0] * 5
+    events = _events([('2021-01-31 12:00', None, 'DATA_LOSS')])
+    mean, _ = _water_leak_stats_from_history(history, events)
+    assert mean == 100.0
+
+def test_water_leak_mv_commissioned_filters_days_before_end():
+    # 5 high days before commissioning ends at 2021-01-06 00:00, then 30 normal days
+    history = [10000.0] * 5 + [100.0] * 30
+    events = _events([('2021-01-01', '2021-01-06', 'MV_COMMISSIONED')])
+    mean, _ = _water_leak_stats_from_history(history, events)
+    assert mean == 100.0
+
+def test_water_leak_mv_commissioned_without_end_uses_start():
+    history = [10000.0] * 5 + [100.0] * 30
+    events = _events([('2021-01-06', None, 'MV_COMMISSIONED')])
+    mean, _ = _water_leak_stats_from_history(history, events)
+    assert mean == 100.0
+
+def test_water_leak_filtering_can_leave_insufficient_history(capsys):
+    history = [100.0] * 35
+    events = _events([('2021-01-01', '2021-01-10', 'SYSTEM_MAINTENANCE')])
+    assert _water_leak_stats_from_history(history, events) is None
+    assert "daily table does not have sufficient data, cannot process WTRLEAK alarm" in capsys.readouterr().out
+
+def test_water_leak_events_unavailable_uses_unfiltered_history(capsys):
+    config = _water_leak_config(history=[100.0] * 30 + [130.0])
+    config.get_summary_filtered_events.return_value = None
+    mean, _ = WaterLeak(_water_leak_bounds())._get_flow_stats('Flow_CityWater', config)
+    assert mean == pytest.approx(3130.0 / 31)
+    assert "Warning: unable to retrieve site_events" in capsys.readouterr().out
+
+def test_get_summary_filtered_events_queries_site():
+    config = MagicMock()
+    config.get_site_name.return_value = 'site_a'
+    cursor = MagicMock()
+    cursor.fetchall.return_value = [(datetime(2021, 1, 1), None, 'DATA_LOSS'),
+                                    (datetime(2021, 2, 1), datetime(2021, 2, 2), 'MV_COMMISSIONED')]
+    config.connect_db.return_value = (MagicMock(), cursor)
+    events = _RealConfigManager.get_summary_filtered_events(config)
+    query, params = cursor.execute.call_args[0]
+    assert 'site_events' in query and 'summary_filtered = TRUE' in query
+    assert params == ('site_a',)
+    assert list(events.columns) == ['start_time_pt', 'end_time_pt', 'event_type']
+    assert pd.isna(events.iloc[0]['end_time_pt'])
+    assert events.iloc[1]['end_time_pt'] == pd.Timestamp('2021-02-02')
+
+def test_get_summary_filtered_events_query_error():
+    config = MagicMock()
+    config.get_site_name.return_value = 'site_a'
+    cursor = MagicMock()
+    cursor.execute.side_effect = mysqlerrors.ProgrammingError("Table doesn't exist")
+    config.connect_db.return_value = (MagicMock(), cursor)
+    assert _RealConfigManager.get_summary_filtered_events(config) is None

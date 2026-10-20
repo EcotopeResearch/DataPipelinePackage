@@ -407,6 +407,42 @@ class ConfigManager:
             return None
         return float(stat_value)
 
+    def get_summary_filtered_events(self) -> pd.DataFrame:
+        """Return this site's events from the ``site_events`` table that have
+        ``summary_filtered`` set to true.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``start_time_pt``, ``end_time_pt`` and
+            ``event_type``, one row per event. ``end_time_pt`` is ``NaT`` for
+            ongoing events. Returns ``None`` if the database connection or the
+            query fails (e.g. the ``site_events`` table does not exist).
+        """
+        db_connection, cursor = self.connect_db(quiet_connection=True)
+        if db_connection is None:
+            return None
+        try:
+            cursor.execute(
+                "SELECT start_time_pt, end_time_pt, event_type FROM site_events WHERE site_name = %s AND summary_filtered = TRUE",
+                (self.get_site_name(),))
+            results = cursor.fetchall()
+        except mysql.connector.Error as e:
+            print(f"Unable to query site_events: {e}")
+            return None
+        finally:
+            cursor.close()
+            db_connection.close()
+
+        events = pd.DataFrame(results, columns=['start_time_pt', 'end_time_pt', 'event_type'])
+        events['start_time_pt'] = pd.to_datetime(events['start_time_pt'])
+        events['end_time_pt'] = pd.to_datetime(events['end_time_pt'])
+        return events
+
     def get_fm_token(self) -> str:
         """Retrieve a Field Manager API token using the configured credentials.
 
