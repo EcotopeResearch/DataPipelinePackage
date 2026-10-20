@@ -384,6 +384,7 @@ def test_central_alarm_all_detectors_called_and_results_concatenated(mock_read_c
         "ShortCycle": empty_cls,
         "TempRange": empty_cls,
         "LSInconsist": empty_cls,
+        "WaterLeak": empty_cls,
     }
 
     with patch.multiple("ecopipeline.event_tracking.event_tracking", **patches):
@@ -427,6 +428,7 @@ def test_central_alarm_upload_alarm_set_false_skips_loader(mock_read_csv, mock_a
         "ShortCycle": empty_cls,
         "TempRange": empty_cls,
         "LSInconsist": empty_cls,
+        "WaterLeak": empty_cls,
     }
 
     with patch.multiple("ecopipeline.event_tracking.event_tracking", **patches):

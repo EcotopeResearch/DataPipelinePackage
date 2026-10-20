@@ -43,18 +43,26 @@ class CSVProcessor(FileProcessor):
     date_string_end_idx : int, optional
         End index (from the end) of the date substring in the filename.
         Defaults to ``-3``.
+    strip_time_zone_suffix : bool, optional
+        When ``True``, remove the final whitespace-delimited token from each
+        timestamp string before parsing it with ``time_column_format`` (e.g.
+        ``'06/01/2025 00:15 PDT'`` becomes ``'06/01/2025 00:15'``).  Use this
+        for files that append a time-zone abbreviation such as ``PDT`` or
+        ``PST``, which ``%Z`` cannot parse.  Defaults to ``False``.
     """
 
     def __init__(self, config: ConfigManager, start_time: datetime = None, end_time: datetime = None, raw_time_column: str = 'DateTime',
                  time_column_format: str = '%Y/%m/%d %H:%M:%S', filename_date_format: str = "%Y%m%d%H%M%S", file_prefix: str = "", data_sub_dir: str = "",
-                 date_string_start_idx: int = -17, date_string_end_idx: int = -3):
+                 date_string_start_idx: int = -17, date_string_end_idx: int = -3, strip_time_zone_suffix: bool = False):
+        self.strip_time_zone_suffix = strip_time_zone_suffix
         super().__init__(config, ".csv", start_time, end_time, raw_time_column, time_column_format, filename_date_format,
                          file_prefix, data_sub_dir, date_string_start_idx, date_string_end_idx)
 
     def _read_file_into_df(self, file_name : str) -> pd.DataFrame:
         """Read a single CSV file and set a ``time_pt`` datetime index.
 
-        Delegates raw CSV reading to the parent implementation, then parses
+        Delegates raw CSV reading to the parent implementation, optionally
+        strips the trailing time-zone token from ``raw_time_column``, then parses
         ``raw_time_column`` with ``time_column_format`` and sets the result as
         the DataFrame index.
 
@@ -71,7 +79,10 @@ class CSVProcessor(FileProcessor):
         """
         data = super()._read_file_into_df(file_name)
         if len(data) != 0:
-            data['time_pt'] = pd.to_datetime(data[self.raw_time_column], format=self.time_column_format)
+            time_strings = data[self.raw_time_column]
+            if self.strip_time_zone_suffix:
+                time_strings = time_strings.str.rsplit(' ', n=1).str[0]
+            data['time_pt'] = pd.to_datetime(time_strings, format=self.time_column_format)
             data.set_index('time_pt', inplace=True)
 
         return data

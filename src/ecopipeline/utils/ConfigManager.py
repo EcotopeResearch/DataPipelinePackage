@@ -3,7 +3,7 @@ import os
 import mysql.connector
 import mysql.connector.cursor
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import base64
 import hashlib
 import hmac
@@ -297,7 +297,7 @@ class ConfigManager:
 
         return configure.get(config_key, 'table_name')
     
-    def connect_db(self) -> [mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor]:
+    def connect_db(self, quiet_connection : bool = False) -> [mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor]:
         """Create a connection to the configured MySQL database.
 
         Uses the host, user, password, and database name stored in
@@ -325,11 +325,11 @@ class ConfigManager:
         except mysql.connector.Error:
             print("Unable to connect to database with given credentials.")
             return None, None
-
-        print(f"Successfully connected to database.")
+        if not quiet_connection:
+            print(f"Successfully connected to database.")
         return connection, connection.cursor()
     
-    def connect_siteConfig_db(self) -> (mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor):
+    def connect_siteConfig_db(self, quiet_connection : bool = False) -> (mysql.connector.MySQLConnection, mysql.connector.cursor.MySQLCursor):
         """Create a connection to the ``SiteConfig`` MySQL database.
 
         Uses the same host, user, and password stored in ``db_connection_info``
@@ -359,9 +359,90 @@ class ConfigManager:
             print("Unable to connect to database with given credentials.")
             return None, None
 
-        print(f"Successfully connected to database.")
+        if not quiet_connection:
+            print(f"Successfully connected to database.")
         return connection, connection.cursor()
-    
+
+    def get_cached_stat(self, stat_id : str, stat_max_age_hours : int) -> float:
+        """Return a cached stat for this site from the SiteConfig ``stat_cache`` table.
+
+        Looks up the most recent row where ``site_name`` matches
+        :meth:`get_site_name` and ``stat_id`` matches the given ID.
+
+        Parameters
+        ----------
+        stat_id : str
+            ID of the stat to retrieve (e.g. ``"mean_daily_flow"``).
+        stat_max_age_hours : int
+            Maximum age in hours of the stat's ``calced_date``, compared against
+            the current local time.
+
+        Returns
+        -------
+        float
+            The cached ``stat_value``, or ``None`` if the stat does not exist, is
+            older than ``stat_max_age_hours``, or could not be retrieved.
+        """
+        db_connection, cursor = self.connect_siteConfig_db(quiet_connection=True)
+        if db_connection is None:
+            return None
+        try:
+            cursor.execute(
+                "SELECT stat_value, calced_date FROM stat_cache WHERE site_name = %s AND stat_id = %s ORDER BY calced_date DESC LIMIT 1",
+                (self.get_site_name(), stat_id))
+            results = cursor.fetchall()
+        except mysql.connector.Error as e:
+            print(f"Unable to query stat_cache for {stat_id}: {e}")
+            return None
+        finally:
+            cursor.close()
+            db_connection.close()
+
+        if len(results) == 0:
+            return None
+        stat_value, calced_date = results[0]
+        if stat_value is None or calced_date is None:
+            return None
+        if pd.Timestamp(calced_date) < datetime.now() - timedelta(hours=stat_max_age_hours):
+            return None
+        return float(stat_value)
+
+    def get_summary_filtered_events(self) -> pd.DataFrame:
+        """Return this site's events from the ``site_events`` table that have
+        ``summary_filtered`` set to true.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with columns ``start_time_pt``, ``end_time_pt`` and
+            ``event_type``, one row per event. ``end_time_pt`` is ``NaT`` for
+            ongoing events. Returns ``None`` if the database connection or the
+            query fails (e.g. the ``site_events`` table does not exist).
+        """
+        db_connection, cursor = self.connect_db(quiet_connection=True)
+        if db_connection is None:
+            return None
+        try:
+            cursor.execute(
+                "SELECT start_time_pt, end_time_pt, event_type FROM site_events WHERE site_name = %s AND summary_filtered = TRUE",
+                (self.get_site_name(),))
+            results = cursor.fetchall()
+        except mysql.connector.Error as e:
+            print(f"Unable to query site_events: {e}")
+            return None
+        finally:
+            cursor.close()
+            db_connection.close()
+
+        events = pd.DataFrame(results, columns=['start_time_pt', 'end_time_pt', 'event_type'])
+        events['start_time_pt'] = pd.to_datetime(events['start_time_pt'])
+        events['end_time_pt'] = pd.to_datetime(events['end_time_pt'])
+        return events
+
     def get_fm_token(self) -> str:
         """Retrieve a Field Manager API token using the configured credentials.
 
