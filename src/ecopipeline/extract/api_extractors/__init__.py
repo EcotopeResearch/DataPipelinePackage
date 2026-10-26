@@ -13,6 +13,8 @@ subclasses, each of which targets a specific third-party data API:
   LI-COR Cloud sensor API.
 - :class:`~ecopipeline.extract.api_extractors.Bluedot.Bluedot` —
   Bluedot API.
+- :class:`~ecopipeline.extract.api_extractors.PiExtractor.PiExtractor` —
+  data interface on an Ecotope Pi monitoring unit.
 """
 
 from .ThingsBoard import ThingsBoard
@@ -20,3 +22,4 @@ from .Skycentrics import Skycentrics
 from .FieldManager import FieldManager
 from .LiCOR import LiCOR
 from .Bluedot import Bluedot
+from .PiExtractor import PiExtractor
