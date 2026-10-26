@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 BASE_URL = 'https://prod.bluebot.com/flow/v2'
 
 
-class Bluedot(APIExtractor):
+class Bluebot(APIExtractor):
     """APIExtractor for the BlueBot Flow API.
 
     Queries sensor data for the configured device between ``start_time`` and

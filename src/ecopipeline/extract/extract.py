@@ -30,7 +30,7 @@ from .api_extractors.ThingsBoard import ThingsBoard
 from .api_extractors.Skycentrics import Skycentrics
 from .api_extractors.FieldManager import FieldManager
 from .api_extractors.LiCOR import LiCOR
-from .api_extractors.Bluedot import Bluedot
+from .api_extractors.Bluebot import Bluebot
 from .api_extractors.PiExtractor import PiExtractor
 
 def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, use_defaults : bool = True,
@@ -62,7 +62,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
         ``"csv_long"``, ``"csv_mb"``, ``"csv_dent"``, ``"csv_flow"``,
         ``"csv_msa"``, ``"csv_egauge"``, ``"csv_small_planet"``, ``"json"``,
         ``"api_tb"``, ``"api_skycentrics"``, ``"api_fm"``, ``"api_licor"``,
-        ``"api_bluedot"``, and ``"api_pi"``.
+        ``"api_bluebot"``, and ``"api_pi"``.
     start_time : datetime, optional
         Inclusive start of the extraction window in local time.  If ``None``
         the start time is derived from :func:`get_last_full_day_from_db`.
@@ -211,8 +211,8 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                 api_extractor = FieldManager(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_licor":
                 api_extractor = LiCOR(config, start_time, end_time, sub_directory=data_sub_dir)
-            elif process_type == "api_bluedot":
-                api_extractor = Bluedot(config, start_time, end_time, sub_directory=data_sub_dir)
+            elif process_type == "api_bluebot":
+                api_extractor = Bluebot(config, start_time, end_time, sub_directory=data_sub_dir)
             elif process_type == "api_pi":
                 api_extractor = PiExtractor(config, start_time, end_time, sub_directory=data_sub_dir)
             else:
@@ -294,7 +294,7 @@ def _get_time_indicator_defaults(process_type : str, raw_time_column : str, time
         "api_skycentrics" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
         "api_fm" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
         "api_licor" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
-        "api_bluedot" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
+        "api_bluebot" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
         "api_pi" : ['time_pt', '%Y-%m-%d %H:%M:%S'],
     }
     if process_type in default_map:

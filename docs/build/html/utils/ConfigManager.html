@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 2.1.0 documentation</title>
+    <title>Pipeline Configuration Documentation &#8212; DataPipelinePackage 2.4.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css?v=bcd535f3" />
-    <script src="../_static/documentation_options.js?v=20623aea"></script>
+    <script src="../_static/documentation_options.js?v=7a6bd5fc"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -31,7 +31,7 @@
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.4.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>  
@@ -115,6 +115,12 @@ source configuration.</p>
 </dd>
 <dt><strong>api_device_id</strong><span class="classifier">str or None</span></dt><dd><p>API device ID read from the config file, if present.</p>
 </dd>
+<dt><strong>api_host</strong><span class="classifier">str or None</span></dt><dd><p>Address of a Pi monitoring unit’s data interface, read from the config
+file if present.</p>
+</dd>
+<dt><strong>api_port</strong><span class="classifier">int or None</span></dt><dd><p>Port of a Pi monitoring unit’s data interface. Defaults to <code class="docutils literal notranslate"><span class="pre">5002</span></code>
+when <code class="docutils literal notranslate"><span class="pre">api_host</span></code> is set without <code class="docutils literal notranslate"><span class="pre">api_port</span></code>.</p>
+</dd>
 <dt><strong>db_connection_info</strong><span class="classifier">dict</span></dt><dd><p>Dictionary containing <code class="docutils literal notranslate"><span class="pre">user</span></code>, <code class="docutils literal notranslate"><span class="pre">password</span></code>, <code class="docutils literal notranslate"><span class="pre">host</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">database</span></code> keys used to open MySQL connections.</p>
 </dd>
@@ -124,38 +130,44 @@ source configuration.</p>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db" title="utils.ConfigManager.ConfigManager.connect_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_db</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db" title="utils.ConfigManager.ConfigManager.connect_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_db</span></code></a>(quiet_connection)</p></td>
 <td><p>Create a connection to the configured MySQL database.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db" title="utils.ConfigManager.ConfigManager.connect_siteConfig_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_siteConfig_db</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db" title="utils.ConfigManager.ConfigManager.connect_siteConfig_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_siteConfig_db</span></code></a>(quiet_connection)</p></td>
 <td><p>Create a connection to the <code class="docutils literal notranslate"><span class="pre">SiteConfig</span></code> MySQL database.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_name" title="utils.ConfigManager.ConfigManager.get_db_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_name</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_cached_stat" title="utils.ConfigManager.ConfigManager.get_cached_stat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cached_stat</span></code></a>(stat_id, stat_max_age_hours)</p></td>
+<td><p>Return a cached stat for this site from the SiteConfig <code class="docutils literal notranslate"><span class="pre">stat_cache</span></code> table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_name" title="utils.ConfigManager.ConfigManager.get_db_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_name</span></code></a>()</p></td>
 <td><p>Return the name of the database that data will be uploaded to.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="utils.ConfigManager.ConfigManager.get_db_table_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_table_info</span></code></a>(table_headers)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info" title="utils.ConfigManager.ConfigManager.get_db_table_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db_table_info</span></code></a>(table_headers)</p></td>
 <td><p>Read table configuration from the config file and return a combined info dict.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="utils.ConfigManager.ConfigManager.get_event_log_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_event_log_path</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path" title="utils.ConfigManager.ConfigManager.get_event_log_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_event_log_path</span></code></a>()</p></td>
 <td><p>Return the full path to the <code class="docutils literal notranslate"><span class="pre">Event_Log.csv</span></code> file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_device_id" title="utils.ConfigManager.ConfigManager.get_fm_device_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fm_device_id</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_device_id" title="utils.ConfigManager.ConfigManager.get_fm_device_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fm_device_id</span></code></a>()</p></td>
 <td><p>Return the configured API device ID.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_token" title="utils.ConfigManager.ConfigManager.get_fm_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fm_token</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_fm_token" title="utils.ConfigManager.ConfigManager.get_fm_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fm_token</span></code></a>()</p></td>
 <td><p>Retrieve a Field Manager API token using the configured credentials.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_df" title="utils.ConfigManager.ConfigManager.get_ls_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ls_df</span></code></a>([ls_file_name])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_df" title="utils.ConfigManager.ConfigManager.get_ls_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ls_df</span></code></a>([ls_file_name])</p></td>
 <td><p>Load the load-shift schedule CSV and return it as a DataFrame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_filename" title="utils.ConfigManager.ConfigManager.get_ls_filename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ls_filename</span></code></a>([ls_file_name])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_filename" title="utils.ConfigManager.ConfigManager.get_ls_filename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ls_filename</span></code></a>([ls_file_name])</p></td>
 <td><p>Return the full path to the load-shift CSV file if it exists.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>([config_key])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_site_name</span></code></a>([config_key])</p></td>
 <td><p>Return the site name derived from the configured minute-table name.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_skycentrics_token" title="utils.ConfigManager.ConfigManager.get_skycentrics_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_skycentrics_token</span></code></a>([request_str, date_str])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_skycentrics_token" title="utils.ConfigManager.ConfigManager.get_skycentrics_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_skycentrics_token</span></code></a>([request_str, date_str])</p></td>
 <td><p>Generate a Skycentrics HMAC-SHA1 authentication token.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_summary_filtered_events" title="utils.ConfigManager.ConfigManager.get_summary_filtered_events"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_summary_filtered_events</span></code></a>()</p></td>
+<td><p>Return this site's events from the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table that have <code class="docutils literal notranslate"><span class="pre">summary_filtered</span></code> set to true.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_table_name" title="utils.ConfigManager.ConfigManager.get_table_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_name</span></code></a>(header)</p></td>
 <td><p>Return the <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value for the given config file section.</p></td>
@@ -171,9 +183,16 @@ source configuration.</p>
 </tr>
 </tbody>
 </table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get_var_names_df</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.connect_db">
-<span class="sig-name descname"><span class="pre">connect_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">[&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;]</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_db" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">connect_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quiet_connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">[&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;]</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_db" title="Link to this definition">¶</a></dt>
 <dd><p>Create a connection to the configured MySQL database.</p>
 <p>Uses the host, user, password, and database name stored in
 <code class="docutils literal notranslate"><span class="pre">db_connection_info</span></code>. Prints a message and returns <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None)</span></code>
@@ -194,7 +213,7 @@ could not be established.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.connect_siteConfig_db">
-<span class="sig-name descname"><span class="pre">connect_siteConfig_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">connect_siteConfig_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quiet_connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False)</span> <span class="pre">-&gt;</span> <span class="pre">(&lt;class</span> <span class="pre">'mysql.connector.connection.MySQLConnection'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'mysql.connector.cursor.MySQLCursor'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db" title="Link to this definition">¶</a></dt>
 <dd><p>Create a connection to the <code class="docutils literal notranslate"><span class="pre">SiteConfig</span></code> MySQL database.</p>
 <p>Uses the same host, user, and password stored in <code class="docutils literal notranslate"><span class="pre">db_connection_info</span></code>
 but always connects to the <code class="docutils literal notranslate"><span class="pre">SiteConfig</span></code> database regardless of the
@@ -208,6 +227,32 @@ database name in the config file. Prints a message and returns
 execute MySQL queries and the connection object can be used to
 commit those changes. Both elements are <code class="docutils literal notranslate"><span class="pre">None</span></code> if the connection
 could not be established.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_cached_stat">
+<span class="sig-name descname"><span class="pre">get_cached_stat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stat_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_max_age_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_cached_stat" title="Link to this definition">¶</a></dt>
+<dd><p>Return a cached stat for this site from the SiteConfig <code class="docutils literal notranslate"><span class="pre">stat_cache</span></code> table.</p>
+<p>Looks up the most recent row where <code class="docutils literal notranslate"><span class="pre">site_name</span></code> matches
+<a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name" title="utils.ConfigManager.ConfigManager.get_site_name"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_site_name()</span></code></a> and <code class="docutils literal notranslate"><span class="pre">stat_id</span></code> matches the given ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>stat_id</strong><span class="classifier">str</span></dt><dd><p>ID of the stat to retrieve (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;mean_daily_flow&quot;</span></code>).</p>
+</dd>
+<dt><strong>stat_max_age_hours</strong><span class="classifier">int</span></dt><dd><p>Maximum age in hours of the stat’s <code class="docutils literal notranslate"><span class="pre">calced_date</span></code>, compared against
+the current local time.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>float</dt><dd><p>The cached <code class="docutils literal notranslate"><span class="pre">stat_value</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the stat does not exist, is
+older than <code class="docutils literal notranslate"><span class="pre">stat_max_age_hours</span></code>, or could not be retrieved.</p>
 </dd>
 </dl>
 </dd>
@@ -427,6 +472,29 @@ one).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_summary_filtered_events">
+<span class="sig-name descname"><span class="pre">get_summary_filtered_events</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_summary_filtered_events" title="Link to this definition">¶</a></dt>
+<dd><p>Return this site’s events from the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table that have
+<code class="docutils literal notranslate"><span class="pre">summary_filtered</span></code> set to true.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>None</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>DataFrame with columns <code class="docutils literal notranslate"><span class="pre">start_time_pt</span></code>, <code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code> and
+<code class="docutils literal notranslate"><span class="pre">event_type</span></code>, one row per event. <code class="docutils literal notranslate"><span class="pre">end_time_pt</span></code> is <code class="docutils literal notranslate"><span class="pre">NaT</span></code> for
+ongoing events. Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if the database connection or the
+query fails (e.g. the <code class="docutils literal notranslate"><span class="pre">site_events</span></code> table does not exist).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="utils.ConfigManager.ConfigManager.get_table_name">
 <span class="sig-name descname"><span class="pre">get_table_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#utils.ConfigManager.ConfigManager.get_table_name" title="Link to this definition">¶</a></dt>
 <dd><p>Return the <code class="docutils literal notranslate"><span class="pre">table_name</span></code> value for the given config file section.</p>
@@ -522,6 +590,7 @@ directory (e.g. <code class="docutils literal notranslate"><span class="pre">&qu
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager"><code class="docutils literal notranslate"><span class="pre">ConfigManager</span></code></a><ul>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_db"><code class="docutils literal notranslate"><span class="pre">ConfigManager.connect_db()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.connect_siteConfig_db"><code class="docutils literal notranslate"><span class="pre">ConfigManager.connect_siteConfig_db()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_cached_stat"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_cached_stat()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_name()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_db_table_info"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_db_table_info()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_event_log_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_event_log_path()</span></code></a></li>
@@ -531,6 +600,7 @@ directory (e.g. <code class="docutils literal notranslate"><span class="pre">&qu
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_ls_filename"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_ls_filename()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_site_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_site_name()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_skycentrics_token"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_skycentrics_token()</span></code></a></li>
+<li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_summary_filtered_events"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_summary_filtered_events()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_table_name"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_table_name()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_thingsboard_token"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_thingsboard_token()</span></code></a></li>
 <li><a class="reference internal" href="#utils.ConfigManager.ConfigManager.get_var_names_path"><code class="docutils literal notranslate"><span class="pre">ConfigManager.get_var_names_path()</span></code></a></li>
@@ -588,7 +658,7 @@ directory (e.g. <code class="docutils literal notranslate"><span class="pre">&qu
         <li class="right" >
           <a href="../index.html" title="EcoPipeline Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.4.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pipeline Configuration Documentation</a></li> 
       </ul>
     </div>
