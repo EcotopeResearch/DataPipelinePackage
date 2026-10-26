@@ -69,7 +69,8 @@ Supported `process_type` values map to processor classes:
 | `api_skycentrics`  | Skycentrics cloud API            |
 | `api_fm`           | Field Manager API                |
 | `api_licor`        | LI-COR Cloud API                 |
-| `api_bluedot`      | Bluedot API                      |
+| `api_bluebot`      | Bluebot API                      |
+| `api_pi`           | Ecotope Pi monitoring unit       |
 
 Weather data (outdoor air temperature) is fetched automatically from Open Meteo for the same time window. When reprocessing, previously pulled API data is read from cached CSV files.
 

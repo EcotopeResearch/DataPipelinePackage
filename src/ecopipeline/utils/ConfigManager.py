@@ -60,6 +60,12 @@ class ConfigManager:
         API secret read from the config file, if present.
     api_device_id : str or None
         API device ID read from the config file, if present.
+    api_host : str or None
+        Address of a Pi monitoring unit's data interface, read from the config
+        file if present.
+    api_port : int or None
+        Port of a Pi monitoring unit's data interface. Defaults to ``5002``
+        when ``api_host`` is set without ``api_port``.
     db_connection_info : dict
         Dictionary containing ``user``, ``password``, ``host``, and
         ``database`` keys used to open MySQL connections.
@@ -112,6 +118,8 @@ class ConfigManager:
         self.api_token = None
         self.api_secret = None
         self.api_device_id = None
+        self.api_host = None
+        self.api_port = None
         if self.data_directory is None:
             configured_data_method = False
             if 'data' in configure:
@@ -128,6 +136,12 @@ class ConfigManager:
                     self.api_usr = configure.get('data', 'api_usr')
                     self.api_pw = configure.get('data', 'api_pw')
                     self.api_device_id = configure.get('data','device_id')
+                    configured_data_method = True
+                elif 'api_token' in configure['data'] and 'api_host' in configure['data']:
+                    # Pi monitoring unit data interface: addressed by host and port, no device id
+                    self.api_token = configure.get('data', 'api_token')
+                    self.api_host = configure.get('data', 'api_host')
+                    self.api_port = configure.getint('data', 'api_port', fallback=5002)
                     configured_data_method = True
                 elif 'api_token' in configure['data']:
                     self.api_token = configure.get('data', 'api_token')

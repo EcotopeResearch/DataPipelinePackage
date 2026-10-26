@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Alarm Classes Documentation &#8212; DataPipelinePackage 2.1.0 documentation</title>
+    <title>Alarm Classes Documentation &#8212; DataPipelinePackage 2.4.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/nature.css?v=bcd535f3" />
-    <script src="../_static/documentation_options.js?v=20623aea"></script>
+    <script src="../_static/documentation_options.js?v=7a6bd5fc"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -27,7 +27,7 @@
         <li class="right" >
           <a href="event_tracking.html" title="Event Tracking Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.4.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Alarm Classes Documentation</a></li> 
       </ul>
     </div>  
@@ -75,6 +75,12 @@ pretty_name - (Optional) Display name for the variable in alarm messages. Defaul
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -89,7 +95,7 @@ pretty_name - (Optional) Display name for the variable in alarm messages. Defaul
 
 <span class="target" id="module-ecopipeline.event_tracking.alarms.BackupUse"></span><dl class="py class">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.alarms.BackupUse.BackupUse">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.alarms.BackupUse.</span></span><span class="sig-name descname"><span class="pre">BackupUse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.alarms.BackupUse.BackupUse" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.alarms.BackupUse.</span></span><span class="sig-name descname"><span class="pre">BackupUse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setpoint_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.alarms.BackupUse.BackupUse" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="event_tracking.html#ecopipeline.event_tracking.Alarm" title="ecopipeline.event_tracking.Alarm.Alarm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Alarm</span></code></a></p>
 <p>Detects improper backup equipment use by monitoring whether backup power exceeds an expected
 fraction of total system power, and whether setpoint variables have been altered from their
@@ -117,6 +123,9 @@ variable_name column: determines the role of the variable by its first underscor
 <dt><strong>default_power_ratio</strong><span class="classifier">float</span></dt><dd><p>Default ratio threshold for PowerIn_Total variables when no bound is specified (default 0.1).
 Alarm triggers when sum of backup power &gt;= total power * threshold.</p>
 </dd>
+<dt><strong>setpoint_fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of minutes a Setpoint variable must differ from its expected value before
+triggering an alarm (default 10).</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -130,6 +139,12 @@ Alarm triggers when sum of backup power &gt;= total power * threshold.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -185,6 +200,12 @@ Alarm triggers when sum of ER power &gt;= total power * threshold.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -239,6 +260,12 @@ variable_name column: Must start with <a href="#id1"><span class="problematic" i
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -283,6 +310,12 @@ Can be overridden per-variable using the fault_time column in Variable_Names.csv
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -342,6 +375,12 @@ Alarm triggers when inlet temperature exceeds this value while the HP is on.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -400,6 +439,12 @@ Alarm triggers when HP power falls below this ratio of total power over the roll
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -414,7 +459,7 @@ Alarm triggers when HP power falls below this ratio of total power over the roll
 
 <span class="target" id="module-ecopipeline.event_tracking.alarms.HPWHOutlet"></span><dl class="py class">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.alarms.HPWHOutlet.HPWHOutlet">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.alarms.HPWHOutlet.</span></span><span class="sig-name descname"><span class="pre">HPWHOutlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_temp_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">140.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.alarms.HPWHOutlet.HPWHOutlet" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.alarms.HPWHOutlet.</span></span><span class="sig-name descname"><span class="pre">HPWHOutlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_temp_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">140.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_minutes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.alarms.HPWHOutlet.HPWHOutlet" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="event_tracking.html#ecopipeline.event_tracking.Alarm" title="ecopipeline.event_tracking.Alarm.Alarm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Alarm</span></code></a></p>
 <p>Detects low heat pump outlet temperature by checking if the outlet temperature falls below a threshold
 while the heat pump is running. The first 10 minutes after each HP turn-on are excluded as a warmup
@@ -447,6 +492,8 @@ Alarm triggers when outlet temperature falls BELOW this value after the warmup p
 </dd>
 <dt><strong>fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of consecutive minutes that temperature must be below threshold (after warmup) before triggering an alarm (default 5).</p>
 </dd>
+<dt><strong>warmup_minutes</strong><span class="classifier">int</span></dt><dd><p>Number of minutes after each HP turn-on to exclude as a warmup period (default 10).</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -460,6 +507,12 @@ Alarm triggers when outlet temperature falls BELOW this value after the warmup p
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -497,6 +550,12 @@ Bound (###) from alarm_codes is the expected value of the variable during that m
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -555,6 +614,12 @@ values over this many days before calculating ratios.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -606,6 +671,12 @@ this many consecutive minutes before turning off.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -669,6 +740,12 @@ more than 5.0 degrees from this value when the HP turns off.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -724,6 +801,12 @@ Temperature below this triggers an alarm.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -738,7 +821,7 @@ Temperature below this triggers an alarm.</p>
 
 <span class="target" id="module-ecopipeline.event_tracking.alarms.TMSetpoint"></span><dl class="py class">
 <dt class="sig sig-object py" id="ecopipeline.event_tracking.alarms.TMSetpoint.TMSetpoint">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.alarms.TMSetpoint.</span></span><span class="sig-name descname"><span class="pre">TMSetpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_indication</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.alarms.TMSetpoint.TMSetpoint" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ecopipeline.event_tracking.alarms.TMSetpoint.</span></span><span class="sig-name descname"><span class="pre">TMSetpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_setpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">130.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_indication</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_power_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setpoint_fault_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ecopipeline.event_tracking.alarms.TMSetpoint.TMSetpoint" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="event_tracking.html#ecopipeline.event_tracking.Alarm" title="ecopipeline.event_tracking.Alarm.Alarm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Alarm</span></code></a></p>
 <p>Detects temperature maintenance (TM) equipment issues including setpoint alterations, overheating
 while powered on, and excessive power consumption relative to total system power.</p>
@@ -777,6 +860,9 @@ PowerIn_Total for ratio comparison.</p>
 <dt><strong>default_power_ratio</strong><span class="classifier">float</span></dt><dd><p>Default ratio threshold for PowerIn_Total variables when no bound is specified (default 0.4).
 Alarm triggers when TM power / total power exceeds this threshold.</p>
 </dd>
+<dt><strong>setpoint_fault_time</strong><span class="classifier">int</span></dt><dd><p>Number of minutes a Setpoint variable must differ from its expected value before
+triggering an alarm (default 10).</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -790,6 +876,12 @@ Alarm triggers when TM power / total power exceeds this threshold.</p>
 </table>
 <table class="docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><strong>get_alarm_set_df</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>record_set_alarm</strong></p></td>
+<td></td>
+</tr>
 <tr class="row-odd"><td><p><strong>specific_alarm_function</strong></p></td>
 <td></td>
 </tr>
@@ -914,7 +1006,7 @@ Alarm triggers when TM power / total power exceeds this threshold.</p>
         <li class="right" >
           <a href="event_tracking.html" title="Event Tracking Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DataPipelinePackage 2.4.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Alarm Classes Documentation</a></li> 
       </ul>
     </div>
