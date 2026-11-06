@@ -33,6 +33,21 @@ from .api_extractors.LiCOR import LiCOR
 from .api_extractors.Bluebot import Bluebot
 from .api_extractors.PiExtractor import PiExtractor
 
+def _to_naive_local_index(index : pd.Index, time_zone : str = None) -> pd.Index:
+    """Return ``index`` as a timezone-naive DatetimeIndex in local time.
+
+    Handles tz-aware indexes, already-naive indexes, and object indexes of
+    timestamps with mixed UTC offsets (e.g. data spanning a DST change).
+    """
+    if not isinstance(index, pd.DatetimeIndex):
+        # Mixed offsets leave an object Index; parse as UTC to get one time zone
+        index = pd.to_datetime(index, utc=True)
+    if index.tz is None:
+        return index
+    if time_zone is not None:
+        index = index.tz_convert(time_zone)
+    return index.tz_localize(None)
+
 def central_extract_function(config : ConfigManager, process_type : str, start_time: datetime = None, end_time: datetime = None, use_defaults : bool = True,
                  raw_time_column : str = 'DateTime', time_column_format : str ='%Y/%m/%d %H:%M:%S', filename_date_format : str = "%Y%m%d%H%M%S",
                  file_prefix : str = "", data_sub_dir : str = "", date_string_start_idx : int = -17, date_string_end_idx : int = -3,
@@ -196,7 +211,7 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                 print("Time frame includes existing data and new data.")
                 merge_process = True
             file_processor = CSVProcessor(config, start_time, end_time, raw_time_column, time_column_format, filename_date_format, file_prefix, data_sub_dir,
-                 -18, -4)
+                 -18, -4, time_zone=time_zone)
             raw_df = file_processor.get_raw_data()
             if merge_process and start_time < last_db_day:
                 start_time = last_db_day
@@ -221,8 +236,8 @@ def central_extract_function(config : ConfigManager, process_type : str, start_t
                 print("Merging existing data and new data...")
                 api_df = api_extractor.get_raw_data()
                 if not (raw_df.empty or api_df.empty):
-                    raw_df.index = raw_df.index.tz_localize(None)
-                    api_df.index = api_df.index.tz_localize(None)
+                    raw_df.index = _to_naive_local_index(raw_df.index, time_zone)
+                    api_df.index = _to_naive_local_index(api_df.index, time_zone)
                 raw_df = pd.concat([raw_df, api_df])
             else:
                 raw_df = api_extractor.get_raw_data()
