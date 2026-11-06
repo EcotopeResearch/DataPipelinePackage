@@ -557,7 +557,10 @@ def estimate_power(df : pd.DataFrame, new_power_column : str, current_a_column :
         Dataframe with a new estimated power column of the specified name.
     """
     #average current * 208V * PF * sqrt(3)
-    df[new_power_column] = (df[current_a_column] + df[current_b_column] + df[current_c_column]) / 3 * assumed_voltage * power_factor * np.sqrt(3) / 1000
+    if current_a_column in df.columns and current_b_column in df.columns and current_c_column in df.columns:
+        df[new_power_column] = (df[current_a_column] + df[current_b_column] + df[current_c_column]) / 3 * assumed_voltage * power_factor * np.sqrt(3) / 1000
+    else:
+        print(f'Could not calculate {new_power_column}. {current_a_column}, {current_b_column}, and/or {current_c_column} mising from dataframe.')
 
     return df
 
@@ -783,10 +786,13 @@ def heat_output_calc(df: pd.DataFrame, flow_var : str, hot_temp : str, cold_temp
     pd.DataFrame
         Dataframe with the new heat output column of the specified name.
     """
-    df[heat_out_col_name] = 500 * df[flow_var] * (df[hot_temp] - df[cold_temp]) #BTU/hr
-    df[heat_out_col_name] = np.where(df[heat_out_col_name] > 0, df[heat_out_col_name], 0)
-    if return_as_kw:
-        df[heat_out_col_name] = df[heat_out_col_name]/3412 # convert to kW
+    if flow_var in df.columns and hot_temp in df.columns and cold_temp in df.columns:
+        df[heat_out_col_name] = 500 * df[flow_var] * (df[hot_temp] - df[cold_temp]) #BTU/hr
+        df[heat_out_col_name] = np.where(df[heat_out_col_name] > 0, df[heat_out_col_name], 0)
+        if return_as_kw:
+            df[heat_out_col_name] = df[heat_out_col_name]/3412 # convert to kW
+    else:
+        print(f"Could not calculate {heat_out_col_name}: At least one of [{flow_var}, {hot_temp}, {cold_temp}] missing from dataframe.")
     return df
 
 #TODO investigate if this can be removed
